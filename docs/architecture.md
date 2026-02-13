@@ -21,41 +21,56 @@ HotkeyCanvas は、キーボードファーストでキャンバスを編集で�
 | Infrastructure | ログ、メトリクス等の技術基盤 | ドメイン判断ロジック |
 
 ## 3. ディレクトリ責務マップ
-| Directory | 責務 |
-|---|---|
-| `App` | `HotkeyCanvasApp` のエントリポイント、DependencyContainer の初期化 |
-| `Domain` | ドメインの中核。状態と操作の不変条件を保持 |
-| `Domain/Model` | `CanvasState`, `Node`, `Edge` などの純粋データ構造 |
-| `Domain/Command` | ドメインで扱う編集操作コマンドの定義 |
-| `Domain/Service` | 純粋関数の reducer、undo 情報の合成 |
-| `Domain/Error` | ドメイン整合性違反などのエラー定義 |
-| `Application` | ユースケース単位のオーケストレーション |
-| `Application/UseCase` | `Apply/Undo/Redo/Save/Load/AgentEdit` の実行単位 |
-| `Application/DTO` | UseCase 入出力データ (`ApplyResult`, `SideEffect`) |
-| `Application/Port` | 外部依存に対する抽象境界 (protocol) |
-| `Application/Port/Input` | UI/外部から受ける入力境界 |
-| `Application/Port/Output` | 状態通知や画面更新の出力境界 |
-| `Application/Port/Gateway` | 保存・AI・スナップショットなど外部I/O境界 |
-| `Application/Coordinator` | 複数ユースケース横断の編集セッション制御 |
-| `InterfaceAdapters` | 入出力・外部形式を Application/Domain へ接続 |
-| `InterfaceAdapters/Input` | 外部入力の取り込み |
-| `InterfaceAdapters/Input/Hotkey` | `NSEvent`/ショートカットを `CanvasCommand` へ変換 |
-| `InterfaceAdapters/Output` | UI描画・表示更新の実装群 |
-| `InterfaceAdapters/Output/ViewModel` | Application 出力を SwiftUI 用状態へ変換 |
-| `InterfaceAdapters/Output/SwiftUI` | SwiftUI View コンポーネント |
-| `InterfaceAdapters/Output/Metal` | Metal による描画実装 |
-| `InterfaceAdapters/Persistence` | 永続化アダプタ |
-| `InterfaceAdapters/Persistence/JsonCanvas` | Domain と Json Canvas のマッピング、ファイル保存 |
-| `InterfaceAdapters/Agent` | Agent API 連携、Command 変換、編集状態スナップショット取得 |
-| `Infrastructure` | 横断的な技術基盤 |
-| `Infrastructure/Logging` | ログ出力の実装 |
-| `Infrastructure/Diagnostics` | メトリクス・診断情報の収集 |
-| `Tests` | テスト全体の入口 |
-| `Tests/DomainTests` | Domain の純粋関数・不変条件テスト |
-| `Tests/ApplicationTests` | UseCase/Port 契約テスト |
-| `Tests/InterfaceAdapterTests` | 入出力変換、Mapper テスト |
-| `Tests/IntegrationTests` | Hotkey -> Apply -> Render など統合シナリオ |
-| `docs` | 設計・運用ドキュメント |
+```text
+.
+|-- App/                                  # エントリポイント、DI 組み立て、起動配線のみ
+|   |-- HotkeyCanvasApp                   # ルート Scene 定義
+|   `-- DependencyContainer               # 依存注入の集約点
+|
+|-- Domain/                               # ドメイン中核（純粋モデルと不変条件）
+|   |-- Model/                            # CanvasState, Node, Edge などの純粋データ構造
+|   |-- Command/                          # ドメイン編集コマンド定義
+|   |-- Service/                          # reducer など純粋関数、undo 情報の合成
+|   `-- Error/                            # 整合性違反などのドメインエラー
+|
+|-- Application/                          # ユースケースのオーケストレーション
+|   |-- UseCase/                          # Apply/Undo/Redo/Save/Load/AgentEdit 実行単位（表示文言・状態取得もここ経由）
+|   |-- DTO/                              # UseCase 入出力データ (ApplyResult, SideEffect)
+|   |-- Port/                             # 外部依存への抽象境界 (protocol)
+|   |   |-- Input/                        # UI/外部 -> Application の入力境界
+|   |   |                                 # 例: GreetingInputPort のような呼び出し契約
+|   |   |-- Output/                       # 状態通知や画面更新の出力境界
+|   |   `-- Gateway/                      # 保存・AI・スナップショット等の外部I/O境界
+|   `-- Coordinator/                      # 複数ユースケース横断の編集セッション制御
+|
+|-- InterfaceAdapters/                    # 入出力・外部形式を Application/Domain へ接続
+|   |-- Input/
+|   |   `-- Hotkey/                       # NSEvent/ショートカット -> CanvasCommand 変換
+|   |-- Output/                           # UI描画・表示更新の実装群
+|   |   |-- ViewModel/                    # Application 出力を表示状態へ変換
+|   |   |                                 # ViewModel は Input Port の利用者であり、実装者ではない
+|   |   |-- SwiftUI/                      # SwiftUI View コンポーネント（SwiftUI依存を閉じ込める）
+|   |   |                                 # View は描画専念。文言・状態は直書きせず UseCase 経由で受け取る
+|   |   `-- Metal/                        # Metal 描画実装
+|   |-- Persistence/
+|   |   `-- JsonCanvas/                   # Domain <-> Json Canvas 変換、ファイル保存
+|   `-- Agent/                            # Agent API 連携、Command 変換、状態スナップショット取得
+|
+|-- Infrastructure/                       # 横断的技術基盤
+|   |-- Logging/                          # ログ出力実装
+|   `-- Diagnostics/                      # メトリクス・診断情報収集
+|
+|-- Tests/                                # テスト群（本体と同じ責務分割を反映）
+|   |-- DomainTests/                      # Domain の純粋関数・不変条件テスト
+|   |-- ApplicationTests/                 # UseCase/Port 契約テスト
+|   |-- InterfaceAdapterTests/            # 入出力変換、Mapper テスト
+|   `-- IntegrationTests/                 # Hotkey -> Apply -> Render 統合シナリオ
+|
+`-- docs/                                 # 設計・運用ドキュメント
+```
+
+表示系の追加ルール:
+- 画面表示に必要な文言・状態取得は、原則 View 直書きではなく UseCase 経由で取得する。
 
 ## 4. 依存ルール
 依存方向は外側から内側へ。
