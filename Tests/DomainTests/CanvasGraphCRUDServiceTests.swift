@@ -104,6 +104,25 @@ func test_deleteNode_removesConnectedEdges() throws {
     #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: prunedGraph) == nil)
 }
 
+@Test("Deleting focused node clears focus")
+func test_deleteNode_clearsFocus_whenDeletingFocusedNode() throws {
+    let focusedNode = CanvasNode(
+        id: CanvasNodeID(rawValue: "focused"),
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 60)
+    )
+    let graph = CanvasGraph(
+        nodesByID: [focusedNode.id: focusedNode],
+        edgesByID: [:],
+        focusedNodeID: focusedNode.id
+    )
+
+    let prunedGraph = try CanvasGraphCRUDService.deleteNode(id: focusedNode.id, in: graph)
+
+    #expect(prunedGraph.focusedNodeID == nil)
+}
+
 @Test("Validation: creating invalid edge or duplicate node fails")
 func test_validation_invalidOperations_throwExpectedErrors() throws {
     let node = CanvasNode(
