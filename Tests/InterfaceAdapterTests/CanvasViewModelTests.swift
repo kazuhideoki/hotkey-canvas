@@ -77,7 +77,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: node.id
                 )
-            case .addChildNode, .addChildNodeFromTopLevelParent, .moveFocus:
+            case .addChildNode, .addSiblingNode, .moveFocus:
                 continue
             case .focusNode:
                 continue
@@ -141,7 +141,7 @@ extension OverlappingFailureCanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: node.id
                 )
-            case .addChildNode, .addChildNodeFromTopLevelParent, .moveFocus:
+            case .addChildNode, .addSiblingNode, .moveFocus:
                 continue
             case .focusNode:
                 continue

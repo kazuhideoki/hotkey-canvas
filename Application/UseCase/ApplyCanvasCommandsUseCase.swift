@@ -47,8 +47,8 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .addChildNode:
             return try addChildNode(in: graph, requiresTopLevelParent: false)
-        case .addChildNodeFromTopLevelParent:
-            return try addChildNode(in: graph, requiresTopLevelParent: true)
+        case .addSiblingNode:
+            return try addSiblingNode(in: graph)
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
         case .focusNode(let nodeID):
@@ -60,6 +60,7 @@ extension ApplyCanvasCommandsUseCase {
 }
 
 extension ApplyCanvasCommandsUseCase {
+<<<<<<< HEAD
     private func focusNode(in graph: CanvasGraph, nodeID: CanvasNodeID) -> CanvasGraph {
         guard graph.nodesByID[nodeID] != nil else {
             return graph
@@ -75,6 +76,9 @@ extension ApplyCanvasCommandsUseCase {
     }
 
     private func makeAvailableNewNodeBounds(in graph: CanvasGraph) -> CanvasBounds {
+=======
+    func makeAvailableNewNodeBounds(in graph: CanvasGraph) -> CanvasBounds {
+>>>>>>> main
         let focusedNode = graph.focusedNodeID.flatMap { graph.nodesByID[$0] }
         let startX = focusedNode?.bounds.x ?? Self.defaultNewNodeX
         let startY =
