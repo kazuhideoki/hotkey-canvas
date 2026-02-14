@@ -1,0 +1,44 @@
+included:
+  - App
+  - Application
+  - Domain
+  - Infrastructure
+  - InterfaceAdapters
+  - Tests
+
+excluded:
+  - .build
+
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - first_where
+  - force_unwrapping
+  - sorted_imports
+  - vertical_parameter_alignment_on_call
+
+line_length:
+  warning: 120
+  error: 150
+
+type_name:
+  min_length: 2
+  max_length:
+    warning: 50
+    error: 60
+
+identifier_name:
+  min_length:
+    warning: 2
+  excluded:
+    - id
+    - x
+    - y
+
+function_body_length:
+  warning: 60
+  error: 100
+
+file_length:
+  warning: 400
+  error: 800
