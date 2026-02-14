@@ -14,42 +14,34 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "Domain",
-            path: "Domain"
+            name: "Domain"
         ),
         .target(
             name: "Application",
-            dependencies: ["Domain"],
-            path: "Application"
+            dependencies: ["Domain"]
         ),
         .target(
-            name: "Infrastructure",
-            path: "Infrastructure"
+            name: "Infrastructure"
         ),
         .target(
             name: "InterfaceAdapters",
-            dependencies: ["Application", "Domain"],
-            path: "InterfaceAdapters"
+            dependencies: ["Application", "Domain"]
         ),
         .executableTarget(
             name: "App",
-            dependencies: ["Application", "Domain", "InterfaceAdapters", "Infrastructure"],
-            path: "App"
+            dependencies: ["Application", "Domain", "InterfaceAdapters", "Infrastructure"]
         ),
         .testTarget(
             name: "DomainTests",
-            dependencies: ["Domain"],
-            path: "Tests/DomainTests"
+            dependencies: ["Domain"]
         ),
         .testTarget(
             name: "ApplicationTests",
-            dependencies: ["Application", "Domain"],
-            path: "Tests/ApplicationTests"
+            dependencies: ["Application", "Domain"]
         ),
         .testTarget(
-            name: "InterfaceAdapterTests",
-            dependencies: ["InterfaceAdapters", "Domain"],
-            path: "Tests/InterfaceAdapterTests"
+            name: "InterfaceAdaptersTests",
+            dependencies: ["InterfaceAdapters", "Domain"]
         ),
     ]
 )

@@ -84,13 +84,13 @@ extension CanvasHotkeyTranslator {
     private func isRedo(_ event: NSEvent) -> Bool {
         let flags = normalizedFlags(from: event)
         if flags.contains([.command, .shift]),
-           flags.isDisjoint(with: [.control, .option, .function]),
-           normalizedShortcutCharacter(from: event) == "z" {
+            flags.isDisjoint(with: [.control, .option, .function]),
+            normalizedShortcutCharacter(from: event) == "z" {
             return true
         }
         if flags.contains(.command),
-           flags.isDisjoint(with: [.shift, .control, .option, .function]),
-           normalizedShortcutCharacter(from: event) == "y" {
+            flags.isDisjoint(with: [.shift, .control, .option, .function]),
+            normalizedShortcutCharacter(from: event) == "y" {
             return true
         }
         return false

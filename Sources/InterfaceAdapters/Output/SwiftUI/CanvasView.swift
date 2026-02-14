@@ -133,11 +133,13 @@ extension CanvasView {
         _ event: NSEvent,
         nodesByID: [CanvasNodeID: CanvasNode]
     ) -> Bool {
-        guard let context = editingStartResolver.resolve(
-            from: event,
-            focusedNodeID: viewModel.focusedNodeID,
-            nodesByID: nodesByID
-        ) else {
+        guard
+            let context = editingStartResolver.resolve(
+                from: event,
+                focusedNodeID: viewModel.focusedNodeID,
+                nodesByID: nodesByID
+            )
+        else {
             return false
         }
         editingContext = NodeEditingContext(

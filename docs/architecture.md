@@ -27,50 +27,51 @@ HotkeyCanvas は、キーボードファーストでキャンバスを編集で�
 
 ```text
 .
-|-- App/                                  # エントリポイント、DI 組み立て、起動配線のみ
-|   |-- HotkeyCanvasApp.swift             # ルート Scene 定義（命名: *App）
-|   `-- DependencyContainer.swift         # 依存注入の集約点（命名: *Container）
-|
-|-- Domain/                               # ドメイン中核（純粋モデルと不変条件）
-|   |-- Model/                            # CanvasState, Node, Edge などの純粋データ構造（型名: 名詞）
-|   |-- Command/                          # ドメイン編集コマンド定義（型名: *Command）
-|   |-- Service/                          # reducer など純粋関数、undo 情報の合成（型名: *Service）
-|   `-- Error/                            # 整合性違反などのドメインエラー（型名: *Error）
-|
-|-- Application/                          # ユースケースのオーケストレーション
-|   |-- UseCase/                          # 実行単位（表示文言・状態取得もここ経由、関数名は動詞開始）
-|   |   `-- <Verb>UseCase.swift           # 命名: *UseCase
-|   |-- DTO/                              # UseCase 入出力データ（型名: *Input/*Output/*Result）
-|   |-- Port/                             # 外部依存への抽象境界（protocol）
-|   |   |-- Input/                        # UI/外部 -> Application の入力境界
-|   |   |                                 # 命名: *InputPort（例: GreetingInputPort）
-|   |   |-- Output/                       # 状態通知や画面更新の出力境界（命名: *OutputPort）
-|   |   `-- Gateway/                      # 保存・AI・外部I/O境界（命名: *Gateway）
-|   `-- Coordinator/                      # 複数ユースケース横断制御（命名: *Coordinator）
-|
-|-- InterfaceAdapters/                    # 入出力・外部形式を Application/Domain へ接続
-|   |-- Input/
-|   |   `-- Hotkey/                       # NSEvent/ショートカット -> CanvasCommand 変換（命名: *Translator）
-|   |-- Output/                           # UI描画・表示更新の実装群
-|   |   |-- ViewModel/                    # Application 出力を表示状態へ変換
-|   |   |                                 # ViewModel は Input Port の利用者であり、実装者ではない
-|   |   |                                 # 命名: *ViewModel
-|   |   |-- SwiftUI/                      # SwiftUI View コンポーネント（SwiftUI依存を閉じ込める）
-|   |   |                                 # View は描画専念。文言・状態は直書きせず UseCase 経由で受け取る
-|   |   |                                 # 命名: *View
-|   |   `-- Metal/                        # Metal 描画実装（命名: *Renderer）
-|   |-- Persistence/
-|   |   `-- JsonCanvas/                   # Domain <-> Json Canvas 変換、ファイル保存（命名: *Mapper, *Repository）
-|   `-- Agent/                            # Agent API 連携、Command 変換、状態スナップショット取得（命名: *Client）
-|
-|-- Infrastructure/                       # 横断的技術基盤
-|   |-- Logging/                          # ログ出力実装（命名: *Logger）
-|   `-- Diagnostics/                      # メトリクス・診断情報収集（命名: *Diagnostics, *Monitor）
+|-- Sources/
+|   |-- App/                              # エントリポイント、DI 組み立て、起動配線のみ
+|   |   |-- HotkeyCanvasApp.swift         # ルート Scene 定義（命名: *App）
+|   |   `-- DependencyContainer.swift     # 依存注入の集約点（命名: *Container）
+|   |
+|   |-- Domain/                           # ドメイン中核（純粋モデルと不変条件）
+|   |   |-- Model/                        # CanvasState, Node, Edge などの純粋データ構造（型名: 名詞）
+|   |   |-- Command/                      # ドメイン編集コマンド定義（型名: *Command）
+|   |   |-- Service/                      # reducer など純粋関数、undo 情報の合成（型名: *Service）
+|   |   `-- Error/                        # 整合性違反などのドメインエラー（型名: *Error）
+|   |
+|   |-- Application/                      # ユースケースのオーケストレーション
+|   |   |-- UseCase/                      # 実行単位（表示文言・状態取得もここ経由、関数名は動詞開始）
+|   |   |   `-- <Verb>UseCase.swift       # 命名: *UseCase
+|   |   |-- DTO/                          # UseCase 入出力データ（型名: *Input/*Output/*Result）
+|   |   |-- Port/                         # 外部依存への抽象境界（protocol）
+|   |   |   |-- Input/                    # UI/外部 -> Application の入力境界
+|   |   |   |                             # 命名: *InputPort（例: GreetingInputPort）
+|   |   |   |-- Output/                   # 状態通知や画面更新の出力境界（命名: *OutputPort）
+|   |   |   `-- Gateway/                  # 保存・AI・外部I/O境界（命名: *Gateway）
+|   |   `-- Coordinator/                  # 複数ユースケース横断制御（命名: *Coordinator）
+|   |
+|   |-- InterfaceAdapters/                # 入出力・外部形式を Application/Domain へ接続
+|   |   |-- Input/
+|   |   |   `-- Hotkey/                   # NSEvent/ショートカット -> CanvasCommand 変換（命名: *Translator）
+|   |   |-- Output/                       # UI描画・表示更新の実装群
+|   |   |   |-- ViewModel/                # Application 出力を表示状態へ変換
+|   |   |   |                             # ViewModel は Input Port の利用者であり、実装者ではない
+|   |   |   |                             # 命名: *ViewModel
+|   |   |   |-- SwiftUI/                  # SwiftUI View コンポーネント（SwiftUI依存を閉じ込める）
+|   |   |   |                             # View は描画専念。文言・状態は直書きせず UseCase 経由で受け取る
+|   |   |   |                             # 命名: *View
+|   |   |   `-- Metal/                    # Metal 描画実装（命名: *Renderer）
+|   |   |-- Persistence/
+|   |   |   `-- JsonCanvas/               # Domain <-> Json Canvas 変換、ファイル保存（命名: *Mapper, *Repository）
+|   |   `-- Agent/                        # Agent API 連携、Command 変換、状態スナップショット取得（命名: *Client）
+|   |
+|   `-- Infrastructure/                   # 横断的技術基盤
+|       |-- Logging/                      # ログ出力実装（命名: *Logger）
+|       `-- Diagnostics/                  # メトリクス・診断情報収集（命名: *Diagnostics, *Monitor）
 |
 |-- Tests/                                # テスト群（本体と同じ責務分割を反映）
 |   |-- DomainTests/                      # Domain の純粋関数・不変条件テスト
 |   |-- ApplicationTests/                 # UseCase/Port 契約テスト
-|   |-- InterfaceAdapterTests/            # 入出力変換、Mapper テスト
+|   |-- InterfaceAdaptersTests/           # 入出力変換、Mapper テスト
 |   `-- IntegrationTests/                 # Hotkey -> Apply -> Render 統合シナリオ
 |                                         # ファイル命名: <TypeName>Tests.swift / 関数命名: test_<condition>_<expected>()
 |
@@ -96,12 +97,12 @@ Infrastructure -> (Application/InterfaceAdapters から利用)
 ## 5. データ境界
 
 - Domain は保存形式から独立したモデルを持つ。
-- 保存形式との相互変換は `InterfaceAdapters/Persistence/*` に閉じ込める。
+- 保存形式との相互変換は `Sources/InterfaceAdapters/Persistence/*` に閉じ込める。
 - 保存形式変更時は Mapper 差し替えで吸収する。
 
 ## 6. 操作境界 (`apply`)
 
-`## 3` の `Application/Port/Input` で扱う編集中核契約。
+`## 3` の `Sources/Application/Port/Input` で扱う編集中核契約。
 
 ```swift
 protocol CanvasEditingInputPort {
@@ -121,20 +122,20 @@ struct ApplyResult {
 ## 7. Agent 連携境界
 
 - Agent は UI を直接変更しない。
-- Agent 連携は `Application/Port/Gateway/*Gateway` 経由で Command 列を生成し、`apply` で適用する。
-- 編集状態の画像取得は Adapter 側の責務 (`InterfaceAdapters/Agent`) とする。
+- Agent 連携は `Sources/Application/Port/Gateway/*Gateway` 経由で Command 列を生成し、`apply` で適用する。
+- 編集状態の画像取得は Adapter 側の責務 (`Sources/InterfaceAdapters/Agent`) とする。
 
 ## 8. 最小シーケンス（サンプル）
 
 ```text
 Hotkey Input
-  -> InterfaceAdapters/Input/*Translator
+  -> Sources/InterfaceAdapters/Input/*Translator
   -> CanvasEditingInputPort.apply(commands)
-  -> Application/UseCase/*UseCase
-  -> Domain/Service reducer
+  -> Sources/Application/UseCase/*UseCase
+  -> Sources/Domain/Service reducer
   -> ApplyResult
-  -> InterfaceAdapters/Output/*ViewModel update
-  -> InterfaceAdapters/Output/SwiftUI|Metal render
+  -> Sources/InterfaceAdapters/Output/*ViewModel update
+  -> Sources/InterfaceAdapters/Output/SwiftUI|Metal render
 ```
 
 ## 9. 将来拡張方針
