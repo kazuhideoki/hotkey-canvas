@@ -3,25 +3,35 @@ import SwiftUI
 
 public struct CanvasHotkeyCaptureView: NSViewRepresentable {
     private let onKeyDown: (NSEvent) -> Bool
+    private let isEnabled: Bool
 
-    public init(onKeyDown: @escaping (NSEvent) -> Bool) {
+    public init(
+        isEnabled: Bool = true,
+        onKeyDown: @escaping (NSEvent) -> Bool
+    ) {
+        self.isEnabled = isEnabled
         self.onKeyDown = onKeyDown
     }
 
     public func makeNSView(context: Context) -> CanvasKeyCaptureNSView {
-        CanvasKeyCaptureNSView(onKeyDown: onKeyDown)
+        CanvasKeyCaptureNSView(isEnabled: isEnabled, onKeyDown: onKeyDown)
     }
 
     public func updateNSView(_ nsView: CanvasKeyCaptureNSView, context: Context) {
+        nsView.isCaptureEnabled = isEnabled
         nsView.onKeyDown = onKeyDown
-        nsView.focusIfPossible()
+        if isEnabled {
+            nsView.focusIfPossible()
+        }
     }
 }
 
 public final class CanvasKeyCaptureNSView: NSView {
+    var isCaptureEnabled: Bool
     var onKeyDown: (NSEvent) -> Bool
 
-    init(onKeyDown: @escaping (NSEvent) -> Bool) {
+    init(isEnabled: Bool, onKeyDown: @escaping (NSEvent) -> Bool) {
+        isCaptureEnabled = isEnabled
         self.onKeyDown = onKeyDown
         super.init(frame: .zero)
     }
@@ -32,7 +42,7 @@ public final class CanvasKeyCaptureNSView: NSView {
     }
 
     public override var acceptsFirstResponder: Bool {
-        true
+        isCaptureEnabled
     }
 
     public override func viewDidMoveToWindow() {
@@ -58,6 +68,9 @@ public final class CanvasKeyCaptureNSView: NSView {
     }
 
     func handleKeyDown(_ event: NSEvent) -> Bool {
-        onKeyDown(event)
+        guard isCaptureEnabled else {
+            return false
+        }
+        return onKeyDown(event)
     }
 }

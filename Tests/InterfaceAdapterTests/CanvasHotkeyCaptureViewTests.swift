@@ -6,7 +6,7 @@ import Testing
 @Test("CanvasKeyCaptureNSView: handleKeyDown returns handler result")
 func test_handleKeyDown_returnsHandlerResult() throws {
     var wasCalled = false
-    let sut = CanvasKeyCaptureNSView { _ in
+    let sut = CanvasKeyCaptureNSView(isEnabled: true) { _ in
         wasCalled = true
         return true
     }
