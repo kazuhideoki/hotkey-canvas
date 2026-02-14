@@ -54,7 +54,7 @@ extension SubtreeDeletionFixture {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 240, y: 0, width: 100, height: 80)
-            )
+            ),
         ]
     }
 
@@ -77,7 +77,7 @@ extension SubtreeDeletionFixture {
                 fromNodeID: ids.rootID,
                 toNodeID: ids.siblingID,
                 relationType: .parentChild
-            )
+            ),
         ]
     }
 }

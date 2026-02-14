@@ -87,61 +87,6 @@ func test_apply_addChildNode_avoidsOverlap() async throws {
     #expect(child.bounds.x >= blocker.bounds.x + blocker.bounds.width)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addChildNodeFromTopLevelParent only works for top-level parent")
-func test_apply_addChildNodeFromTopLevelParent_onlyForTopLevelParent() async throws {
-    let rootID = CanvasNodeID(rawValue: "root")
-    let childID = CanvasNodeID(rawValue: "child")
-    let grandchildID = CanvasNodeID(rawValue: "grandchild")
-    let root = CanvasNode(
-        id: rootID,
-        kind: .text,
-        text: nil,
-        bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)
-    )
-    let child = CanvasNode(
-        id: childID,
-        kind: .text,
-        text: nil,
-        bounds: CanvasBounds(x: 0, y: 160, width: 220, height: 120)
-    )
-    let grandchild = CanvasNode(
-        id: grandchildID,
-        kind: .text,
-        text: nil,
-        bounds: CanvasBounds(x: 0, y: 320, width: 220, height: 120)
-    )
-    let rootToChild = CanvasEdge(
-        id: CanvasEdgeID(rawValue: "edge-root-child"),
-        fromNodeID: rootID,
-        toNodeID: childID,
-        relationType: .parentChild
-    )
-    let childToGrandchild = CanvasEdge(
-        id: CanvasEdgeID(rawValue: "edge-child-grandchild"),
-        fromNodeID: childID,
-        toNodeID: grandchildID,
-        relationType: .parentChild
-    )
-
-    let rootGraph = CanvasGraph(
-        nodesByID: [rootID: root, childID: child, grandchildID: grandchild],
-        edgesByID: [rootToChild.id: rootToChild, childToGrandchild.id: childToGrandchild],
-        focusedNodeID: rootID
-    )
-    let rootSUT = ApplyCanvasCommandsUseCase(initialGraph: rootGraph)
-    let rootResult = try await rootSUT.apply(commands: [.addChildNodeFromTopLevelParent])
-    #expect(rootResult.newState.nodesByID.count == 4)
-
-    let childGraph = CanvasGraph(
-        nodesByID: [rootID: root, childID: child, grandchildID: grandchild],
-        edgesByID: [rootToChild.id: rootToChild, childToGrandchild.id: childToGrandchild],
-        focusedNodeID: childID
-    )
-    let childSUT = ApplyCanvasCommandsUseCase(initialGraph: childGraph)
-    let childResult = try await childSUT.apply(commands: [.addChildNodeFromTopLevelParent])
-    #expect(childResult.newState.nodesByID.count == 3)
-}
-
 @Test("ApplyCanvasCommandsUseCase: addNode places node below focused node")
 func test_apply_addNode_placesNodeBelowFocusedNode() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
@@ -185,7 +130,7 @@ func test_apply_addNode_skipsOccupiedSpaceBelowFocusedNode() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 140, y: 250, width: 220, height: 120)
-            )
+            ),
         ],
         edgesByID: [:],
         focusedNodeID: focusedNodeID
@@ -226,7 +171,7 @@ func test_apply_moveFocus_movesToNearestNodeInDirection() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 420, y: 100, width: 100, height: 100)
-            )
+            ),
         ],
         edgesByID: [:],
         focusedNodeID: centerID
@@ -301,7 +246,7 @@ func test_apply_deleteFocusedNode_removesFocusedNode() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 280, y: 100, width: 100, height: 100)
-            )
+            ),
         ],
         edgesByID: [
             edgeID: CanvasEdge(

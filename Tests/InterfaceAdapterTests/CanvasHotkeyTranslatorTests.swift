@@ -26,8 +26,8 @@ func test_translate_shiftEnter_returnsAddNode() throws {
     #expect(commands == [.addNode])
 }
 
-@Test("CanvasHotkeyTranslator: Enter without Shift maps to addChildNodeFromTopLevelParent command")
-func test_translate_enterWithoutShift_returnsAddChildNodeFromTopLevelParent() throws {
+@Test("CanvasHotkeyTranslator: Enter without Shift maps to addSiblingNode command")
+func test_translate_enterWithoutShift_returnsAddSiblingNode() throws {
     let sut = CanvasHotkeyTranslator()
     let event = try #require(
         NSEvent.keyEvent(
@@ -46,7 +46,7 @@ func test_translate_enterWithoutShift_returnsAddChildNodeFromTopLevelParent() th
 
     let commands = sut.translate(event)
 
-    #expect(commands == [.addChildNodeFromTopLevelParent])
+    #expect(commands == [.addSiblingNode])
 }
 
 @Test("CanvasHotkeyTranslator: Fn+Enter maps to no command")
