@@ -53,6 +53,10 @@ extension ApplyCanvasCommandsUseCase {
             return moveFocus(in: graph, direction: direction)
         case .deleteFocusedNode:
             return try deleteFocusedNode(in: graph)
+        case .focusNode(let nodeID):
+            return focusNode(in: graph, nodeID: nodeID)
+        case .setNodeText(let nodeID, let text):
+            return try setNodeText(in: graph, nodeID: nodeID, text: text)
         }
     }
 }

@@ -4,6 +4,8 @@ public enum CanvasCommand: Equatable, Sendable {
     case addChildNodeFromTopLevelParent
     case moveFocus(CanvasFocusDirection)
     case deleteFocusedNode
+    case focusNode(CanvasNodeID)
+    case setNodeText(nodeID: CanvasNodeID, text: String)
 }
 
 /// Direction used to move node focus on canvas.
