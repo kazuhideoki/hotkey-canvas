@@ -5,7 +5,6 @@ public enum CanvasCommand: Equatable, Sendable {
     case moveFocus(CanvasFocusDirection)
     case focusNode(CanvasNodeID)
     case deleteFocusedNode
-    case focusNode(CanvasNodeID)
     case setNodeText(nodeID: CanvasNodeID, text: String)
 }
 
