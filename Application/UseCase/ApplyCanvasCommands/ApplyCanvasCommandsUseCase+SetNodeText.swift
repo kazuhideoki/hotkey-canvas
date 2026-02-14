@@ -1,26 +1,13 @@
-// Background: Node editing flows need explicit commands to change focus and node text from UI interactions.
-// Responsibility: Handle focused-node targeting commands for inline text editing.
 import Domain
 
+// Background: Inline editing needs a command path to mutate node text content.
+// Responsibility: Update text of an existing node and normalize empty strings to nil.
 extension ApplyCanvasCommandsUseCase {
-    func focusNode(in graph: CanvasGraph, nodeID: CanvasNodeID) -> CanvasGraph {
-        guard graph.nodesByID[nodeID] != nil else {
-            return graph
-        }
-        guard graph.focusedNodeID != nodeID else {
-            return graph
-        }
-        return CanvasGraph(
-            nodesByID: graph.nodesByID,
-            edgesByID: graph.edgesByID,
-            focusedNodeID: nodeID
-        )
-    }
-
     func setNodeText(in graph: CanvasGraph, nodeID: CanvasNodeID, text: String) throws -> CanvasGraph {
         guard let node = graph.nodesByID[nodeID] else {
             return graph
         }
+
         let normalizedText = text.isEmpty ? nil : text
         guard node.text != normalizedText else {
             return graph

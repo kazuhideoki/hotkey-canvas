@@ -17,6 +17,8 @@ extension ApplyCanvasCommandsUseCase {
             return focusNode(in: graph, nodeID: nodeID)
         case .deleteFocusedNode:
             return try deleteFocusedNode(in: graph)
+        case .setNodeText(let nodeID, let text):
+            return try setNodeText(in: graph, nodeID: nodeID, text: text)
         }
     }
 }
