@@ -48,13 +48,27 @@ func test_edgeCrud_withExistingNodes_lifecycleWorks() throws {
     graph = try CanvasGraphCRUDService.createNode(toNode, in: graph)
 
     let edgeID = CanvasEdgeID(rawValue: "edge-1")
-    let edge = CanvasEdge(id: edgeID, fromNodeID: fromNode.id, toNodeID: toNode.id, label: "flow")
+    let edge = CanvasEdge(
+        id: edgeID,
+        fromNodeID: fromNode.id,
+        toNodeID: toNode.id,
+        relationType: .parentChild,
+        label: "flow"
+    )
     graph = try CanvasGraphCRUDService.createEdge(edge, in: graph)
     #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.label == "flow")
+    #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.relationType == .parentChild)
 
-    let updatedEdge = CanvasEdge(id: edgeID, fromNodeID: fromNode.id, toNodeID: toNode.id, label: "updated")
+    let updatedEdge = CanvasEdge(
+        id: edgeID,
+        fromNodeID: fromNode.id,
+        toNodeID: toNode.id,
+        relationType: .normal,
+        label: "updated"
+    )
     graph = try CanvasGraphCRUDService.updateEdge(updatedEdge, in: graph)
     #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.label == "updated")
+    #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.relationType == .normal)
 
     graph = try CanvasGraphCRUDService.deleteEdge(id: edgeID, in: graph)
     #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph) == nil)
@@ -119,4 +133,14 @@ func test_validation_invalidOperations_throwExpectedErrors() throws {
     } catch let error as CanvasGraphError {
         #expect(error == .edgeEndpointNotFound(missingNodeID))
     }
+}
+
+@Test("Edge default relation type is normal")
+func test_edge_defaultRelationType_isNormal() {
+    let edge = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-default"),
+        fromNodeID: CanvasNodeID(rawValue: "from"),
+        toNodeID: CanvasNodeID(rawValue: "to")
+    )
+    #expect(edge.relationType == .normal)
 }
