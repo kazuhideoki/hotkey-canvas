@@ -1,3 +1,5 @@
+// Background: Bootstrap use case needs a minimal behavior safety net.
+// Responsibility: Verify greeting use case returns expected startup text.
 import Application
 import Testing
 
