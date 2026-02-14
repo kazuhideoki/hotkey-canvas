@@ -368,7 +368,6 @@ func test_apply_deleteFocusedNode_isNoOp_whenFocusedNodeIDIsStale() async throws
     #expect(result.newState == graph)
 }
 
-<<<<<<< HEAD
 @Test("ApplyCanvasCommandsUseCase: focusNode sets focused node when node exists")
 func test_apply_focusNode_setsFocusedNode_whenNodeExists() async throws {
     let firstID = CanvasNodeID(rawValue: "first")
@@ -419,7 +418,8 @@ func test_apply_focusNode_isNoOp_whenNodeDoesNotExist() async throws {
     let result = try await sut.apply(commands: [.focusNode(missingID)])
 
     #expect(result.newState == graph)
-=======
+}
+
 @Test("ApplyCanvasCommandsUseCase: deleteFocusedNode removes focused subtree")
 func test_apply_deleteFocusedNode_removesFocusedSubtree() async throws {
     let fixture = SubtreeDeletionFixture.make()
@@ -439,5 +439,4 @@ func test_apply_deleteFocusedNode_removesFocusedSubtree() async throws {
     #expect(result.newState.edgesByID[fixture.edgeRootChildID] == nil)
     #expect(result.newState.edgesByID[fixture.edgeChildGrandchildID] == nil)
     #expect(result.newState.edgesByID[fixture.edgeRootSiblingID] != nil)
->>>>>>> main
 }
