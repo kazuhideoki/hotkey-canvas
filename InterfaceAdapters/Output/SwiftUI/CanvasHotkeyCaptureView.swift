@@ -2,9 +2,9 @@ import AppKit
 import SwiftUI
 
 public struct CanvasHotkeyCaptureView: NSViewRepresentable {
-    private let onKeyDown: (NSEvent) -> Void
+    private let onKeyDown: (NSEvent) -> Bool
 
-    public init(onKeyDown: @escaping (NSEvent) -> Void) {
+    public init(onKeyDown: @escaping (NSEvent) -> Bool) {
         self.onKeyDown = onKeyDown
     }
 
@@ -19,9 +19,9 @@ public struct CanvasHotkeyCaptureView: NSViewRepresentable {
 }
 
 public final class CanvasKeyCaptureNSView: NSView {
-    var onKeyDown: (NSEvent) -> Void
+    var onKeyDown: (NSEvent) -> Bool
 
-    init(onKeyDown: @escaping (NSEvent) -> Void) {
+    init(onKeyDown: @escaping (NSEvent) -> Bool) {
         self.onKeyDown = onKeyDown
         super.init(frame: .zero)
     }
@@ -41,7 +41,10 @@ public final class CanvasKeyCaptureNSView: NSView {
     }
 
     public override func keyDown(with event: NSEvent) {
-        onKeyDown(event)
+        // Consume handled shortcuts here to prevent AppKit's default beep/propagation.
+        guard !handleKeyDown(event) else {
+            return
+        }
         super.keyDown(with: event)
     }
 
@@ -52,5 +55,9 @@ public final class CanvasKeyCaptureNSView: NSView {
             }
             window.makeFirstResponder(self)
         }
+    }
+
+    func handleKeyDown(_ event: NSEvent) -> Bool {
+        onKeyDown(event)
     }
 }

@@ -39,7 +39,12 @@ public struct CanvasView: View {
 
             CanvasHotkeyCaptureView { event in
                 let commands = hotkeyTranslator.translate(event)
+                guard !commands.isEmpty else {
+                    return false
+                }
+                // Returning true tells the capture view to stop responder-chain propagation.
                 Task { await viewModel.apply(commands: commands) }
+                return true
             }
             .frame(width: 1, height: 1)
         }
