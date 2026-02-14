@@ -1,5 +1,7 @@
 public enum CanvasCommand: Equatable, Sendable {
     case addNode
+    case addChildNode
+    case addChildNodeFromTopLevelParent
     case moveFocus(CanvasFocusDirection)
     case focusNode(CanvasNodeID)
     case deleteFocusedNode

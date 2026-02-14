@@ -8,6 +8,12 @@ public struct CanvasHotkeyTranslator {
         guard event.type == .keyDown else {
             return []
         }
+        if isCommandEnter(event) {
+            return [.addChildNode]
+        }
+        if isEnterWithoutDisallowedModifiers(event) {
+            return [.addChildNodeFromTopLevelParent]
+        }
         if isShiftEnter(event) {
             return [.addNode]
         }
@@ -37,6 +43,26 @@ extension CanvasHotkeyTranslator {
         let flags = normalizedFlags(from: event)
         let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .function]
         return flags.contains(.shift) && flags.isDisjoint(with: disallowed)
+    }
+
+    private func isCommandEnter(_ event: NSEvent) -> Bool {
+        guard event.keyCode == 36 else {
+            return false
+        }
+
+        let flags = normalizedFlags(from: event)
+        let disallowed: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
+        return flags.contains(.command) && flags.isDisjoint(with: disallowed)
+    }
+
+    private func isEnterWithoutDisallowedModifiers(_ event: NSEvent) -> Bool {
+        guard event.keyCode == 36 else {
+            return false
+        }
+
+        let flags = normalizedFlags(from: event)
+        let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .shift, .function]
+        return flags.isDisjoint(with: disallowed)
     }
 
     private func isDelete(_ event: NSEvent) -> Bool {

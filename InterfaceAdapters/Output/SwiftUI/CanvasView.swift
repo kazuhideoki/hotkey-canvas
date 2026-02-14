@@ -14,9 +14,21 @@ public struct CanvasView: View {
     }
 
     public var body: some View {
+        let nodesByID = Dictionary(uniqueKeysWithValues: viewModel.nodes.map { ($0.id, $0) })
+
         ZStack(alignment: .topLeading) {
             Color(nsColor: .textBackgroundColor)
                 .ignoresSafeArea()
+
+            ForEach(viewModel.edges, id: \.id) { edge in
+                if let fromNode = nodesByID[edge.fromNodeID], let toNode = nodesByID[edge.toNodeID] {
+                    Path { path in
+                        path.move(to: centerPoint(for: fromNode))
+                        path.addLine(to: centerPoint(for: toNode))
+                    }
+                    .stroke(Color(nsColor: .separatorColor), lineWidth: 1.5)
+                }
+            }
 
             ForEach(viewModel.nodes, id: \.id) { node in
                 let isFocused = viewModel.focusedNodeID == node.id
@@ -78,6 +90,7 @@ public struct CanvasView: View {
 }
 
 extension CanvasView {
+<<<<<<< HEAD
     private func focusedNodeID(at location: CGPoint) -> CanvasNodeID? {
         // Reverse-order search approximates top-most node when overlaps exist.
         viewModel.nodes.reversed().first { node in
@@ -89,5 +102,12 @@ extension CanvasView {
             )
             return rect.contains(location)
         }?.id
+=======
+    private func centerPoint(for node: CanvasNode) -> CGPoint {
+        CGPoint(
+            x: node.bounds.x + (node.bounds.width / 2),
+            y: node.bounds.y + (node.bounds.height / 2)
+        )
+>>>>>>> main
     }
 }

@@ -26,8 +26,8 @@ func test_translate_shiftEnter_returnsAddNode() throws {
     #expect(commands == [.addNode])
 }
 
-@Test("CanvasHotkeyTranslator: Enter without Shift maps to no command")
-func test_translate_enterWithoutShift_returnsEmpty() throws {
+@Test("CanvasHotkeyTranslator: Enter without Shift maps to addChildNodeFromTopLevelParent command")
+func test_translate_enterWithoutShift_returnsAddChildNodeFromTopLevelParent() throws {
     let sut = CanvasHotkeyTranslator()
     let event = try #require(
         NSEvent.keyEvent(
@@ -46,7 +46,53 @@ func test_translate_enterWithoutShift_returnsEmpty() throws {
 
     let commands = sut.translate(event)
 
+    #expect(commands == [.addChildNodeFromTopLevelParent])
+}
+
+@Test("CanvasHotkeyTranslator: Fn+Enter maps to no command")
+func test_translate_functionEnter_returnsEmpty() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.function],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "\r",
+            charactersIgnoringModifiers: "\r",
+            isARepeat: false,
+            keyCode: 36
+        )
+    )
+
+    let commands = sut.translate(event)
+
     #expect(commands.isEmpty)
+}
+
+@Test("CanvasHotkeyTranslator: Command+Enter maps to addChildNode")
+func test_translate_commandEnter_returnsAddChildNode() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "\r",
+            charactersIgnoringModifiers: "\r",
+            isARepeat: false,
+            keyCode: 36
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.addChildNode])
 }
 
 @Test("CanvasHotkeyTranslator: Up arrow maps to moveFocus up")
