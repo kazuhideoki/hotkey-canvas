@@ -12,7 +12,7 @@ public struct CanvasHotkeyTranslator {
             return [.addChildNode]
         }
         if isEnterWithoutDisallowedModifiers(event) {
-            return [.addChildNodeFromTopLevelParent]
+            return [.addSiblingNode]
         }
         if isShiftEnter(event) {
             return [.addNode]
