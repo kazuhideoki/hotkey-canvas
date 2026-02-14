@@ -5,19 +5,13 @@ import InterfaceAdapters
 
 /// Assembles dependencies required by top-level app scenes.
 struct DependencyContainer {
-<<<<<<< HEAD
     let canvasEditingInputPort: any CanvasEditingInputPort
-=======
-    // TEMP: Wiring for hello-world bootstrap only. Replace with real composition roots as features are added.
-    /// Input boundary consumed by the bootstrap view model.
-    let greetingInputPort: any GreetingInputPort
->>>>>>> main
 
     init() {
         canvasEditingInputPort = ApplyCanvasCommandsUseCase()
     }
 
-    /// Creates the view model instance used by the greeting screen.
+    /// Creates the view model instance used by the canvas screen.
     @MainActor
     func makeCanvasViewModel() -> CanvasViewModel {
         CanvasViewModel(inputPort: canvasEditingInputPort)
