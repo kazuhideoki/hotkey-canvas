@@ -1,6 +1,7 @@
 import Domain
-import Foundation
 
+// Background: The use case owns command application sequencing and in-memory graph state updates.
+// Responsibility: Coordinate command execution and expose the latest graph snapshot.
 public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
     private var graph: CanvasGraph
     private var undoStack: [CanvasGraph]
@@ -54,6 +55,7 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
         graph
     }
 }
+<<<<<<< HEAD
 
 extension ApplyCanvasCommandsUseCase {
     private func makeApplyResult(newState: CanvasGraph) -> ApplyResult {
@@ -373,3 +375,5 @@ private struct FocusCandidate {
     let perpendicularDistance: Double
     let distance: Double
 }
+=======
+>>>>>>> main
