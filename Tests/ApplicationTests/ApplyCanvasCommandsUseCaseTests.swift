@@ -28,7 +28,6 @@ func test_apply_addNodeTwice_createsTwoNodes() async throws {
     #expect(second.newState.nodesByID[focusedNodeID] != nil)
 }
 
-<<<<<<< HEAD
 @Test("ApplyCanvasCommandsUseCase: addChildNode creates child and parent-child edge")
 func test_apply_addChildNode_createsChildAndEdge() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
@@ -141,7 +140,8 @@ func test_apply_addChildNodeFromTopLevelParent_onlyForTopLevelParent() async thr
     let childSUT = ApplyCanvasCommandsUseCase(initialGraph: childGraph)
     let childResult = try await childSUT.apply(commands: [.addChildNodeFromTopLevelParent])
     #expect(childResult.newState.nodesByID.count == 3)
-=======
+}
+
 @Test("ApplyCanvasCommandsUseCase: addNode places node below focused node")
 func test_apply_addNode_placesNodeBelowFocusedNode() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
@@ -199,7 +199,6 @@ func test_apply_addNode_skipsOccupiedSpaceBelowFocusedNode() async throws {
     let newNode = try #require(result.newState.nodesByID[newNodeID])
     #expect(newNode.bounds.x == 140)
     #expect(newNode.bounds.y == 394)
->>>>>>> main
 }
 
 @Test("ApplyCanvasCommandsUseCase: moveFocus picks nearest node in requested direction")
