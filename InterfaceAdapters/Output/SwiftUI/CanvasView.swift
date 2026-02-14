@@ -22,9 +22,6 @@ public struct CanvasView: View {
             Color(nsColor: .textBackgroundColor)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
-                .onTapGesture {
-                    commitNodeEditingIfNeeded()
-                }
 
             ForEach(viewModel.edges, id: \.id) { edge in
                 if let fromNode = nodesByID[edge.fromNodeID], let toNode = nodesByID[edge.toNodeID] {
@@ -51,7 +48,7 @@ public struct CanvasView: View {
                         if editingContext?.nodeID == node.id {
                             NodeTextEditor(
                                 text: editingTextBinding(for: node.id),
-                                selectAllOnFirstFocus: editingContext?.selectAllOnFirstFocus ?? false,
+                                selectAllOnFirstFocus: false,
                                 onCommit: {
                                     commitNodeEditing()
                                 }
@@ -69,17 +66,6 @@ public struct CanvasView: View {
                         alignment: .topLeading
                     )
                     .offset(x: CGFloat(node.bounds.x), y: CGFloat(node.bounds.y))
-                    .contentShape(Rectangle())
-                    .gesture(
-                        ExclusiveGesture(
-                            TapGesture(count: 2).onEnded {
-                                beginEditingByDoubleClick(node: node)
-                            },
-                            TapGesture().onEnded {
-                                handleNodeSingleTap(nodeID: node.id)
-                            }
-                        )
-                    )
             }
 
             CanvasHotkeyCaptureView(isEnabled: editingContext == nil) { event in
@@ -92,7 +78,7 @@ public struct CanvasView: View {
                 return true
             }
             .frame(width: 1, height: 1)
-            // Keep key capture active without stealing mouse interactions from canvas nodes.
+            // Keep key capture active without intercepting canvas rendering.
             .allowsHitTesting(false)
         }
         .frame(minWidth: 900, minHeight: 600, alignment: .topLeading)
@@ -127,31 +113,6 @@ extension CanvasView {
         )
     }
 
-    private func beginEditingByDoubleClick(node: CanvasNode) {
-        if let context = editingContext {
-            if context.nodeID == node.id {
-                return
-            }
-            commitNodeEditing(context)
-        }
-        editingContext = NodeEditingContext(
-            nodeID: node.id,
-            text: node.text ?? "",
-            selectAllOnFirstFocus: true
-        )
-        Task { await viewModel.focusNode(node.id) }
-    }
-
-    private func handleNodeSingleTap(nodeID: CanvasNodeID) {
-        if let context = editingContext {
-            guard context.nodeID != nodeID else {
-                return
-            }
-            commitNodeEditing(context)
-        }
-        Task { await viewModel.focusNode(nodeID) }
-    }
-
     private func handleTypingInputStart(
         _ event: NSEvent,
         nodesByID: [CanvasNodeID: CanvasNode]
@@ -164,10 +125,8 @@ extension CanvasView {
         }
         editingContext = NodeEditingContext(
             nodeID: focusedNodeID,
-            text: typedCharacters,
-            selectAllOnFirstFocus: false
+            text: typedCharacters
         )
-        Task { await viewModel.focusNode(focusedNodeID) }
         return true
     }
 
@@ -209,5 +168,4 @@ extension CanvasView {
 private struct NodeEditingContext: Equatable {
     let nodeID: CanvasNodeID
     var text: String
-    let selectAllOnFirstFocus: Bool
 }

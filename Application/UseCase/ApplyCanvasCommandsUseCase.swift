@@ -51,8 +51,6 @@ extension ApplyCanvasCommandsUseCase {
             return try addSiblingNode(in: graph)
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
-        case .focusNode(let nodeID):
-            return focusNode(in: graph, nodeID: nodeID)
         case .deleteFocusedNode:
             return try deleteFocusedNode(in: graph)
         case .setNodeText(let nodeID, let text):
