@@ -1,3 +1,5 @@
+// Background: Temporary greeting model still needs a basic contract test.
+// Responsibility: Verify Greeting stores constructor-provided text.
 import Domain
 import Testing
 
