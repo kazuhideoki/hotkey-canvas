@@ -1,25 +1,22 @@
 # hotkey-canvas
 
-<<<<<<< HEAD
-## Lint
-
-Swift 向けリンターとして `SwiftLint` を Swift Package Plugin 経由で導入済みです。
+## Commands
 
 ```bash
+# 型チェック（コンパイル）
+swift build
+
+# テスト
+swift test
+
+# Lint
 ./scripts/lint.sh
 ```
 
-設定は `.swiftlint.yml` にあります。
-=======
-## Type Safety Rules
+Lint / Type Safety の具体ルールは `AGENTS.md` を参照。
 
-- `Any` is prohibited (`.swiftlint.yml` -> `no_any_type` as `error`).
-- Prefer concrete types, generics, or `any Protocol`.
+## Dependencies
 
-## Lint
-
-```bash
-brew install swiftlint
-swiftlint lint
-```
->>>>>>> main
+- `Package.swift` で `SimplyDanny/SwiftLintPlugins` を依存に追加済み。
+- バージョンは `Package.resolved` で固定される。
+- 初回実行時のみ SwiftLint バイナリアーティファクトの取得が発生する。

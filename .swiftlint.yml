@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 included:
   - App
   - Application
@@ -9,6 +8,7 @@ included:
 
 excluded:
   - .build
+  - .codex
 
 opt_in_rules:
   - empty_count
@@ -43,11 +43,6 @@ function_body_length:
 file_length:
   warning: 400
   error: 800
-=======
-excluded:
-  - .build
-  - .codex
-
 custom_rules:
   no_any_type:
     name: "No Any Type"
@@ -56,4 +51,3 @@ custom_rules:
     severity: error
     match_kinds:
       - identifier
->>>>>>> main
