@@ -6,6 +6,8 @@ import Foundation
 // TEMP: Bootstrap-only ViewModel for hello-world screen. Remove with initial scaffold UI.
 public final class GreetingViewModel: ObservableObject {
     @Published public private(set) var greetingText: String = ""
+    @Published public var inputText: String = ""
+    @Published public private(set) var submittedText: String = ""
 
     private let inputPort: any GreetingInputPort
 
@@ -16,5 +18,9 @@ public final class GreetingViewModel: ObservableObject {
     public func onAppear() async {
         let greeting = await inputPort.getGreeting()
         greetingText = greeting.text
+    }
+
+    public func submitInput() {
+        submittedText = inputText
     }
 }
