@@ -28,6 +28,7 @@ func test_apply_addNodeTwice_createsTwoNodes() async throws {
     #expect(second.newState.nodesByID[focusedNodeID] != nil)
 }
 
+<<<<<<< HEAD
 @Test("ApplyCanvasCommandsUseCase: addChildNode creates child and parent-child edge")
 func test_apply_addChildNode_createsChildAndEdge() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
@@ -140,6 +141,65 @@ func test_apply_addChildNodeFromTopLevelParent_onlyForTopLevelParent() async thr
     let childSUT = ApplyCanvasCommandsUseCase(initialGraph: childGraph)
     let childResult = try await childSUT.apply(commands: [.addChildNodeFromTopLevelParent])
     #expect(childResult.newState.nodesByID.count == 3)
+=======
+@Test("ApplyCanvasCommandsUseCase: addNode places node below focused node")
+func test_apply_addNode_placesNodeBelowFocusedNode() async throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 140, y: 120, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addNode])
+
+    #expect(result.newState.nodesByID.count == 2)
+    let newNodeID = try #require(result.newState.focusedNodeID)
+    let newNode = try #require(result.newState.nodesByID[newNodeID])
+    #expect(newNode.bounds.x == 140)
+    #expect(newNode.bounds.y == 264)
+}
+
+@Test("ApplyCanvasCommandsUseCase: addNode skips occupied space below focused node")
+func test_apply_addNode_skipsOccupiedSpaceBelowFocusedNode() async throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let blockerNodeID = CanvasNodeID(rawValue: "blocker")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 140, y: 120, width: 220, height: 120)
+            ),
+            blockerNodeID: CanvasNode(
+                id: blockerNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 140, y: 250, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addNode])
+
+    #expect(result.newState.nodesByID.count == 3)
+    let newNodeID = try #require(result.newState.focusedNodeID)
+    let newNode = try #require(result.newState.nodesByID[newNodeID])
+    #expect(newNode.bounds.x == 140)
+    #expect(newNode.bounds.y == 394)
+>>>>>>> main
 }
 
 @Test("ApplyCanvasCommandsUseCase: moveFocus picks nearest node in requested direction")
