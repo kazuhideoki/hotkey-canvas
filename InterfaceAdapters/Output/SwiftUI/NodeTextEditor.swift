@@ -3,10 +3,17 @@
 import AppKit
 import SwiftUI
 
+/// Initial cursor position when the inline editor first receives focus.
+enum NodeTextEditorInitialCursorPlacement: Equatable {
+    case start
+    case end
+}
+
 /// Inline editor used for canvas node text editing.
 struct NodeTextEditor: NSViewRepresentable {
     @Binding var text: String
     let selectAllOnFirstFocus: Bool
+    let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
     let onCommit: () -> Void
     let onCancel: () -> Void
 
@@ -30,7 +37,11 @@ struct NodeTextEditor: NSViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(text: $text, selectAllOnFirstFocus: selectAllOnFirstFocus)
+        Coordinator(
+            text: $text,
+            selectAllOnFirstFocus: selectAllOnFirstFocus,
+            initialCursorPlacement: initialCursorPlacement
+        )
     }
 }
 
@@ -38,11 +49,17 @@ extension NodeTextEditor {
     final class Coordinator: NSObject, NSTextViewDelegate {
         var text: Binding<String>
         let selectAllOnFirstFocus: Bool
+        let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
         var hasFocusedEditor: Bool = false
 
-        init(text: Binding<String>, selectAllOnFirstFocus: Bool) {
+        init(
+            text: Binding<String>,
+            selectAllOnFirstFocus: Bool,
+            initialCursorPlacement: NodeTextEditorInitialCursorPlacement
+        ) {
             self.text = text
             self.selectAllOnFirstFocus = selectAllOnFirstFocus
+            self.initialCursorPlacement = initialCursorPlacement
         }
 
         func textDidChange(_ notification: Notification) {
@@ -83,9 +100,26 @@ extension NodeTextEditor {
             window.makeFirstResponder(textView)
             if coordinator.selectAllOnFirstFocus, !coordinator.hasFocusedEditor {
                 textView.selectAll(nil)
+            } else if !coordinator.hasFocusedEditor {
+                placeInitialCursor(textView, placement: coordinator.initialCursorPlacement)
             }
             coordinator.hasFocusedEditor = true
         }
+    }
+
+    private func placeInitialCursor(
+        _ textView: NodeTextEditorTextView,
+        placement: NodeTextEditorInitialCursorPlacement
+    ) {
+        let textLength = (textView.string as NSString).length
+        let location: Int
+        switch placement {
+        case .start:
+            location = 0
+        case .end:
+            location = textLength
+        }
+        textView.setSelectedRange(NSRange(location: location, length: 0))
     }
 }
 
