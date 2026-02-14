@@ -46,6 +46,10 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
         return makeApplyResult(newState: nextGraph)
     }
 
+    public func getCurrentResult() async -> ApplyResult {
+        makeApplyResult(newState: graph)
+    }
+
     public func getCurrentGraph() async -> CanvasGraph {
         graph
     }

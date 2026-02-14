@@ -301,3 +301,26 @@ func test_historyAction_commandY_returnsRedo() throws {
 
     #expect(action == .redo)
 }
+
+@Test("CanvasHotkeyTranslator: Command+Z uses character matching regardless of key code")
+func test_historyAction_commandZ_usesCharacterMatching() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "z",
+            charactersIgnoringModifiers: "z",
+            isARepeat: false,
+            keyCode: 1
+        )
+    )
+
+    let action = sut.historyAction(event)
+
+    #expect(action == .undo)
+}

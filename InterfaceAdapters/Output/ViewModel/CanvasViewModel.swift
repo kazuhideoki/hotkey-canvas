@@ -20,14 +20,12 @@ public final class CanvasViewModel: ObservableObject {
 
     public func onAppear() async {
         let requestIDAtStart = latestDisplayedRequestID
-        let graph = await inputPort.getCurrentGraph()
+        let result = await inputPort.getCurrentResult()
         // Ignore stale snapshot when a newer apply() result has already been displayed.
         guard requestIDAtStart == latestDisplayedRequestID else {
             return
         }
-        nodes = sortedNodes(in: graph)
-        edges = sortedEdges(in: graph)
-        focusedNodeID = graph.focusedNodeID
+        updateDisplay(with: result)
     }
 
     public func apply(commands: [CanvasCommand]) async {
