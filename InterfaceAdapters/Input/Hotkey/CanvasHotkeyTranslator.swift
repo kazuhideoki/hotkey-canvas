@@ -52,8 +52,6 @@ extension CanvasHotkeyTranslator {
     private static let rightArrowKeyCode: UInt16 = 124
     private static let downArrowKeyCode: UInt16 = 125
     private static let upArrowKeyCode: UInt16 = 126
-    private static let zKeyCode: UInt16 = 6
-    private static let yKeyCode: UInt16 = 16
 
     private func isShiftEnter(_ event: NSEvent) -> Bool {
         guard event.keyCode == 36 else {
@@ -76,24 +74,24 @@ extension CanvasHotkeyTranslator {
     }
 
     private func isUndo(_ event: NSEvent) -> Bool {
-        guard event.keyCode == Self.zKeyCode else {
-            return false
-        }
-
         let flags = normalizedFlags(from: event)
         let disallowed: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
-        return flags.contains(.command) && flags.isDisjoint(with: disallowed)
+        return flags.contains(.command)
+            && flags.isDisjoint(with: disallowed)
+            && normalizedShortcutCharacter(from: event) == "z"
     }
 
     private func isRedo(_ event: NSEvent) -> Bool {
         let flags = normalizedFlags(from: event)
-        let disallowed: NSEvent.ModifierFlags = [.control, .option, .function]
-        if event.keyCode == Self.zKeyCode {
-            return flags.contains([.command, .shift]) && flags.isDisjoint(with: disallowed)
+        if flags.contains([.command, .shift]),
+           flags.isDisjoint(with: [.control, .option, .function]),
+           normalizedShortcutCharacter(from: event) == "z" {
+            return true
         }
-        if event.keyCode == Self.yKeyCode {
-            let yDisallowed: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
-            return flags.contains(.command) && flags.isDisjoint(with: yDisallowed)
+        if flags.contains(.command),
+           flags.isDisjoint(with: [.shift, .control, .option, .function]),
+           normalizedShortcutCharacter(from: event) == "y" {
+            return true
         }
         return false
     }
@@ -143,5 +141,16 @@ extension CanvasHotkeyTranslator {
 
     private func normalizedFlags(from event: NSEvent) -> NSEvent.ModifierFlags {
         event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+    }
+
+    private func normalizedShortcutCharacter(from event: NSEvent) -> String? {
+        guard let charactersIgnoringModifiers = event.charactersIgnoringModifiers else {
+            return nil
+        }
+        let normalized = charactersIgnoringModifiers.lowercased()
+        guard normalized.count == 1 else {
+            return nil
+        }
+        return normalized
     }
 }

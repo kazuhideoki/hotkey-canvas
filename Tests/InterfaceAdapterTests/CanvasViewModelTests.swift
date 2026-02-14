@@ -88,6 +88,20 @@ func test_undo_keepsState_whenOlderApplyCompletesLater() async throws {
     #expect(viewModel.nodes.isEmpty)
 }
 
+@MainActor
+@Test("CanvasViewModel: onAppear reflects history flags from shared input port")
+func test_onAppear_reflectsHistoryFlags() async throws {
+    let inputPort = UndoRedoCanvasEditingInputPort()
+    _ = try await inputPort.apply(commands: [.addNode])
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.onAppear()
+
+    #expect(viewModel.canUndo)
+    #expect(!viewModel.canRedo)
+    #expect(viewModel.nodes.count == 1)
+}
+
 actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
     private var graph: CanvasGraph = .empty
     private let getDelayNanoseconds: UInt64
@@ -129,6 +143,11 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
         return snapshot
     }
 
+    func getCurrentResult() async -> ApplyResult {
+        let snapshot = await getCurrentGraph()
+        return ApplyResult(newState: snapshot)
+    }
+
     func undo() async -> ApplyResult {
         ApplyResult(newState: graph)
     }
@@ -157,6 +176,10 @@ actor OverlappingFailureCanvasEditingInputPort: CanvasEditingInputPort {
 
     func getCurrentGraph() async -> CanvasGraph {
         graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
     }
 
     func undo() async -> ApplyResult {
@@ -224,6 +247,10 @@ actor ReorderedSuccessCanvasEditingInputPort: CanvasEditingInputPort {
         .empty
     }
 
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: .empty)
+    }
+
     func undo() async -> ApplyResult {
         ApplyResult(newState: .empty)
     }
@@ -286,6 +313,10 @@ actor UndoRedoCanvasEditingInputPort: CanvasEditingInputPort {
     func getCurrentGraph() async -> CanvasGraph {
         graph
     }
+
+    func getCurrentResult() async -> ApplyResult {
+        makeResult(graph)
+    }
 }
 
 extension UndoRedoCanvasEditingInputPort {
@@ -329,6 +360,10 @@ actor ApplyUndoReorderCanvasEditingInputPort: CanvasEditingInputPort {
 
     func getCurrentGraph() async -> CanvasGraph {
         graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph, canUndo: true, canRedo: false)
     }
 
     func releaseApply() {
