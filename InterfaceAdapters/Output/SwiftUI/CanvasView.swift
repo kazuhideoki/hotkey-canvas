@@ -6,6 +6,7 @@ public struct CanvasView: View {
     @StateObject private var viewModel: CanvasViewModel
     @State private var editingContext: NodeEditingContext?
     private let hotkeyTranslator: CanvasHotkeyTranslator
+    private let editingStartResolver = NodeEditingStartResolver()
 
     public init(
         viewModel: CanvasViewModel,
@@ -49,6 +50,7 @@ public struct CanvasView: View {
                             NodeTextEditor(
                                 text: editingTextBinding(for: node.id),
                                 selectAllOnFirstFocus: false,
+                                initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
                                 onCommit: {
                                     commitNodeEditing()
                                 },
@@ -120,33 +122,19 @@ extension CanvasView {
         _ event: NSEvent,
         nodesByID: [CanvasNodeID: CanvasNode]
     ) -> Bool {
-        guard let focusedNodeID = viewModel.focusedNodeID, nodesByID[focusedNodeID] != nil else {
-            return false
-        }
-        guard let typedCharacters = typedCharactersForInputStart(from: event) else {
+        guard let context = editingStartResolver.resolve(
+            from: event,
+            focusedNodeID: viewModel.focusedNodeID,
+            nodesByID: nodesByID
+        ) else {
             return false
         }
         editingContext = NodeEditingContext(
-            nodeID: focusedNodeID,
-            text: typedCharacters
+            nodeID: context.nodeID,
+            text: context.text,
+            initialCursorPlacement: context.initialCursorPlacement
         )
         return true
-    }
-
-    private func typedCharactersForInputStart(from event: NSEvent) -> String? {
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .function]
-        guard flags.isDisjoint(with: disallowed) else {
-            return nil
-        }
-
-        guard let characters = event.characters, !characters.isEmpty else {
-            return nil
-        }
-        if characters.rangeOfCharacter(from: .controlCharacters) != nil {
-            return nil
-        }
-        return characters
     }
 
     private func commitNodeEditingIfNeeded() {
@@ -175,4 +163,5 @@ extension CanvasView {
 private struct NodeEditingContext: Equatable {
     let nodeID: CanvasNodeID
     var text: String
+    let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
 }
