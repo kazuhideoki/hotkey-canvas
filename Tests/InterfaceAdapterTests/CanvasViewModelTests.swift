@@ -79,6 +79,8 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .moveFocus:
                 continue
+            case .focusNode:
+                continue
             case .deleteFocusedNode:
                 continue
             }
@@ -140,6 +142,8 @@ extension OverlappingFailureCanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
             case .moveFocus:
+                continue
+            case .focusNode:
                 continue
             case .deleteFocusedNode:
                 continue
