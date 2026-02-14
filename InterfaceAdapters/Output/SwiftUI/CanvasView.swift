@@ -51,6 +51,9 @@ public struct CanvasView: View {
                                 selectAllOnFirstFocus: false,
                                 onCommit: {
                                     commitNodeEditing()
+                                },
+                                onCancel: {
+                                    cancelNodeEditing()
                                 }
                             )
                             .padding(6)
@@ -173,6 +176,10 @@ extension CanvasView {
         Task {
             await viewModel.commitNodeText(nodeID: context.nodeID, text: context.text)
         }
+    }
+
+    private func cancelNodeEditing() {
+        editingContext = nil
     }
 }
 
