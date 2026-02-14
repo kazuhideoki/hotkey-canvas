@@ -1,5 +1,5 @@
 // Background: Node inline editing needs AppKit key handling not exposed by SwiftUI text components.
-// Responsibility: Provide an NSTextView bridge with Enter commit and Option+Enter newline behavior.
+// Responsibility: Provide an NSTextView bridge with Enter commit, Escape cancel, and Option+Enter newline behavior.
 import AppKit
 import SwiftUI
 
@@ -8,11 +8,13 @@ struct NodeTextEditor: NSViewRepresentable {
     @Binding var text: String
     let selectAllOnFirstFocus: Bool
     let onCommit: () -> Void
+    let onCancel: () -> Void
 
     func makeNSView(context: Context) -> NodeTextEditorTextView {
         let textView = NodeTextEditorTextView()
         textView.delegate = context.coordinator
         textView.onCommit = onCommit
+        textView.onCancel = onCancel
         configureTextViewAppearance(textView)
         return textView
     }
@@ -22,6 +24,7 @@ struct NodeTextEditor: NSViewRepresentable {
             nsView.string = text
         }
         nsView.onCommit = onCommit
+        nsView.onCancel = onCancel
         nsView.typingAttributes[.foregroundColor] = NSColor.white
         focusEditorIfNeeded(nsView, coordinator: context.coordinator)
     }
@@ -86,12 +89,26 @@ extension NodeTextEditor {
     }
 }
 
-/// NSTextView subclass that commits with Enter and inserts newline with Option+Enter.
+/// NSTextView subclass that commits with Enter, cancels with Escape, and inserts newline with Option+Enter.
 final class NodeTextEditorTextView: NSTextView {
+    private static let enterKeyCode: UInt16 = 36
+    private static let escapeKeyCode: UInt16 = 53
+
     var onCommit: (() -> Void)?
+    var onCancel: (() -> Void)?
 
     override func keyDown(with event: NSEvent) {
-        guard event.keyCode == 36 else {
+        if event.keyCode == Self.escapeKeyCode {
+            // During IME composition, Escape must cancel marked text in NSTextView.
+            guard !hasMarkedText() else {
+                super.keyDown(with: event)
+                return
+            }
+            onCancel?()
+            return
+        }
+
+        guard event.keyCode == Self.enterKeyCode else {
             super.keyDown(with: event)
             return
         }
