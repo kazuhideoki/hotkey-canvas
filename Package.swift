@@ -42,6 +42,6 @@ let package = Package(
             name: "ApplicationTests",
             dependencies: ["Application", "Domain"],
             path: "Tests/ApplicationTests"
-        )
+        ),
     ]
 )
