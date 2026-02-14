@@ -1,3 +1,5 @@
+// Background: Domain graph edits are pure and should be regression-tested by invariants.
+// Responsibility: Verify CRUD behavior and validation rules of CanvasGraphCRUDService.
 import Domain
 import Testing
 
