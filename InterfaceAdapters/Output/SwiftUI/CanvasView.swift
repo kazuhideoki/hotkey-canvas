@@ -18,11 +18,15 @@ public struct CanvasView: View {
                 .ignoresSafeArea()
 
             ForEach(viewModel.nodes, id: \.id) { node in
+                let isFocused = viewModel.focusedNodeID == node.id
                 RoundedRectangle(cornerRadius: 10)
                     .fill(Color(nsColor: .windowBackgroundColor))
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                            .stroke(
+                                isFocused ? Color.accentColor : Color(nsColor: .separatorColor),
+                                lineWidth: isFocused ? 2 : 1
+                            )
                     )
                     .overlay(alignment: .topLeading) {
                         Text(node.text ?? "New Node")

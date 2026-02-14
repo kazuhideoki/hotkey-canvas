@@ -5,21 +5,59 @@ public struct CanvasHotkeyTranslator {
     public init() {}
 
     public func translate(_ event: NSEvent) -> [CanvasCommand] {
-        guard isShiftEnter(event) else {
+        guard event.type == .keyDown else {
             return []
         }
-        return [.addNode]
+        if isShiftEnter(event) {
+            return [.addNode]
+        }
+        guard let direction = focusDirectionIfArrow(event) else {
+            return []
+        }
+        return [.moveFocus(direction)]
     }
 }
 
 extension CanvasHotkeyTranslator {
+    private static let leftArrowKeyCode: UInt16 = 123
+    private static let rightArrowKeyCode: UInt16 = 124
+    private static let downArrowKeyCode: UInt16 = 125
+    private static let upArrowKeyCode: UInt16 = 126
+
     private func isShiftEnter(_ event: NSEvent) -> Bool {
-        guard event.type == .keyDown, event.keyCode == 36 else {
+        guard event.keyCode == 36 else {
             return false
         }
 
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let flags = normalizedFlags(from: event)
         let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .function]
         return flags.contains(.shift) && flags.isDisjoint(with: disallowed)
+    }
+
+    private func focusDirectionIfArrow(_ event: NSEvent) -> CanvasFocusDirection? {
+        let flags = normalizedFlags(from: event)
+        // NOTE: Some environments attach `.function` to arrow-key events.
+        // We only block modifiers that should explicitly change shortcut meaning.
+        let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .shift]
+        guard flags.isDisjoint(with: disallowed) else {
+            return nil
+        }
+
+        switch event.keyCode {
+        case Self.upArrowKeyCode:
+            return .up
+        case Self.downArrowKeyCode:
+            return .down
+        case Self.leftArrowKeyCode:
+            return .left
+        case Self.rightArrowKeyCode:
+            return .right
+        default:
+            return nil
+        }
+    }
+
+    private func normalizedFlags(from event: NSEvent) -> NSEvent.ModifierFlags {
+        event.modifierFlags.intersection(.deviceIndependentFlagsMask)
     }
 }

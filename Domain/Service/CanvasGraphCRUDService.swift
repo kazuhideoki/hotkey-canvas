@@ -16,7 +16,11 @@ public enum CanvasGraphCRUDService {
 
         var nodes = graph.nodesByID
         nodes[node.id] = node
-        return CanvasGraph(nodesByID: nodes, edgesByID: graph.edgesByID)
+        return CanvasGraph(
+            nodesByID: nodes,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: graph.focusedNodeID
+        )
     }
 
     /// Reads a node by identifier.
@@ -42,7 +46,11 @@ public enum CanvasGraphCRUDService {
 
         var nodes = graph.nodesByID
         nodes[node.id] = node
-        return CanvasGraph(nodesByID: nodes, edgesByID: graph.edgesByID)
+        return CanvasGraph(
+            nodesByID: nodes,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: graph.focusedNodeID
+        )
     }
 
     /// Deletes a node and all connected edges.
@@ -62,7 +70,12 @@ public enum CanvasGraphCRUDService {
             edge.fromNodeID != id && edge.toNodeID != id
         }
 
-        return CanvasGraph(nodesByID: nodes, edgesByID: edges)
+        let nextFocusedNodeID = graph.focusedNodeID == id ? nil : graph.focusedNodeID
+        return CanvasGraph(
+            nodesByID: nodes,
+            edgesByID: edges,
+            focusedNodeID: nextFocusedNodeID
+        )
     }
 
     /// Inserts an edge into the graph.
@@ -79,7 +92,11 @@ public enum CanvasGraphCRUDService {
 
         var edges = graph.edgesByID
         edges[edge.id] = edge
-        return CanvasGraph(nodesByID: graph.nodesByID, edgesByID: edges)
+        return CanvasGraph(
+            nodesByID: graph.nodesByID,
+            edgesByID: edges,
+            focusedNodeID: graph.focusedNodeID
+        )
     }
 
     /// Reads an edge by identifier.
@@ -105,7 +122,11 @@ public enum CanvasGraphCRUDService {
 
         var edges = graph.edgesByID
         edges[edge.id] = edge
-        return CanvasGraph(nodesByID: graph.nodesByID, edgesByID: edges)
+        return CanvasGraph(
+            nodesByID: graph.nodesByID,
+            edgesByID: edges,
+            focusedNodeID: graph.focusedNodeID
+        )
     }
 
     /// Deletes an edge.
@@ -121,7 +142,11 @@ public enum CanvasGraphCRUDService {
 
         var edges = graph.edgesByID
         edges.removeValue(forKey: id)
-        return CanvasGraph(nodesByID: graph.nodesByID, edgesByID: edges)
+        return CanvasGraph(
+            nodesByID: graph.nodesByID,
+            edgesByID: edges,
+            focusedNodeID: graph.focusedNodeID
+        )
     }
 }
 

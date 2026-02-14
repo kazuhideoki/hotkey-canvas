@@ -6,17 +6,22 @@ public struct CanvasGraph: Equatable, Sendable {
     public let nodesByID: [CanvasNodeID: CanvasNode]
     /// Edge collection indexed by edge identifier.
     public let edgesByID: [CanvasEdgeID: CanvasEdge]
+    /// Currently focused node identifier.
+    public let focusedNodeID: CanvasNodeID?
 
     /// Creates an immutable graph snapshot.
     /// - Parameters:
     ///   - nodesByID: Node dictionary keyed by identifier.
     ///   - edgesByID: Edge dictionary keyed by identifier.
+    ///   - focusedNodeID: Currently focused node identifier.
     public init(
         nodesByID: [CanvasNodeID: CanvasNode] = [:],
-        edgesByID: [CanvasEdgeID: CanvasEdge] = [:]
+        edgesByID: [CanvasEdgeID: CanvasEdge] = [:],
+        focusedNodeID: CanvasNodeID? = nil
     ) {
         self.nodesByID = nodesByID
         self.edgesByID = edgesByID
+        self.focusedNodeID = focusedNodeID
     }
 
     /// Empty graph constant used as an initial state.

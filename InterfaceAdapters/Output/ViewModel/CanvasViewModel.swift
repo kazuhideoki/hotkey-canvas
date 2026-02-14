@@ -5,6 +5,7 @@ import Domain
 @MainActor
 public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var nodes: [CanvasNode] = []
+    @Published public private(set) var focusedNodeID: CanvasNodeID?
 
     private let inputPort: any CanvasEditingInputPort
     private var nextRequestID: UInt64 = 0
@@ -22,6 +23,7 @@ public final class CanvasViewModel: ObservableObject {
             return
         }
         nodes = sortedNodes(in: graph)
+        focusedNodeID = graph.focusedNodeID
     }
 
     public func apply(commands: [CanvasCommand]) async {
@@ -38,6 +40,7 @@ public final class CanvasViewModel: ObservableObject {
                 return
             }
             nodes = sortedNodes(in: result.newState)
+            focusedNodeID = result.newState.focusedNodeID
             latestDisplayedRequestID = requestID
         } catch {
             // Keep current display state when command application fails.

@@ -49,6 +49,7 @@ func test_apply_keepsNewerSuccess_whenOlderCompletesLater() async throws {
     await firstApplyTask.value
 
     #expect(viewModel.nodes.count == 2)
+    #expect(viewModel.focusedNodeID == CanvasNodeID(rawValue: "node-2"))
 }
 
 actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
@@ -71,6 +72,13 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                     bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
                 )
                 nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph)
+                nextGraph = CanvasGraph(
+                    nodesByID: nextGraph.nodesByID,
+                    edgesByID: nextGraph.edgesByID,
+                    focusedNodeID: node.id
+                )
+            case .moveFocus:
+                continue
             }
         }
         graph = nextGraph
@@ -124,6 +132,13 @@ extension OverlappingFailureCanvasEditingInputPort {
                     bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
                 )
                 nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph)
+                nextGraph = CanvasGraph(
+                    nodesByID: nextGraph.nodesByID,
+                    edgesByID: nextGraph.edgesByID,
+                    focusedNodeID: node.id
+                )
+            case .moveFocus:
+                continue
             }
         }
         graph = nextGraph
@@ -171,6 +186,7 @@ extension ReorderedSuccessCanvasEditingInputPort {
                 bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
             )
         }
-        return CanvasGraph(nodesByID: nodesByID, edgesByID: [:])
+        let focusedNodeID = CanvasNodeID(rawValue: "node-\(nodeCount)")
+        return CanvasGraph(nodesByID: nodesByID, edgesByID: [:], focusedNodeID: focusedNodeID)
     }
 }

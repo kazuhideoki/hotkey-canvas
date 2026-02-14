@@ -48,3 +48,72 @@ func test_translate_enterWithoutShift_returnsEmpty() throws {
 
     #expect(commands.isEmpty)
 }
+
+@Test("CanvasHotkeyTranslator: Up arrow maps to moveFocus up")
+func test_translate_upArrow_returnsMoveFocusUp() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "↑",
+            charactersIgnoringModifiers: "↑",
+            isARepeat: false,
+            keyCode: 126
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.moveFocus(.up)])
+}
+
+@Test("CanvasHotkeyTranslator: Arrow with Shift maps to no command")
+func test_translate_shiftArrow_returnsEmpty() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "←",
+            charactersIgnoringModifiers: "←",
+            isARepeat: false,
+            keyCode: 123
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands.isEmpty)
+}
+
+@Test("CanvasHotkeyTranslator: Arrow with Function flag still maps to moveFocus")
+func test_translate_functionArrow_returnsMoveFocus() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.function],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "→",
+            charactersIgnoringModifiers: "→",
+            isARepeat: false,
+            keyCode: 124
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.moveFocus(.right)])
+}
