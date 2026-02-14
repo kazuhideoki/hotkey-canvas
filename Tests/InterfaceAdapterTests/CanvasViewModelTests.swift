@@ -52,6 +52,56 @@ func test_apply_keepsNewerSuccess_whenOlderCompletesLater() async throws {
     #expect(viewModel.focusedNodeID == CanvasNodeID(rawValue: "node-2"))
 }
 
+@MainActor
+@Test("CanvasViewModel: undo and redo update history flags")
+func test_undoRedo_updatesHistoryFlags() async throws {
+    let inputPort = UndoRedoCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.apply(commands: [.addNode])
+    #expect(viewModel.canUndo)
+    #expect(!viewModel.canRedo)
+
+    await viewModel.undo()
+    #expect(!viewModel.canUndo)
+    #expect(viewModel.canRedo)
+    #expect(viewModel.nodes.isEmpty)
+
+    await viewModel.redo()
+    #expect(viewModel.canUndo)
+    #expect(!viewModel.canRedo)
+    #expect(viewModel.nodes.count == 1)
+}
+
+@MainActor
+@Test("CanvasViewModel: undo result stays visible when older apply completes later")
+func test_undo_keepsState_whenOlderApplyCompletesLater() async throws {
+    let inputPort = ApplyUndoReorderCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    let applyTask = Task { await viewModel.apply(commands: [.addNode]) }
+    try await Task.sleep(nanoseconds: 20_000_000)
+    await viewModel.undo()
+    await inputPort.releaseApply()
+    await applyTask.value
+
+    #expect(viewModel.nodes.isEmpty)
+}
+
+@MainActor
+@Test("CanvasViewModel: onAppear reflects history flags from shared input port")
+func test_onAppear_reflectsHistoryFlags() async throws {
+    let inputPort = UndoRedoCanvasEditingInputPort()
+    _ = try await inputPort.apply(commands: [.addNode])
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.onAppear()
+
+    #expect(viewModel.canUndo)
+    #expect(!viewModel.canRedo)
+    #expect(viewModel.nodes.count == 1)
+}
+
 actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
     private var graph: CanvasGraph = .empty
     private let getDelayNanoseconds: UInt64
@@ -92,6 +142,19 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
         try? await Task.sleep(nanoseconds: getDelayNanoseconds)
         return snapshot
     }
+
+    func getCurrentResult() async -> ApplyResult {
+        let snapshot = await getCurrentGraph()
+        return ApplyResult(newState: snapshot)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
 }
 
 actor OverlappingFailureCanvasEditingInputPort: CanvasEditingInputPort {
@@ -113,6 +176,18 @@ actor OverlappingFailureCanvasEditingInputPort: CanvasEditingInputPort {
 
     func getCurrentGraph() async -> CanvasGraph {
         graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
     }
 
     func releaseFirstApply() {
@@ -172,9 +247,128 @@ actor ReorderedSuccessCanvasEditingInputPort: CanvasEditingInputPort {
         .empty
     }
 
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: .empty)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: .empty)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: makeGraph(nodeCount: 2))
+    }
+
     func releaseFirstApply() {
         firstApplyContinuation?.resume()
         firstApplyContinuation = nil
+    }
+}
+
+actor UndoRedoCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+    private var undoStack: [CanvasGraph] = []
+    private var redoStack: [CanvasGraph] = []
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        guard commands.contains(.addNode) else {
+            return makeResult(graph)
+        }
+        undoStack.append(graph)
+        redoStack.removeAll()
+        let nodeID = CanvasNodeID(rawValue: "node-\(graph.nodesByID.count + 1)")
+        let node = CanvasNode(
+            id: nodeID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+        )
+        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph)
+        graph = CanvasGraph(
+            nodesByID: nextGraph.nodesByID,
+            edgesByID: nextGraph.edgesByID,
+            focusedNodeID: nodeID
+        )
+        return makeResult(graph)
+    }
+
+    func undo() async -> ApplyResult {
+        guard let previous = undoStack.popLast() else {
+            return makeResult(graph)
+        }
+        redoStack.append(graph)
+        graph = previous
+        return makeResult(graph)
+    }
+
+    func redo() async -> ApplyResult {
+        guard let next = redoStack.popLast() else {
+            return makeResult(graph)
+        }
+        undoStack.append(graph)
+        graph = next
+        return makeResult(graph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        makeResult(graph)
+    }
+}
+
+extension UndoRedoCanvasEditingInputPort {
+    private func makeResult(_ graph: CanvasGraph) -> ApplyResult {
+        ApplyResult(newState: graph, canUndo: !undoStack.isEmpty, canRedo: !redoStack.isEmpty)
+    }
+}
+
+actor ApplyUndoReorderCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+    private var applyContinuation: CheckedContinuation<Void, Never>?
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        await withCheckedContinuation { continuation in
+            applyContinuation = continuation
+        }
+        let nodeID = CanvasNodeID(rawValue: "node-1")
+        graph = CanvasGraph(
+            nodesByID: [
+                nodeID: CanvasNode(
+                    id: nodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+            ],
+            edgesByID: [:],
+            focusedNodeID: nodeID
+        )
+        return ApplyResult(newState: graph, canUndo: true, canRedo: false)
+    }
+
+    func undo() async -> ApplyResult {
+        graph = .empty
+        return ApplyResult(newState: graph, canUndo: false, canRedo: true)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph, canUndo: false, canRedo: false)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph, canUndo: true, canRedo: false)
+    }
+
+    func releaseApply() {
+        applyContinuation?.resume()
+        applyContinuation = nil
     }
 }
 

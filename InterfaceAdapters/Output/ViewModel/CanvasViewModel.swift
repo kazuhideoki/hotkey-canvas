@@ -7,6 +7,8 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var nodes: [CanvasNode] = []
     @Published public private(set) var edges: [CanvasEdge] = []
     @Published public private(set) var focusedNodeID: CanvasNodeID?
+    @Published public private(set) var canUndo: Bool = false
+    @Published public private(set) var canRedo: Bool = false
 
     private let inputPort: any CanvasEditingInputPort
     private var nextRequestID: UInt64 = 0
@@ -18,14 +20,12 @@ public final class CanvasViewModel: ObservableObject {
 
     public func onAppear() async {
         let requestIDAtStart = latestDisplayedRequestID
-        let graph = await inputPort.getCurrentGraph()
+        let result = await inputPort.getCurrentResult()
         // Ignore stale snapshot when a newer apply() result has already been displayed.
         guard requestIDAtStart == latestDisplayedRequestID else {
             return
         }
-        nodes = sortedNodes(in: graph)
-        edges = sortedEdges(in: graph)
-        focusedNodeID = graph.focusedNodeID
+        updateDisplay(with: result)
     }
 
     public func apply(commands: [CanvasCommand]) async {
@@ -33,21 +33,38 @@ public final class CanvasViewModel: ObservableObject {
             return
         }
 
-        nextRequestID &+= 1
-        let requestID = nextRequestID
+        let requestID = consumeNextRequestID()
         do {
             let result = try await inputPort.apply(commands: commands)
             // Only display results newer than the currently displayed request.
-            guard requestID > latestDisplayedRequestID else {
+            guard shouldDisplayResult(for: requestID) else {
                 return
             }
-            nodes = sortedNodes(in: result.newState)
-            edges = sortedEdges(in: result.newState)
-            focusedNodeID = result.newState.focusedNodeID
-            latestDisplayedRequestID = requestID
+            updateDisplay(with: result)
+            markDisplayed(requestID)
         } catch {
             // Keep current display state when command application fails.
         }
+    }
+
+    public func undo() async {
+        let requestID = consumeNextRequestID()
+        let result = await inputPort.undo()
+        guard shouldDisplayResult(for: requestID) else {
+            return
+        }
+        updateDisplay(with: result)
+        markDisplayed(requestID)
+    }
+
+    public func redo() async {
+        let requestID = consumeNextRequestID()
+        let result = await inputPort.redo()
+        guard shouldDisplayResult(for: requestID) else {
+            return
+        }
+        updateDisplay(with: result)
+        markDisplayed(requestID)
     }
 
     public func commitNodeText(nodeID: CanvasNodeID, text: String) async {
@@ -56,6 +73,29 @@ public final class CanvasViewModel: ObservableObject {
 }
 
 extension CanvasViewModel {
+    // Keep one global request timeline for apply/undo/redo.
+    // This prevents older async completions from overwriting a newer user action.
+    private func consumeNextRequestID() -> UInt64 {
+        nextRequestID &+= 1
+        return nextRequestID
+    }
+
+    private func shouldDisplayResult(for requestID: UInt64) -> Bool {
+        requestID > latestDisplayedRequestID
+    }
+
+    private func markDisplayed(_ requestID: UInt64) {
+        latestDisplayedRequestID = requestID
+    }
+
+    private func updateDisplay(with result: ApplyResult) {
+        nodes = sortedNodes(in: result.newState)
+        edges = sortedEdges(in: result.newState)
+        focusedNodeID = result.newState.focusedNodeID
+        canUndo = result.canUndo
+        canRedo = result.canRedo
+    }
+
     private func sortedNodes(in graph: CanvasGraph) -> [CanvasNode] {
         graph.nodesByID.values.sorted {
             if $0.bounds.y == $1.bounds.y {
