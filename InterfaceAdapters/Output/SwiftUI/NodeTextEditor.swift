@@ -95,6 +95,11 @@ final class NodeTextEditorTextView: NSTextView {
             super.keyDown(with: event)
             return
         }
+        // During IME composition, Enter must confirm marked text in NSTextView.
+        guard !hasMarkedText() else {
+            super.keyDown(with: event)
+            return
+        }
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         if flags.contains(.option), flags.isDisjoint(with: [.command, .control]) {
