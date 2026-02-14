@@ -54,7 +54,6 @@ extension ApplyCanvasCommandsUseCase {
 }
 
 extension ApplyCanvasCommandsUseCase {
-<<<<<<< HEAD
     private func makeAvailableNewNodeBounds(in graph: CanvasGraph) -> CanvasBounds {
         let focusedNode = graph.focusedNodeID.flatMap { graph.nodesByID[$0] }
         let startX = focusedNode?.bounds.x ?? Self.defaultNewNodeX
@@ -95,7 +94,8 @@ extension ApplyCanvasCommandsUseCase {
         let lhsBottom = lhs.y + lhs.height
         let rhsBottom = rhs.y + rhs.height
         return lhs.x < rhsRight && lhsRight > rhs.x && lhs.y < rhsBottom && lhsBottom > rhs.y
-=======
+    }
+
     private func deleteFocusedNode(in graph: CanvasGraph) throws -> CanvasGraph {
         guard let focusedNodeID = graph.focusedNodeID else {
             return graph
@@ -112,7 +112,6 @@ extension ApplyCanvasCommandsUseCase {
             edgesByID: graphAfterDelete.edgesByID,
             focusedNodeID: nextFocusedNodeID
         )
->>>>>>> main
     }
 
     private func moveFocus(in graph: CanvasGraph, direction: CanvasFocusDirection) -> CanvasGraph {
