@@ -46,5 +46,10 @@ let package = Package(
             dependencies: ["Application", "Domain"],
             path: "Tests/ApplicationTests"
         ),
+        .testTarget(
+            name: "InterfaceAdapterTests",
+            dependencies: ["InterfaceAdapters", "Domain"],
+            path: "Tests/InterfaceAdapterTests"
+        ),
     ]
 )
