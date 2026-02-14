@@ -104,31 +104,6 @@ extension ApplyCanvasCommandsUseCase {
         return lhs.x < rhsRight && lhsRight > rhs.x && lhs.y < rhsBottom && lhsBottom > rhs.y
     }
 
-    private func deleteFocusedNode(in graph: CanvasGraph) throws -> CanvasGraph {
-        guard let focusedNodeID = graph.focusedNodeID else {
-            return graph
-        }
-        guard let focusedNode = graph.nodesByID[focusedNodeID] else {
-            return graph
-        }
-
-        var graphAfterDelete = graph
-        let subtreeNodeIDs = descendantNodeIDs(of: focusedNodeID, in: graph)
-            .union([focusedNodeID])
-            .sorted { $0.rawValue < $1.rawValue }
-
-        for nodeID in subtreeNodeIDs {
-            graphAfterDelete = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: graphAfterDelete)
-        }
-        let nextFocusedNodeID = nearestNodeID(to: focusedNode, in: graphAfterDelete)
-
-        return CanvasGraph(
-            nodesByID: graphAfterDelete.nodesByID,
-            edgesByID: graphAfterDelete.edgesByID,
-            focusedNodeID: nextFocusedNodeID
-        )
-    }
-
     private func addChildNode(in graph: CanvasGraph, requiresTopLevelParent: Bool) throws -> CanvasGraph {
         guard let parentID = graph.focusedNodeID else {
             return graph
@@ -282,33 +257,6 @@ extension ApplyCanvasCommandsUseCase {
         return lhs.node.id.rawValue < rhs.node.id.rawValue
     }
 
-    private func nearestNodeID(to sourceNode: CanvasNode, in graph: CanvasGraph) -> CanvasNodeID? {
-        let sourceCenter = nodeCenter(for: sourceNode)
-        return graph.nodesByID.values.min { lhs, rhs in
-            let lhsDistance = squaredDistance(from: sourceCenter, to: nodeCenter(for: lhs))
-            let rhsDistance = squaredDistance(from: sourceCenter, to: nodeCenter(for: rhs))
-            if lhsDistance != rhsDistance {
-                return lhsDistance < rhsDistance
-            }
-            if lhs.bounds.y != rhs.bounds.y {
-                return lhs.bounds.y < rhs.bounds.y
-            }
-            if lhs.bounds.x != rhs.bounds.x {
-                return lhs.bounds.x < rhs.bounds.x
-            }
-            return lhs.id.rawValue < rhs.id.rawValue
-        }?.id
-    }
-
-    private func squaredDistance(
-        from source: (x: Double, y: Double),
-        to destination: (x: Double, y: Double)
-    ) -> Double {
-        let deltaX = destination.x - source.x
-        let deltaY = destination.y - source.y
-        return (deltaX * deltaX) + (deltaY * deltaY)
-    }
-
     private func isTopLevelParent(_ nodeID: CanvasNodeID, in graph: CanvasGraph) -> Bool {
         !graph.edgesByID.values.contains {
             $0.relationType == .parentChild && $0.toNodeID == nodeID
@@ -348,25 +296,6 @@ extension ApplyCanvasCommandsUseCase {
             && lhsBottom > rhs.y
     }
 
-    private func descendantNodeIDs(of rootID: CanvasNodeID, in graph: CanvasGraph) -> Set<CanvasNodeID> {
-        var visited: Set<CanvasNodeID> = []
-        var queue: [CanvasNodeID] = [rootID]
-
-        while !queue.isEmpty {
-            let currentID = queue.removeFirst()
-            for edge in graph.edgesByID.values
-            where edge.relationType == .parentChild && edge.fromNodeID == currentID {
-                let childID = edge.toNodeID
-                guard !visited.contains(childID) else {
-                    continue
-                }
-                visited.insert(childID)
-                queue.append(childID)
-            }
-        }
-
-        return visited
-    }
 }
 
 extension ApplyCanvasCommandsUseCase {
