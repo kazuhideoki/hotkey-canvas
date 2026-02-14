@@ -23,24 +23,21 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
 }
 
 extension ApplyCanvasCommandsUseCase {
+    private static let newNodeWidth: Double = 220
+    private static let newNodeHeight: Double = 120
+    private static let defaultNewNodeX: Double = 48
+    private static let defaultNewNodeY: Double = 48
+    private static let newNodeVerticalSpacing: Double = 24
+
     private func apply(command: CanvasCommand, to graph: CanvasGraph) throws -> CanvasGraph {
         switch command {
         case .addNode:
-            // NOTE: Minimal bootstrap behavior for now.
-            // Default node shape/position and ID generation should move to a Domain factory/service
-            // when add-node variants (explicit position/kind/size) are introduced.
-            let nodeCount = graph.nodesByID.count
-            let offset = Double(nodeCount * 24)
+            let bounds = makeAvailableNewNodeBounds(in: graph)
             let node = CanvasNode(
                 id: CanvasNodeID(rawValue: "node-\(UUID().uuidString.lowercased())"),
                 kind: .text,
                 text: nil,
-                bounds: CanvasBounds(
-                    x: 48 + offset,
-                    y: 48 + offset,
-                    width: 220,
-                    height: 120
-                )
+                bounds: bounds
             )
             let graphWithNode = try CanvasGraphCRUDService.createNode(node, in: graph)
             return CanvasGraph(
@@ -55,6 +52,48 @@ extension ApplyCanvasCommandsUseCase {
 }
 
 extension ApplyCanvasCommandsUseCase {
+    private func makeAvailableNewNodeBounds(in graph: CanvasGraph) -> CanvasBounds {
+        let focusedNode = graph.focusedNodeID.flatMap { graph.nodesByID[$0] }
+        let startX = focusedNode?.bounds.x ?? Self.defaultNewNodeX
+        let startY =
+            if let focusedNode {
+                focusedNode.bounds.y + focusedNode.bounds.height + Self.newNodeVerticalSpacing
+            } else {
+                Self.defaultNewNodeY
+            }
+
+        var candidate = CanvasBounds(
+            x: startX,
+            y: startY,
+            width: Self.newNodeWidth,
+            height: Self.newNodeHeight
+        )
+        let sortedNodes = sortedNodes(in: graph)
+        while let overlappedNode = firstOverlappedNode(for: candidate, in: sortedNodes) {
+            candidate = CanvasBounds(
+                x: candidate.x,
+                y: overlappedNode.bounds.y + overlappedNode.bounds.height + Self.newNodeVerticalSpacing,
+                width: candidate.width,
+                height: candidate.height
+            )
+        }
+        return candidate
+    }
+
+    private func firstOverlappedNode(for candidate: CanvasBounds, in nodes: [CanvasNode]) -> CanvasNode? {
+        nodes.first { node in
+            boundsOverlap(candidate, node.bounds)
+        }
+    }
+
+    private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds) -> Bool {
+        let lhsRight = lhs.x + lhs.width
+        let rhsRight = rhs.x + rhs.width
+        let lhsBottom = lhs.y + lhs.height
+        let rhsBottom = rhs.y + rhs.height
+        return lhs.x < rhsRight && lhsRight > rhs.x && lhs.y < rhsBottom && lhsBottom > rhs.y
+    }
+
     private func moveFocus(in graph: CanvasGraph, direction: CanvasFocusDirection) -> CanvasGraph {
         let sortedNodes = sortedNodes(in: graph)
         guard !sortedNodes.isEmpty else {
