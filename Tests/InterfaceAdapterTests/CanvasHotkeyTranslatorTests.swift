@@ -232,3 +232,72 @@ func test_translate_shiftDelete_returnsEmpty() throws {
 
     #expect(commands.isEmpty)
 }
+
+@Test("CanvasHotkeyTranslator: Command+Z maps to undo history action")
+func test_historyAction_commandZ_returnsUndo() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "z",
+            charactersIgnoringModifiers: "z",
+            isARepeat: false,
+            keyCode: 6
+        )
+    )
+
+    let action = sut.historyAction(event)
+
+    #expect(action == .undo)
+}
+
+@Test("CanvasHotkeyTranslator: Shift+Command+Z maps to redo history action")
+func test_historyAction_shiftCommandZ_returnsRedo() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "Z",
+            charactersIgnoringModifiers: "z",
+            isARepeat: false,
+            keyCode: 6
+        )
+    )
+
+    let action = sut.historyAction(event)
+
+    #expect(action == .redo)
+}
+
+@Test("CanvasHotkeyTranslator: Command+Y maps to redo history action")
+func test_historyAction_commandY_returnsRedo() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "y",
+            charactersIgnoringModifiers: "y",
+            isARepeat: false,
+            keyCode: 16
+        )
+    )
+
+    let action = sut.historyAction(event)
+
+    #expect(action == .redo)
+}

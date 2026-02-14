@@ -1,8 +1,26 @@
 import AppKit
 import Domain
 
+public enum CanvasHistoryAction: Equatable, Sendable {
+    case undo
+    case redo
+}
+
 public struct CanvasHotkeyTranslator {
     public init() {}
+
+    public func historyAction(_ event: NSEvent) -> CanvasHistoryAction? {
+        guard event.type == .keyDown else {
+            return nil
+        }
+        if isUndo(event) {
+            return .undo
+        }
+        if isRedo(event) {
+            return .redo
+        }
+        return nil
+    }
 
     public func translate(_ event: NSEvent) -> [CanvasCommand] {
         guard event.type == .keyDown else {
@@ -34,6 +52,8 @@ extension CanvasHotkeyTranslator {
     private static let rightArrowKeyCode: UInt16 = 124
     private static let downArrowKeyCode: UInt16 = 125
     private static let upArrowKeyCode: UInt16 = 126
+    private static let zKeyCode: UInt16 = 6
+    private static let yKeyCode: UInt16 = 16
 
     private func isShiftEnter(_ event: NSEvent) -> Bool {
         guard event.keyCode == 36 else {
@@ -53,6 +73,29 @@ extension CanvasHotkeyTranslator {
         let flags = normalizedFlags(from: event)
         let disallowed: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
         return flags.contains(.command) && flags.isDisjoint(with: disallowed)
+    }
+
+    private func isUndo(_ event: NSEvent) -> Bool {
+        guard event.keyCode == Self.zKeyCode else {
+            return false
+        }
+
+        let flags = normalizedFlags(from: event)
+        let disallowed: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
+        return flags.contains(.command) && flags.isDisjoint(with: disallowed)
+    }
+
+    private func isRedo(_ event: NSEvent) -> Bool {
+        let flags = normalizedFlags(from: event)
+        let disallowed: NSEvent.ModifierFlags = [.control, .option, .function]
+        if event.keyCode == Self.zKeyCode {
+            return flags.contains([.command, .shift]) && flags.isDisjoint(with: disallowed)
+        }
+        if event.keyCode == Self.yKeyCode {
+            let yDisallowed: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
+            return flags.contains(.command) && flags.isDisjoint(with: yDisallowed)
+        }
+        return false
     }
 
     private func isEnterWithoutDisallowedModifiers(_ event: NSEvent) -> Bool {

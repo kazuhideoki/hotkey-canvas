@@ -69,6 +69,17 @@ public struct CanvasView: View {
             }
 
             CanvasHotkeyCaptureView(isEnabled: editingContext == nil) { event in
+                if let historyAction = hotkeyTranslator.historyAction(event) {
+                    Task {
+                        switch historyAction {
+                        case .undo:
+                            await viewModel.undo()
+                        case .redo:
+                            await viewModel.redo()
+                        }
+                    }
+                    return true
+                }
                 let commands = hotkeyTranslator.translate(event)
                 guard !commands.isEmpty else {
                     return handleTypingInputStart(event, nodesByID: nodesByID)
