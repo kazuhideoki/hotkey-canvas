@@ -1,3 +1,8 @@
+<<<<<<< HEAD:Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift
+=======
+// Background: Keyboard-first node editing needs text update commands.
+// Responsibility: Handle focused-node text updates for inline editing.
+>>>>>>> main:Application/UseCase/ApplyCanvasCommandsUseCase+NodeEditing.swift
 import Domain
 
 // Background: Inline editing needs a command path to mutate node text content.
