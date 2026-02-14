@@ -117,3 +117,72 @@ func test_translate_functionArrow_returnsMoveFocus() throws {
 
     #expect(commands == [.moveFocus(.right)])
 }
+
+@Test("CanvasHotkeyTranslator: Delete maps to deleteFocusedNode")
+func test_translate_delete_returnsDeleteFocusedNode() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "\u{8}",
+            charactersIgnoringModifiers: "\u{8}",
+            isARepeat: false,
+            keyCode: 51
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.deleteFocusedNode])
+}
+
+@Test("CanvasHotkeyTranslator: Forward delete with Function maps to deleteFocusedNode")
+func test_translate_forwardDeleteWithFunction_returnsDeleteFocusedNode() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.function],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "\u{7F}",
+            charactersIgnoringModifiers: "\u{7F}",
+            isARepeat: false,
+            keyCode: 117
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.deleteFocusedNode])
+}
+
+@Test("CanvasHotkeyTranslator: Delete with Shift maps to no command")
+func test_translate_shiftDelete_returnsEmpty() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "\u{8}",
+            charactersIgnoringModifiers: "\u{8}",
+            isARepeat: false,
+            keyCode: 51
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands.isEmpty)
+}

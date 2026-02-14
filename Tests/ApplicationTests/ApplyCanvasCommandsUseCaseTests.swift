@@ -167,3 +167,89 @@ func test_apply_moveFocus_assignsFallbackFocus_whenFocusedNodeIDIsNil() async th
 
     #expect(result.newState.focusedNodeID == singleNodeID)
 }
+
+@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode removes focused node")
+func test_apply_deleteFocusedNode_removesFocusedNode() async throws {
+    let targetID = CanvasNodeID(rawValue: "target")
+    let otherID = CanvasNodeID(rawValue: "other")
+    let edgeID = CanvasEdgeID(rawValue: "edge")
+
+    let graph = CanvasGraph(
+        nodesByID: [
+            targetID: CanvasNode(
+                id: targetID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 100, y: 100, width: 100, height: 100)
+            ),
+            otherID: CanvasNode(
+                id: otherID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 280, y: 100, width: 100, height: 100)
+            )
+        ],
+        edgesByID: [
+            edgeID: CanvasEdge(
+                id: edgeID,
+                fromNodeID: targetID,
+                toNodeID: otherID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: targetID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.deleteFocusedNode])
+
+    #expect(result.newState.nodesByID[targetID] == nil)
+    #expect(result.newState.nodesByID[otherID] != nil)
+    #expect(result.newState.edgesByID[edgeID] == nil)
+    #expect(result.newState.focusedNodeID == otherID)
+}
+
+@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode is no-op when focus is nil")
+func test_apply_deleteFocusedNode_isNoOp_whenFocusedNodeIDIsNil() async throws {
+    let nodeID = CanvasNodeID(rawValue: "node")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 100, y: 100, width: 100, height: 100)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nil
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.deleteFocusedNode])
+
+    #expect(result.newState == graph)
+}
+
+@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode is no-op when focused node is stale")
+func test_apply_deleteFocusedNode_isNoOp_whenFocusedNodeIDIsStale() async throws {
+    let existingNodeID = CanvasNodeID(rawValue: "node")
+    let staleFocusedNodeID = CanvasNodeID(rawValue: "stale")
+    let graph = CanvasGraph(
+        nodesByID: [
+            existingNodeID: CanvasNode(
+                id: existingNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 100, y: 100, width: 100, height: 100)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: staleFocusedNodeID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.deleteFocusedNode])
+
+    #expect(result.newState == graph)
+}

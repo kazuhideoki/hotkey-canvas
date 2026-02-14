@@ -11,6 +11,9 @@ public struct CanvasHotkeyTranslator {
         if isShiftEnter(event) {
             return [.addNode]
         }
+        if isDelete(event) {
+            return [.deleteFocusedNode]
+        }
         guard let direction = focusDirectionIfArrow(event) else {
             return []
         }
@@ -19,6 +22,8 @@ public struct CanvasHotkeyTranslator {
 }
 
 extension CanvasHotkeyTranslator {
+    private static let deleteKeyCode: UInt16 = 51
+    private static let forwardDeleteKeyCode: UInt16 = 117
     private static let leftArrowKeyCode: UInt16 = 123
     private static let rightArrowKeyCode: UInt16 = 124
     private static let downArrowKeyCode: UInt16 = 125
@@ -32,6 +37,16 @@ extension CanvasHotkeyTranslator {
         let flags = normalizedFlags(from: event)
         let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .function]
         return flags.contains(.shift) && flags.isDisjoint(with: disallowed)
+    }
+
+    private func isDelete(_ event: NSEvent) -> Bool {
+        guard event.keyCode == Self.deleteKeyCode || event.keyCode == Self.forwardDeleteKeyCode else {
+            return false
+        }
+
+        let flags = normalizedFlags(from: event)
+        let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .shift]
+        return flags.isDisjoint(with: disallowed)
     }
 
     private func focusDirectionIfArrow(_ event: NSEvent) -> CanvasFocusDirection? {
