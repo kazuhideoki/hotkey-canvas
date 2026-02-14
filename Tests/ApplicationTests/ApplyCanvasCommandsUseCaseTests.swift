@@ -28,6 +28,120 @@ func test_apply_addNodeTwice_createsTwoNodes() async throws {
     #expect(second.newState.nodesByID[focusedNodeID] != nil)
 }
 
+@Test("ApplyCanvasCommandsUseCase: addChildNode creates child and parent-child edge")
+func test_apply_addChildNode_createsChildAndEdge() async throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let parent = CanvasNode(
+        id: parentID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 100, y: 100, width: 220, height: 120)
+    )
+    let graph = CanvasGraph(
+        nodesByID: [parentID: parent],
+        edgesByID: [:],
+        focusedNodeID: parentID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addChildNode])
+
+    #expect(result.newState.nodesByID.count == 2)
+    let childID = try #require(result.newState.focusedNodeID)
+    let child = try #require(result.newState.nodesByID[childID])
+    #expect(child.id != parentID)
+    let edge = try #require(result.newState.edgesByID.values.first)
+    #expect(edge.fromNodeID == parentID)
+    #expect(edge.toNodeID == childID)
+    #expect(edge.relationType == .parentChild)
+    #expect(child.bounds.x >= parent.bounds.x + parent.bounds.width)
+}
+
+@Test("ApplyCanvasCommandsUseCase: addChildNode avoids overlap by shifting rightward")
+func test_apply_addChildNode_avoidsOverlap() async throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let blockerID = CanvasNodeID(rawValue: "blocker")
+    let parent = CanvasNode(
+        id: parentID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 100, y: 100, width: 220, height: 120)
+    )
+    let blocker = CanvasNode(
+        id: blockerID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 352, y: 100, width: 220, height: 120)
+    )
+    let graph = CanvasGraph(
+        nodesByID: [parentID: parent, blockerID: blocker],
+        edgesByID: [:],
+        focusedNodeID: parentID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addChildNode])
+
+    let childID = try #require(result.newState.focusedNodeID)
+    let child = try #require(result.newState.nodesByID[childID])
+    #expect(child.bounds.x >= blocker.bounds.x + blocker.bounds.width)
+}
+
+@Test("ApplyCanvasCommandsUseCase: addChildNodeFromTopLevelParent only works for top-level parent")
+func test_apply_addChildNodeFromTopLevelParent_onlyForTopLevelParent() async throws {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let childID = CanvasNodeID(rawValue: "child")
+    let grandchildID = CanvasNodeID(rawValue: "grandchild")
+    let root = CanvasNode(
+        id: rootID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)
+    )
+    let child = CanvasNode(
+        id: childID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 160, width: 220, height: 120)
+    )
+    let grandchild = CanvasNode(
+        id: grandchildID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 320, width: 220, height: 120)
+    )
+    let rootToChild = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-root-child"),
+        fromNodeID: rootID,
+        toNodeID: childID,
+        relationType: .parentChild
+    )
+    let childToGrandchild = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-child-grandchild"),
+        fromNodeID: childID,
+        toNodeID: grandchildID,
+        relationType: .parentChild
+    )
+
+    let rootGraph = CanvasGraph(
+        nodesByID: [rootID: root, childID: child, grandchildID: grandchild],
+        edgesByID: [rootToChild.id: rootToChild, childToGrandchild.id: childToGrandchild],
+        focusedNodeID: rootID
+    )
+    let rootSUT = ApplyCanvasCommandsUseCase(initialGraph: rootGraph)
+    let rootResult = try await rootSUT.apply(commands: [.addChildNodeFromTopLevelParent])
+    #expect(rootResult.newState.nodesByID.count == 4)
+
+    let childGraph = CanvasGraph(
+        nodesByID: [rootID: root, childID: child, grandchildID: grandchild],
+        edgesByID: [rootToChild.id: rootToChild, childToGrandchild.id: childToGrandchild],
+        focusedNodeID: childID
+    )
+    let childSUT = ApplyCanvasCommandsUseCase(initialGraph: childGraph)
+    let childResult = try await childSUT.apply(commands: [.addChildNodeFromTopLevelParent])
+    #expect(childResult.newState.nodesByID.count == 3)
+}
+
 @Test("ApplyCanvasCommandsUseCase: moveFocus picks nearest node in requested direction")
 func test_apply_moveFocus_movesToNearestNodeInDirection() async throws {
     let centerID = CanvasNodeID(rawValue: "center")
@@ -193,4 +307,25 @@ func test_apply_deleteFocusedNode_isNoOp_whenFocusedNodeIDIsStale() async throws
     let result = try await sut.apply(commands: [.deleteFocusedNode])
 
     #expect(result.newState == graph)
+}
+
+@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode removes focused subtree")
+func test_apply_deleteFocusedNode_removesFocusedSubtree() async throws {
+    let fixture = SubtreeDeletionFixture.make()
+    let graph = CanvasGraph(
+        nodesByID: fixture.nodesByID,
+        edgesByID: fixture.edgesByID,
+        focusedNodeID: fixture.childID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.deleteFocusedNode])
+
+    #expect(result.newState.nodesByID[fixture.childID] == nil)
+    #expect(result.newState.nodesByID[fixture.grandchildID] == nil)
+    #expect(result.newState.nodesByID[fixture.rootID] != nil)
+    #expect(result.newState.nodesByID[fixture.siblingID] != nil)
+    #expect(result.newState.edgesByID[fixture.edgeRootChildID] == nil)
+    #expect(result.newState.edgesByID[fixture.edgeChildGrandchildID] == nil)
+    #expect(result.newState.edgesByID[fixture.edgeRootSiblingID] != nil)
 }

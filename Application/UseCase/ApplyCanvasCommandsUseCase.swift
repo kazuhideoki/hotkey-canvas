@@ -48,6 +48,10 @@ extension ApplyCanvasCommandsUseCase {
                 edgesByID: graphWithNode.edgesByID,
                 focusedNodeID: node.id
             )
+        case .addChildNode:
+            return try addChildNode(in: graph, requiresTopLevelParent: false)
+        case .addChildNodeFromTopLevelParent:
+            return try addChildNode(in: graph, requiresTopLevelParent: true)
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
         case .deleteFocusedNode:
@@ -65,13 +69,55 @@ extension ApplyCanvasCommandsUseCase {
             return graph
         }
 
-        let graphAfterDelete = try CanvasGraphCRUDService.deleteNode(id: focusedNodeID, in: graph)
+        var graphAfterDelete = graph
+        let subtreeNodeIDs = descendantNodeIDs(of: focusedNodeID, in: graph)
+            .union([focusedNodeID])
+            .sorted { $0.rawValue < $1.rawValue }
+
+        for nodeID in subtreeNodeIDs {
+            graphAfterDelete = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: graphAfterDelete)
+        }
         let nextFocusedNodeID = nearestNodeID(to: focusedNode, in: graphAfterDelete)
 
         return CanvasGraph(
             nodesByID: graphAfterDelete.nodesByID,
             edgesByID: graphAfterDelete.edgesByID,
             focusedNodeID: nextFocusedNodeID
+        )
+    }
+
+    private func addChildNode(in graph: CanvasGraph, requiresTopLevelParent: Bool) throws -> CanvasGraph {
+        guard let parentID = graph.focusedNodeID else {
+            return graph
+        }
+        guard let parentNode = graph.nodesByID[parentID] else {
+            return graph
+        }
+        if requiresTopLevelParent && !isTopLevelParent(parentID, in: graph) {
+            return graph
+        }
+
+        let childBounds = calculateChildBounds(for: parentNode, in: graph)
+        let childNode = CanvasNode(
+            id: CanvasNodeID(rawValue: "node-\(UUID().uuidString.lowercased())"),
+            kind: .text,
+            text: nil,
+            bounds: childBounds
+        )
+
+        var graphWithChild = try CanvasGraphCRUDService.createNode(childNode, in: graph)
+        let edge = CanvasEdge(
+            id: CanvasEdgeID(rawValue: "edge-\(UUID().uuidString.lowercased())"),
+            fromNodeID: parentID,
+            toNodeID: childNode.id,
+            relationType: .parentChild
+        )
+        graphWithChild = try CanvasGraphCRUDService.createEdge(edge, in: graphWithChild)
+
+        return CanvasGraph(
+            nodesByID: graphWithChild.nodesByID,
+            edgesByID: graphWithChild.edgesByID,
+            focusedNodeID: childNode.id
         )
     }
 
@@ -219,6 +265,69 @@ extension ApplyCanvasCommandsUseCase {
         let deltaY = destination.y - source.y
         return (deltaX * deltaX) + (deltaY * deltaY)
     }
+
+    private func isTopLevelParent(_ nodeID: CanvasNodeID, in graph: CanvasGraph) -> Bool {
+        !graph.edgesByID.values.contains {
+            $0.relationType == .parentChild && $0.toNodeID == nodeID
+        }
+    }
+
+    private func calculateChildBounds(for parentNode: CanvasNode, in graph: CanvasGraph) -> CanvasBounds {
+        let width = parentNode.bounds.width
+        let height = parentNode.bounds.height
+        let y = parentNode.bounds.y
+
+        var x = parentNode.bounds.x + parentNode.bounds.width + Self.childHorizontalGap
+        var candidate = CanvasBounds(x: x, y: y, width: width, height: height)
+
+        while hasOverlappingNode(candidate, in: graph) {
+            x += width + Self.childHorizontalGap
+            candidate = CanvasBounds(x: x, y: y, width: width, height: height)
+        }
+        return candidate
+    }
+
+    private func hasOverlappingNode(_ bounds: CanvasBounds, in graph: CanvasGraph) -> Bool {
+        graph.nodesByID.values.contains { existingNode in
+            intersects(bounds, existingNode.bounds)
+        }
+    }
+
+    private func intersects(_ lhs: CanvasBounds, _ rhs: CanvasBounds) -> Bool {
+        let lhsRight = lhs.x + lhs.width
+        let lhsBottom = lhs.y + lhs.height
+        let rhsRight = rhs.x + rhs.width
+        let rhsBottom = rhs.y + rhs.height
+
+        return lhs.x < rhsRight
+            && lhsRight > rhs.x
+            && lhs.y < rhsBottom
+            && lhsBottom > rhs.y
+    }
+
+    private func descendantNodeIDs(of rootID: CanvasNodeID, in graph: CanvasGraph) -> Set<CanvasNodeID> {
+        var visited: Set<CanvasNodeID> = []
+        var queue: [CanvasNodeID] = [rootID]
+
+        while !queue.isEmpty {
+            let currentID = queue.removeFirst()
+            for edge in graph.edgesByID.values
+            where edge.relationType == .parentChild && edge.fromNodeID == currentID {
+                let childID = edge.toNodeID
+                guard !visited.contains(childID) else {
+                    continue
+                }
+                visited.insert(childID)
+                queue.append(childID)
+            }
+        }
+
+        return visited
+    }
+}
+
+extension ApplyCanvasCommandsUseCase {
+    private static let childHorizontalGap: Double = 32
 }
 
 private struct FocusCandidate {
