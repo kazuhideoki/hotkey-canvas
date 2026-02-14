@@ -1,9 +1,5 @@
 included:
-  - App
-  - Application
-  - Domain
-  - Infrastructure
-  - InterfaceAdapters
+  - Sources
   - Tests
 
 excluded:
