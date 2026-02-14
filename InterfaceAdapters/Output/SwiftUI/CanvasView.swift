@@ -90,7 +90,6 @@ public struct CanvasView: View {
 }
 
 extension CanvasView {
-<<<<<<< HEAD
     private func focusedNodeID(at location: CGPoint) -> CanvasNodeID? {
         // Reverse-order search approximates top-most node when overlaps exist.
         viewModel.nodes.reversed().first { node in
@@ -102,12 +101,12 @@ extension CanvasView {
             )
             return rect.contains(location)
         }?.id
-=======
+    }
+
     private func centerPoint(for node: CanvasNode) -> CGPoint {
         CGPoint(
             x: node.bounds.x + (node.bounds.width / 2),
             y: node.bounds.y + (node.bounds.height / 2)
         )
->>>>>>> main
     }
 }
