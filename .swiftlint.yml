@@ -1,0 +1,12 @@
+excluded:
+  - .build
+  - .codex
+
+custom_rules:
+  no_any_type:
+    name: "No Any Type"
+    regex: "\\bAny\\b"
+    message: "`Any` is prohibited. Use a concrete type, `any Protocol`, or generics."
+    severity: error
+    match_kinds:
+      - identifier
