@@ -1,3 +1,4 @@
+import Domain
 import SwiftUI
 
 public struct CanvasView: View {
@@ -38,7 +39,10 @@ public struct CanvasView: View {
                         height: CGFloat(node.bounds.height),
                         alignment: .topLeading
                     )
-                    .offset(x: CGFloat(node.bounds.x), y: CGFloat(node.bounds.y))
+                    .position(
+                        x: CGFloat(node.bounds.x + (node.bounds.width / 2)),
+                        y: CGFloat(node.bounds.y + (node.bounds.height / 2))
+                    )
             }
 
             CanvasHotkeyCaptureView { event in
@@ -51,10 +55,39 @@ public struct CanvasView: View {
                 return true
             }
             .frame(width: 1, height: 1)
+            // Keep key capture active without stealing mouse interactions from canvas nodes.
+            .allowsHitTesting(false)
         }
+        .gesture(
+            SpatialTapGesture().onEnded { value in
+                // Use canvas-level hit testing because per-node tap handlers were unreliable
+                // with the current layered ZStack + AppKit bridge setup.
+                guard let nodeID = focusedNodeID(at: value.location) else {
+                    return
+                }
+                Task {
+                    await viewModel.apply(commands: [.focusNode(nodeID)])
+                }
+            }
+        )
         .frame(minWidth: 900, minHeight: 600, alignment: .topLeading)
         .task {
             await viewModel.onAppear()
         }
+    }
+}
+
+extension CanvasView {
+    private func focusedNodeID(at location: CGPoint) -> CanvasNodeID? {
+        // Reverse-order search approximates top-most node when overlaps exist.
+        viewModel.nodes.reversed().first { node in
+            let rect = CGRect(
+                x: node.bounds.x,
+                y: node.bounds.y,
+                width: node.bounds.width,
+                height: node.bounds.height
+            )
+            return rect.contains(location)
+        }?.id
     }
 }

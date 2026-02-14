@@ -47,6 +47,8 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
+        case .focusNode(let nodeID):
+            return focusNode(in: graph, nodeID: nodeID)
         case .deleteFocusedNode:
             return try deleteFocusedNode(in: graph)
         }
@@ -54,6 +56,20 @@ extension ApplyCanvasCommandsUseCase {
 }
 
 extension ApplyCanvasCommandsUseCase {
+    private func focusNode(in graph: CanvasGraph, nodeID: CanvasNodeID) -> CanvasGraph {
+        guard graph.nodesByID[nodeID] != nil else {
+            return graph
+        }
+        guard graph.focusedNodeID != nodeID else {
+            return graph
+        }
+        return CanvasGraph(
+            nodesByID: graph.nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: nodeID
+        )
+    }
+
     private func makeAvailableNewNodeBounds(in graph: CanvasGraph) -> CanvasBounds {
         let focusedNode = graph.focusedNodeID.flatMap { graph.nodesByID[$0] }
         let startX = focusedNode?.bounds.x ?? Self.defaultNewNodeX
