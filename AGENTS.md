@@ -24,6 +24,19 @@ Canonical commands:
 - Use 4-space indentation and keep one primary type per file.
 - Keep domain logic pure in `Domain/`; keep framework/API details in adapters.
 - Naming rules are defined in `docs/architecture.md`.
+- Language policy:
+  - Source code comments in `.swift` files must be written in English.
+  - Documentation under `docs/` must be written in Japanese.
+- Comment policy:
+  - Use `///` doc comments for symbols that should surface in LSP/Quick Help.
+  - Add a short file-header comment at the top of each Swift file describing:
+    - Why the file exists (background/context).
+    - What responsibility the file owns.
+  - Add `///` on public/internal types with a one-line responsibility summary.
+  - Add `///` on functions with purpose plus `- Parameters`, `- Returns`, `- Throws` when relevant.
+  - Add `///` on stored properties only when intent is not obvious from naming.
+  - Use `// MARK: ...` for logical sections in larger files.
+  - Keep comments short and maintainable; avoid comments that merely restate the code.
 - Lint/type safety rules:
   - `Any` is prohibited (SwiftLint `custom_rules.no_any_type` as `error`).
   - Prefer concrete types, generics, or `any Protocol`.
