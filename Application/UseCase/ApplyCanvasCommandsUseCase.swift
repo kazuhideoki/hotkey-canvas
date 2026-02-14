@@ -47,11 +47,14 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
+        case .deleteFocusedNode:
+            return try deleteFocusedNode(in: graph)
         }
     }
 }
 
 extension ApplyCanvasCommandsUseCase {
+<<<<<<< HEAD
     private func makeAvailableNewNodeBounds(in graph: CanvasGraph) -> CanvasBounds {
         let focusedNode = graph.focusedNodeID.flatMap { graph.nodesByID[$0] }
         let startX = focusedNode?.bounds.x ?? Self.defaultNewNodeX
@@ -92,6 +95,24 @@ extension ApplyCanvasCommandsUseCase {
         let lhsBottom = lhs.y + lhs.height
         let rhsBottom = rhs.y + rhs.height
         return lhs.x < rhsRight && lhsRight > rhs.x && lhs.y < rhsBottom && lhsBottom > rhs.y
+=======
+    private func deleteFocusedNode(in graph: CanvasGraph) throws -> CanvasGraph {
+        guard let focusedNodeID = graph.focusedNodeID else {
+            return graph
+        }
+        guard let focusedNode = graph.nodesByID[focusedNodeID] else {
+            return graph
+        }
+
+        let graphAfterDelete = try CanvasGraphCRUDService.deleteNode(id: focusedNodeID, in: graph)
+        let nextFocusedNodeID = nearestNodeID(to: focusedNode, in: graphAfterDelete)
+
+        return CanvasGraph(
+            nodesByID: graphAfterDelete.nodesByID,
+            edgesByID: graphAfterDelete.edgesByID,
+            focusedNodeID: nextFocusedNodeID
+        )
+>>>>>>> main
     }
 
     private func moveFocus(in graph: CanvasGraph, direction: CanvasFocusDirection) -> CanvasGraph {
@@ -210,6 +231,33 @@ extension ApplyCanvasCommandsUseCase {
             return lhs.distance < rhs.distance
         }
         return lhs.node.id.rawValue < rhs.node.id.rawValue
+    }
+
+    private func nearestNodeID(to sourceNode: CanvasNode, in graph: CanvasGraph) -> CanvasNodeID? {
+        let sourceCenter = nodeCenter(for: sourceNode)
+        return graph.nodesByID.values.min { lhs, rhs in
+            let lhsDistance = squaredDistance(from: sourceCenter, to: nodeCenter(for: lhs))
+            let rhsDistance = squaredDistance(from: sourceCenter, to: nodeCenter(for: rhs))
+            if lhsDistance != rhsDistance {
+                return lhsDistance < rhsDistance
+            }
+            if lhs.bounds.y != rhs.bounds.y {
+                return lhs.bounds.y < rhs.bounds.y
+            }
+            if lhs.bounds.x != rhs.bounds.x {
+                return lhs.bounds.x < rhs.bounds.x
+            }
+            return lhs.id.rawValue < rhs.id.rawValue
+        }?.id
+    }
+
+    private func squaredDistance(
+        from source: (x: Double, y: Double),
+        to destination: (x: Double, y: Double)
+    ) -> Double {
+        let deltaX = destination.x - source.x
+        let deltaY = destination.y - source.y
+        return (deltaX * deltaX) + (deltaY * deltaY)
     }
 }
 

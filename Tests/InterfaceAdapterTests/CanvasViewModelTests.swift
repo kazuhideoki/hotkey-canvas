@@ -79,6 +79,8 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .moveFocus:
                 continue
+            case .deleteFocusedNode:
+                continue
             }
         }
         graph = nextGraph
@@ -138,6 +140,8 @@ extension OverlappingFailureCanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
             case .moveFocus:
+                continue
+            case .deleteFocusedNode:
                 continue
             }
         }
