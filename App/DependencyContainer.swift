@@ -2,15 +2,14 @@ import Application
 import InterfaceAdapters
 
 struct DependencyContainer {
-    // TEMP: Wiring for hello-world bootstrap only. Replace with real composition roots as features are added.
-    let greetingInputPort: any GreetingInputPort
+    let canvasEditingInputPort: any CanvasEditingInputPort
 
     init() {
-        greetingInputPort = GetGreetingUseCase()
+        canvasEditingInputPort = ApplyCanvasCommandsUseCase()
     }
 
     @MainActor
-    func makeGreetingViewModel() -> GreetingViewModel {
-        GreetingViewModel(inputPort: greetingInputPort)
+    func makeCanvasViewModel() -> CanvasViewModel {
+        CanvasViewModel(inputPort: canvasEditingInputPort)
     }
 }
