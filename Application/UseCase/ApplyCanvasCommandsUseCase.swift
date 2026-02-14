@@ -60,7 +60,6 @@ extension ApplyCanvasCommandsUseCase {
 }
 
 extension ApplyCanvasCommandsUseCase {
-<<<<<<< HEAD
     private func focusNode(in graph: CanvasGraph, nodeID: CanvasNodeID) -> CanvasGraph {
         guard graph.nodesByID[nodeID] != nil else {
             return graph
@@ -75,10 +74,7 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 
-    private func makeAvailableNewNodeBounds(in graph: CanvasGraph) -> CanvasBounds {
-=======
     func makeAvailableNewNodeBounds(in graph: CanvasGraph) -> CanvasBounds {
->>>>>>> main
         let focusedNode = graph.focusedNodeID.flatMap { graph.nodesByID[$0] }
         let startX = focusedNode?.bounds.x ?? Self.defaultNewNodeX
         let startY =
