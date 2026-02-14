@@ -2,6 +2,8 @@ import Application
 import Domain
 import Testing
 
+// Background: Sibling creation depends on parent-child links from the focused node.
+// Responsibility: Verify sibling creation under the same parent and no-op behavior without a parent.
 @Test("ApplyCanvasCommandsUseCase: addSiblingNode creates sibling under same parent")
 func test_apply_addSiblingNode_createsSiblingUnderSameParent() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
