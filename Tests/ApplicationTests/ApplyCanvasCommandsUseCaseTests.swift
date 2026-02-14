@@ -130,7 +130,7 @@ func test_apply_addNode_skipsOccupiedSpaceBelowFocusedNode() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 140, y: 250, width: 220, height: 120)
-            ),
+            )
         ],
         edgesByID: [:],
         focusedNodeID: focusedNodeID
@@ -171,7 +171,7 @@ func test_apply_moveFocus_movesToNearestNodeInDirection() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 420, y: 100, width: 100, height: 100)
-            ),
+            )
         ],
         edgesByID: [:],
         focusedNodeID: centerID
@@ -246,7 +246,7 @@ func test_apply_deleteFocusedNode_removesFocusedNode() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 280, y: 100, width: 100, height: 100)
-            ),
+            )
         ],
         edgesByID: [
             edgeID: CanvasEdge(
@@ -330,7 +330,7 @@ func test_apply_focusNode_setsFocusedNode_whenNodeExists() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 120, y: 0, width: 100, height: 100)
-            ),
+            )
         ],
         edgesByID: [:],
         focusedNodeID: firstID
