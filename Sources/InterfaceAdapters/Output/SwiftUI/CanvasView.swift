@@ -1,14 +1,24 @@
+// Background: The canvas needs a single view that coordinates rendering, hotkeys, and inline text editing.
+// Responsibility: Render nodes/edges and orchestrate transitions between hotkey mode and node-editing mode.
 import AppKit
+import Combine
 import Domain
+import Foundation
 import SwiftUI
 
+/// SwiftUI canvas that displays graph nodes and handles keyboard-first editing interactions.
 public struct CanvasView: View {
     private static let minimumCanvasWidth: Double = 900
     private static let minimumCanvasHeight: Double = 600
     private static let canvasMargin: Double = 120
+    private static let nodeTextLineHeight: Double = 20
+    private static let nodeTextVerticalPadding: Double = 24
+    private static let minimumTextNodeHeight: Double = 120
 
     @StateObject private var viewModel: CanvasViewModel
     @State private var editingContext: NodeEditingContext?
+    /// Monotonic token used to ignore stale async editing-start tasks.
+    @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
     private let editingStartResolver = NodeEditingStartResolver()
 
@@ -21,9 +31,10 @@ public struct CanvasView: View {
     }
 
     public var body: some View {
-        let nodesByID = Dictionary(uniqueKeysWithValues: viewModel.nodes.map { ($0.id, $0) })
+        let displayNodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
+        let nodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
         let contentBounds = CanvasContentBoundsCalculator.calculate(
-            nodes: viewModel.nodes,
+            nodes: displayNodes,
             minimumWidth: Self.minimumCanvasWidth,
             minimumHeight: Self.minimumCanvasHeight,
             margin: Self.canvasMargin
@@ -61,15 +72,18 @@ public struct CanvasView: View {
                             }
                         }
 
-                        ForEach(viewModel.nodes, id: \.id) { node in
+                        ForEach(displayNodes, id: \.id) { node in
                             let isFocused = viewModel.focusedNodeID == node.id
+                            let isEditing = editingContext?.nodeID == node.id
                             RoundedRectangle(cornerRadius: 10)
                                 .fill(Color(nsColor: .windowBackgroundColor))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
                                         .stroke(
-                                            isFocused ? Color.accentColor : Color(nsColor: .separatorColor),
-                                            lineWidth: isFocused ? 2 : 1
+                                            isEditing
+                                                ? Color(nsColor: .systemPink)
+                                                : (isFocused ? Color.accentColor : Color(nsColor: .separatorColor)),
+                                            lineWidth: (isEditing || isFocused) ? 2 : 1
                                         )
                                 )
                                 .overlay(alignment: .topLeading) {
@@ -135,7 +149,11 @@ public struct CanvasView: View {
                 // Keep key capture active without intercepting canvas rendering.
                 .allowsHitTesting(false)
             }
-            .frame(minWidth: 900, minHeight: 600, alignment: .topLeading)
+            .frame(
+                minWidth: Self.minimumCanvasWidth,
+                minHeight: Self.minimumCanvasHeight,
+                alignment: .topLeading
+            )
             .task {
                 await viewModel.onAppear()
                 focusCurrentNode(with: scrollProxy)
@@ -144,10 +162,98 @@ public struct CanvasView: View {
                 focusCurrentNode(with: scrollProxy)
             }
         }
+        .onReceive(viewModel.$pendingEditingNodeID) { pendingNodeID in
+            pendingEditingRequestID &+= 1
+            guard let nodeID = pendingNodeID else {
+                return
+            }
+            let requestID = pendingEditingRequestID
+            Task { @MainActor in
+                let maxLookupAttempts = 4
+                for attempt in 0..<maxLookupAttempts {
+                    guard pendingEditingRequestID == requestID else {
+                        return
+                    }
+                    guard viewModel.pendingEditingNodeID == nodeID else {
+                        return
+                    }
+                    if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
+                        editingContext = NodeEditingContext(
+                            nodeID: nodeID,
+                            text: node.text ?? "",
+                            initialCursorPlacement: .end
+                        )
+                        guard pendingEditingRequestID == requestID else {
+                            return
+                        }
+                        guard viewModel.pendingEditingNodeID == nodeID else {
+                            return
+                        }
+                        viewModel.consumePendingEditingNodeID()
+                        return
+                    }
+                    guard attempt < (maxLookupAttempts - 1) else {
+                        break
+                    }
+                    // Wait for subsequent UI updates when apply completion and rendering race.
+                    await Task.yield()
+                }
+                guard pendingEditingRequestID == requestID else {
+                    return
+                }
+                guard viewModel.pendingEditingNodeID == nodeID else {
+                    return
+                }
+                viewModel.consumePendingEditingNodeID()
+            }
+        }
     }
 }
 
 extension CanvasView {
+    private func displayNodeForCurrentEditingState(_ node: CanvasNode) -> CanvasNode {
+        guard let editingContext, editingContext.nodeID == node.id else {
+            return node
+        }
+        let requiredHeight = requiredEditingHeight(
+            for: editingContext.text,
+            baselineHeight: baselineHeight(for: node.bounds)
+        )
+        guard requiredHeight != node.bounds.height else {
+            return node
+        }
+        let resizedBounds = CanvasBounds(
+            x: node.bounds.x,
+            y: node.bounds.y,
+            width: node.bounds.width,
+            height: requiredHeight
+        )
+        return CanvasNode(
+            id: node.id,
+            kind: node.kind,
+            text: node.text,
+            bounds: resizedBounds,
+            metadata: node.metadata
+        )
+    }
+
+    private func baselineHeight(for bounds: CanvasBounds) -> Double {
+        min(bounds.height, Self.minimumTextNodeHeight)
+    }
+
+    private func requiredEditingHeight(for text: String, baselineHeight: Double) -> Double {
+        let normalizedText =
+            text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+        let lineCount =
+            normalizedText
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .count
+        let contentHeight = (Double(max(1, lineCount)) * Self.nodeTextLineHeight) + Self.nodeTextVerticalPadding
+        return max(baselineHeight, contentHeight)
+    }
+
     private func centerPoint(
         for node: CanvasNode,
         horizontalOffset: Double,
