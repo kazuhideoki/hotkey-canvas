@@ -139,6 +139,43 @@ func test_apply_moveNodeLeft_promotesToParentSibling() async throws {
     #expect(result.newState.focusedNodeID == focusedID)
 }
 
+@Test("ApplyCanvasCommandsUseCase: moveNode left keeps top-level parent child unchanged")
+func test_apply_moveNodeLeft_doesNotPromoteTopLevelChild() async throws {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let childID = CanvasNodeID(rawValue: "child")
+
+    let root = CanvasNode(
+        id: rootID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)
+    )
+    let child = CanvasNode(
+        id: childID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 260, y: 0, width: 220, height: 120)
+    )
+    let edgeRootToChild = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-root-child"),
+        fromNodeID: rootID,
+        toNodeID: childID,
+        relationType: .parentChild
+    )
+    let graph = CanvasGraph(
+        nodesByID: [rootID: root, childID: child],
+        edgesByID: [edgeRootToChild.id: edgeRootToChild],
+        focusedNodeID: childID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.left)])
+
+    #expect(result.newState.focusedNodeID == childID)
+    #expect(hasParentChildEdge(from: rootID, to: childID, in: result.newState))
+    #expect(result.newState.edgesByID == graph.edgesByID)
+}
+
 @Test("ApplyCanvasCommandsUseCase: moveNode right indents node under previous sibling")
 func test_apply_moveNodeRight_indentsUnderPreviousSibling() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
