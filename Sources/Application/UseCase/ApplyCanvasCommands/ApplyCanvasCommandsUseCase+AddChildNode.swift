@@ -31,7 +31,8 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentID, to: childNode.id),
             in: graphWithChild
         )
-        let graphAfterLayout = resolveAreaOverlaps(around: childNode.id, in: graphWithChild)
+        let graphAfterTreeLayout = relayoutParentChildTrees(in: graphWithChild)
+        let graphAfterLayout = resolveAreaOverlaps(around: childNode.id, in: graphAfterTreeLayout)
 
         return CanvasGraph(
             nodesByID: graphAfterLayout.nodesByID,

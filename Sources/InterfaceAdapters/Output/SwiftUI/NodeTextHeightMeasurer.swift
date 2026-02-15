@@ -13,7 +13,7 @@ struct NodeTextHeightMeasurer {
     private let maximumNodeHeight: CGFloat
 
     init(
-        font: NSFont = .systemFont(ofSize: 14, weight: .medium),
+        font: NSFont = .systemFont(ofSize: NodeTextStyle.fontSize, weight: NodeTextStyle.fontWeight),
         outerHorizontalPadding: CGFloat = 6,
         outerVerticalPadding: CGFloat = 6,
         textContainerInset: NSSize = NSSize(width: 6, height: 6),
