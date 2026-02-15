@@ -1,8 +1,12 @@
+// Background: The canvas needs a single view that coordinates rendering, hotkeys, and inline text editing.
+// Responsibility: Render nodes/edges and orchestrate transitions between hotkey mode and node-editing mode.
 import AppKit
+import Combine
 import Domain
 import Foundation
 import SwiftUI
 
+/// SwiftUI canvas that displays graph nodes and handles keyboard-first editing interactions.
 public struct CanvasView: View {
     private static let minimumCanvasWidth: Double = 900
     private static let minimumCanvasHeight: Double = 600
@@ -13,6 +17,8 @@ public struct CanvasView: View {
 
     @StateObject private var viewModel: CanvasViewModel
     @State private var editingContext: NodeEditingContext?
+    /// Monotonic token used to ignore stale async editing-start tasks.
+    @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
     private let editingStartResolver = NodeEditingStartResolver()
 
@@ -68,13 +74,16 @@ public struct CanvasView: View {
 
                         ForEach(displayNodes, id: \.id) { node in
                             let isFocused = viewModel.focusedNodeID == node.id
+                            let isEditing = editingContext?.nodeID == node.id
                             RoundedRectangle(cornerRadius: 10)
                                 .fill(Color(nsColor: .windowBackgroundColor))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
                                         .stroke(
-                                            isFocused ? Color.accentColor : Color(nsColor: .separatorColor),
-                                            lineWidth: isFocused ? 2 : 1
+                                            isEditing
+                                                ? Color(nsColor: .systemPink)
+                                                : (isFocused ? Color.accentColor : Color(nsColor: .separatorColor)),
+                                            lineWidth: (isEditing || isFocused) ? 2 : 1
                                         )
                                 )
                                 .overlay(alignment: .topLeading) {
@@ -140,13 +149,62 @@ public struct CanvasView: View {
                 // Keep key capture active without intercepting canvas rendering.
                 .allowsHitTesting(false)
             }
-            .frame(minWidth: 900, minHeight: 600, alignment: .topLeading)
+            .frame(
+                minWidth: Self.minimumCanvasWidth,
+                minHeight: Self.minimumCanvasHeight,
+                alignment: .topLeading
+            )
             .task {
                 await viewModel.onAppear()
                 focusCurrentNode(with: scrollProxy)
             }
             .onChange(of: viewModel.focusedNodeID) { _ in
                 focusCurrentNode(with: scrollProxy)
+            }
+        }
+        .onReceive(viewModel.$pendingEditingNodeID) { pendingNodeID in
+            pendingEditingRequestID &+= 1
+            guard let nodeID = pendingNodeID else {
+                return
+            }
+            let requestID = pendingEditingRequestID
+            Task { @MainActor in
+                let maxLookupAttempts = 4
+                for attempt in 0..<maxLookupAttempts {
+                    guard pendingEditingRequestID == requestID else {
+                        return
+                    }
+                    guard viewModel.pendingEditingNodeID == nodeID else {
+                        return
+                    }
+                    if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
+                        editingContext = NodeEditingContext(
+                            nodeID: nodeID,
+                            text: node.text ?? "",
+                            initialCursorPlacement: .end
+                        )
+                        guard pendingEditingRequestID == requestID else {
+                            return
+                        }
+                        guard viewModel.pendingEditingNodeID == nodeID else {
+                            return
+                        }
+                        viewModel.consumePendingEditingNodeID()
+                        return
+                    }
+                    guard attempt < (maxLookupAttempts - 1) else {
+                        break
+                    }
+                    // Wait for subsequent UI updates when apply completion and rendering race.
+                    await Task.yield()
+                }
+                guard pendingEditingRequestID == requestID else {
+                    return
+                }
+                guard viewModel.pendingEditingNodeID == nodeID else {
+                    return
+                }
+                viewModel.consumePendingEditingNodeID()
             }
         }
     }
