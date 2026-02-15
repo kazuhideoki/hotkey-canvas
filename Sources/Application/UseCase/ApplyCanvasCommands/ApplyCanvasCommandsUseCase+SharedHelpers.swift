@@ -106,37 +106,105 @@ extension ApplyCanvasCommandsUseCase {
         return candidate
     }
 
+    /// Computes sibling-node bounds for insertion around the focused node.
+    /// - Parameters:
+    ///   - graph: Current canvas graph.
+    ///   - parentID: Parent node identifier shared by siblings.
+    ///   - focusedNode: Focused sibling used as insertion anchor.
+    ///   - position: Relative insertion side from the focused sibling.
+    /// - Returns: Bounds used to create the new sibling node.
     func makeSiblingNodeBounds(
         in graph: CanvasGraph,
+        parentID: CanvasNodeID,
         focusedNode: CanvasNode,
-        position: CanvasSiblingNodePosition,
-        avoiding nodeIDs: Set<CanvasNodeID>
+        position: CanvasSiblingNodePosition
     ) -> CanvasBounds {
+        let siblingNodes = childNodes(of: parentID, in: graph)
+        let focusedIndex = siblingNodes.firstIndex(where: { $0.id == focusedNode.id })
+        let y = makeSiblingInsertionY(
+            focusedNode: focusedNode,
+            siblings: siblingNodes,
+            focusedIndex: focusedIndex,
+            position: position
+        )
+
+        return CanvasBounds(
+            x: focusedNode.bounds.x,
+            y: y,
+            width: Self.newNodeWidth,
+            height: Self.newNodeHeight
+        )
+    }
+
+    /// Returns children of a parent sorted by visual order.
+    /// - Parameters:
+    ///   - parentID: Parent node identifier.
+    ///   - graph: Current canvas graph.
+    /// - Returns: Child nodes sorted by top-to-bottom and then left-to-right.
+    func childNodes(of parentID: CanvasNodeID, in graph: CanvasGraph) -> [CanvasNode] {
+        graph.edgesByID.values
+            .filter {
+                $0.relationType == .parentChild
+                    && $0.fromNodeID == parentID
+            }
+            .compactMap { graph.nodesByID[$0.toNodeID] }
+            .sorted { lhs, rhs in
+                if lhs.bounds.y == rhs.bounds.y {
+                    if lhs.bounds.x == rhs.bounds.x {
+                        return lhs.id.rawValue < rhs.id.rawValue
+                    }
+                    return lhs.bounds.x < rhs.bounds.x
+                }
+                return lhs.bounds.y < rhs.bounds.y
+            }
+    }
+
+    /// Computes insertion Y that preserves requested above/below order in sibling sorting.
+    /// - Parameters:
+    ///   - focusedNode: Focused sibling node.
+    ///   - siblings: Siblings sorted by visual order.
+    ///   - focusedIndex: Index of focused node inside `siblings`.
+    ///   - position: Relative insertion side from focused sibling.
+    /// - Returns: Candidate Y for the new sibling node.
+    private func makeSiblingInsertionY(
+        focusedNode: CanvasNode,
+        siblings: [CanvasNode],
+        focusedIndex: Int?,
+        position: CanvasSiblingNodePosition
+    ) -> Double {
+        let orderingEpsilon = 0.001
+
         switch position {
         case .above:
-            return CanvasBounds(
-                x: focusedNode.bounds.x,
-                y: focusedNode.bounds.y - Self.newNodeHeight - Self.newNodeVerticalSpacing,
-                width: Self.newNodeWidth,
-                height: Self.newNodeHeight
-            )
-        case .below:
-            var candidate = CanvasBounds(
-                x: focusedNode.bounds.x,
-                y: focusedNode.bounds.y + focusedNode.bounds.height + Self.newNodeVerticalSpacing,
-                width: Self.newNodeWidth,
-                height: Self.newNodeHeight
-            )
-            let collisionNodes = nodesForPlacementCollision(in: graph, avoiding: nodeIDs)
-            while let overlappedNode = firstOverlappedNode(for: candidate, in: collisionNodes) {
-                candidate = CanvasBounds(
-                    x: candidate.x,
-                    y: overlappedNode.bounds.y + overlappedNode.bounds.height + Self.newNodeVerticalSpacing,
-                    width: candidate.width,
-                    height: candidate.height
-                )
+            let upperBound = focusedNode.bounds.y - orderingEpsilon
+            guard
+                let focusedIndex,
+                focusedIndex > 0
+            else {
+                return focusedNode.bounds.y - Self.newNodeHeight - Self.newNodeVerticalSpacing
             }
-            return candidate
+            let previousSibling = siblings[focusedIndex - 1]
+            let lowerBound = previousSibling.bounds.y + orderingEpsilon
+            guard lowerBound <= upperBound else {
+                return upperBound
+            }
+            let midpoint = (previousSibling.bounds.y + focusedNode.bounds.y) / 2
+            return max(lowerBound, min(upperBound, midpoint))
+        case .below:
+            let lowerBound = focusedNode.bounds.y + orderingEpsilon
+            guard
+                let focusedIndex,
+                focusedIndex + 1 < siblings.count
+            else {
+                return focusedNode.bounds.y + focusedNode.bounds.height + Self.newNodeVerticalSpacing
+            }
+            let nextSibling = siblings[focusedIndex + 1]
+            let upperBound = nextSibling.bounds.y - orderingEpsilon
+            guard lowerBound <= upperBound else {
+                return lowerBound
+            }
+            let midpoint = (focusedNode.bounds.y + nextSibling.bounds.y) / 2
+            return min(upperBound, max(lowerBound, midpoint))
         }
     }
 
@@ -391,7 +459,6 @@ extension ApplyCanvasCommandsUseCase {
         let lhsBottom = lhs.y + lhs.height
         let rhsRight = rhs.x + rhs.width
         let rhsBottom = rhs.y + rhs.height
-
         return lhs.x < rhsRight
             && lhsRight > rhs.x
             && lhs.y < rhsBottom
