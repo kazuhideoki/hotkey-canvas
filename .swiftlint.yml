@@ -37,8 +37,8 @@ function_body_length:
   error: 100
 
 file_length:
-  warning: 400
-  error: 800
+  warning: 500
+  error: 1000
 custom_rules:
   no_any_type:
     name: "No Any Type"

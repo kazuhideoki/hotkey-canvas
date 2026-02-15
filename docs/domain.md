@@ -175,6 +175,7 @@
 
 - Application 共有ヘルパー
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers+Graph.swift`
     - `parentChildArea(...)`
     - `resolveAreaOverlaps(...)`
 - 間接利用（ノード追加系）
@@ -231,6 +232,7 @@
 
 - Application 共有ヘルパー
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers+Graph.swift`
     - `relayoutParentChildTrees(in:)`
 - 間接利用（構造変更・サイズ変更系）
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
@@ -270,4 +272,8 @@
 
 - 2026-02-15: 初版作成。
 - 2026-02-15: `CanvasTreeLayoutService` を追加し、親子ツリー再配置の利用箇所と不変条件を追記。
+<<<<<<< HEAD
 - 2026-02-15: `CanvasCommand.moveNode` と `CanvasNodeMoveDirection` を追加し、`cmd+矢印キー` のネスト移動利用箇所を追記。
+=======
+- 2026-02-15: `CanvasTreeLayoutService` の実装を `CanvasTreeLayoutService+Relayout.swift` と `CanvasTreeLayoutService+RelayoutInternals.swift` に分割（挙動変更なし）。
+>>>>>>> main
