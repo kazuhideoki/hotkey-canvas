@@ -106,10 +106,13 @@ func test_apply_addChildNode_avoidsOccupiedSlotWithinSameArea() async throws {
 
     let childID = try #require(result.newState.focusedNodeID)
     let newChild = try #require(result.newState.nodesByID[childID])
+    let parentAfter = try #require(result.newState.nodesByID[parentID])
+    let existingChildAfter = try #require(result.newState.nodesByID[existingChildID])
     #expect(newChild.id != existingChildID)
-    #expect(boundsOverlap(newChild.bounds, existingChild.bounds, spacing: 0) == false)
-    #expect(newChild.bounds.x == existingChild.bounds.x + existingChild.bounds.width + 32)
-    #expect(newChild.bounds.y == existingChild.bounds.y)
+    #expect(boundsOverlap(newChild.bounds, existingChildAfter.bounds, spacing: 0) == false)
+    #expect(newChild.bounds.x == parentAfter.bounds.x + parentAfter.bounds.width + 32)
+    #expect(existingChildAfter.bounds.x == newChild.bounds.x)
+    #expect(newChild.bounds.y >= existingChildAfter.bounds.y + existingChildAfter.bounds.height + 24)
 }
 
 private func enclosingBounds(of nodes: [CanvasNode]) -> CanvasBounds {

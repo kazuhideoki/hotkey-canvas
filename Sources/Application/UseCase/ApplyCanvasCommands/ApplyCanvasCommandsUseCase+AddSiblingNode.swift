@@ -24,13 +24,12 @@ extension ApplyCanvasCommandsUseCase {
             return graph
         }
 
-        let siblingAreaNodeIDs = parentChildAreaNodeIDs(containing: parentID, in: graph)
         let siblingNode = makeTextNode(
             bounds: makeSiblingNodeBounds(
                 in: graph,
+                parentID: parentID,
                 focusedNode: focusedNode,
-                position: position,
-                avoiding: siblingAreaNodeIDs
+                position: position
             )
         )
 
@@ -39,7 +38,8 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentID, to: siblingNode.id),
             in: graphWithSibling
         )
-        let graphAfterLayout = resolveAreaOverlaps(around: siblingNode.id, in: graphWithSibling)
+        let graphAfterTreeLayout = relayoutParentChildTrees(in: graphWithSibling)
+        let graphAfterLayout = resolveAreaOverlaps(around: siblingNode.id, in: graphAfterTreeLayout)
 
         return CanvasGraph(
             nodesByID: graphAfterLayout.nodesByID,
