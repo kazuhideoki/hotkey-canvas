@@ -14,7 +14,7 @@ func test_apply_addNode_createsTextNode() async throws {
     let node = try #require(result.newState.nodesByID.values.first)
     #expect(node.kind == .text)
     #expect(node.bounds.width == 220)
-    #expect(node.bounds.height == 120)
+    #expect(node.bounds.height == 41)
     #expect(result.newState.focusedNodeID == node.id)
 }
 

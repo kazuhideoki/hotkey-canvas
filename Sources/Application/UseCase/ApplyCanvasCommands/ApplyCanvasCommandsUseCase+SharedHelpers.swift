@@ -5,7 +5,7 @@ import Foundation
 // Responsibility: Provide shared helper routines used across ApplyCanvasCommandsUseCase command files.
 extension ApplyCanvasCommandsUseCase {
     private static let newNodeWidth: Double = 220
-    private static let newNodeHeight: Double = 120
+    private static let newNodeHeight: Double = 41
     private static let defaultNewNodeX: Double = 48
     private static let defaultNewNodeY: Double = 48
     private static let newNodeVerticalSpacing: Double = 24
