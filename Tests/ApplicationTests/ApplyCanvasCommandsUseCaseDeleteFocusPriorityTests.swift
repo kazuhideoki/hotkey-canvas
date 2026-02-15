@@ -34,7 +34,7 @@ func test_apply_deleteFocusedNode_focusesUpperSibling_whenSiblingExists() async 
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 200, y: 360, width: 100, height: 80)
-            ),
+            )
         ],
         edgesByID: [
             CanvasEdgeID(rawValue: "edge-parent-upper"): CanvasEdge(
@@ -54,7 +54,7 @@ func test_apply_deleteFocusedNode_focusesUpperSibling_whenSiblingExists() async 
                 fromNodeID: parentID,
                 toNodeID: lowerSiblingID,
                 relationType: .parentChild
-            ),
+            )
         ],
         focusedNodeID: focusedID
     )
@@ -91,7 +91,7 @@ func test_apply_deleteFocusedNode_focusesParent_whenSiblingDoesNotExist() async 
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 320, y: 220, width: 100, height: 80)
-            ),
+            )
         ],
         edgesByID: [
             CanvasEdgeID(rawValue: "edge-parent-focused"): CanvasEdge(
@@ -136,7 +136,7 @@ func test_apply_deleteFocusedNode_focusesNearestNode_whenParentDoesNotExist() as
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 600, y: 100, width: 100, height: 80)
-            ),
+            )
         ],
         edgesByID: [:],
         focusedNodeID: focusedID
@@ -174,7 +174,7 @@ func test_apply_deleteFocusedNode_skipsDeletedUpperSibling() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 200, y: 120, width: 100, height: 80)
-            ),
+            )
         ],
         edgesByID: [
             CanvasEdgeID(rawValue: "edge-parent-focused"): CanvasEdge(
@@ -194,7 +194,7 @@ func test_apply_deleteFocusedNode_skipsDeletedUpperSibling() async throws {
                 fromNodeID: focusedID,
                 toNodeID: upperSiblingID,
                 relationType: .parentChild
-            ),
+            )
         ],
         focusedNodeID: focusedID
     )
@@ -232,7 +232,7 @@ func test_apply_deleteFocusedNode_choosesDeterministicParent_whenMultiParent() a
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 100, y: 200, width: 100, height: 80)
-            ),
+            )
         ],
         edgesByID: [
             CanvasEdgeID(rawValue: "z-parent-focused"): CanvasEdge(
@@ -246,7 +246,7 @@ func test_apply_deleteFocusedNode_choosesDeterministicParent_whenMultiParent() a
                 fromNodeID: parentAID,
                 toNodeID: focusedID,
                 relationType: .parentChild
-            ),
+            )
         ],
         focusedNodeID: focusedID
     )
