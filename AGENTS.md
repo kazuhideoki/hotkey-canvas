@@ -4,6 +4,12 @@
 
 `docs/architecture.md` is the single source of truth for layer responsibilities, dependency direction, directory placement, naming conventions, and UI display flow rules.
 
+## Domain Documentation
+
+- `docs/domain.md` documents domain-by-domain structure, services, usage, and invariants.
+- When adding or changing domain models/services/commands/errors under `Sources/Domain/`, update `docs/domain.md` in the same change.
+- When changing application behavior that affects how domain services are used (for example command dispatch or service call flow), update the relevant usage sections in `docs/domain.md`.
+
 ## Project Structure & Module Organization
 
 Follow `docs/architecture.md` for layer boundaries, dependency rules, and placement decisions.
