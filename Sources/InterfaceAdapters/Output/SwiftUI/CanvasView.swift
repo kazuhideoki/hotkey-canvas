@@ -9,6 +9,8 @@ import SwiftUI
 public struct CanvasView: View {
     @StateObject private var viewModel: CanvasViewModel
     @State private var editingContext: NodeEditingContext?
+    /// Monotonic token used to ignore stale async editing-start tasks.
+    @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
     private let editingStartResolver = NodeEditingStartResolver()
 
@@ -108,16 +110,33 @@ public struct CanvasView: View {
         .task {
             await viewModel.onAppear()
         }
-        .onReceive(viewModel.$pendingEditingNodeID.compactMap { $0 }) { nodeID in
+        .onReceive(viewModel.$pendingEditingNodeID) { pendingNodeID in
+            pendingEditingRequestID &+= 1
+            guard let nodeID = pendingNodeID else {
+                return
+            }
+            let requestID = pendingEditingRequestID
             Task { @MainActor in
                 let maxLookupAttempts = 4
                 for attempt in 0..<maxLookupAttempts {
+                    guard pendingEditingRequestID == requestID else {
+                        return
+                    }
+                    guard viewModel.pendingEditingNodeID == nodeID else {
+                        return
+                    }
                     if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
                         editingContext = NodeEditingContext(
                             nodeID: nodeID,
                             text: node.text ?? "",
                             initialCursorPlacement: .end
                         )
+                        guard pendingEditingRequestID == requestID else {
+                            return
+                        }
+                        guard viewModel.pendingEditingNodeID == nodeID else {
+                            return
+                        }
                         viewModel.consumePendingEditingNodeID()
                         return
                     }
@@ -126,6 +145,12 @@ public struct CanvasView: View {
                     }
                     // Wait for subsequent UI updates when apply completion and rendering race.
                     await Task.yield()
+                }
+                guard pendingEditingRequestID == requestID else {
+                    return
+                }
+                guard viewModel.pendingEditingNodeID == nodeID else {
+                    return
                 }
                 viewModel.consumePendingEditingNodeID()
             }

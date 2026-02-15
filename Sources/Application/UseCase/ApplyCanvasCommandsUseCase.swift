@@ -23,10 +23,11 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
         guard nextGraph != graph else {
             return makeApplyResult(newState: graph)
         }
+        let didAddNode = hasAddedNode(from: graph, to: nextGraph)
         appendUndoSnapshot(graph)
         graph = nextGraph
         redoStack.removeAll(keepingCapacity: true)
-        return makeApplyResult(newState: nextGraph)
+        return makeApplyResult(newState: nextGraph, didAddNode: didAddNode)
     }
 
     public func undo() async -> ApplyResult {
@@ -57,12 +58,18 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
 }
 
 extension ApplyCanvasCommandsUseCase {
-    private func makeApplyResult(newState: CanvasGraph) -> ApplyResult {
+    private func makeApplyResult(newState: CanvasGraph, didAddNode: Bool = false) -> ApplyResult {
         ApplyResult(
             newState: newState,
             canUndo: !undoStack.isEmpty,
-            canRedo: !redoStack.isEmpty
+            canRedo: !redoStack.isEmpty,
+            didAddNode: didAddNode
         )
+    }
+
+    private func hasAddedNode(from oldGraph: CanvasGraph, to newGraph: CanvasGraph) -> Bool {
+        let previousNodeIDs = Set(oldGraph.nodesByID.keys)
+        return newGraph.nodesByID.keys.contains { !previousNodeIDs.contains($0) }
     }
 
     private func appendUndoSnapshot(_ snapshot: CanvasGraph) {
