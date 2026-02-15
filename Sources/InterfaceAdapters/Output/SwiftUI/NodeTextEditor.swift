@@ -34,6 +34,7 @@ struct NodeTextEditor: NSViewRepresentable {
         nsView.onCommit = onCommit
         nsView.onCancel = onCancel
         nsView.typingAttributes[.foregroundColor] = NSColor.labelColor
+        nsView.typingAttributes[.font] = nsView.font ?? NodeTextStyle.font
         nsView.textColor = .labelColor
         nsView.insertionPointColor = .labelColor
         focusEditorIfNeeded(nsView, coordinator: context.coordinator)
@@ -90,7 +91,7 @@ extension NodeTextEditor {
     private func configureTextViewAppearance(_ textView: NodeTextEditorTextView) {
         textView.drawsBackground = false
         textView.backgroundColor = .clear
-        textView.font = .systemFont(ofSize: 14, weight: .medium)
+        textView.font = .systemFont(ofSize: NodeTextStyle.fontSize, weight: NodeTextStyle.fontWeight)
         textView.textColor = .labelColor
         textView.insertionPointColor = .labelColor
         textView.isRichText = false
@@ -103,7 +104,10 @@ extension NodeTextEditor {
             width: CGFloat.greatestFiniteMagnitude,
             height: CGFloat.greatestFiniteMagnitude
         )
-        textView.typingAttributes = [.foregroundColor: NSColor.labelColor]
+        textView.typingAttributes = [
+            .foregroundColor: NSColor.labelColor,
+            .font: textView.font ?? NodeTextStyle.font,
+        ]
     }
 
     private func focusEditorIfNeeded(
@@ -212,7 +216,7 @@ private enum NodeTextEditorTextViewMeasurement {
 
         var contentHeight = lineHeights.reduce(0, +)
         let defaultLineHeight = layoutManager.defaultLineHeight(
-            for: textView.font ?? .systemFont(ofSize: 14)
+            for: textView.font ?? NodeTextStyle.font
         )
         if layoutManager.extraLineFragmentTextContainer != nil {
             contentHeight += lineHeights.last ?? defaultLineHeight

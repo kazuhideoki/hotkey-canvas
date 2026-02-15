@@ -44,6 +44,8 @@ extension ApplyCanvasCommandsUseCase {
             bounds: updatedBounds,
             metadata: node.metadata
         )
-        return try CanvasGraphCRUDService.updateNode(updatedNode, in: graph)
+        let updatedGraph = try CanvasGraphCRUDService.updateNode(updatedNode, in: graph)
+        let graphAfterTreeLayout = relayoutParentChildTrees(in: updatedGraph)
+        return resolveAreaOverlaps(around: nodeID, in: graphAfterTreeLayout)
     }
 }
