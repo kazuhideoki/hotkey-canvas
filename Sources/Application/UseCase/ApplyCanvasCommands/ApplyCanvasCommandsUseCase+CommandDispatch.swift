@@ -9,8 +9,8 @@ extension ApplyCanvasCommandsUseCase {
             return try addNode(in: graph)
         case .addChildNode:
             return try addChildNode(in: graph, requiresTopLevelParent: false)
-        case .addSiblingNode:
-            return try addSiblingNode(in: graph)
+        case .addSiblingNode(let position):
+            return try addSiblingNode(in: graph, position: position)
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
         case .deleteFocusedNode:

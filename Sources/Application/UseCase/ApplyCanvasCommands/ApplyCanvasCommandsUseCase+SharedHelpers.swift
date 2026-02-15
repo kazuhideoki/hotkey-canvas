@@ -57,6 +57,39 @@ extension ApplyCanvasCommandsUseCase {
         return candidate
     }
 
+    func makeSiblingNodeBounds(
+        in graph: CanvasGraph,
+        focusedNode: CanvasNode,
+        position: CanvasSiblingNodePosition
+    ) -> CanvasBounds {
+        switch position {
+        case .above:
+            return CanvasBounds(
+                x: focusedNode.bounds.x,
+                y: focusedNode.bounds.y - Self.newNodeHeight - Self.newNodeVerticalSpacing,
+                width: Self.newNodeWidth,
+                height: Self.newNodeHeight
+            )
+        case .below:
+            var candidate = CanvasBounds(
+                x: focusedNode.bounds.x,
+                y: focusedNode.bounds.y + focusedNode.bounds.height + Self.newNodeVerticalSpacing,
+                width: Self.newNodeWidth,
+                height: Self.newNodeHeight
+            )
+            let sorted = sortedNodes(in: graph)
+            while let overlappedNode = firstOverlappedNode(for: candidate, in: sorted) {
+                candidate = CanvasBounds(
+                    x: candidate.x,
+                    y: overlappedNode.bounds.y + overlappedNode.bounds.height + Self.newNodeVerticalSpacing,
+                    width: candidate.width,
+                    height: candidate.height
+                )
+            }
+            return candidate
+        }
+    }
+
     func calculateChildBounds(for parentNode: CanvasNode, in graph: CanvasGraph) -> CanvasBounds {
         let width = parentNode.bounds.width
         let height = parentNode.bounds.height
