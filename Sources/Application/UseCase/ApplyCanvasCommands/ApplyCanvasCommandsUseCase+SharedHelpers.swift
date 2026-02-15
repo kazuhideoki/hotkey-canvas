@@ -381,7 +381,6 @@ extension ApplyCanvasCommandsUseCase {
             boundsOverlap(bounds, existingNode.bounds)
         }
     }
-
     /// Evaluates axis-aligned rectangle overlap.
     /// - Parameters:
     ///   - lhs: First bounds.

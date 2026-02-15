@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Application
 import Domain
 import InterfaceAdapters
@@ -212,7 +213,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
                 didAddNode = true
-            case .addChildNode, .addSiblingNode(_), .moveFocus, .setNodeText:
+            case .addChildNode, .addSiblingNode, .moveFocus, .setNodeText:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -301,7 +302,7 @@ extension OverlappingFailureCanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
                 didAddNode = true
-            case .addChildNode, .addSiblingNode(_), .moveFocus, .setNodeText:
+            case .addChildNode, .addSiblingNode, .moveFocus, .setNodeText:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -490,7 +491,7 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nextGraph.focusedNodeID
                 )
-            case .addNode, .addChildNode, .addSiblingNode(_), .moveFocus, .deleteFocusedNode:
+            case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .deleteFocusedNode:
                 continue
             }
         }

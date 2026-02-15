@@ -112,7 +112,7 @@ extension CanvasViewModel {
 
     private func isInlineEditingStartCommand(_ command: CanvasCommand) -> Bool {
         switch command {
-        case .addNode, .addChildNode, .addSiblingNode(_):
+        case .addNode, .addChildNode, .addSiblingNode:
             return true
         case .moveFocus, .deleteFocusedNode, .setNodeText:
             return false
