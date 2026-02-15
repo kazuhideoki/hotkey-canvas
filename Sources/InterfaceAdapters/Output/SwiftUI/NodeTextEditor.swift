@@ -147,14 +147,20 @@ private enum NodeTextEditorTextViewMeasurement {
             return max(1, textView.frame.height)
         }
 
-        _ = layoutManager.glyphRange(for: textContainer)
-        var textHeight = layoutManager.usedRect(for: textContainer).height
+        let glyphRange = layoutManager.glyphRange(for: textContainer)
+        var lineFragmentCount = 0
+        layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { _, _, _, _, _ in
+            lineFragmentCount += 1
+        }
         if layoutManager.extraLineFragmentTextContainer != nil {
-            textHeight += layoutManager.extraLineFragmentRect.height
+            lineFragmentCount += 1
         }
 
-        let minimumLineHeight = layoutManager.defaultLineHeight(for: textView.font ?? .systemFont(ofSize: 14))
-        let contentHeight = max(textHeight, minimumLineHeight)
+        let effectiveLineCount = max(lineFragmentCount, 1)
+        let lineHeight = layoutManager.defaultLineHeight(
+            for: textView.font ?? .systemFont(ofSize: 14)
+        )
+        let contentHeight = CGFloat(effectiveLineCount) * lineHeight
         let nodeHeight =
             contentHeight
             + (textView.textContainerInset.height * 2)
