@@ -21,6 +21,16 @@ public struct CanvasRect: Equatable, Sendable {
         minY + height
     }
 
+    /// Horizontal center point in canvas coordinates.
+    public var centerX: Double {
+        minX + (width / 2)
+    }
+
+    /// Vertical center point in canvas coordinates.
+    public var centerY: Double {
+        minY + (height / 2)
+    }
+
     /// Creates an immutable rectangle.
     /// - Parameters:
     ///   - minX: Left edge in canvas coordinates.
@@ -48,5 +58,29 @@ public struct CanvasRect: Equatable, Sendable {
             width: width + (safeHorizontal * 2),
             height: height + (safeVertical * 2)
         )
+    }
+
+    /// Returns a rectangle translated by the given offset.
+    /// - Parameters:
+    ///   - dx: Horizontal offset.
+    ///   - dy: Vertical offset.
+    /// - Returns: Translated rectangle.
+    public func translated(dx: Double, dy: Double) -> CanvasRect {
+        CanvasRect(
+            minX: minX + dx,
+            minY: minY + dy,
+            width: width,
+            height: height
+        )
+    }
+
+    /// Returns whether this rectangle overlaps with another rectangle.
+    /// - Parameter other: Rectangle to compare against.
+    /// - Returns: `true` when the two rectangles overlap.
+    public func intersects(_ other: CanvasRect) -> Bool {
+        minX < other.maxX
+            && maxX > other.minX
+            && minY < other.maxY
+            && maxY > other.minY
     }
 }
