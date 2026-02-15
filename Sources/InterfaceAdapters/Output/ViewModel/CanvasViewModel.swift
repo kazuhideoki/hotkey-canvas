@@ -67,8 +67,8 @@ public final class CanvasViewModel: ObservableObject {
         markDisplayed(requestID)
     }
 
-    public func commitNodeText(nodeID: CanvasNodeID, text: String) async {
-        await apply(commands: [.setNodeText(nodeID: nodeID, text: text)])
+    public func commitNodeText(nodeID: CanvasNodeID, text: String, nodeHeight: Double) async {
+        await apply(commands: [.setNodeText(nodeID: nodeID, text: text, nodeHeight: nodeHeight)])
     }
 }
 

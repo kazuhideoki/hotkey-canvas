@@ -7,6 +7,7 @@ public struct CanvasView: View {
     @State private var editingContext: NodeEditingContext?
     private let hotkeyTranslator: CanvasHotkeyTranslator
     private let editingStartResolver = NodeEditingStartResolver()
+    private let nodeTextHeightMeasurer = NodeTextHeightMeasurer()
 
     public init(
         viewModel: CanvasViewModel,
@@ -51,6 +52,9 @@ public struct CanvasView: View {
                                 text: editingTextBinding(for: node.id),
                                 selectAllOnFirstFocus: false,
                                 initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
+                                onMeasuredHeightChange: { measuredHeight in
+                                    updateEditingNodeHeight(for: node.id, measuredHeight: measuredHeight)
+                                },
                                 onCommit: {
                                     commitNodeEditing()
                                 },
@@ -67,7 +71,7 @@ public struct CanvasView: View {
                     }
                     .frame(
                         width: CGFloat(node.bounds.width),
-                        height: CGFloat(node.bounds.height),
+                        height: nodeHeight(for: node),
                         alignment: .topLeading
                     )
                     .offset(x: CGFloat(node.bounds.x), y: CGFloat(node.bounds.y))
@@ -108,8 +112,15 @@ extension CanvasView {
     private func centerPoint(for node: CanvasNode) -> CGPoint {
         CGPoint(
             x: node.bounds.x + (node.bounds.width / 2),
-            y: node.bounds.y + (node.bounds.height / 2)
+            y: node.bounds.y + (Double(nodeHeight(for: node)) / 2)
         )
+    }
+
+    private func nodeHeight(for node: CanvasNode) -> CGFloat {
+        guard let context = editingContext, context.nodeID == node.id else {
+            return CGFloat(node.bounds.height)
+        }
+        return CGFloat(context.nodeHeight)
     }
 
     private func editingTextBinding(for nodeID: CanvasNodeID) -> Binding<String> {
@@ -121,10 +132,11 @@ extension CanvasView {
                 return editingContext?.text ?? ""
             },
             set: { updatedText in
-                guard editingContext?.nodeID == nodeID else {
+                guard var context = editingContext, context.nodeID == nodeID else {
                     return
                 }
-                editingContext?.text = updatedText
+                context.text = updatedText
+                editingContext = context
             }
         )
     }
@@ -142,9 +154,16 @@ extension CanvasView {
         else {
             return false
         }
+        guard let node = nodesByID[context.nodeID] else {
+            return false
+        }
+
+        let measuredHeight = measuredNodeHeight(text: context.text, nodeWidth: node.bounds.width)
         editingContext = NodeEditingContext(
             nodeID: context.nodeID,
             text: context.text,
+            nodeWidth: node.bounds.width,
+            nodeHeight: measuredHeight,
             initialCursorPlacement: context.initialCursorPlacement
         )
         return true
@@ -164,17 +183,39 @@ extension CanvasView {
     private func commitNodeEditing(_ context: NodeEditingContext) {
         editingContext = nil
         Task {
-            await viewModel.commitNodeText(nodeID: context.nodeID, text: context.text)
+            await viewModel.commitNodeText(
+                nodeID: context.nodeID,
+                text: context.text,
+                nodeHeight: context.nodeHeight
+            )
         }
     }
 
     private func cancelNodeEditing() {
         editingContext = nil
     }
+
+    private func updateEditingNodeHeight(for nodeID: CanvasNodeID, measuredHeight: CGFloat) {
+        guard var context = editingContext, context.nodeID == nodeID else {
+            return
+        }
+        let roundedHeight = Double(ceil(measuredHeight))
+        guard context.nodeHeight != roundedHeight else {
+            return
+        }
+        context.nodeHeight = roundedHeight
+        editingContext = context
+    }
+
+    private func measuredNodeHeight(text: String, nodeWidth: Double) -> Double {
+        Double(nodeTextHeightMeasurer.measure(text: text, nodeWidth: CGFloat(nodeWidth)))
+    }
 }
 
 private struct NodeEditingContext: Equatable {
     let nodeID: CanvasNodeID
     var text: String
+    let nodeWidth: Double
+    var nodeHeight: Double
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
 }
