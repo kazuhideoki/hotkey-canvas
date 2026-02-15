@@ -33,6 +33,16 @@ func test_measure_emptyText_keepsMinimumHeight() {
     #expect(height >= 30)
 }
 
+@Test("NodeTextHeightMeasurer: empty one-line and text one-line use same height")
+func test_measure_emptyAndSingleLineText_matchHeight() {
+    let sut = NodeTextHeightMeasurer()
+
+    let emptyHeight = sut.measure(text: "", nodeWidth: 220)
+    let textHeight = sut.measure(text: "abc", nodeWidth: 220)
+
+    #expect(abs(emptyHeight - textHeight) <= 0.5)
+}
+
 @Test("NodeTextHeightMeasurer: long text is capped by maximum height")
 func test_measure_longText_isClampedToMaximumHeight() {
     let sut = NodeTextHeightMeasurer(maximumNodeHeight: 140)
