@@ -41,11 +41,7 @@ public final class CanvasViewModel: ObservableObject {
             guard shouldDisplayResult(for: requestID) else {
                 return
             }
-            let shouldStartEditing = shouldStartEditingAfterApply(
-                commands: commands,
-                previousNodeCount: nodes.count,
-                result: result
-            )
+            let shouldStartEditing = shouldStartEditingAfterApply(commands: commands, result: result)
             updateDisplay(with: result)
             pendingEditingNodeID = shouldStartEditing ? result.newState.focusedNodeID : nil
             markDisplayed(requestID)
@@ -103,13 +99,12 @@ extension CanvasViewModel {
 
     private func shouldStartEditingAfterApply(
         commands: [CanvasCommand],
-        previousNodeCount: Int,
         result: ApplyResult
     ) -> Bool {
         guard commands.contains(where: isInlineEditingStartCommand) else {
             return false
         }
-        guard result.newState.nodesByID.count > previousNodeCount else {
+        guard result.didAddNode else {
             return false
         }
         return result.newState.focusedNodeID != nil
