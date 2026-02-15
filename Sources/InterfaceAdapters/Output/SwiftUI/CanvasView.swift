@@ -339,7 +339,6 @@ extension CanvasView {
         editingContext = nil
     }
 
-<<<<<<< HEAD
     private func updateEditingNodeHeight(for nodeID: CanvasNodeID, measuredHeight: CGFloat) {
         guard var context = editingContext, context.nodeID == nodeID else {
             return
@@ -357,7 +356,8 @@ extension CanvasView {
 
     private func measuredNodeHeight(text: String, nodeWidth: Double) -> Double {
         Double(nodeTextHeightMeasurer.measure(text: text, nodeWidth: CGFloat(nodeWidth)))
-=======
+    }
+
     private func startInitialNodeEditingIfNeeded(nodeID: CanvasNodeID?) {
         guard editingContext == nil, let nodeID else {
             return
@@ -365,12 +365,14 @@ extension CanvasView {
         guard let node = viewModel.nodes.first(where: { $0.id == nodeID }) else {
             return
         }
+        let measuredHeight = measuredNodeHeight(text: node.text ?? "", nodeWidth: node.bounds.width)
         editingContext = NodeEditingContext(
             nodeID: nodeID,
             text: node.text ?? "",
+            nodeWidth: node.bounds.width,
+            nodeHeight: measuredHeight,
             initialCursorPlacement: .end
         )
->>>>>>> main
     }
 }
 

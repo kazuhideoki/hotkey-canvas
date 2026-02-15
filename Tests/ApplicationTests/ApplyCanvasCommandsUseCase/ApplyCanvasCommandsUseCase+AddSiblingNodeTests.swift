@@ -160,7 +160,7 @@ func test_apply_addSiblingNodeAbove_placesNodeAboveFocusedNode() async throws {
     let siblingID = try #require(result.newState.focusedNodeID)
     let sibling = try #require(result.newState.nodesByID[siblingID])
     #expect(sibling.bounds.x == focusedChild.bounds.x)
-    #expect(sibling.bounds.y == focusedChild.bounds.y - 120 - 24)
+    #expect(sibling.bounds.y == focusedChild.bounds.y - sibling.bounds.height - 24)
 }
 
 @Test("ApplyCanvasCommandsUseCase: addSiblingNode avoids occupied slot within same parent area")
