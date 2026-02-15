@@ -126,19 +126,10 @@ func test_apply_addSiblingNode_withoutParent_isNoOp() async throws {
     #expect(result.newState == graph)
 }
 
-<<<<<<< HEAD
 @Test("ApplyCanvasCommandsUseCase: addSiblingNode above places node directly above focused node")
 func test_apply_addSiblingNodeAbove_placesNodeAboveFocusedNode() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let focusedChildID = CanvasNodeID(rawValue: "focused-child")
-=======
-@Test("ApplyCanvasCommandsUseCase: addSiblingNode avoids occupied slot within same parent area")
-func test_apply_addSiblingNode_avoidsOccupiedSlotWithinSameArea() async throws {
-    let rootID = CanvasNodeID(rawValue: "root")
-    let focusedChildID = CanvasNodeID(rawValue: "focused-child")
-    let lowerSiblingID = CanvasNodeID(rawValue: "lower-sibling")
-
->>>>>>> main
     let root = CanvasNode(
         id: rootID,
         kind: .text,
@@ -149,12 +140,44 @@ func test_apply_addSiblingNode_avoidsOccupiedSlotWithinSameArea() async throws {
         id: focusedChildID,
         kind: .text,
         text: nil,
-<<<<<<< HEAD
         bounds: CanvasBounds(x: 80, y: 200, width: 220, height: 120)
     )
     let rootToFocusedChild = CanvasEdge(
         id: CanvasEdgeID(rawValue: "edge-root-focused-child"),
-=======
+        fromNodeID: rootID,
+        toNodeID: focusedChildID,
+        relationType: .parentChild
+    )
+    let graph = CanvasGraph(
+        nodesByID: [rootID: root, focusedChildID: focusedChild],
+        edgesByID: [rootToFocusedChild.id: rootToFocusedChild],
+        focusedNodeID: focusedChildID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addSiblingNode(position: .above)])
+
+    let siblingID = try #require(result.newState.focusedNodeID)
+    let sibling = try #require(result.newState.nodesByID[siblingID])
+    #expect(sibling.bounds.x == focusedChild.bounds.x)
+    #expect(sibling.bounds.y == focusedChild.bounds.y - 120 - 24)
+}
+
+@Test("ApplyCanvasCommandsUseCase: addSiblingNode avoids occupied slot within same parent area")
+func test_apply_addSiblingNode_avoidsOccupiedSlotWithinSameArea() async throws {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let focusedChildID = CanvasNodeID(rawValue: "focused-child")
+    let lowerSiblingID = CanvasNodeID(rawValue: "lower-sibling")
+    let root = CanvasNode(
+        id: rootID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)
+    )
+    let focusedChild = CanvasNode(
+        id: focusedChildID,
+        kind: .text,
+        text: nil,
         bounds: CanvasBounds(x: 140, y: 120, width: 220, height: 120)
     )
     let lowerSibling = CanvasNode(
@@ -165,16 +188,10 @@ func test_apply_addSiblingNode_avoidsOccupiedSlotWithinSameArea() async throws {
     )
     let rootToFocused = CanvasEdge(
         id: CanvasEdgeID(rawValue: "edge-root-focused"),
->>>>>>> main
         fromNodeID: rootID,
         toNodeID: focusedChildID,
         relationType: .parentChild
     )
-<<<<<<< HEAD
-    let graph = CanvasGraph(
-        nodesByID: [rootID: root, focusedChildID: focusedChild],
-        edgesByID: [rootToFocusedChild.id: rootToFocusedChild],
-=======
     let rootToLower = CanvasEdge(
         id: CanvasEdgeID(rawValue: "edge-root-lower"),
         fromNodeID: rootID,
@@ -184,20 +201,11 @@ func test_apply_addSiblingNode_avoidsOccupiedSlotWithinSameArea() async throws {
     let graph = CanvasGraph(
         nodesByID: [rootID: root, focusedChildID: focusedChild, lowerSiblingID: lowerSibling],
         edgesByID: [rootToFocused.id: rootToFocused, rootToLower.id: rootToLower],
->>>>>>> main
         focusedNodeID: focusedChildID
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-<<<<<<< HEAD
-    let result = try await sut.apply(commands: [.addSiblingNode(position: .above)])
-
-    let siblingID = try #require(result.newState.focusedNodeID)
-    let sibling = try #require(result.newState.nodesByID[siblingID])
-    #expect(sibling.bounds.x == focusedChild.bounds.x)
-    #expect(sibling.bounds.y == focusedChild.bounds.y - 120 - 24)
-=======
-    let result = try await sut.apply(commands: [.addSiblingNode])
+    let result = try await sut.apply(commands: [.addSiblingNode(position: .below)])
 
     let siblingID = try #require(result.newState.focusedNodeID)
     let newSibling = try #require(result.newState.nodesByID[siblingID])
@@ -243,5 +251,4 @@ private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds, spacing: Do
         && lhsRight > rhsLeft
         && lhsTop < rhsBottom
         && lhsBottom > rhsTop
->>>>>>> main
 }

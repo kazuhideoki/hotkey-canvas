@@ -156,7 +156,7 @@ func test_apply_addNoOp_doesNotSetPendingEditingNodeID_whenDisplayedSnapshotIsSt
     let inputPort = StaticCanvasEditingInputPort(graph: graph)
     let viewModel = CanvasViewModel(inputPort: inputPort)
 
-    await viewModel.apply(commands: [.addSiblingNode])
+    await viewModel.apply(commands: [.addSiblingNode(position: .below)])
 
     #expect(viewModel.pendingEditingNodeID == nil)
 }
@@ -179,7 +179,7 @@ func test_apply_addSiblingNode_setsPendingEditingNodeID() async throws {
     let inputPort = AddSiblingCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
 
-    await viewModel.apply(commands: [.addSiblingNode])
+    await viewModel.apply(commands: [.addSiblingNode(position: .below)])
 
     #expect(viewModel.nodes.count == 1)
     #expect(viewModel.pendingEditingNodeID == CanvasNodeID(rawValue: "sibling-1"))
@@ -211,12 +211,8 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: node.id
                 )
-<<<<<<< HEAD
-            case .addChildNode, .addSiblingNode(_), .moveFocus, .setNodeText:
-=======
                 didAddNode = true
-            case .addChildNode, .addSiblingNode, .moveFocus, .setNodeText:
->>>>>>> main
+            case .addChildNode, .addSiblingNode(_), .moveFocus, .setNodeText:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -304,12 +300,8 @@ extension OverlappingFailureCanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: node.id
                 )
-<<<<<<< HEAD
-            case .addChildNode, .addSiblingNode(_), .moveFocus, .setNodeText:
-=======
                 didAddNode = true
-            case .addChildNode, .addSiblingNode, .moveFocus, .setNodeText:
->>>>>>> main
+            case .addChildNode, .addSiblingNode(_), .moveFocus, .setNodeText:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -498,7 +490,7 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nextGraph.focusedNodeID
                 )
-            case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .deleteFocusedNode:
+            case .addNode, .addChildNode, .addSiblingNode(_), .moveFocus, .deleteFocusedNode:
                 continue
             }
         }
@@ -567,7 +559,14 @@ actor AddSiblingCanvasEditingInputPort: CanvasEditingInputPort {
     private var graph: CanvasGraph = .empty
 
     func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
-        guard commands.contains(.addSiblingNode) else {
+        guard
+            commands.contains(where: { command in
+                if case .addSiblingNode = command {
+                    return true
+                }
+                return false
+            })
+        else {
             return ApplyResult(newState: graph)
         }
         let nodeID = CanvasNodeID(rawValue: "sibling-1")

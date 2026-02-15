@@ -106,11 +106,11 @@ extension ApplyCanvasCommandsUseCase {
         return candidate
     }
 
-<<<<<<< HEAD
     func makeSiblingNodeBounds(
         in graph: CanvasGraph,
         focusedNode: CanvasNode,
-        position: CanvasSiblingNodePosition
+        position: CanvasSiblingNodePosition,
+        avoiding nodeIDs: Set<CanvasNodeID>
     ) -> CanvasBounds {
         switch position {
         case .above:
@@ -127,8 +127,8 @@ extension ApplyCanvasCommandsUseCase {
                 width: Self.newNodeWidth,
                 height: Self.newNodeHeight
             )
-            let sorted = sortedNodes(in: graph)
-            while let overlappedNode = firstOverlappedNode(for: candidate, in: sorted) {
+            let collisionNodes = nodesForPlacementCollision(in: graph, avoiding: nodeIDs)
+            while let overlappedNode = firstOverlappedNode(for: candidate, in: collisionNodes) {
                 candidate = CanvasBounds(
                     x: candidate.x,
                     y: overlappedNode.bounds.y + overlappedNode.bounds.height + Self.newNodeVerticalSpacing,
@@ -140,8 +140,6 @@ extension ApplyCanvasCommandsUseCase {
         }
     }
 
-    func calculateChildBounds(for parentNode: CanvasNode, in graph: CanvasGraph) -> CanvasBounds {
-=======
     /// Computes child-node bounds to the right of the parent while avoiding overlap.
     /// - Parameters:
     ///   - parentNode: Parent node used as placement anchor.
@@ -153,7 +151,6 @@ extension ApplyCanvasCommandsUseCase {
         in graph: CanvasGraph,
         avoiding nodeIDs: Set<CanvasNodeID>
     ) -> CanvasBounds {
->>>>>>> main
         let width = parentNode.bounds.width
         let height = parentNode.bounds.height
         let y = parentNode.bounds.y
