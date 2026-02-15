@@ -34,7 +34,6 @@ struct NodeTextEditor: NSViewRepresentable {
         nsView.onCommit = onCommit
         nsView.onCancel = onCancel
         nsView.typingAttributes[.foregroundColor] = NSColor.white
-        context.coordinator.pushMeasuredHeight(from: nsView)
         focusEditorIfNeeded(nsView, coordinator: context.coordinator)
     }
 
@@ -73,10 +72,13 @@ extension NodeTextEditor {
                 return
             }
             text.wrappedValue = textView.string
-            pushMeasuredHeight(from: textView)
+            pushMeasuredHeightIfReady(from: textView)
         }
 
-        func pushMeasuredHeight(from textView: NSTextView) {
+        func pushMeasuredHeightIfReady(from textView: NSTextView) {
+            guard textView.bounds.width > 1 else {
+                return
+            }
             onMeasuredHeightChange(NodeTextEditorTextViewMeasurement.nodeHeight(for: textView))
         }
     }
@@ -114,6 +116,7 @@ extension NodeTextEditor {
             } else if !coordinator.hasFocusedEditor {
                 placeInitialCursor(textView, placement: coordinator.initialCursorPlacement)
             }
+            coordinator.pushMeasuredHeightIfReady(from: textView)
             coordinator.hasFocusedEditor = true
         }
     }

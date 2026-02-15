@@ -5,6 +5,8 @@ import Domain
 // Background: Inline editing needs a command path to mutate node text content.
 // Responsibility: Update text of an existing node and normalize empty strings to nil.
 extension ApplyCanvasCommandsUseCase {
+    private static let minimumNodeHeight: Double = 1
+
     func setNodeText(
         in graph: CanvasGraph,
         nodeID: CanvasNodeID,
@@ -16,7 +18,14 @@ extension ApplyCanvasCommandsUseCase {
         }
 
         let normalizedText = text.isEmpty ? nil : text
-        let normalizedHeight = max(nodeHeight, 1)
+        let fallbackHeight =
+            if node.bounds.height.isFinite, node.bounds.height > Self.minimumNodeHeight {
+                node.bounds.height
+            } else {
+                Self.minimumNodeHeight
+            }
+        let proposedHeight = nodeHeight.isFinite ? nodeHeight : fallbackHeight
+        let normalizedHeight = max(proposedHeight, Self.minimumNodeHeight)
         if node.text == normalizedText, node.bounds.height == normalizedHeight {
             return graph
         }
