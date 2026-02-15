@@ -42,33 +42,6 @@ public struct CanvasView: View {
         let horizontalOffset = -contentBounds.minX
         let verticalOffset = -contentBounds.minY
 
-<<<<<<< HEAD
-            ForEach(viewModel.nodes, id: \.id) { node in
-                let isFocused = viewModel.focusedNodeID == node.id
-                let isEditing = editingContext?.nodeID == node.id
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(nsColor: .windowBackgroundColor))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(
-                                isEditing
-                                    ? Color(nsColor: .systemPink)
-                                    : (isFocused ? Color.accentColor : Color(nsColor: .separatorColor)),
-                                lineWidth: (isEditing || isFocused) ? 2 : 1
-                            )
-                    )
-                    .overlay(alignment: .topLeading) {
-                        if editingContext?.nodeID == node.id {
-                            NodeTextEditor(
-                                text: editingTextBinding(for: node.id),
-                                selectAllOnFirstFocus: false,
-                                initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
-                                onCommit: {
-                                    commitNodeEditing()
-                                },
-                                onCancel: {
-                                    cancelNodeEditing()
-=======
         return ScrollViewReader { scrollProxy in
             ZStack(alignment: .topLeading) {
                 Color(nsColor: .textBackgroundColor)
@@ -94,7 +67,6 @@ public struct CanvasView: View {
                                             verticalOffset: verticalOffset
                                         )
                                     )
->>>>>>> main
                                 }
                                 .stroke(Color(nsColor: .separatorColor), lineWidth: 1.5)
                             }
@@ -102,13 +74,16 @@ public struct CanvasView: View {
 
                         ForEach(displayNodes, id: \.id) { node in
                             let isFocused = viewModel.focusedNodeID == node.id
+                            let isEditing = editingContext?.nodeID == node.id
                             RoundedRectangle(cornerRadius: 10)
                                 .fill(Color(nsColor: .windowBackgroundColor))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
                                         .stroke(
-                                            isFocused ? Color.accentColor : Color(nsColor: .separatorColor),
-                                            lineWidth: isFocused ? 2 : 1
+                                            isEditing
+                                                ? Color(nsColor: .systemPink)
+                                                : (isFocused ? Color.accentColor : Color(nsColor: .separatorColor)),
+                                            lineWidth: (isEditing || isFocused) ? 2 : 1
                                         )
                                 )
                                 .overlay(alignment: .topLeading) {
@@ -174,7 +149,11 @@ public struct CanvasView: View {
                 // Keep key capture active without intercepting canvas rendering.
                 .allowsHitTesting(false)
             }
-            .frame(minWidth: 900, minHeight: 600, alignment: .topLeading)
+            .frame(
+                minWidth: Self.minimumCanvasWidth,
+                minHeight: Self.minimumCanvasHeight,
+                alignment: .topLeading
+            )
             .task {
                 await viewModel.onAppear()
                 focusCurrentNode(with: scrollProxy)
