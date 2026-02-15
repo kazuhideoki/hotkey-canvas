@@ -9,6 +9,7 @@ import Foundation
 extension ApplyCanvasCommandsUseCase {
     private static let nodeTextLineHeight: Double = 20
     private static let nodeTextVerticalPadding: Double = 24
+    private static let minimumTextNodeHeight: Double = 120
 
     func setNodeText(in graph: CanvasGraph, nodeID: CanvasNodeID, text: String) throws -> CanvasGraph {
         guard let node = graph.nodesByID[nodeID] else {
@@ -32,7 +33,7 @@ extension ApplyCanvasCommandsUseCase {
     }
 
     private func resizedBounds(for bounds: CanvasBounds, text: String?) -> CanvasBounds {
-        let requiredHeight = requiredHeight(for: text, minimumHeight: bounds.height)
+        let requiredHeight = requiredHeight(for: text, baselineHeight: baselineHeight(for: bounds))
         guard requiredHeight != bounds.height else {
             return bounds
         }
@@ -44,9 +45,13 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 
-    private func requiredHeight(for text: String?, minimumHeight: Double) -> Double {
+    private func baselineHeight(for bounds: CanvasBounds) -> Double {
+        min(bounds.height, Self.minimumTextNodeHeight)
+    }
+
+    private func requiredHeight(for text: String?, baselineHeight: Double) -> Double {
         guard let text, !text.isEmpty else {
-            return minimumHeight
+            return baselineHeight
         }
         let normalizedText =
             text
@@ -57,6 +62,6 @@ extension ApplyCanvasCommandsUseCase {
             .split(separator: "\n", omittingEmptySubsequences: false)
             .count
         let contentHeight = (Double(max(1, lineCount)) * Self.nodeTextLineHeight) + Self.nodeTextVerticalPadding
-        return max(minimumHeight, contentHeight)
+        return max(baselineHeight, contentHeight)
     }
 }
