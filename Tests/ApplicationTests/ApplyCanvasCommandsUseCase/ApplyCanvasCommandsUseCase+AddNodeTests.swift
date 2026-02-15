@@ -75,24 +75,7 @@ func test_apply_addNode_resolvesOverlapByMovingBothAreas() async throws {
         bounds: CanvasBounds(x: 140, y: 250, width: 220, height: 120)
     )
     let graph = CanvasGraph(
-<<<<<<< HEAD
-        nodesByID: [
-            focusedNodeID: CanvasNode(
-                id: focusedNodeID,
-                kind: .text,
-                text: nil,
-                bounds: CanvasBounds(x: 140, y: 120, width: 220, height: 120)
-            ),
-            blockerNodeID: CanvasNode(
-                id: blockerNodeID,
-                kind: .text,
-                text: nil,
-                bounds: CanvasBounds(x: 140, y: 250, width: 220, height: 120)
-            )
-        ],
-=======
         nodesByID: [focusedNodeID: focusedNode, blockerNodeID: blockerNode],
->>>>>>> main
         edgesByID: [:],
         focusedNodeID: focusedNodeID
     )
