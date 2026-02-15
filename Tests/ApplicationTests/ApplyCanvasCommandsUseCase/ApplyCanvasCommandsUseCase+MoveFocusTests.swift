@@ -109,7 +109,7 @@ func test_apply_moveFocus_prefersAlignedNode_overOffsetNearNode() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 300, y: 100, width: 100, height: 100)
-            )
+            ),
         ],
         edgesByID: [:],
         focusedNodeID: centerID
