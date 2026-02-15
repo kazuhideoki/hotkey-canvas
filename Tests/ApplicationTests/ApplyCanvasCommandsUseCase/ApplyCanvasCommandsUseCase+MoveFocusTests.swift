@@ -84,3 +84,39 @@ func test_apply_moveFocus_assignsFallbackFocus_whenFocusedNodeIDIsNil() async th
 
     #expect(result.newState.focusedNodeID == singleNodeID)
 }
+
+@Test("ApplyCanvasCommandsUseCase: moveFocus prefers aligned node over heavily offset near node")
+func test_apply_moveFocus_prefersAlignedNode_overOffsetNearNode() async throws {
+    let centerID = CanvasNodeID(rawValue: "center")
+    let rightOffsetNearID = CanvasNodeID(rawValue: "right-offset-near")
+    let rightAlignedFarID = CanvasNodeID(rawValue: "right-aligned-far")
+    let graph = CanvasGraph(
+        nodesByID: [
+            centerID: CanvasNode(
+                id: centerID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 100, y: 100, width: 100, height: 100)
+            ),
+            rightOffsetNearID: CanvasNode(
+                id: rightOffsetNearID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 180, y: 320, width: 100, height: 100)
+            ),
+            rightAlignedFarID: CanvasNode(
+                id: rightAlignedFarID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 300, y: 100, width: 100, height: 100)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: centerID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.moveFocus(.right)])
+
+    #expect(result.newState.focusedNodeID == rightAlignedFarID)
+}
