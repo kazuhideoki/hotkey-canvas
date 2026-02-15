@@ -84,15 +84,12 @@ public final class CanvasKeyCaptureNSView: NSView {
             guard self.isCaptureEnabled else {
                 return
             }
-<<<<<<< HEAD
-=======
             guard self.focusRequestID == requestID else {
                 return
             }
             guard window.firstResponder !== self else {
                 return
             }
->>>>>>> main
             window.makeFirstResponder(self)
         }
     }

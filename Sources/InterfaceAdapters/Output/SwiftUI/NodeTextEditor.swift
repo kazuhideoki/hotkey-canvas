@@ -132,11 +132,6 @@ extension NodeTextEditor {
                 )
                 return
             }
-<<<<<<< HEAD
-            guard window.makeFirstResponder(textView), window.firstResponder === textView else {
-                return
-            }
-=======
 
             guard window.firstResponder !== textView else {
                 coordinator.hasFocusedEditor = true
@@ -157,7 +152,6 @@ extension NodeTextEditor {
                 return
             }
 
->>>>>>> main
             if coordinator.selectAllOnFirstFocus, !coordinator.hasFocusedEditor {
                 textView.selectAll(nil)
             } else if !coordinator.hasFocusedEditor {
