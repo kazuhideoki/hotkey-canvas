@@ -33,7 +33,7 @@ func test_apply_addSiblingNode_createsSiblingUnderSameParent() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    let result = try await sut.apply(commands: [.addSiblingNode])
+    let result = try await sut.apply(commands: [.addSiblingNode(position: .below)])
 
     #expect(result.newState.nodesByID.count == 3)
     let siblingID = try #require(result.newState.focusedNodeID)
@@ -85,7 +85,7 @@ func test_apply_addSiblingNode_avoidsOverlapByMovingDownward() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    let result = try await sut.apply(commands: [.addSiblingNode])
+    let result = try await sut.apply(commands: [.addSiblingNode(position: .below)])
 
     let siblingID = try #require(result.newState.focusedNodeID)
     let sibling = try #require(result.newState.nodesByID[siblingID])
@@ -110,7 +110,44 @@ func test_apply_addSiblingNode_withoutParent_isNoOp() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    let result = try await sut.apply(commands: [.addSiblingNode])
+    let result = try await sut.apply(commands: [.addSiblingNode(position: .below)])
 
     #expect(result.newState == graph)
+}
+
+@Test("ApplyCanvasCommandsUseCase: addSiblingNode above places node directly above focused node")
+func test_apply_addSiblingNodeAbove_placesNodeAboveFocusedNode() async throws {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let focusedChildID = CanvasNodeID(rawValue: "focused-child")
+    let root = CanvasNode(
+        id: rootID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)
+    )
+    let focusedChild = CanvasNode(
+        id: focusedChildID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 80, y: 200, width: 220, height: 120)
+    )
+    let rootToFocusedChild = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-root-focused-child"),
+        fromNodeID: rootID,
+        toNodeID: focusedChildID,
+        relationType: .parentChild
+    )
+    let graph = CanvasGraph(
+        nodesByID: [rootID: root, focusedChildID: focusedChild],
+        edgesByID: [rootToFocusedChild.id: rootToFocusedChild],
+        focusedNodeID: focusedChildID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addSiblingNode(position: .above)])
+
+    let siblingID = try #require(result.newState.focusedNodeID)
+    let sibling = try #require(result.newState.nodesByID[siblingID])
+    #expect(sibling.bounds.x == focusedChild.bounds.x)
+    #expect(sibling.bounds.y == focusedChild.bounds.y - 120 - 24)
 }

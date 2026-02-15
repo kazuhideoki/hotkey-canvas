@@ -46,7 +46,30 @@ func test_translate_enterWithoutShift_returnsAddSiblingNode() throws {
 
     let commands = sut.translate(event)
 
-    #expect(commands == [.addSiblingNode])
+    #expect(commands == [.addSiblingNode(position: .below)])
+}
+
+@Test("CanvasHotkeyTranslator: Option+Enter maps to addSiblingNode above command")
+func test_translate_optionEnter_returnsAddSiblingNodeAbove() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.option],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "\r",
+            charactersIgnoringModifiers: "\r",
+            isARepeat: false,
+            keyCode: 36
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.addSiblingNode(position: .above)])
 }
 
 @Test("CanvasHotkeyTranslator: Fn+Enter maps to no command")

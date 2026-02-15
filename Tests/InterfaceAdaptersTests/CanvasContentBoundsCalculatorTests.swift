@@ -31,7 +31,7 @@ func test_calculate_nodesWithNegativeCoordinates_expandsInAllDirections() {
             kind: .text,
             text: nil,
             bounds: CanvasBounds(x: 320, y: 260, width: 200, height: 100)
-        )
+        ),
     ]
 
     let result = CanvasContentBoundsCalculator.calculate(

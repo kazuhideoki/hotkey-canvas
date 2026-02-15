@@ -1,10 +1,16 @@
 public enum CanvasCommand: Equatable, Sendable {
     case addNode
     case addChildNode
-    case addSiblingNode
+    case addSiblingNode(position: CanvasSiblingNodePosition)
     case moveFocus(CanvasFocusDirection)
     case deleteFocusedNode
     case setNodeText(nodeID: CanvasNodeID, text: String)
+}
+
+/// Position used when adding a sibling node relative to focused node.
+public enum CanvasSiblingNodePosition: Equatable, Sendable {
+    case above
+    case below
 }
 
 /// Direction used to move node focus on canvas.
