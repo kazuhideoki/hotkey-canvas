@@ -1,11 +1,14 @@
 import AppKit
 import Domain
+import Foundation
 import SwiftUI
 
 public struct CanvasView: View {
     private static let minimumCanvasWidth: Double = 900
     private static let minimumCanvasHeight: Double = 600
     private static let canvasMargin: Double = 120
+    private static let nodeTextLineHeight: Double = 20
+    private static let nodeTextVerticalPadding: Double = 24
 
     @StateObject private var viewModel: CanvasViewModel
     @State private var editingContext: NodeEditingContext?
@@ -21,9 +24,10 @@ public struct CanvasView: View {
     }
 
     public var body: some View {
-        let nodesByID = Dictionary(uniqueKeysWithValues: viewModel.nodes.map { ($0.id, $0) })
+        let displayNodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
+        let nodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
         let contentBounds = CanvasContentBoundsCalculator.calculate(
-            nodes: viewModel.nodes,
+            nodes: displayNodes,
             minimumWidth: Self.minimumCanvasWidth,
             minimumHeight: Self.minimumCanvasHeight,
             margin: Self.canvasMargin
@@ -61,7 +65,7 @@ public struct CanvasView: View {
                             }
                         }
 
-                        ForEach(viewModel.nodes, id: \.id) { node in
+                        ForEach(displayNodes, id: \.id) { node in
                             let isFocused = viewModel.focusedNodeID == node.id
                             RoundedRectangle(cornerRadius: 10)
                                 .fill(Color(nsColor: .windowBackgroundColor))
@@ -148,6 +152,42 @@ public struct CanvasView: View {
 }
 
 extension CanvasView {
+    private func displayNodeForCurrentEditingState(_ node: CanvasNode) -> CanvasNode {
+        guard let editingContext, editingContext.nodeID == node.id else {
+            return node
+        }
+        let requiredHeight = requiredEditingHeight(for: editingContext.text, minimumHeight: node.bounds.height)
+        guard requiredHeight != node.bounds.height else {
+            return node
+        }
+        let resizedBounds = CanvasBounds(
+            x: node.bounds.x,
+            y: node.bounds.y,
+            width: node.bounds.width,
+            height: requiredHeight
+        )
+        return CanvasNode(
+            id: node.id,
+            kind: node.kind,
+            text: node.text,
+            bounds: resizedBounds,
+            metadata: node.metadata
+        )
+    }
+
+    private func requiredEditingHeight(for text: String, minimumHeight: Double) -> Double {
+        let normalizedText =
+            text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+        let lineCount =
+            normalizedText
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .count
+        let contentHeight = (Double(max(1, lineCount)) * Self.nodeTextLineHeight) + Self.nodeTextVerticalPadding
+        return max(minimumHeight, contentHeight)
+    }
+
     private func centerPoint(
         for node: CanvasNode,
         horizontalOffset: Double,
