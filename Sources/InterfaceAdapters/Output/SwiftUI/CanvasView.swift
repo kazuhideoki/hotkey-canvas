@@ -9,6 +9,7 @@ public struct CanvasView: View {
     private static let canvasMargin: Double = 120
     private static let nodeTextLineHeight: Double = 20
     private static let nodeTextVerticalPadding: Double = 24
+    private static let minimumTextNodeHeight: Double = 120
 
     @StateObject private var viewModel: CanvasViewModel
     @State private var editingContext: NodeEditingContext?
@@ -156,7 +157,10 @@ extension CanvasView {
         guard let editingContext, editingContext.nodeID == node.id else {
             return node
         }
-        let requiredHeight = requiredEditingHeight(for: editingContext.text, minimumHeight: node.bounds.height)
+        let requiredHeight = requiredEditingHeight(
+            for: editingContext.text,
+            baselineHeight: baselineHeight(for: node.bounds)
+        )
         guard requiredHeight != node.bounds.height else {
             return node
         }
@@ -175,7 +179,11 @@ extension CanvasView {
         )
     }
 
-    private func requiredEditingHeight(for text: String, minimumHeight: Double) -> Double {
+    private func baselineHeight(for bounds: CanvasBounds) -> Double {
+        min(bounds.height, Self.minimumTextNodeHeight)
+    }
+
+    private func requiredEditingHeight(for text: String, baselineHeight: Double) -> Double {
         let normalizedText =
             text
             .replacingOccurrences(of: "\r\n", with: "\n")
@@ -185,7 +193,7 @@ extension CanvasView {
             .split(separator: "\n", omittingEmptySubsequences: false)
             .count
         let contentHeight = (Double(max(1, lineCount)) * Self.nodeTextLineHeight) + Self.nodeTextVerticalPadding
-        return max(minimumHeight, contentHeight)
+        return max(baselineHeight, contentHeight)
     }
 
     private func centerPoint(
