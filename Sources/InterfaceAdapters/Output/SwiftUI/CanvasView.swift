@@ -103,7 +103,7 @@ public struct CanvasView: View {
                                         .padding(6)
                                     } else {
                                         Text(node.text ?? "")
-                                            .font(.system(size: 14, weight: .medium))
+                                            .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
                                             .padding(12)
                                     }
                                 }
