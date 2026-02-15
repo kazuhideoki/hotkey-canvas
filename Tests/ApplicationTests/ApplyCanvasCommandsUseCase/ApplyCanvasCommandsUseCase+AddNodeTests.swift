@@ -62,21 +62,20 @@ func test_apply_addNode_placesNodeBelowFocusedNode() async throws {
 func test_apply_addNode_resolvesOverlapByMovingBothAreas() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let blockerNodeID = CanvasNodeID(rawValue: "blocker")
+    let focusedNode = CanvasNode(
+        id: focusedNodeID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 140, y: 120, width: 220, height: 120)
+    )
+    let blockerNode = CanvasNode(
+        id: blockerNodeID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 140, y: 250, width: 220, height: 120)
+    )
     let graph = CanvasGraph(
-        nodesByID: [
-            focusedNodeID: CanvasNode(
-                id: focusedNodeID,
-                kind: .text,
-                text: nil,
-                bounds: CanvasBounds(x: 140, y: 120, width: 220, height: 120)
-            ),
-            blockerNodeID: CanvasNode(
-                id: blockerNodeID,
-                kind: .text,
-                text: nil,
-                bounds: CanvasBounds(x: 140, y: 250, width: 220, height: 120)
-            )
-        ],
+        nodesByID: [focusedNodeID: focusedNode, blockerNodeID: blockerNode],
         edgesByID: [:],
         focusedNodeID: focusedNodeID
     )
@@ -93,6 +92,48 @@ func test_apply_addNode_resolvesOverlapByMovingBothAreas() async throws {
     #expect(blockerAfter.bounds.x != 140 || blockerAfter.bounds.y != 250)
     #expect(newNode.bounds.y < 394)
     #expect(boundsOverlap(newNode.bounds, blockerAfter.bounds, spacing: 32) == false)
+}
+
+@Test("ApplyCanvasCommandsUseCase: addNode keeps new node below focused area")
+func test_apply_addNode_keepsNewNodeBelowFocusedArea() async throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let descendantNodeID = CanvasNodeID(rawValue: "descendant")
+    let edgeID = CanvasEdgeID(rawValue: "edge-focused-descendant")
+    let focusedNode = CanvasNode(
+        id: focusedNodeID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 140, y: 0, width: 220, height: 120)
+    )
+    let descendantNode = CanvasNode(
+        id: descendantNodeID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 420, y: 400, width: 220, height: 120)
+    )
+    let graph = CanvasGraph(
+        nodesByID: [focusedNodeID: focusedNode, descendantNodeID: descendantNode],
+        edgesByID: [
+            edgeID: CanvasEdge(
+                id: edgeID,
+                fromNodeID: focusedNodeID,
+                toNodeID: descendantNodeID,
+                relationType: .parentChild
+            )
+        ],
+        focusedNodeID: focusedNodeID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addNode])
+
+    let newNodeID = try #require(result.newState.focusedNodeID)
+    let newNode = try #require(result.newState.nodesByID[newNodeID])
+    let focusedAfter = try #require(result.newState.nodesByID[focusedNodeID])
+
+    #expect(newNode.bounds.x == focusedAfter.bounds.x)
+    #expect(newNode.bounds.y > focusedAfter.bounds.y)
+    #expect(newNode.bounds.y >= 552)
 }
 
 private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds, spacing: Double = 0) -> Bool {
