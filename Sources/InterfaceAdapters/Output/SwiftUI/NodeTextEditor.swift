@@ -33,7 +33,9 @@ struct NodeTextEditor: NSViewRepresentable {
         }
         nsView.onCommit = onCommit
         nsView.onCancel = onCancel
-        nsView.typingAttributes[.foregroundColor] = NSColor.white
+        nsView.typingAttributes[.foregroundColor] = NSColor.labelColor
+        nsView.textColor = .labelColor
+        nsView.insertionPointColor = .labelColor
         focusEditorIfNeeded(nsView, coordinator: context.coordinator)
     }
 
@@ -54,6 +56,8 @@ extension NodeTextEditor {
         let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
         let onMeasuredHeightChange: (CGFloat) -> Void
         var hasFocusedEditor: Bool = false
+        /// Monotonic token used to cancel stale focus retries from older update cycles.
+        var focusRequestID: UInt64 = 0
 
         init(
             text: Binding<String>,
@@ -87,8 +91,8 @@ extension NodeTextEditor {
         textView.drawsBackground = false
         textView.backgroundColor = .clear
         textView.font = .systemFont(ofSize: 14, weight: .medium)
-        textView.textColor = .white
-        textView.insertionPointColor = .white
+        textView.textColor = .labelColor
+        textView.insertionPointColor = .labelColor
         textView.isRichText = false
         textView.isHorizontallyResizable = false
         textView.isVerticallyResizable = true
@@ -99,18 +103,68 @@ extension NodeTextEditor {
             width: CGFloat.greatestFiniteMagnitude,
             height: CGFloat.greatestFiniteMagnitude
         )
-        textView.typingAttributes = [.foregroundColor: NSColor.white]
+        textView.typingAttributes = [.foregroundColor: NSColor.labelColor]
     }
 
     private func focusEditorIfNeeded(
         _ textView: NodeTextEditorTextView,
         coordinator: Coordinator
     ) {
-        DispatchQueue.main.async {
-            guard let window = textView.window, window.firstResponder !== textView else {
+        // Cancel outstanding retries and start a new focus cycle for the latest editor state.
+        coordinator.focusRequestID &+= 1
+        let requestID = coordinator.focusRequestID
+        attemptFocus(
+            textView,
+            coordinator: coordinator,
+            requestID: requestID,
+            remainingAttempts: 20
+        )
+    }
+
+    private func attemptFocus(
+        _ textView: NodeTextEditorTextView,
+        coordinator: Coordinator,
+        requestID: UInt64,
+        remainingAttempts: Int
+    ) {
+        // Retry with a short delay because first responder handoff can race with SwiftUI view updates.
+        let delay: DispatchTimeInterval = remainingAttempts == 20 ? .milliseconds(0) : .milliseconds(10)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard coordinator.focusRequestID == requestID else {
                 return
             }
-            window.makeFirstResponder(textView)
+            guard let window = textView.window else {
+                guard remainingAttempts > 1 else {
+                    return
+                }
+                attemptFocus(
+                    textView,
+                    coordinator: coordinator,
+                    requestID: requestID,
+                    remainingAttempts: remainingAttempts - 1
+                )
+                return
+            }
+
+            guard window.firstResponder !== textView else {
+                coordinator.hasFocusedEditor = true
+                return
+            }
+
+            let becameFirstResponder = window.makeFirstResponder(textView)
+            guard becameFirstResponder else {
+                guard remainingAttempts > 1 else {
+                    return
+                }
+                attemptFocus(
+                    textView,
+                    coordinator: coordinator,
+                    requestID: requestID,
+                    remainingAttempts: remainingAttempts - 1
+                )
+                return
+            }
+
             if coordinator.selectAllOnFirstFocus, !coordinator.hasFocusedEditor {
                 textView.selectAll(nil)
             } else if !coordinator.hasFocusedEditor {

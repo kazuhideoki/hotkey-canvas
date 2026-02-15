@@ -102,6 +102,89 @@ func test_onAppear_reflectsHistoryFlags() async throws {
     #expect(viewModel.nodes.count == 1)
 }
 
+@MainActor
+@Test("CanvasViewModel: add-node apply publishes pending editing node")
+func test_apply_addNode_setsPendingEditingNodeID() async throws {
+    let inputPort = UndoRedoCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.apply(commands: [.addNode])
+
+    #expect(viewModel.pendingEditingNodeID == CanvasNodeID(rawValue: "node-1"))
+}
+
+@MainActor
+@Test("CanvasViewModel: non-add apply does not publish pending editing node")
+func test_apply_nonAddCommand_doesNotSetPendingEditingNodeID() async throws {
+    let nodeID = CanvasNodeID(rawValue: "focused")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: "before",
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID
+    )
+    let inputPort = StaticCanvasEditingInputPort(graph: graph)
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.apply(commands: [.setNodeText(nodeID: nodeID, text: "after")])
+
+    #expect(viewModel.pendingEditingNodeID == nil)
+}
+
+@MainActor
+@Test("CanvasViewModel: add no-op does not publish pending editing node when displayed nodes are stale")
+func test_apply_addNoOp_doesNotSetPendingEditingNodeID_whenDisplayedSnapshotIsStale() async throws {
+    let nodeID = CanvasNodeID(rawValue: "focused")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: "existing",
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID
+    )
+    let inputPort = StaticCanvasEditingInputPort(graph: graph)
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.apply(commands: [.addSiblingNode])
+
+    #expect(viewModel.pendingEditingNodeID == nil)
+}
+
+@MainActor
+@Test("CanvasViewModel: add-child apply publishes pending editing node")
+func test_apply_addChildNode_setsPendingEditingNodeID() async throws {
+    let inputPort = AddChildCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.apply(commands: [.addChildNode])
+
+    #expect(viewModel.nodes.count == 1)
+    #expect(viewModel.pendingEditingNodeID == CanvasNodeID(rawValue: "child-1"))
+}
+
+@MainActor
+@Test("CanvasViewModel: add-sibling apply publishes pending editing node")
+func test_apply_addSiblingNode_setsPendingEditingNodeID() async throws {
+    let inputPort = AddSiblingCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.apply(commands: [.addSiblingNode])
+
+    #expect(viewModel.nodes.count == 1)
+    #expect(viewModel.pendingEditingNodeID == CanvasNodeID(rawValue: "sibling-1"))
+}
+
 actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
     private var graph: CanvasGraph = .empty
     private let getDelayNanoseconds: UInt64
@@ -112,6 +195,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
 
     func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
         var nextGraph = graph
+        var didAddNode = false
         for command in commands {
             switch command {
             case .addNode:
@@ -127,6 +211,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: node.id
                 )
+                didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .setNodeText:
                 continue
             case .deleteFocusedNode:
@@ -134,7 +219,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
             }
         }
         graph = nextGraph
-        return ApplyResult(newState: nextGraph)
+        return ApplyResult(newState: nextGraph, didAddNode: didAddNode)
     }
 
     func getCurrentGraph() async -> CanvasGraph {
@@ -199,6 +284,7 @@ actor OverlappingFailureCanvasEditingInputPort: CanvasEditingInputPort {
 extension OverlappingFailureCanvasEditingInputPort {
     private func applyCommands(_ commands: [CanvasCommand], to currentGraph: CanvasGraph) throws -> ApplyResult {
         var nextGraph = currentGraph
+        var didAddNode = false
         for command in commands {
             switch command {
             case .addNode:
@@ -214,6 +300,7 @@ extension OverlappingFailureCanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: node.id
                 )
+                didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .setNodeText:
                 continue
             case .deleteFocusedNode:
@@ -221,7 +308,7 @@ extension OverlappingFailureCanvasEditingInputPort {
             }
         }
         graph = nextGraph
-        return ApplyResult(newState: nextGraph)
+        return ApplyResult(newState: nextGraph, didAddNode: didAddNode)
     }
 }
 
@@ -237,10 +324,10 @@ actor ReorderedSuccessCanvasEditingInputPort: CanvasEditingInputPort {
             await withCheckedContinuation { continuation in
                 firstApplyContinuation = continuation
             }
-            return ApplyResult(newState: makeGraph(nodeCount: 1))
+            return ApplyResult(newState: makeGraph(nodeCount: 1), didAddNode: true)
         }
 
-        return ApplyResult(newState: makeGraph(nodeCount: 2))
+        return ApplyResult(newState: makeGraph(nodeCount: 2), didAddNode: true)
     }
 
     func getCurrentGraph() async -> CanvasGraph {
@@ -289,7 +376,7 @@ actor UndoRedoCanvasEditingInputPort: CanvasEditingInputPort {
             edgesByID: nextGraph.edgesByID,
             focusedNodeID: nodeID
         )
-        return makeResult(graph)
+        return makeResult(graph, didAddNode: true)
     }
 
     func undo() async -> ApplyResult {
@@ -320,8 +407,13 @@ actor UndoRedoCanvasEditingInputPort: CanvasEditingInputPort {
 }
 
 extension UndoRedoCanvasEditingInputPort {
-    private func makeResult(_ graph: CanvasGraph) -> ApplyResult {
-        ApplyResult(newState: graph, canUndo: !undoStack.isEmpty, canRedo: !redoStack.isEmpty)
+    private func makeResult(_ graph: CanvasGraph, didAddNode: Bool = false) -> ApplyResult {
+        ApplyResult(
+            newState: graph,
+            canUndo: !undoStack.isEmpty,
+            canRedo: !redoStack.isEmpty,
+            didAddNode: didAddNode
+        )
     }
 }
 
@@ -346,7 +438,7 @@ actor ApplyUndoReorderCanvasEditingInputPort: CanvasEditingInputPort {
             edgesByID: [:],
             focusedNodeID: nodeID
         )
-        return ApplyResult(newState: graph, canUndo: true, canRedo: false)
+        return ApplyResult(newState: graph, canUndo: true, canRedo: false, didAddNode: true)
     }
 
     func undo() async -> ApplyResult {
@@ -369,6 +461,137 @@ actor ApplyUndoReorderCanvasEditingInputPort: CanvasEditingInputPort {
     func releaseApply() {
         applyContinuation?.resume()
         applyContinuation = nil
+    }
+}
+
+actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph
+
+    init(graph: CanvasGraph) {
+        self.graph = graph
+    }
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        var nextGraph = graph
+        for command in commands {
+            switch command {
+            case .setNodeText(let nodeID, let text):
+                guard let node = nextGraph.nodesByID[nodeID] else {
+                    continue
+                }
+                let updatedNode = CanvasNode(
+                    id: node.id,
+                    kind: node.kind,
+                    text: text,
+                    bounds: node.bounds
+                )
+                nextGraph = CanvasGraph(
+                    nodesByID: nextGraph.nodesByID.merging([nodeID: updatedNode], uniquingKeysWith: { _, new in new }),
+                    edgesByID: nextGraph.edgesByID,
+                    focusedNodeID: nextGraph.focusedNodeID
+                )
+            case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .deleteFocusedNode:
+                continue
+            }
+        }
+        graph = nextGraph
+        return ApplyResult(newState: nextGraph)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+}
+
+actor AddChildCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        guard commands.contains(.addChildNode) else {
+            return ApplyResult(newState: graph)
+        }
+        let nodeID = CanvasNodeID(rawValue: "child-1")
+        let node = CanvasNode(
+            id: nodeID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+        )
+        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph)
+        graph = CanvasGraph(
+            nodesByID: nextGraph.nodesByID,
+            edgesByID: nextGraph.edgesByID,
+            focusedNodeID: nodeID
+        )
+        return ApplyResult(newState: graph, didAddNode: true)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+}
+
+actor AddSiblingCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        guard commands.contains(.addSiblingNode) else {
+            return ApplyResult(newState: graph)
+        }
+        let nodeID = CanvasNodeID(rawValue: "sibling-1")
+        let node = CanvasNode(
+            id: nodeID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+        )
+        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph)
+        graph = CanvasGraph(
+            nodesByID: nextGraph.nodesByID,
+            edgesByID: nextGraph.edgesByID,
+            focusedNodeID: nodeID
+        )
+        return ApplyResult(newState: graph, didAddNode: true)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
     }
 }
 
