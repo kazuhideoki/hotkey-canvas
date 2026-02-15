@@ -29,8 +29,11 @@ public struct CanvasHotkeyTranslator {
         if isCommandEnter(event) {
             return [.addChildNode]
         }
+        if isOptionEnter(event) {
+            return [.addSiblingNode(position: .above)]
+        }
         if isEnterWithoutDisallowedModifiers(event) {
-            return [.addSiblingNode]
+            return [.addSiblingNode(position: .below)]
         }
         if isShiftEnter(event) {
             return [.addNode]
@@ -71,6 +74,16 @@ extension CanvasHotkeyTranslator {
         let flags = normalizedFlags(from: event)
         let disallowed: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
         return flags.contains(.command) && flags.isDisjoint(with: disallowed)
+    }
+
+    private func isOptionEnter(_ event: NSEvent) -> Bool {
+        guard event.keyCode == 36 else {
+            return false
+        }
+
+        let flags = normalizedFlags(from: event)
+        let disallowed: NSEvent.ModifierFlags = [.command, .control, .shift, .function]
+        return flags.contains(.option) && flags.isDisjoint(with: disallowed)
     }
 
     private func isUndo(_ event: NSEvent) -> Bool {
