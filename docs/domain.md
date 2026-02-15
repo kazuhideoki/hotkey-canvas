@@ -274,3 +274,4 @@
 - 2026-02-15: `CanvasTreeLayoutService` を追加し、親子ツリー再配置の利用箇所と不変条件を追記。
 - 2026-02-15: `CanvasCommand.moveNode` と `CanvasNodeMoveDirection` を追加し、`cmd+矢印キー` のネスト移動利用箇所を追記。
 - 2026-02-15: `CanvasTreeLayoutService` の実装を `CanvasTreeLayoutService+Relayout.swift` と `CanvasTreeLayoutService+RelayoutInternals.swift` に分割（挙動変更なし）。
+- 2026-02-15: `moveNode(.left)` の挙動を変更し、トップレベルノードの子からルート親方向への昇格を抑止するガードを追加。

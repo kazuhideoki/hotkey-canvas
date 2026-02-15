@@ -100,14 +100,18 @@ extension ApplyCanvasCommandsUseCase {
         guard let parentNode = graph.nodesByID[parentEdge.fromNodeID] else {
             return graph
         }
+        guard let grandparentNodeID = parentNodeID(of: parentEdge.fromNodeID, in: graph) else {
+            return graph
+        }
+        guard let grandparentNode = graph.nodesByID[grandparentNodeID] else {
+            return graph
+        }
 
         var nextGraph = try CanvasGraphCRUDService.deleteEdge(id: parentEdge.id, in: graph)
-        if let grandparentNodeID = parentNodeID(of: parentNode.id, in: graph) {
-            nextGraph = try CanvasGraphCRUDService.createEdge(
-                makeParentChildEdge(from: grandparentNodeID, to: focusedNodeID),
-                in: nextGraph
-            )
-        }
+        nextGraph = try CanvasGraphCRUDService.createEdge(
+            makeParentChildEdge(from: grandparentNode.id, to: focusedNodeID),
+            in: nextGraph
+        )
 
         let updatedFocusedNode = CanvasNode(
             id: focusedNode.id,
