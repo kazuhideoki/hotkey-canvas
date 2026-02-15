@@ -11,9 +11,6 @@ public struct CanvasView: View {
     private static let minimumCanvasWidth: Double = 900
     private static let minimumCanvasHeight: Double = 600
     private static let canvasMargin: Double = 120
-    private static let nodeTextLineHeight: Double = 20
-    private static let nodeTextVerticalPadding: Double = 24
-    private static let minimumTextNodeHeight: Double = 120
 
     @StateObject private var viewModel: CanvasViewModel
     @State private var editingContext: NodeEditingContext?
@@ -43,33 +40,6 @@ public struct CanvasView: View {
         let horizontalOffset = -contentBounds.minX
         let verticalOffset = -contentBounds.minY
 
-<<<<<<< HEAD
-            ForEach(viewModel.nodes, id: \.id) { node in
-                let isFocused = viewModel.focusedNodeID == node.id
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(nsColor: .windowBackgroundColor))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(
-                                isFocused ? Color.accentColor : Color(nsColor: .separatorColor),
-                                lineWidth: isFocused ? 2 : 1
-                            )
-                    )
-                    .overlay(alignment: .topLeading) {
-                        if editingContext?.nodeID == node.id {
-                            NodeTextEditor(
-                                text: editingTextBinding(for: node.id),
-                                selectAllOnFirstFocus: false,
-                                initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
-                                onMeasuredHeightChange: { measuredHeight in
-                                    updateEditingNodeHeight(for: node.id, measuredHeight: measuredHeight)
-                                },
-                                onCommit: {
-                                    commitNodeEditing()
-                                },
-                                onCancel: {
-                                    cancelNodeEditing()
-=======
         return ScrollViewReader { scrollProxy in
             ZStack(alignment: .topLeading) {
                 Color(nsColor: .textBackgroundColor)
@@ -120,6 +90,9 @@ public struct CanvasView: View {
                                             text: editingTextBinding(for: node.id),
                                             selectAllOnFirstFocus: false,
                                             initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
+                                            onMeasuredHeightChange: { measuredHeight in
+                                                updateEditingNodeHeight(for: node.id, measuredHeight: measuredHeight)
+                                            },
                                             onCommit: {
                                                 commitNodeEditing()
                                             },
@@ -133,7 +106,6 @@ public struct CanvasView: View {
                                             .font(.system(size: 14, weight: .medium))
                                             .padding(12)
                                     }
->>>>>>> main
                                 }
                                 .frame(
                                     width: CGFloat(node.bounds.width),
@@ -148,13 +120,8 @@ public struct CanvasView: View {
                         }
                     }
                     .frame(
-<<<<<<< HEAD
-                        width: CGFloat(node.bounds.width),
-                        height: nodeHeight(for: node),
-=======
                         width: CGFloat(contentBounds.width),
                         height: CGFloat(contentBounds.height),
->>>>>>> main
                         alignment: .topLeading
                     )
                 }
@@ -212,9 +179,15 @@ public struct CanvasView: View {
                         return
                     }
                     if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
+                        let measuredHeight = measuredNodeHeight(
+                            text: node.text ?? "",
+                            nodeWidth: node.bounds.width
+                        )
                         editingContext = NodeEditingContext(
                             nodeID: nodeID,
                             text: node.text ?? "",
+                            nodeWidth: node.bounds.width,
+                            nodeHeight: measuredHeight,
                             initialCursorPlacement: .end
                         )
                         guard pendingEditingRequestID == requestID else {
@@ -249,10 +222,12 @@ extension CanvasView {
         guard let editingContext, editingContext.nodeID == node.id else {
             return node
         }
-        let requiredHeight = requiredEditingHeight(
-            for: editingContext.text,
-            baselineHeight: baselineHeight(for: node.bounds)
-        )
+        let requiredHeight =
+            if editingContext.nodeHeight.isFinite {
+                max(editingContext.nodeHeight, 1)
+            } else {
+                node.bounds.height
+            }
         guard requiredHeight != node.bounds.height else {
             return node
         }
@@ -271,41 +246,12 @@ extension CanvasView {
         )
     }
 
-    private func baselineHeight(for bounds: CanvasBounds) -> Double {
-        min(bounds.height, Self.minimumTextNodeHeight)
-    }
-
-    private func requiredEditingHeight(for text: String, baselineHeight: Double) -> Double {
-        let normalizedText =
-            text
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\r", with: "\n")
-        let lineCount =
-            normalizedText
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .count
-        let contentHeight = (Double(max(1, lineCount)) * Self.nodeTextLineHeight) + Self.nodeTextVerticalPadding
-        return max(baselineHeight, contentHeight)
-    }
-
     private func centerPoint(
         for node: CanvasNode,
         horizontalOffset: Double,
         verticalOffset: Double
     ) -> CGPoint {
         CGPoint(
-<<<<<<< HEAD
-            x: node.bounds.x + (node.bounds.width / 2),
-            y: node.bounds.y + (Double(nodeHeight(for: node)) / 2)
-        )
-    }
-
-    private func nodeHeight(for node: CanvasNode) -> CGFloat {
-        guard let context = editingContext, context.nodeID == node.id else {
-            return CGFloat(node.bounds.height)
-        }
-        return CGFloat(context.nodeHeight)
-=======
             x: node.bounds.x + (node.bounds.width / 2) + horizontalOffset,
             y: node.bounds.y + (node.bounds.height / 2) + verticalOffset
         )
@@ -318,7 +264,6 @@ extension CanvasView {
         withAnimation(.easeInOut(duration: 0.18)) {
             proxy.scrollTo(focusedNodeID, anchor: .center)
         }
->>>>>>> main
     }
 
     private func editingTextBinding(for nodeID: CanvasNodeID) -> Binding<String> {
@@ -398,6 +343,9 @@ extension CanvasView {
             return
         }
         let roundedHeight = Double(ceil(measuredHeight))
+        guard roundedHeight.isFinite, roundedHeight > 0 else {
+            return
+        }
         guard context.nodeHeight != roundedHeight else {
             return
         }

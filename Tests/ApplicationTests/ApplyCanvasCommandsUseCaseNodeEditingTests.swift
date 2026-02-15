@@ -80,13 +80,20 @@ func test_apply_setNodeText_expandsNodeHeightAsLinesIncrease() async throws {
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
     let twentyLines = Array(repeating: "line", count: 20).joined(separator: "\n")
     let fortyLines = Array(repeating: "line", count: 40).joined(separator: "\n")
+    let twentyLineHeightInput = 420.0
+    let fortyLineHeightInput = 760.0
 
-    let twentyLineResult = try await sut.apply(commands: [.setNodeText(nodeID: nodeID, text: twentyLines)])
+    let twentyLineResult = try await sut.apply(
+        commands: [.setNodeText(nodeID: nodeID, text: twentyLines, nodeHeight: twentyLineHeightInput)]
+    )
     let twentyLineHeight = try #require(twentyLineResult.newState.nodesByID[nodeID]?.bounds.height)
-    #expect(twentyLineHeight > 120)
+    #expect(twentyLineHeight == twentyLineHeightInput)
 
-    let fortyLineResult = try await sut.apply(commands: [.setNodeText(nodeID: nodeID, text: fortyLines)])
+    let fortyLineResult = try await sut.apply(
+        commands: [.setNodeText(nodeID: nodeID, text: fortyLines, nodeHeight: fortyLineHeightInput)]
+    )
     let fortyLineHeight = try #require(fortyLineResult.newState.nodesByID[nodeID]?.bounds.height)
+    #expect(fortyLineHeight == fortyLineHeightInput)
     #expect(fortyLineHeight > twentyLineHeight)
 }
 
@@ -107,13 +114,19 @@ func test_apply_setNodeText_shrinksNodeHeightWhenLinesDecrease() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
     let fortyLines = Array(repeating: "line", count: 40).joined(separator: "\n")
+    let expandedHeightInput = 760.0
+    let shrunkHeightInput = 120.0
 
-    let expanded = try await sut.apply(commands: [.setNodeText(nodeID: nodeID, text: fortyLines)])
+    let expanded = try await sut.apply(
+        commands: [.setNodeText(nodeID: nodeID, text: fortyLines, nodeHeight: expandedHeightInput)]
+    )
     let expandedHeight = try #require(expanded.newState.nodesByID[nodeID]?.bounds.height)
-    #expect(expandedHeight > 120)
+    #expect(expandedHeight == expandedHeightInput)
 
-    let shrunk = try await sut.apply(commands: [.setNodeText(nodeID: nodeID, text: "line")])
+    let shrunk = try await sut.apply(
+        commands: [.setNodeText(nodeID: nodeID, text: "line", nodeHeight: shrunkHeightInput)]
+    )
     let shrunkHeight = try #require(shrunk.newState.nodesByID[nodeID]?.bounds.height)
-    #expect(shrunkHeight == 120)
+    #expect(shrunkHeight == shrunkHeightInput)
     #expect(shrunkHeight < expandedHeight)
 }
