@@ -27,7 +27,7 @@ func test_nextFocusedNodeID_prefersAlignedCandidate_overOffsetNearCandidate() {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 300, y: 100, width: 100, height: 100)
-            )
+            ),
         ],
         edgesByID: [:],
         focusedNodeID: centerID
@@ -62,7 +62,7 @@ func test_nextFocusedNodeID_usesDirectionalFallback_whenPreferredCorridorHasNoCa
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 280, y: 0, width: 100, height: 100)
-            )
+            ),
         ],
         edgesByID: [:],
         focusedNodeID: centerID
