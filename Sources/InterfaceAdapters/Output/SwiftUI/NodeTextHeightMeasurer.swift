@@ -72,13 +72,16 @@ extension NodeTextHeightMeasurer {
         layoutManager.addTextContainer(textContainer)
         textStorage.addLayoutManager(layoutManager)
 
-        _ = layoutManager.glyphRange(for: textContainer)
-        var measuredHeight = layoutManager.usedRect(for: textContainer).height
-        if layoutManager.extraLineFragmentTextContainer != nil {
-            measuredHeight += layoutManager.extraLineFragmentRect.height
+        let glyphRange = layoutManager.glyphRange(for: textContainer)
+        var lineFragmentCount = 0
+        layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { _, _, _, _, _ in
+            lineFragmentCount += 1
         }
-
-        let minimumLineHeight = layoutManager.defaultLineHeight(for: font)
-        return max(measuredHeight, minimumLineHeight)
+        if layoutManager.extraLineFragmentTextContainer != nil {
+            lineFragmentCount += 1
+        }
+        let effectiveLineCount = max(lineFragmentCount, 1)
+        let lineHeight = layoutManager.defaultLineHeight(for: font)
+        return CGFloat(effectiveLineCount) * lineHeight
     }
 }
