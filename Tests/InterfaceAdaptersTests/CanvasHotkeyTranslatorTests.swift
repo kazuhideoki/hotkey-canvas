@@ -141,6 +141,52 @@ func test_translate_upArrow_returnsMoveFocusUp() throws {
     #expect(commands == [.moveFocus(.up)])
 }
 
+@Test("CanvasHotkeyTranslator: Command+Down maps to moveNode down")
+func test_translate_commandDownArrow_returnsMoveNodeDown() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "↓",
+            charactersIgnoringModifiers: "↓",
+            isARepeat: false,
+            keyCode: 125
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.moveNode(.down)])
+}
+
+@Test("CanvasHotkeyTranslator: Command+Shift+Right maps to no command")
+func test_translate_commandShiftRightArrow_returnsEmpty() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "→",
+            charactersIgnoringModifiers: "→",
+            isARepeat: false,
+            keyCode: 124
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands.isEmpty)
+}
+
 @Test("CanvasHotkeyTranslator: Arrow with Shift maps to no command")
 func test_translate_shiftArrow_returnsEmpty() throws {
     let sut = CanvasHotkeyTranslator()

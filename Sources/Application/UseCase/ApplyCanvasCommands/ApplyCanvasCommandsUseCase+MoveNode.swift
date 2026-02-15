@@ -1,0 +1,210 @@
+import Domain
+
+// Background: Keyboard-first editing needs direct structure changes without creating or deleting nodes.
+// Responsibility: Move the focused node across sibling order and nesting levels.
+extension ApplyCanvasCommandsUseCase {
+    /// Moves the focused node according to nesting-aware direction semantics.
+    /// - Parameters:
+    ///   - graph: Current canvas graph.
+    ///   - direction: Move direction bound to command-arrow shortcuts.
+    /// - Returns: Updated graph, or the original graph when movement is not applicable.
+    /// - Throws: Propagates graph mutation errors from edge updates.
+    func moveNode(in graph: CanvasGraph, direction: CanvasNodeMoveDirection) throws -> CanvasGraph {
+        switch direction {
+        case .up:
+            return try moveNodeVertically(in: graph, offset: -1)
+        case .down:
+            return try moveNodeVertically(in: graph, offset: 1)
+        case .left:
+            return try outdentNode(in: graph)
+        case .right:
+            return try indentNode(in: graph)
+        }
+    }
+}
+
+extension ApplyCanvasCommandsUseCase {
+    private static let orderingEpsilon: Double = 0.001
+    private static let indentHorizontalGap: Double = 32
+
+    private func moveNodeVertically(in graph: CanvasGraph, offset: Int) throws -> CanvasGraph {
+        guard let focusedNodeID = graph.focusedNodeID else {
+            return graph
+        }
+        guard let focusedNode = graph.nodesByID[focusedNodeID] else {
+            return graph
+        }
+
+        let peers = orderedPeerNodes(of: focusedNodeID, in: graph)
+        guard let focusedIndex = peers.firstIndex(where: { $0.id == focusedNodeID }) else {
+            return graph
+        }
+        let destinationIndex = focusedIndex + offset
+        guard peers.indices.contains(destinationIndex) else {
+            return graph
+        }
+        let destinationNode = peers[destinationIndex]
+        guard let destination = graph.nodesByID[destinationNode.id] else {
+            return graph
+        }
+
+        let focusedWithMovedBounds = CanvasNode(
+            id: focusedNode.id,
+            kind: focusedNode.kind,
+            text: focusedNode.text,
+            bounds: CanvasBounds(
+                x: destination.bounds.x,
+                y: destination.bounds.y,
+                width: focusedNode.bounds.width,
+                height: focusedNode.bounds.height
+            ),
+            metadata: focusedNode.metadata
+        )
+        let destinationWithMovedBounds = CanvasNode(
+            id: destination.id,
+            kind: destination.kind,
+            text: destination.text,
+            bounds: CanvasBounds(
+                x: focusedNode.bounds.x,
+                y: focusedNode.bounds.y,
+                width: destination.bounds.width,
+                height: destination.bounds.height
+            ),
+            metadata: destination.metadata
+        )
+        let graphAfterSwap = CanvasGraph(
+            nodesByID: graph.nodesByID.merging(
+                [
+                    focusedNodeID: focusedWithMovedBounds,
+                    destination.id: destinationWithMovedBounds,
+                ],
+                uniquingKeysWith: { _, new in new }
+            ),
+            edgesByID: graph.edgesByID,
+            focusedNodeID: focusedNodeID
+        )
+        let graphAfterTreeLayout = relayoutParentChildTrees(in: graphAfterSwap)
+        return resolveAreaOverlaps(around: focusedNodeID, in: graphAfterTreeLayout)
+    }
+
+    private func outdentNode(in graph: CanvasGraph) throws -> CanvasGraph {
+        guard let focusedNodeID = graph.focusedNodeID else {
+            return graph
+        }
+        guard let focusedNode = graph.nodesByID[focusedNodeID] else {
+            return graph
+        }
+        guard let parentEdge = parentChildIncomingEdge(of: focusedNodeID, in: graph) else {
+            return graph
+        }
+        guard let parentNode = graph.nodesByID[parentEdge.fromNodeID] else {
+            return graph
+        }
+
+        var nextGraph = try CanvasGraphCRUDService.deleteEdge(id: parentEdge.id, in: graph)
+        if let grandparentNodeID = parentNodeID(of: parentNode.id, in: graph) {
+            nextGraph = try CanvasGraphCRUDService.createEdge(
+                makeParentChildEdge(from: grandparentNodeID, to: focusedNodeID),
+                in: nextGraph
+            )
+        }
+
+        let updatedFocusedNode = CanvasNode(
+            id: focusedNode.id,
+            kind: focusedNode.kind,
+            text: focusedNode.text,
+            bounds: CanvasBounds(
+                x: parentNode.bounds.x,
+                y: parentNode.bounds.y + Self.orderingEpsilon,
+                width: focusedNode.bounds.width,
+                height: focusedNode.bounds.height
+            ),
+            metadata: focusedNode.metadata
+        )
+        nextGraph = CanvasGraph(
+            nodesByID: nextGraph.nodesByID.merging(
+                [focusedNodeID: updatedFocusedNode], uniquingKeysWith: { _, new in new }),
+            edgesByID: nextGraph.edgesByID,
+            focusedNodeID: focusedNodeID
+        )
+
+        let graphAfterTreeLayout = relayoutParentChildTrees(in: nextGraph)
+        return resolveAreaOverlaps(around: focusedNodeID, in: graphAfterTreeLayout)
+    }
+
+    private func indentNode(in graph: CanvasGraph) throws -> CanvasGraph {
+        guard let focusedNodeID = graph.focusedNodeID else {
+            return graph
+        }
+        guard let focusedNode = graph.nodesByID[focusedNodeID] else {
+            return graph
+        }
+
+        let peers = orderedPeerNodes(of: focusedNodeID, in: graph)
+        guard let focusedIndex = peers.firstIndex(where: { $0.id == focusedNodeID }) else {
+            return graph
+        }
+        let previousIndex = focusedIndex - 1
+        guard peers.indices.contains(previousIndex) else {
+            return graph
+        }
+        let newParent = peers[previousIndex]
+
+        var nextGraph = graph
+        if let currentParentEdge = parentChildIncomingEdge(of: focusedNodeID, in: graph) {
+            nextGraph = try CanvasGraphCRUDService.deleteEdge(id: currentParentEdge.id, in: nextGraph)
+        }
+        nextGraph = try CanvasGraphCRUDService.createEdge(
+            makeParentChildEdge(from: newParent.id, to: focusedNodeID),
+            in: nextGraph
+        )
+
+        let updatedFocusedNode = CanvasNode(
+            id: focusedNode.id,
+            kind: focusedNode.kind,
+            text: focusedNode.text,
+            bounds: CanvasBounds(
+                x: newParent.bounds.x + newParent.bounds.width + Self.indentHorizontalGap,
+                y: newParent.bounds.y,
+                width: focusedNode.bounds.width,
+                height: focusedNode.bounds.height
+            ),
+            metadata: focusedNode.metadata
+        )
+        nextGraph = CanvasGraph(
+            nodesByID: nextGraph.nodesByID.merging(
+                [focusedNodeID: updatedFocusedNode], uniquingKeysWith: { _, new in new }),
+            edgesByID: nextGraph.edgesByID,
+            focusedNodeID: focusedNodeID
+        )
+
+        let graphAfterTreeLayout = relayoutParentChildTrees(in: nextGraph)
+        return resolveAreaOverlaps(around: focusedNodeID, in: graphAfterTreeLayout)
+    }
+
+    private func orderedPeerNodes(of nodeID: CanvasNodeID, in graph: CanvasGraph) -> [CanvasNode] {
+        if let parentID = parentNodeID(of: nodeID, in: graph) {
+            return childNodes(of: parentID, in: graph)
+        }
+        return graph.nodesByID.values
+            .filter { isTopLevelParent($0.id, in: graph) }
+            .sorted(by: isPeerNodeOrderedBefore)
+    }
+
+    private func parentChildIncomingEdge(of nodeID: CanvasNodeID, in graph: CanvasGraph) -> CanvasEdge? {
+        graph.edgesByID.values
+            .filter { $0.relationType == .parentChild && $0.toNodeID == nodeID }
+            .sorted { $0.id.rawValue < $1.id.rawValue }
+            .first
+    }
+
+    private func isPeerNodeOrderedBefore(_ lhs: CanvasNode, _ rhs: CanvasNode) -> Bool {
+        if lhs.bounds.y != rhs.bounds.y {
+            return lhs.bounds.y < rhs.bounds.y
+        }
+        if lhs.bounds.x != rhs.bounds.x {
+            return lhs.bounds.x < rhs.bounds.x
+        }
+        return lhs.id.rawValue < rhs.id.rawValue
+    }
+}
