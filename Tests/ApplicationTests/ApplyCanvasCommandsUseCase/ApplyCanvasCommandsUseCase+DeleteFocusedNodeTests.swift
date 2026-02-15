@@ -23,7 +23,7 @@ func test_apply_deleteFocusedNode_removesFocusedNode() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 280, y: 100, width: 100, height: 100)
-            ),
+            )
         ],
         edgesByID: [
             edgeID: CanvasEdge(

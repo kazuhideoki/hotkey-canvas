@@ -73,7 +73,7 @@ func test_apply_addNode_skipsOccupiedSpaceBelowFocusedNode() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 140, y: 250, width: 220, height: 120)
-            ),
+            )
         ],
         edgesByID: [:],
         focusedNodeID: focusedNodeID

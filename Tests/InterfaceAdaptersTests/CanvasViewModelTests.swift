@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Application
 import Domain
 import InterfaceAdapters
@@ -132,7 +133,7 @@ func test_apply_nonAddCommand_doesNotSetPendingEditingNodeID() async throws {
     let inputPort = StaticCanvasEditingInputPort(graph: graph)
     let viewModel = CanvasViewModel(inputPort: inputPort)
 
-    await viewModel.apply(commands: [.setNodeText(nodeID: nodeID, text: "after")])
+    await viewModel.apply(commands: [.setNodeText(nodeID: nodeID, text: "after", nodeHeight: 100)])
 
     #expect(viewModel.pendingEditingNodeID == nil)
 }
@@ -475,7 +476,7 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
         var nextGraph = graph
         for command in commands {
             switch command {
-            case .setNodeText(let nodeID, let text):
+            case .setNodeText(let nodeID, let text, _):
                 guard let node = nextGraph.nodesByID[nodeID] else {
                     continue
                 }
