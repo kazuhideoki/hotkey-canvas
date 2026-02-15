@@ -97,7 +97,9 @@ extension NodeTextEditor {
             guard let window = textView.window, window.firstResponder !== textView else {
                 return
             }
-            window.makeFirstResponder(textView)
+            guard window.makeFirstResponder(textView), window.firstResponder === textView else {
+                return
+            }
             if coordinator.selectAllOnFirstFocus, !coordinator.hasFocusedEditor {
                 textView.selectAll(nil)
             } else if !coordinator.hasFocusedEditor {

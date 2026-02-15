@@ -18,6 +18,19 @@ func test_onAppear_doesNotOverwriteApplyResult() async throws {
 }
 
 @MainActor
+@Test("CanvasViewModel: onAppear creates initial node and returns editing target when graph is empty")
+func test_onAppear_createsInitialNode_andReturnsEditingTarget() async throws {
+    let inputPort = EmptyBootstrapCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    let initialEditingNodeID = await viewModel.onAppear()
+
+    #expect(viewModel.nodes.count == 1)
+    #expect(viewModel.focusedNodeID == CanvasNodeID(rawValue: "node-1"))
+    #expect(initialEditingNodeID == CanvasNodeID(rawValue: "node-1"))
+}
+
+@MainActor
 @Test("CanvasViewModel: earlier successful apply is preserved when later overlapping apply fails")
 func test_apply_preservesEarlierSuccess_whenLaterOverlappingApplyFails() async throws {
     let inputPort = OverlappingFailureCanvasEditingInputPort()
@@ -386,5 +399,51 @@ extension ReorderedSuccessCanvasEditingInputPort {
         }
         let focusedNodeID = CanvasNodeID(rawValue: "node-\(nodeCount)")
         return CanvasGraph(nodesByID: nodesByID, edgesByID: [:], focusedNodeID: focusedNodeID)
+    }
+}
+
+actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        var nextGraph = graph
+        for command in commands {
+            switch command {
+            case .addNode:
+                let nodeID = CanvasNodeID(rawValue: "node-\(nextGraph.nodesByID.count + 1)")
+                let node = CanvasNode(
+                    id: nodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph)
+                nextGraph = CanvasGraph(
+                    nodesByID: nextGraph.nodesByID,
+                    edgesByID: nextGraph.edgesByID,
+                    focusedNodeID: nodeID
+                )
+            case .addChildNode, .addSiblingNode, .moveFocus, .setNodeText, .deleteFocusedNode:
+                continue
+            }
+        }
+        graph = nextGraph
+        return ApplyResult(newState: nextGraph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
     }
 }
