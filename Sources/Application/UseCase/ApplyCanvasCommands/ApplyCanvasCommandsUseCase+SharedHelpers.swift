@@ -10,6 +10,7 @@ extension ApplyCanvasCommandsUseCase {
     private static let defaultNewNodeY: Double = 48
     private static let newNodeVerticalSpacing: Double = 24
     private static let childHorizontalGap: Double = 32
+    private static let areaCollisionSpacing: Double = 32
 
     func makeTextNode(bounds: CanvasBounds) -> CanvasNode {
         CanvasNode(
@@ -39,37 +40,81 @@ extension ApplyCanvasCommandsUseCase {
                 Self.defaultNewNodeY
             }
 
-        var candidate = CanvasBounds(
+        return CanvasBounds(
             x: startX,
             y: startY,
             width: Self.newNodeWidth,
             height: Self.newNodeHeight
         )
-        let sorted = sortedNodes(in: graph)
-        while let overlappedNode = firstOverlappedNode(for: candidate, in: sorted) {
-            candidate = CanvasBounds(
-                x: candidate.x,
-                y: overlappedNode.bounds.y + overlappedNode.bounds.height + Self.newNodeVerticalSpacing,
-                width: candidate.width,
-                height: candidate.height
-            )
-        }
-        return candidate
     }
 
-    func calculateChildBounds(for parentNode: CanvasNode, in graph: CanvasGraph) -> CanvasBounds {
+    func calculateChildBounds(for parentNode: CanvasNode, in _: CanvasGraph) -> CanvasBounds {
         let width = parentNode.bounds.width
         let height = parentNode.bounds.height
         let y = parentNode.bounds.y
 
-        var x = parentNode.bounds.x + parentNode.bounds.width + Self.childHorizontalGap
-        var candidate = CanvasBounds(x: x, y: y, width: width, height: height)
+        return CanvasBounds(
+            x: parentNode.bounds.x + parentNode.bounds.width + Self.childHorizontalGap,
+            y: y,
+            width: width,
+            height: height
+        )
+    }
 
-        while hasOverlappingNode(candidate, in: graph) {
-            x += width + Self.childHorizontalGap
-            candidate = CanvasBounds(x: x, y: y, width: width, height: height)
+    func resolveAreaOverlaps(around seedNodeID: CanvasNodeID, in graph: CanvasGraph) -> CanvasGraph {
+        let areas = CanvasAreaLayoutService.makeParentChildAreas(in: graph)
+        guard let seedArea = areas.first(where: { $0.nodeIDs.contains(seedNodeID) }) else {
+            return graph
         }
-        return candidate
+
+        let translationsByAreaID = CanvasAreaLayoutService.resolveOverlaps(
+            areas: areas,
+            seedAreaID: seedArea.id,
+            minimumSpacing: Self.areaCollisionSpacing
+        )
+        guard !translationsByAreaID.isEmpty else {
+            return graph
+        }
+
+        let areasByID = Dictionary(uniqueKeysWithValues: areas.map { ($0.id, $0) })
+        var nodesByID = graph.nodesByID
+
+        for areaID in translationsByAreaID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let translation = translationsByAreaID[areaID] else {
+                continue
+            }
+            guard let area = areasByID[areaID] else {
+                continue
+            }
+
+            for nodeID in area.nodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
+                guard let node = nodesByID[nodeID] else {
+                    continue
+                }
+                nodesByID[nodeID] = CanvasNode(
+                    id: node.id,
+                    kind: node.kind,
+                    text: node.text,
+                    bounds: translate(node.bounds, dx: translation.dx, dy: translation.dy),
+                    metadata: node.metadata
+                )
+            }
+        }
+
+        return CanvasGraph(
+            nodesByID: nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: graph.focusedNodeID
+        )
+    }
+
+    func translate(_ bounds: CanvasBounds, dx: Double, dy: Double) -> CanvasBounds {
+        CanvasBounds(
+            x: bounds.x + dx,
+            y: bounds.y + dy,
+            width: bounds.width,
+            height: bounds.height
+        )
     }
 
     func sortedNodes(in graph: CanvasGraph) -> [CanvasNode] {
@@ -128,29 +173,5 @@ extension ApplyCanvasCommandsUseCase {
         !graph.edgesByID.values.contains {
             $0.relationType == .parentChild && $0.toNodeID == nodeID
         }
-    }
-
-    private func firstOverlappedNode(for candidate: CanvasBounds, in nodes: [CanvasNode]) -> CanvasNode? {
-        nodes.first { node in
-            boundsOverlap(candidate, node.bounds)
-        }
-    }
-
-    private func hasOverlappingNode(_ bounds: CanvasBounds, in graph: CanvasGraph) -> Bool {
-        graph.nodesByID.values.contains { existingNode in
-            boundsOverlap(bounds, existingNode.bounds)
-        }
-    }
-
-    private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds) -> Bool {
-        let lhsRight = lhs.x + lhs.width
-        let lhsBottom = lhs.y + lhs.height
-        let rhsRight = rhs.x + rhs.width
-        let rhsBottom = rhs.y + rhs.height
-
-        return lhs.x < rhsRight
-            && lhsRight > rhs.x
-            && lhs.y < rhsBottom
-            && lhsBottom > rhs.y
     }
 }

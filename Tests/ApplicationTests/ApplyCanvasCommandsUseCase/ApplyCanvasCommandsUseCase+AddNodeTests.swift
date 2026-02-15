@@ -3,7 +3,7 @@ import Domain
 import Testing
 
 // Background: Add-node behavior defines the default placement baseline for new graph edits.
-// Responsibility: Verify add-node creation and vertical collision-avoidance behavior.
+// Responsibility: Verify add-node creation and area-based overlap handling behavior.
 @Test("ApplyCanvasCommandsUseCase: addNode creates one text node")
 func test_apply_addNode_createsTextNode() async throws {
     let sut = ApplyCanvasCommandsUseCase()
@@ -52,12 +52,14 @@ func test_apply_addNode_placesNodeBelowFocusedNode() async throws {
     #expect(result.newState.nodesByID.count == 2)
     let newNodeID = try #require(result.newState.focusedNodeID)
     let newNode = try #require(result.newState.nodesByID[newNodeID])
-    #expect(newNode.bounds.x == 140)
-    #expect(newNode.bounds.y == 264)
+    let focusedNodeAfter = try #require(result.newState.nodesByID[focusedNodeID])
+    #expect(newNode.bounds.x == focusedNodeAfter.bounds.x)
+    #expect(newNode.bounds.y > focusedNodeAfter.bounds.y)
+    #expect(boundsOverlap(newNode.bounds, focusedNodeAfter.bounds, spacing: 32) == false)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode skips occupied space below focused node")
-func test_apply_addNode_skipsOccupiedSpaceBelowFocusedNode() async throws {
+@Test("ApplyCanvasCommandsUseCase: addNode resolves overlap by moving both areas")
+func test_apply_addNode_resolvesOverlapByMovingBothAreas() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let blockerNodeID = CanvasNodeID(rawValue: "blocker")
     let graph = CanvasGraph(
@@ -73,7 +75,7 @@ func test_apply_addNode_skipsOccupiedSpaceBelowFocusedNode() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 140, y: 250, width: 220, height: 120)
-            ),
+            )
         ],
         edgesByID: [:],
         focusedNodeID: focusedNodeID
@@ -85,6 +87,27 @@ func test_apply_addNode_skipsOccupiedSpaceBelowFocusedNode() async throws {
     #expect(result.newState.nodesByID.count == 3)
     let newNodeID = try #require(result.newState.focusedNodeID)
     let newNode = try #require(result.newState.nodesByID[newNodeID])
-    #expect(newNode.bounds.x == 140)
-    #expect(newNode.bounds.y == 394)
+    let blockerAfter = try #require(result.newState.nodesByID[blockerNodeID])
+
+    #expect(newNode.bounds.x != 140 || newNode.bounds.y != 264)
+    #expect(blockerAfter.bounds.x != 140 || blockerAfter.bounds.y != 250)
+    #expect(newNode.bounds.y < 394)
+    #expect(boundsOverlap(newNode.bounds, blockerAfter.bounds, spacing: 32) == false)
+}
+
+private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds, spacing: Double = 0) -> Bool {
+    let halfSpacing = max(0, spacing) / 2
+    let lhsLeft = lhs.x - halfSpacing
+    let lhsTop = lhs.y - halfSpacing
+    let lhsRight = lhs.x + lhs.width + halfSpacing
+    let lhsBottom = lhs.y + lhs.height + halfSpacing
+    let rhsLeft = rhs.x - halfSpacing
+    let rhsTop = rhs.y - halfSpacing
+    let rhsRight = rhs.x + rhs.width + halfSpacing
+    let rhsBottom = rhs.y + rhs.height + halfSpacing
+
+    return lhsLeft < rhsRight
+        && lhsRight > rhsLeft
+        && lhsTop < rhsBottom
+        && lhsBottom > rhsTop
 }

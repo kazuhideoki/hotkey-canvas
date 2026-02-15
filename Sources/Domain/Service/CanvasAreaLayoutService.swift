@@ -83,104 +83,154 @@ public enum CanvasAreaLayoutService {
             return [:]
         }
 
-        var boundsByAreaID: [CanvasNodeID: CanvasRect] = [:]
-        for area in areas {
-            boundsByAreaID[area.id] = area.bounds
-        }
-        guard boundsByAreaID[seedAreaID] != nil else {
+        var boundsByAreaID = makeBoundsByAreaID(from: areas)
+        guard
+            var state = makeInitialResolutionState(
+                boundsByAreaID: &boundsByAreaID,
+                seedAreaID: seedAreaID,
+                spacing: max(0, minimumSpacing)
+            )
+        else {
             return [:]
         }
 
-        let spacing = max(0, minimumSpacing)
-        var translationsByAreaID: [CanvasNodeID: CanvasTranslation] = [:]
-        var propagationQueue: [CanvasNodeID] = []
-
-        if let firstCollidedAreaID = firstOverlappedAreaID(
-            of: seedAreaID,
-            in: boundsByAreaID,
-            spacing: spacing
-        ) {
-            guard let seedBounds = boundsByAreaID[seedAreaID],
-                let firstCollidedBounds = boundsByAreaID[firstCollidedAreaID]
-            else {
-                return [:]
-            }
-
-            let initialSeparation = requiredSeparation(
-                moving: firstCollidedBounds,
-                awayFrom: seedBounds,
-                spacing: spacing,
-                tieBreakDirection: seedAreaID.rawValue < firstCollidedAreaID.rawValue ? 1 : -1
-            )
-            applyTranslation(
-                to: seedAreaID,
-                dx: -(initialSeparation.dx / 2),
-                dy: -(initialSeparation.dy / 2),
-                boundsByAreaID: &boundsByAreaID,
-                translationsByAreaID: &translationsByAreaID
-            )
-            applyTranslation(
-                to: firstCollidedAreaID,
-                dx: initialSeparation.dx / 2,
-                dy: initialSeparation.dy / 2,
-                boundsByAreaID: &boundsByAreaID,
-                translationsByAreaID: &translationsByAreaID
-            )
-            propagationQueue.append(seedAreaID)
-            propagationQueue.append(firstCollidedAreaID)
-        } else {
-            return [:]
-        }
-
-        var movementCount = 0
-        while !propagationQueue.isEmpty, movementCount < maxIterations {
-            let moverAreaID = propagationQueue.removeFirst()
-            guard let moverBounds = boundsByAreaID[moverAreaID] else {
-                continue
-            }
-
-            let targetAreaIDs = boundsByAreaID.keys
-                .filter { $0 != moverAreaID }
-                .sorted { $0.rawValue < $1.rawValue }
-
-            for targetAreaID in targetAreaIDs {
-                guard let targetBounds = boundsByAreaID[targetAreaID] else {
-                    continue
-                }
-                guard boundsOverlap(moverBounds, targetBounds, spacing: spacing) else {
-                    continue
-                }
-
-                let separation = requiredSeparation(
-                    moving: targetBounds,
-                    awayFrom: moverBounds,
-                    spacing: spacing,
-                    tieBreakDirection: moverAreaID.rawValue < targetAreaID.rawValue ? 1 : -1
-                )
-                applyTranslation(
-                    to: targetAreaID,
-                    dx: separation.dx,
-                    dy: separation.dy,
-                    boundsByAreaID: &boundsByAreaID,
-                    translationsByAreaID: &translationsByAreaID
-                )
-                propagationQueue.append(targetAreaID)
-                movementCount += 1
-
-                if movementCount >= maxIterations {
-                    break
-                }
-            }
-        }
-
-        return translationsByAreaID.filter { _, translation in
+        propagateOverlaps(
+            state: &state,
+            spacing: max(0, minimumSpacing),
+            maxIterations: maxIterations
+        )
+        return state.translationsByAreaID.filter { _, translation in
             !translation.isZero
         }
     }
 }
 
 extension CanvasAreaLayoutService {
+    private struct OverlapResolutionState {
+        var boundsByAreaID: [CanvasNodeID: CanvasRect]
+        var translationsByAreaID: [CanvasNodeID: CanvasTranslation]
+        var propagationQueue: [CanvasNodeID]
+    }
+
     // MARK: - Internal Geometry Helpers
+
+    private static func makeBoundsByAreaID(from areas: [CanvasNodeArea]) -> [CanvasNodeID: CanvasRect] {
+        var boundsByAreaID: [CanvasNodeID: CanvasRect] = [:]
+        for area in areas {
+            boundsByAreaID[area.id] = area.bounds
+        }
+        return boundsByAreaID
+    }
+
+    private static func makeInitialResolutionState(
+        boundsByAreaID: inout [CanvasNodeID: CanvasRect],
+        seedAreaID: CanvasNodeID,
+        spacing: Double
+    ) -> OverlapResolutionState? {
+        guard
+            let firstCollidedAreaID = firstOverlappedAreaID(
+                of: seedAreaID,
+                in: boundsByAreaID,
+                spacing: spacing
+            )
+        else {
+            return nil
+        }
+        guard let seedBounds = boundsByAreaID[seedAreaID],
+            let firstCollidedBounds = boundsByAreaID[firstCollidedAreaID]
+        else {
+            return nil
+        }
+
+        var translationsByAreaID: [CanvasNodeID: CanvasTranslation] = [:]
+        let initialSeparation = requiredSeparation(
+            moving: firstCollidedBounds,
+            awayFrom: seedBounds,
+            spacing: spacing,
+            tieBreakDirection: seedAreaID.rawValue < firstCollidedAreaID.rawValue ? 1 : -1
+        )
+        applyTranslation(
+            to: seedAreaID,
+            dx: -(initialSeparation.dx / 2),
+            dy: -(initialSeparation.dy / 2),
+            boundsByAreaID: &boundsByAreaID,
+            translationsByAreaID: &translationsByAreaID
+        )
+        applyTranslation(
+            to: firstCollidedAreaID,
+            dx: initialSeparation.dx / 2,
+            dy: initialSeparation.dy / 2,
+            boundsByAreaID: &boundsByAreaID,
+            translationsByAreaID: &translationsByAreaID
+        )
+
+        return OverlapResolutionState(
+            boundsByAreaID: boundsByAreaID,
+            translationsByAreaID: translationsByAreaID,
+            propagationQueue: [seedAreaID, firstCollidedAreaID]
+        )
+    }
+
+    private static func propagateOverlaps(
+        state: inout OverlapResolutionState,
+        spacing: Double,
+        maxIterations: Int
+    ) {
+        var movementCount = 0
+        while !state.propagationQueue.isEmpty, movementCount < maxIterations {
+            let moverAreaID = state.propagationQueue.removeFirst()
+            guard let moverBounds = state.boundsByAreaID[moverAreaID] else {
+                continue
+            }
+
+            let targetAreaIDs = state.boundsByAreaID.keys
+                .filter { $0 != moverAreaID }
+                .sorted { $0.rawValue < $1.rawValue }
+
+            for targetAreaID in targetAreaIDs where movementCount < maxIterations {
+                if moveTargetAreaIfNeeded(
+                    moverAreaID: moverAreaID,
+                    moverBounds: moverBounds,
+                    targetAreaID: targetAreaID,
+                    spacing: spacing,
+                    state: &state
+                ) {
+                    movementCount += 1
+                }
+            }
+        }
+    }
+
+    private static func moveTargetAreaIfNeeded(
+        moverAreaID: CanvasNodeID,
+        moverBounds: CanvasRect,
+        targetAreaID: CanvasNodeID,
+        spacing: Double,
+        state: inout OverlapResolutionState
+    ) -> Bool {
+        guard let targetBounds = state.boundsByAreaID[targetAreaID] else {
+            return false
+        }
+        guard boundsOverlap(moverBounds, targetBounds, spacing: spacing) else {
+            return false
+        }
+
+        let separation = requiredSeparation(
+            moving: targetBounds,
+            awayFrom: moverBounds,
+            spacing: spacing,
+            tieBreakDirection: moverAreaID.rawValue < targetAreaID.rawValue ? 1 : -1
+        )
+        applyTranslation(
+            to: targetAreaID,
+            dx: separation.dx,
+            dy: separation.dy,
+            boundsByAreaID: &state.boundsByAreaID,
+            translationsByAreaID: &state.translationsByAreaID
+        )
+        state.propagationQueue.append(targetAreaID)
+        return true
+    }
 
     /// Calculates a single area bounding rectangle from contained node bounds.
     /// - Parameters:
