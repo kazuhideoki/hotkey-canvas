@@ -262,7 +262,7 @@ final class NodeTextEditorTextView: NSTextView {
             return
         }
 
-        let disallowed: NSEvent.ModifierFlags = [.command, .control, .shift, .function]
+        let disallowed: NSEvent.ModifierFlags = [.control, .option, .shift, .function]
         if flags.isDisjoint(with: disallowed) {
             onCommit?()
             return
