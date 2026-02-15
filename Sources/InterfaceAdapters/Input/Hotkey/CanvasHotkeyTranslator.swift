@@ -41,6 +41,9 @@ public struct CanvasHotkeyTranslator {
         if isDelete(event) {
             return [.deleteFocusedNode]
         }
+        if let direction = nodeMoveDirectionIfCommandArrow(event) {
+            return [.moveNode(direction)]
+        }
         guard let direction = focusDirectionIfArrow(event) else {
             return []
         }
@@ -137,6 +140,27 @@ extension CanvasHotkeyTranslator {
         // We only block modifiers that should explicitly change shortcut meaning.
         let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .shift]
         guard flags.isDisjoint(with: disallowed) else {
+            return nil
+        }
+
+        switch event.keyCode {
+        case Self.upArrowKeyCode:
+            return .up
+        case Self.downArrowKeyCode:
+            return .down
+        case Self.leftArrowKeyCode:
+            return .left
+        case Self.rightArrowKeyCode:
+            return .right
+        default:
+            return nil
+        }
+    }
+
+    private func nodeMoveDirectionIfCommandArrow(_ event: NSEvent) -> CanvasNodeMoveDirection? {
+        let flags = normalizedFlags(from: event)
+        let disallowed: NSEvent.ModifierFlags = [.control, .option, .shift]
+        guard flags.contains(.command), flags.isDisjoint(with: disallowed) else {
             return nil
         }
 

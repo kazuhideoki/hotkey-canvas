@@ -34,6 +34,7 @@
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`
 - コマンド
   - `CanvasCommand`
+  - `CanvasNodeMoveDirection`
   - `CanvasSiblingNodePosition`
 - エラー
   - `CanvasGraphError`
@@ -62,6 +63,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
 - 入力境界/コマンド流入
   - `Sources/Application/Port/Input/CanvasEditingInputPort.swift`
@@ -121,7 +123,7 @@
 - Application ユースケース
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveFocus.swift`
 - コマンド発行
-  - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（矢印キー -> `.moveFocus`）
+  - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（矢印キー -> `.moveFocus`、`cmd+矢印キー` -> `.moveNode`）
 - 主要テスト
   - `Tests/DomainTests/CanvasFocusNavigationServiceTests.swift`
   - `Tests/ApplicationTests/ApplyCanvasCommandsUseCase/ApplyCanvasCommandsUseCase+MoveFocusTests.swift`
@@ -268,3 +270,4 @@
 
 - 2026-02-15: 初版作成。
 - 2026-02-15: `CanvasTreeLayoutService` を追加し、親子ツリー再配置の利用箇所と不変条件を追記。
+- 2026-02-15: `CanvasCommand.moveNode` と `CanvasNodeMoveDirection` を追加し、`cmd+矢印キー` のネスト移動利用箇所を追記。
