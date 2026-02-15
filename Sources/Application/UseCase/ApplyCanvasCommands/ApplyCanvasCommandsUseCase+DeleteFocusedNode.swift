@@ -19,16 +19,24 @@ extension ApplyCanvasCommandsUseCase {
         for nodeID in subtreeNodeIDs {
             graphAfterDelete = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: graphAfterDelete)
         }
+        let graphAfterTreeLayout = relayoutParentChildTrees(in: graphAfterDelete)
+        let nextFocusNodeID = nextFocusedNodeIDAfterDeletion(
+            deleting: focusedNodeID,
+            focusedNode: focusedNode,
+            in: graph,
+            graphAfterDelete: graphAfterTreeLayout
+        )
+        let graphAfterAreaLayout =
+            if let nextFocusNodeID {
+                resolveAreaOverlaps(around: nextFocusNodeID, in: graphAfterTreeLayout)
+            } else {
+                graphAfterTreeLayout
+            }
 
         return CanvasGraph(
-            nodesByID: graphAfterDelete.nodesByID,
-            edgesByID: graphAfterDelete.edgesByID,
-            focusedNodeID: nextFocusedNodeIDAfterDeletion(
-                deleting: focusedNodeID,
-                focusedNode: focusedNode,
-                in: graph,
-                graphAfterDelete: graphAfterDelete
-            )
+            nodesByID: graphAfterAreaLayout.nodesByID,
+            edgesByID: graphAfterAreaLayout.edgesByID,
+            focusedNodeID: nextFocusNodeID
         )
     }
 
@@ -39,12 +47,14 @@ extension ApplyCanvasCommandsUseCase {
         graphAfterDelete: CanvasGraph
     ) -> CanvasNodeID? {
         if let upperSiblingID = upperSiblingNodeID(of: focusedNodeID, in: graphBeforeDelete),
-            graphAfterDelete.nodesByID[upperSiblingID] != nil {
+            graphAfterDelete.nodesByID[upperSiblingID] != nil
+        {
             return upperSiblingID
         }
 
         if let parentID = parentNodeID(of: focusedNodeID, in: graphBeforeDelete),
-            graphAfterDelete.nodesByID[parentID] != nil {
+            graphAfterDelete.nodesByID[parentID] != nil
+        {
             return parentID
         }
 

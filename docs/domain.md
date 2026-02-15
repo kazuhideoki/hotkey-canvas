@@ -19,6 +19,7 @@
 | D1 | キャンバスグラフ編集 | `CanvasGraph`, `CanvasNode`, `CanvasEdge`, `CanvasCommand`, `CanvasGraphCRUDService`, `CanvasGraphError` |
 | D2 | フォーカス移動 | `CanvasFocusDirection`, `CanvasFocusNavigationService` |
 | D3 | エリアレイアウト | `CanvasNodeArea`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService` |
+| D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
 
 ## 4. 各ドメイン詳細
 
@@ -197,6 +198,56 @@
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 
+### D4. ツリーレイアウトドメイン
+
+#### 構造
+
+- 参照モデル
+  - `CanvasGraph`, `CanvasNode`, `CanvasBounds`
+  - `CanvasEdgeRelationType.parentChild`
+- サービス
+  - `CanvasTreeLayoutService`
+
+#### サービス詳細
+
+`CanvasTreeLayoutService` は親子ツリー全体の再配置を担当する。
+
+| メソッド | 責務 |
+| --- | --- |
+| `relayoutParentChildTrees(in:verticalSpacing:horizontalSpacing:rootSpacing:)` | 親子エッジで接続されたノード群を上下対称で再配置し、再計算後の `CanvasBounds` を返す。 |
+
+アルゴリズム要点:
+
+- `parentChild` エッジのみを対象に連結成分を作る。
+- 子ノードの並びは `y -> x -> id` で決定し、途中挿入時も順序を保持する。
+- 子サブツリーを縦方向に積み上げ、親ノードを子クラスタの中心に配置する。
+- 子ノードの X は `parent.width + horizontalSpacing` で親から右へ進める。
+- ルートノードは元の座標をアンカーとして、再配置による急激なジャンプを抑える。
+- 循環参照などで根が取れない成分は 1 本の親リンクを外して決定的に解決する。
+
+#### 利用状況（どこから使われるか）
+
+- Application 共有ヘルパー
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers.swift`
+    - `relayoutParentChildTrees(in:)`
+- 間接利用（構造変更・サイズ変更系）
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
+- 主要テスト
+  - `Tests/DomainTests/CanvasTreeLayoutServiceTests.swift`
+
+#### 不変条件・エラー一覧
+
+- 不変条件
+  - `verticalSpacing` / `horizontalSpacing` / `rootSpacing` は 0 未満を許容せず 0 に丸める。
+  - `parentChild` エッジが存在しない場合は空の更新結果を返す。
+  - 返却値は親子接続成分に含まれるノードのみを対象とする。
+  - 同一入力に対して決定的な結果を返す（順序 tie-break を含む）。
+- エラー
+  - ドメインエラー型は持たず、`throws` しない。
+
 ## 5. ドメイン間の関係（依存・データ受け渡し）
 
 1. `CanvasHotkeyTranslator` がキーイベントを `CanvasCommand` に変換する。
@@ -204,14 +255,16 @@
 3. コマンド種別ごとに Domain サービスを利用する。
    - 編集: `CanvasGraphCRUDService`
    - フォーカス: `CanvasFocusNavigationService`
-   - レイアウト: `CanvasAreaLayoutService`
+   - ツリー再レイアウト: `CanvasTreeLayoutService`
+   - エリア衝突解消: `CanvasAreaLayoutService`
 4. 生成された `CanvasGraph` を `ApplyResult` 経由で ViewModel に返し、表示状態を更新する。
 
 共通契約:
 
-- `CanvasEdgeRelationType.parentChild` は、子孫探索・エリア分割・追加時レイアウト解消で共有される。
+- `CanvasEdgeRelationType.parentChild` は、子孫探索・ツリー再配置・エリア分割/衝突解消で共有される。
 - `CanvasGraph` は Application と InterfaceAdapters 間の共通スナップショットとして扱う。
 
 ## 6. 変更履歴
 
 - 2026-02-15: 初版作成。
+- 2026-02-15: `CanvasTreeLayoutService` を追加し、親子ツリー再配置の利用箇所と不変条件を追記。
