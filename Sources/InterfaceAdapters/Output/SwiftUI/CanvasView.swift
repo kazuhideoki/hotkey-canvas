@@ -51,7 +51,6 @@ public struct CanvasView: View {
                         }
                     }
 
-<<<<<<< HEAD
                     ForEach(displayNodes, id: \.id) { node in
                         let isFocused = viewModel.focusedNodeID == node.id
                         let isEditing = editingContext?.nodeID == node.id
@@ -85,46 +84,8 @@ public struct CanvasView: View {
                                     .padding(6)
                                 } else {
                                     Text(node.text ?? "")
-                                        .font(.system(size: 14, weight: .medium))
+                                        .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
                                         .padding(12)
-=======
-                        ForEach(displayNodes, id: \.id) { node in
-                            let isFocused = viewModel.focusedNodeID == node.id
-                            let isEditing = editingContext?.nodeID == node.id
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color(nsColor: .windowBackgroundColor))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(
-                                            isEditing
-                                                ? Color(nsColor: .systemPink)
-                                                : (isFocused ? Color.accentColor : Color(nsColor: .separatorColor)),
-                                            lineWidth: (isEditing || isFocused) ? 2 : 1
-                                        )
-                                )
-                                .overlay(alignment: .topLeading) {
-                                    if editingContext?.nodeID == node.id {
-                                        NodeTextEditor(
-                                            text: editingTextBinding(for: node.id),
-                                            selectAllOnFirstFocus: false,
-                                            initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
-                                            onMeasuredHeightChange: { measuredHeight in
-                                                updateEditingNodeHeight(for: node.id, measuredHeight: measuredHeight)
-                                            },
-                                            onCommit: {
-                                                commitNodeEditing()
-                                            },
-                                            onCancel: {
-                                                cancelNodeEditing()
-                                            }
-                                        )
-                                        .padding(6)
-                                    } else {
-                                        Text(node.text ?? "")
-                                            .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
-                                            .padding(12)
-                                    }
->>>>>>> main
                                 }
                             }
                             .frame(
