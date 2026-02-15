@@ -99,9 +99,7 @@ public enum CanvasAreaLayoutService {
             spacing: max(0, minimumSpacing),
             maxIterations: maxIterations
         )
-        return state.translationsByAreaID.filter { _, translation in
-            !translation.isZero
-        }
+        return state.translationsByAreaID.filter { _, translation in !translation.isZero }
     }
 }
 
@@ -149,20 +147,21 @@ extension CanvasAreaLayoutService {
             spacing: spacing,
             tieBreakDirection: seedAreaID.rawValue < firstCollidedAreaID.rawValue ? 1 : -1
         )
-        applyTranslation(
+        let didMoveSeedArea = applyTranslation(
             to: seedAreaID,
             dx: -(initialSeparation.dx / 2),
             dy: -(initialSeparation.dy / 2),
             boundsByAreaID: &boundsByAreaID,
             translationsByAreaID: &translationsByAreaID
         )
-        applyTranslation(
+        let didMoveFirstCollidedArea = applyTranslation(
             to: firstCollidedAreaID,
             dx: initialSeparation.dx / 2,
             dy: initialSeparation.dy / 2,
             boundsByAreaID: &boundsByAreaID,
             translationsByAreaID: &translationsByAreaID
         )
+        guard didMoveSeedArea || didMoveFirstCollidedArea else { return nil }
 
         return OverlapResolutionState(
             boundsByAreaID: boundsByAreaID,
@@ -221,13 +220,14 @@ extension CanvasAreaLayoutService {
             spacing: spacing,
             tieBreakDirection: moverAreaID.rawValue < targetAreaID.rawValue ? 1 : -1
         )
-        applyTranslation(
+        let didMoveTargetArea = applyTranslation(
             to: targetAreaID,
             dx: separation.dx,
             dy: separation.dy,
             boundsByAreaID: &state.boundsByAreaID,
             translationsByAreaID: &state.translationsByAreaID
         )
+        guard didMoveTargetArea else { return false }
         state.propagationQueue.append(targetAreaID)
         return true
     }
@@ -362,10 +362,7 @@ extension CanvasAreaLayoutService {
             return .zero
         }
 
-        return CanvasTranslation(
-            dx: unitX * distance,
-            dy: unitY * distance
-        )
+        return CanvasTranslation(dx: unitX * distance, dy: unitY * distance)
     }
 
     /// Applies translation to area bounds and accumulates the area's total translation.
@@ -375,18 +372,19 @@ extension CanvasAreaLayoutService {
     ///   - dy: Vertical translation amount.
     ///   - boundsByAreaID: Mutable area bounds dictionary.
     ///   - translationsByAreaID: Mutable accumulated translation dictionary.
+    /// - Returns: `true` when a non-zero translation was applied.
     private static func applyTranslation(
         to areaID: CanvasNodeID,
         dx: Double,
         dy: Double,
         boundsByAreaID: inout [CanvasNodeID: CanvasRect],
         translationsByAreaID: inout [CanvasNodeID: CanvasTranslation]
-    ) {
+    ) -> Bool {
         guard abs(dx) > numericEpsilon || abs(dy) > numericEpsilon else {
-            return
+            return false
         }
         guard let currentBounds = boundsByAreaID[areaID] else {
-            return
+            return false
         }
 
         boundsByAreaID[areaID] = currentBounds.translated(dx: dx, dy: dy)
@@ -395,5 +393,6 @@ extension CanvasAreaLayoutService {
             dx: currentTranslation.dx + dx,
             dy: currentTranslation.dy + dy
         )
+        return true
     }
 }

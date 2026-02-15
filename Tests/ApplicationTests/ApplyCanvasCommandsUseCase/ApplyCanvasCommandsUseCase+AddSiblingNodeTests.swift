@@ -126,6 +126,60 @@ func test_apply_addSiblingNode_withoutParent_isNoOp() async throws {
     #expect(result.newState == graph)
 }
 
+@Test("ApplyCanvasCommandsUseCase: addSiblingNode avoids occupied slot within same parent area")
+func test_apply_addSiblingNode_avoidsOccupiedSlotWithinSameArea() async throws {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let focusedChildID = CanvasNodeID(rawValue: "focused-child")
+    let lowerSiblingID = CanvasNodeID(rawValue: "lower-sibling")
+
+    let root = CanvasNode(
+        id: rootID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)
+    )
+    let focusedChild = CanvasNode(
+        id: focusedChildID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 140, y: 120, width: 220, height: 120)
+    )
+    let lowerSibling = CanvasNode(
+        id: lowerSiblingID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 140, y: 264, width: 220, height: 120)
+    )
+    let rootToFocused = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-root-focused"),
+        fromNodeID: rootID,
+        toNodeID: focusedChildID,
+        relationType: .parentChild
+    )
+    let rootToLower = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-root-lower"),
+        fromNodeID: rootID,
+        toNodeID: lowerSiblingID,
+        relationType: .parentChild
+    )
+    let graph = CanvasGraph(
+        nodesByID: [rootID: root, focusedChildID: focusedChild, lowerSiblingID: lowerSibling],
+        edgesByID: [rootToFocused.id: rootToFocused, rootToLower.id: rootToLower],
+        focusedNodeID: focusedChildID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addSiblingNode])
+
+    let siblingID = try #require(result.newState.focusedNodeID)
+    let newSibling = try #require(result.newState.nodesByID[siblingID])
+    let lowerSiblingAfter = try #require(result.newState.nodesByID[lowerSiblingID])
+    #expect(newSibling.id != lowerSiblingID)
+    #expect(boundsOverlap(newSibling.bounds, lowerSiblingAfter.bounds, spacing: 0) == false)
+    #expect(newSibling.bounds.x == lowerSiblingAfter.bounds.x)
+    #expect(newSibling.bounds.y == lowerSiblingAfter.bounds.y + lowerSiblingAfter.bounds.height + 24)
+}
+
 private func enclosingBounds(of nodes: [CanvasNode]) -> CanvasBounds {
     guard let first = nodes.first else {
         return CanvasBounds(x: 0, y: 0, width: 0, height: 0)

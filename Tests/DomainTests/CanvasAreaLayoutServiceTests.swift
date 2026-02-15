@@ -118,6 +118,45 @@ func test_resolveOverlaps_withMinimumSpacing_appliesExtraDistance() {
     expectAlmostEqual(translationB.dy, 0)
 }
 
+@Test("CanvasAreaLayoutService: propagation ignores epsilon no-op moves")
+func test_resolveOverlaps_propagation_ignoresNoOpMove() {
+    let tinyOverlap = 0.0000000005
+    let areaA = CanvasNodeArea(
+        id: CanvasNodeID(rawValue: "a"),
+        nodeIDs: Set([CanvasNodeID(rawValue: "a")]),
+        bounds: CanvasRect(minX: 0, minY: 0, width: 100, height: 100)
+    )
+    let areaB = CanvasNodeArea(
+        id: CanvasNodeID(rawValue: "b"),
+        nodeIDs: Set([CanvasNodeID(rawValue: "b")]),
+        bounds: CanvasRect(minX: 80, minY: 0, width: 100, height: 100)
+    )
+    let areaC = CanvasNodeArea(
+        id: CanvasNodeID(rawValue: "c"),
+        nodeIDs: Set([CanvasNodeID(rawValue: "c")]),
+        bounds: CanvasRect(minX: 190 - tinyOverlap, minY: 0, width: 100, height: 100)
+    )
+    let areaD = CanvasNodeArea(
+        id: CanvasNodeID(rawValue: "d"),
+        nodeIDs: Set([CanvasNodeID(rawValue: "d")]),
+        bounds: CanvasRect(minX: 170, minY: 0, width: 100, height: 100)
+    )
+
+    let translations = CanvasAreaLayoutService.resolveOverlaps(
+        areas: [areaA, areaB, areaC, areaD],
+        seedAreaID: areaA.id,
+        maxIterations: 1
+    )
+
+    let translationA = translations[areaA.id] ?? .zero
+    let translationB = translations[areaB.id] ?? .zero
+    let translationD = translations[areaD.id] ?? .zero
+    expectAlmostEqual(translationA.dx, -10)
+    expectAlmostEqual(translationB.dx, 10)
+    expectAlmostEqual(translationD.dx, 20)
+    expectAlmostEqual(translationD.dy, 0)
+}
+
 @Test("CanvasAreaLayoutService: returns empty result when seed area is missing")
 func test_resolveOverlaps_missingSeed_returnsEmpty() {
     let areaA = CanvasNodeArea(

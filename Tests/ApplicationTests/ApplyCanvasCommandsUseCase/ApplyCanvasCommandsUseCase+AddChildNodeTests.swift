@@ -72,6 +72,46 @@ func test_apply_addChildNode_avoidsOverlap() async throws {
     #expect(boundsOverlap(parentAreaBounds, blockerAfter.bounds, spacing: 32) == false)
 }
 
+@Test("ApplyCanvasCommandsUseCase: addChildNode avoids occupied slot within same parent area")
+func test_apply_addChildNode_avoidsOccupiedSlotWithinSameArea() async throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let existingChildID = CanvasNodeID(rawValue: "existing-child")
+
+    let parent = CanvasNode(
+        id: parentID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 100, y: 100, width: 220, height: 120)
+    )
+    let existingChild = CanvasNode(
+        id: existingChildID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 352, y: 100, width: 220, height: 120)
+    )
+    let parentToExistingChild = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-parent-existing-child"),
+        fromNodeID: parentID,
+        toNodeID: existingChildID,
+        relationType: .parentChild
+    )
+    let graph = CanvasGraph(
+        nodesByID: [parentID: parent, existingChildID: existingChild],
+        edgesByID: [parentToExistingChild.id: parentToExistingChild],
+        focusedNodeID: parentID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addChildNode])
+
+    let childID = try #require(result.newState.focusedNodeID)
+    let newChild = try #require(result.newState.nodesByID[childID])
+    #expect(newChild.id != existingChildID)
+    #expect(boundsOverlap(newChild.bounds, existingChild.bounds, spacing: 0) == false)
+    #expect(newChild.bounds.x == existingChild.bounds.x + existingChild.bounds.width + 32)
+    #expect(newChild.bounds.y == existingChild.bounds.y)
+}
+
 private func enclosingBounds(of nodes: [CanvasNode]) -> CanvasBounds {
     guard let first = nodes.first else {
         return CanvasBounds(x: 0, y: 0, width: 0, height: 0)
