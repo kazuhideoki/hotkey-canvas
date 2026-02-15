@@ -19,14 +19,46 @@ public final class CanvasViewModel: ObservableObject {
         self.inputPort = inputPort
     }
 
-    public func onAppear() async {
+    @discardableResult
+    public func onAppear() async -> CanvasNodeID? {
         let requestIDAtStart = latestDisplayedRequestID
         let result = await inputPort.getCurrentResult()
         // Ignore stale snapshot when a newer apply() result has already been displayed.
         guard requestIDAtStart == latestDisplayedRequestID else {
-            return
+            return nil
         }
-        updateDisplay(with: result)
+
+        guard result.newState.nodesByID.isEmpty else {
+            updateDisplay(with: result)
+            return nil
+        }
+
+        let requestID = consumeNextRequestID()
+        // Re-check current graph right before bootstrapping to avoid double add
+        // when another apply() was already started while the first snapshot was loading.
+        let latestResult = await inputPort.getCurrentResult()
+        guard shouldDisplayResult(for: requestID) else {
+            return nil
+        }
+        guard latestResult.newState.nodesByID.isEmpty else {
+            updateDisplay(with: latestResult)
+            markDisplayed(requestID)
+            return nil
+        }
+
+        do {
+            let initialNodeResult = try await inputPort.apply(commands: [.addNode])
+            guard shouldDisplayResult(for: requestID) else {
+                await refreshDisplayFromCurrentResult()
+                return nil
+            }
+            updateDisplay(with: initialNodeResult)
+            markDisplayed(requestID)
+            return initialNodeResult.newState.focusedNodeID
+        } catch {
+            // Keep current display state when initial node creation fails.
+            return nil
+        }
     }
 
     public func apply(commands: [CanvasCommand]) async {
@@ -125,6 +157,11 @@ extension CanvasViewModel {
         focusedNodeID = result.newState.focusedNodeID
         canUndo = result.canUndo
         canRedo = result.canRedo
+    }
+
+    private func refreshDisplayFromCurrentResult() async {
+        let latestResult = await inputPort.getCurrentResult()
+        updateDisplay(with: latestResult)
     }
 
     private func sortedNodes(in graph: CanvasGraph) -> [CanvasNode] {

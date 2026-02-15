@@ -156,7 +156,8 @@ public struct CanvasView: View {
                 alignment: .topLeading
             )
             .task {
-                await viewModel.onAppear()
+                let initialEditingNodeID = await viewModel.onAppear()
+                startInitialNodeEditingIfNeeded(nodeID: initialEditingNodeID)
                 focusCurrentNode(with: scrollProxy)
             }
             .onChange(of: viewModel.focusedNodeID) { _ in
@@ -338,6 +339,7 @@ extension CanvasView {
         editingContext = nil
     }
 
+<<<<<<< HEAD
     private func updateEditingNodeHeight(for nodeID: CanvasNodeID, measuredHeight: CGFloat) {
         guard var context = editingContext, context.nodeID == nodeID else {
             return
@@ -355,6 +357,20 @@ extension CanvasView {
 
     private func measuredNodeHeight(text: String, nodeWidth: Double) -> Double {
         Double(nodeTextHeightMeasurer.measure(text: text, nodeWidth: CGFloat(nodeWidth)))
+=======
+    private func startInitialNodeEditingIfNeeded(nodeID: CanvasNodeID?) {
+        guard editingContext == nil, let nodeID else {
+            return
+        }
+        guard let node = viewModel.nodes.first(where: { $0.id == nodeID }) else {
+            return
+        }
+        editingContext = NodeEditingContext(
+            nodeID: nodeID,
+            text: node.text ?? "",
+            initialCursorPlacement: .end
+        )
+>>>>>>> main
     }
 }
 
