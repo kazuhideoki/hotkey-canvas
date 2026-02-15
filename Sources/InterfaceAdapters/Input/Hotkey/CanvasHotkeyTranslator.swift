@@ -22,6 +22,31 @@ public struct CanvasHotkeyTranslator {
         return nil
     }
 
+    // Command-palette trigger is treated as input-adapter concern:
+    // it decides UI mode switching only, not domain/application behavior.
+    public func shouldOpenCommandPalette(_ event: NSEvent) -> Bool {
+        guard event.type == .keyDown else {
+            return false
+        }
+
+        let flags = normalizedFlags(from: event)
+        let disallowed: NSEvent.ModifierFlags = [.control, .option, .function]
+        guard flags.contains(.command), flags.isDisjoint(with: disallowed) else {
+            return false
+        }
+
+        let normalizedShortcut = normalizedShortcutCharacter(from: event)
+        if flags.contains(.shift), normalizedShortcut == "p" {
+            return true
+        }
+
+        if !flags.contains(.shift), normalizedShortcut == "k" {
+            return true
+        }
+
+        return false
+    }
+
     public func translate(_ event: NSEvent) -> [CanvasCommand] {
         guard event.type == .keyDown else {
             return []

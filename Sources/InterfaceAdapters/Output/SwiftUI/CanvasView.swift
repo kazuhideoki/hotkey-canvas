@@ -12,6 +12,9 @@ public struct CanvasView: View {
 
     @StateObject var viewModel: CanvasViewModel
     @State var editingContext: NodeEditingContext?
+    @State private var commandPaletteQuery: String = ""
+    @State private var isCommandPalettePresented = false
+    @State private var selectedCommandPaletteIndex: Int = 0
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
@@ -35,10 +38,66 @@ public struct CanvasView: View {
                 height: max(geometryProxy.size.height, Self.minimumCanvasHeight)
             )
             let cameraOffset = cameraOffset(for: displayNodes, viewportSize: viewportSize)
+            let commandPaletteItems = filteredCommandPaletteItems()
             ZStack(alignment: .topLeading) {
                 Color(nsColor: .textBackgroundColor)
                     .ignoresSafeArea()
                     .contentShape(Rectangle())
+
+                if isCommandPalettePresented {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Command Palette")
+                            .font(.headline)
+                            .padding(.horizontal, 12)
+                            .padding(.top, 10)
+
+                        TextField("Search commands", text: $commandPaletteQuery)
+                            .textFieldStyle(.roundedBorder)
+                            .padding(.horizontal, 12)
+                            .padding(.top, 8)
+
+                        Rectangle()
+                            .fill(Color(nsColor: .separatorColor))
+                            .frame(height: 1)
+                            .padding(.top, 10)
+
+                        ScrollView {
+                            VStack(spacing: 0) {
+                                ForEach(Array(commandPaletteItems.enumerated()), id: \.element.id) { (index, item) in
+                                    HStack {
+                                        Text(item.title)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                                        Text(item.shortcutLabel)
+                                            .foregroundStyle(.secondary)
+                                            .frame(maxWidth: 170, alignment: .trailing)
+                                    }
+                                    .font(.system(size: 13, weight: .medium))
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 12)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .contentShape(Rectangle())
+                                    .background(index == selectedCommandPaletteIndex ? Color.accentColor.opacity(0.2) : .clear)
+                                    .onTapGesture {
+                                        selectedCommandPaletteIndex = index
+                                        executeSelectedCommand(item)
+                                    }
+                                }
+                            }
+                        }
+                        .frame(maxHeight: 280)
+                    }
+                    .frame(width: 520)
+                    .background(.regularMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                    )
+                    .padding(.leading, 20)
+                    .padding(.top, 20)
+                    .animation(.easeInOut(duration: 0.15), value: commandPaletteItems.count)
+                    .zIndex(10)
+                }
 
                 ZStack(alignment: .topLeading) {
                     ForEach(viewModel.edges, id: \.id) { edge in
@@ -101,7 +160,22 @@ public struct CanvasView: View {
                 }
                 .offset(x: cameraOffset.width, y: cameraOffset.height)
 
+                if isCommandPalettePresented {
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .allowsHitTesting(false)
+                }
+
                 CanvasHotkeyCaptureView(isEnabled: editingContext == nil) { event in
+                    if isCommandPalettePresented {
+                        return handleCommandPaletteKeyDown(event)
+                    }
+
+                    if hotkeyTranslator.shouldOpenCommandPalette(event) {
+                        openCommandPalette()
+                        return true
+                    }
+
                     if let historyAction = hotkeyTranslator.historyAction(event) {
                         Task {
                             switch historyAction {
@@ -186,5 +260,274 @@ public struct CanvasView: View {
                 viewModel.consumePendingEditingNodeID()
             }
         }
+        .onChange(of: commandPaletteQuery) { _ in
+            selectedCommandPaletteIndex = 0
+        }
+        .onChange(of: isCommandPalettePresented) { isVisible in
+            if !isVisible {
+                commandPaletteQuery = ""
+                selectedCommandPaletteIndex = 0
+            }
+        }
+    }
+}
+
+private extension CanvasView {
+    struct CommandPaletteItem: Identifiable, Equatable {
+        let id: String
+        let title: String
+        let shortcutLabel: String
+        let action: CommandPaletteAction
+    }
+
+    enum CommandPaletteAction: Equatable {
+        case apply(commands: [CanvasCommand])
+        case undo
+        case redo
+    }
+
+    static let commandPaletteEscapeKeyCode: UInt16 = 53
+    static let commandPaletteReturnKeyCode: UInt16 = 36
+    static let commandPaletteUpArrowKeyCode: UInt16 = 126
+    static let commandPaletteDownArrowKeyCode: UInt16 = 125
+    static let commandPaletteBackspaceKeyCode: UInt16 = 51
+    static let commandPaletteForwardDeleteKeyCode: UInt16 = 117
+
+    func openCommandPalette() {
+        isCommandPalettePresented = true
+        selectedCommandPaletteIndex = 0
+        commandPaletteQuery = ""
+    }
+
+    func closeCommandPalette() {
+        isCommandPalettePresented = false
+    }
+
+    func handleCommandPaletteKeyDown(_ event: NSEvent) -> Bool {
+        let keyCode = event.keyCode
+
+        if keyCode == Self.commandPaletteEscapeKeyCode {
+            closeCommandPalette()
+            return true
+        }
+
+        if keyCode == Self.commandPaletteReturnKeyCode {
+            executeSelectedCommandIfNeeded()
+            return true
+        }
+
+        if keyCode == Self.commandPaletteUpArrowKeyCode {
+            guard !filteredCommandPaletteItems().isEmpty else {
+                return true
+            }
+            selectedCommandPaletteIndex = max(0, selectedCommandPaletteIndex - 1)
+            return true
+        }
+
+        if keyCode == Self.commandPaletteDownArrowKeyCode {
+            guard !filteredCommandPaletteItems().isEmpty else {
+                return true
+            }
+            let maxIndex = max(0, filteredCommandPaletteItems().count - 1)
+            selectedCommandPaletteIndex = min(maxIndex, selectedCommandPaletteIndex + 1)
+            return true
+        }
+
+        if keyCode == Self.commandPaletteBackspaceKeyCode {
+            guard !commandPaletteQuery.isEmpty else {
+                return true
+            }
+            commandPaletteQuery.removeLast()
+            return true
+        }
+
+        if keyCode == Self.commandPaletteForwardDeleteKeyCode {
+            guard !commandPaletteQuery.isEmpty else {
+                return true
+            }
+            commandPaletteQuery.removeLast()
+            return true
+        }
+
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .function]
+        guard modifiers.isDisjoint(with: disallowed) else {
+            return true
+        }
+
+        guard let characters = event.charactersIgnoringModifiers, let first = characters.first else {
+            return false
+        }
+        guard first != "\r", first != "\n" else {
+            return true
+        }
+        guard first.isASCII, (first.isLetter || first.isNumber || first.isPunctuation || first == " ") else {
+            // Ignore non-printable and function-key artifacts so query filtering stays stable.
+            return true
+        }
+        commandPaletteQuery.append(contentsOf: String(first).lowercased())
+        return true
+    }
+
+    func filteredCommandPaletteItems() -> [CommandPaletteItem] {
+        let orderedItems = defaultCommandPaletteItems()
+            .sorted { lhs, rhs in
+                lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
+            }
+
+        guard !commandPaletteQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return orderedItems
+        }
+
+        return orderedItems.filter { item in
+            matchesCommandPaletteQuery(item.title, commandPaletteQuery)
+        }
+    }
+
+    // Intentionally kept in InterfaceAdapters for now: this is UI metadata
+    // (title/shortcut label/search target) mapped to existing application actions.
+    // No new domain rule or use-case orchestration is introduced by this table.
+    // Future direction: move this catalog behind an Application query use case
+    // and let this view consume that output as display data.
+    func defaultCommandPaletteItems() -> [CommandPaletteItem] {
+        [
+            CommandPaletteItem(
+                id: "addChildNode",
+                title: "Add Child Node",
+                shortcutLabel: "Command + Enter",
+                action: .apply(commands: [.addChildNode])
+            ),
+            CommandPaletteItem(
+                id: "addNode",
+                title: "Add Node",
+                shortcutLabel: "Shift + Enter",
+                action: .apply(commands: [.addNode])
+            ),
+            CommandPaletteItem(
+                id: "addSiblingNodeAbove",
+                title: "Add Sibling Node Above",
+                shortcutLabel: "Option + Enter",
+                action: .apply(commands: [.addSiblingNode(position: .above)])
+            ),
+            CommandPaletteItem(
+                id: "addSiblingNodeBelow",
+                title: "Add Sibling Node Below",
+                shortcutLabel: "Enter",
+                action: .apply(commands: [.addSiblingNode(position: .below)])
+            ),
+            CommandPaletteItem(
+                id: "deleteFocusedNode",
+                title: "Delete Focused Node",
+                shortcutLabel: "Delete",
+                action: .apply(commands: [.deleteFocusedNode])
+            ),
+            CommandPaletteItem(
+                id: "moveFocusDown",
+                title: "Move Focus Down",
+                shortcutLabel: "Down Arrow",
+                action: .apply(commands: [.moveFocus(.down)])
+            ),
+            CommandPaletteItem(
+                id: "moveFocusLeft",
+                title: "Move Focus Left",
+                shortcutLabel: "Left Arrow",
+                action: .apply(commands: [.moveFocus(.left)])
+            ),
+            CommandPaletteItem(
+                id: "moveFocusRight",
+                title: "Move Focus Right",
+                shortcutLabel: "Right Arrow",
+                action: .apply(commands: [.moveFocus(.right)])
+            ),
+            CommandPaletteItem(
+                id: "moveFocusUp",
+                title: "Move Focus Up",
+                shortcutLabel: "Up Arrow",
+                action: .apply(commands: [.moveFocus(.up)])
+            ),
+            CommandPaletteItem(
+                id: "moveNodeDown",
+                title: "Move Node Down",
+                shortcutLabel: "Command + Down Arrow",
+                action: .apply(commands: [.moveNode(.down)])
+            ),
+            CommandPaletteItem(
+                id: "moveNodeLeft",
+                title: "Move Node Left",
+                shortcutLabel: "Command + Left Arrow",
+                action: .apply(commands: [.moveNode(.left)])
+            ),
+            CommandPaletteItem(
+                id: "moveNodeRight",
+                title: "Move Node Right",
+                shortcutLabel: "Command + Right Arrow",
+                action: .apply(commands: [.moveNode(.right)])
+            ),
+            CommandPaletteItem(
+                id: "moveNodeUp",
+                title: "Move Node Up",
+                shortcutLabel: "Command + Up Arrow",
+                action: .apply(commands: [.moveNode(.up)])
+            ),
+            CommandPaletteItem(
+                id: "redo",
+                title: "Redo",
+                shortcutLabel: "Command + Shift + Z / Command + Y",
+                action: .redo
+            ),
+            CommandPaletteItem(
+                id: "undo",
+                title: "Undo",
+                shortcutLabel: "Command + Z",
+                action: .undo
+            )
+        ]
+    }
+
+    func executeSelectedCommandIfNeeded() {
+        let commandItems = filteredCommandPaletteItems()
+        guard !commandItems.isEmpty else {
+            return
+        }
+        let selectedIndex = min(max(0, selectedCommandPaletteIndex), commandItems.count - 1)
+        executeSelectedCommand(commandItems[selectedIndex])
+    }
+
+    func executeSelectedCommand(_ item: CommandPaletteItem) {
+        switch item.action {
+        case let .apply(commands):
+            Task {
+                await viewModel.apply(commands: commands)
+            }
+        case .undo:
+            Task {
+                await viewModel.undo()
+            }
+        case .redo:
+            Task {
+                await viewModel.redo()
+            }
+        }
+        closeCommandPalette()
+    }
+
+    func matchesCommandPaletteQuery(_ value: String, _ rawQuery: String) -> Bool {
+        let valueText = value.lowercased()
+        let query = rawQuery.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            return true
+        }
+
+        var valueIndex = valueText.startIndex
+        for queryCharacter in query {
+            while valueIndex != valueText.endIndex, valueText[valueIndex] != queryCharacter {
+                valueIndex = valueText.index(after: valueIndex)
+            }
+            guard valueIndex != valueText.endIndex else {
+                return false
+            }
+            valueIndex = valueText.index(after: valueIndex)
+        }
+        return true
     }
 }
