@@ -33,9 +33,22 @@ public final class CanvasViewModel: ObservableObject {
         }
 
         let requestID = consumeNextRequestID()
+        // Re-check current graph right before bootstrapping to avoid double add
+        // when another apply() was already started while the first snapshot was loading.
+        let latestResult = await inputPort.getCurrentResult()
+        guard shouldDisplayResult(for: requestID) else {
+            return nil
+        }
+        guard latestResult.newState.nodesByID.isEmpty else {
+            updateDisplay(with: latestResult)
+            markDisplayed(requestID)
+            return nil
+        }
+
         do {
             let initialNodeResult = try await inputPort.apply(commands: [.addNode])
             guard shouldDisplayResult(for: requestID) else {
+                await refreshDisplayFromCurrentResult()
                 return nil
             }
             updateDisplay(with: initialNodeResult)
@@ -113,6 +126,11 @@ extension CanvasViewModel {
         focusedNodeID = result.newState.focusedNodeID
         canUndo = result.canUndo
         canRedo = result.canRedo
+    }
+
+    private func refreshDisplayFromCurrentResult() async {
+        let latestResult = await inputPort.getCurrentResult()
+        updateDisplay(with: latestResult)
     }
 
     private func sortedNodes(in graph: CanvasGraph) -> [CanvasNode] {
