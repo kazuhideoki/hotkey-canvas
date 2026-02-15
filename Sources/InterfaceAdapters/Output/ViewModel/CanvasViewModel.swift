@@ -7,6 +7,7 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var nodes: [CanvasNode] = []
     @Published public private(set) var edges: [CanvasEdge] = []
     @Published public private(set) var focusedNodeID: CanvasNodeID?
+    @Published public private(set) var pendingEditingNodeID: CanvasNodeID?
     @Published public private(set) var canUndo: Bool = false
     @Published public private(set) var canRedo: Bool = false
 
@@ -72,7 +73,9 @@ public final class CanvasViewModel: ObservableObject {
             guard shouldDisplayResult(for: requestID) else {
                 return
             }
+            let shouldStartEditing = shouldStartEditingAfterApply(commands: commands, result: result)
             updateDisplay(with: result)
+            pendingEditingNodeID = shouldStartEditing ? result.newState.focusedNodeID : nil
             markDisplayed(requestID)
         } catch {
             // Keep current display state when command application fails.
@@ -86,6 +89,7 @@ public final class CanvasViewModel: ObservableObject {
             return
         }
         updateDisplay(with: result)
+        pendingEditingNodeID = nil
         markDisplayed(requestID)
     }
 
@@ -96,11 +100,16 @@ public final class CanvasViewModel: ObservableObject {
             return
         }
         updateDisplay(with: result)
+        pendingEditingNodeID = nil
         markDisplayed(requestID)
     }
 
     public func commitNodeText(nodeID: CanvasNodeID, text: String) async {
         await apply(commands: [.setNodeText(nodeID: nodeID, text: text)])
+    }
+
+    public func consumePendingEditingNodeID() {
+        pendingEditingNodeID = nil
     }
 }
 
@@ -118,6 +127,28 @@ extension CanvasViewModel {
 
     private func markDisplayed(_ requestID: UInt64) {
         latestDisplayedRequestID = requestID
+    }
+
+    private func shouldStartEditingAfterApply(
+        commands: [CanvasCommand],
+        result: ApplyResult
+    ) -> Bool {
+        guard commands.contains(where: isInlineEditingStartCommand) else {
+            return false
+        }
+        guard result.didAddNode else {
+            return false
+        }
+        return result.newState.focusedNodeID != nil
+    }
+
+    private func isInlineEditingStartCommand(_ command: CanvasCommand) -> Bool {
+        switch command {
+        case .addNode, .addChildNode, .addSiblingNode:
+            return true
+        case .moveFocus, .deleteFocusedNode, .setNodeText:
+            return false
+        }
     }
 
     private func updateDisplay(with result: ApplyResult) {
