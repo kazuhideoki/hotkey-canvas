@@ -142,7 +142,8 @@ public struct CanvasView: View {
             }
             .frame(minWidth: 900, minHeight: 600, alignment: .topLeading)
             .task {
-                await viewModel.onAppear()
+                let initialEditingNodeID = await viewModel.onAppear()
+                startInitialNodeEditingIfNeeded(nodeID: initialEditingNodeID)
                 focusCurrentNode(with: scrollProxy)
             }
             .onChange(of: viewModel.focusedNodeID) { _ in
@@ -274,6 +275,20 @@ extension CanvasView {
 
     private func cancelNodeEditing() {
         editingContext = nil
+    }
+
+    private func startInitialNodeEditingIfNeeded(nodeID: CanvasNodeID?) {
+        guard editingContext == nil, let nodeID else {
+            return
+        }
+        guard let node = viewModel.nodes.first(where: { $0.id == nodeID }) else {
+            return
+        }
+        editingContext = NodeEditingContext(
+            nodeID: nodeID,
+            text: node.text ?? "",
+            initialCursorPlacement: .end
+        )
     }
 }
 

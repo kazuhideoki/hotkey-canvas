@@ -63,6 +63,9 @@ public final class CanvasKeyCaptureNSView: NSView {
             guard let self, let window = self.window else {
                 return
             }
+            guard self.isCaptureEnabled else {
+                return
+            }
             window.makeFirstResponder(self)
         }
     }
