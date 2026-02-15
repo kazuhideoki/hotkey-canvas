@@ -3,6 +3,10 @@ import Domain
 import SwiftUI
 
 public struct CanvasView: View {
+    private static let minimumCanvasWidth: Double = 900
+    private static let minimumCanvasHeight: Double = 600
+    private static let canvasMargin: Double = 120
+
     @StateObject private var viewModel: CanvasViewModel
     @State private var editingContext: NodeEditingContext?
     private let hotkeyTranslator: CanvasHotkeyTranslator
@@ -18,98 +22,150 @@ public struct CanvasView: View {
 
     public var body: some View {
         let nodesByID = Dictionary(uniqueKeysWithValues: viewModel.nodes.map { ($0.id, $0) })
+        let contentBounds = CanvasContentBoundsCalculator.calculate(
+            nodes: viewModel.nodes,
+            minimumWidth: Self.minimumCanvasWidth,
+            minimumHeight: Self.minimumCanvasHeight,
+            margin: Self.canvasMargin
+        )
+        let horizontalOffset = -contentBounds.minX
+        let verticalOffset = -contentBounds.minY
 
-        ZStack(alignment: .topLeading) {
-            Color(nsColor: .textBackgroundColor)
-                .ignoresSafeArea()
-                .contentShape(Rectangle())
+        return ScrollViewReader { scrollProxy in
+            ZStack(alignment: .topLeading) {
+                Color(nsColor: .textBackgroundColor)
+                    .ignoresSafeArea()
+                    .contentShape(Rectangle())
 
-            ForEach(viewModel.edges, id: \.id) { edge in
-                if let fromNode = nodesByID[edge.fromNodeID], let toNode = nodesByID[edge.toNodeID] {
-                    Path { path in
-                        path.move(to: centerPoint(for: fromNode))
-                        path.addLine(to: centerPoint(for: toNode))
-                    }
-                    .stroke(Color(nsColor: .separatorColor), lineWidth: 1.5)
-                }
-            }
-
-            ForEach(viewModel.nodes, id: \.id) { node in
-                let isFocused = viewModel.focusedNodeID == node.id
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(nsColor: .windowBackgroundColor))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(
-                                isFocused ? Color.accentColor : Color(nsColor: .separatorColor),
-                                lineWidth: isFocused ? 2 : 1
-                            )
-                    )
-                    .overlay(alignment: .topLeading) {
-                        if editingContext?.nodeID == node.id {
-                            NodeTextEditor(
-                                text: editingTextBinding(for: node.id),
-                                selectAllOnFirstFocus: false,
-                                initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
-                                onCommit: {
-                                    commitNodeEditing()
-                                },
-                                onCancel: {
-                                    cancelNodeEditing()
+                ScrollView([.horizontal, .vertical]) {
+                    ZStack(alignment: .topLeading) {
+                        ForEach(viewModel.edges, id: \.id) { edge in
+                            if let fromNode = nodesByID[edge.fromNodeID], let toNode = nodesByID[edge.toNodeID] {
+                                Path { path in
+                                    path.move(
+                                        to: centerPoint(
+                                            for: fromNode,
+                                            horizontalOffset: horizontalOffset,
+                                            verticalOffset: verticalOffset
+                                        )
+                                    )
+                                    path.addLine(
+                                        to: centerPoint(
+                                            for: toNode,
+                                            horizontalOffset: horizontalOffset,
+                                            verticalOffset: verticalOffset
+                                        )
+                                    )
                                 }
-                            )
-                            .padding(6)
-                        } else {
-                            Text(node.text ?? "")
-                                .font(.system(size: 14, weight: .medium))
-                                .padding(12)
+                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1.5)
+                            }
+                        }
+
+                        ForEach(viewModel.nodes, id: \.id) { node in
+                            let isFocused = viewModel.focusedNodeID == node.id
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color(nsColor: .windowBackgroundColor))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(
+                                            isFocused ? Color.accentColor : Color(nsColor: .separatorColor),
+                                            lineWidth: isFocused ? 2 : 1
+                                        )
+                                )
+                                .overlay(alignment: .topLeading) {
+                                    if editingContext?.nodeID == node.id {
+                                        NodeTextEditor(
+                                            text: editingTextBinding(for: node.id),
+                                            selectAllOnFirstFocus: false,
+                                            initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
+                                            onCommit: {
+                                                commitNodeEditing()
+                                            },
+                                            onCancel: {
+                                                cancelNodeEditing()
+                                            }
+                                        )
+                                        .padding(6)
+                                    } else {
+                                        Text(node.text ?? "")
+                                            .font(.system(size: 14, weight: .medium))
+                                            .padding(12)
+                                    }
+                                }
+                                .frame(
+                                    width: CGFloat(node.bounds.width),
+                                    height: CGFloat(node.bounds.height),
+                                    alignment: .topLeading
+                                )
+                                .position(
+                                    x: CGFloat(node.bounds.x + horizontalOffset + (node.bounds.width / 2)),
+                                    y: CGFloat(node.bounds.y + verticalOffset + (node.bounds.height / 2))
+                                )
+                                .id(node.id)
                         }
                     }
                     .frame(
-                        width: CGFloat(node.bounds.width),
-                        height: CGFloat(node.bounds.height),
+                        width: CGFloat(contentBounds.width),
+                        height: CGFloat(contentBounds.height),
                         alignment: .topLeading
                     )
-                    .offset(x: CGFloat(node.bounds.x), y: CGFloat(node.bounds.y))
-            }
+                }
 
-            CanvasHotkeyCaptureView(isEnabled: editingContext == nil) { event in
-                if let historyAction = hotkeyTranslator.historyAction(event) {
-                    Task {
-                        switch historyAction {
-                        case .undo:
-                            await viewModel.undo()
-                        case .redo:
-                            await viewModel.redo()
+                CanvasHotkeyCaptureView(isEnabled: editingContext == nil) { event in
+                    if let historyAction = hotkeyTranslator.historyAction(event) {
+                        Task {
+                            switch historyAction {
+                            case .undo:
+                                await viewModel.undo()
+                            case .redo:
+                                await viewModel.redo()
+                            }
                         }
+                        return true
                     }
+                    let commands = hotkeyTranslator.translate(event)
+                    guard !commands.isEmpty else {
+                        return handleTypingInputStart(event, nodesByID: nodesByID)
+                    }
+                    // Returning true tells the capture view to stop responder-chain propagation.
+                    Task { await viewModel.apply(commands: commands) }
                     return true
                 }
-                let commands = hotkeyTranslator.translate(event)
-                guard !commands.isEmpty else {
-                    return handleTypingInputStart(event, nodesByID: nodesByID)
-                }
-                // Returning true tells the capture view to stop responder-chain propagation.
-                Task { await viewModel.apply(commands: commands) }
-                return true
+                .frame(width: 1, height: 1)
+                // Keep key capture active without intercepting canvas rendering.
+                .allowsHitTesting(false)
             }
-            .frame(width: 1, height: 1)
-            // Keep key capture active without intercepting canvas rendering.
-            .allowsHitTesting(false)
-        }
-        .frame(minWidth: 900, minHeight: 600, alignment: .topLeading)
-        .task {
-            await viewModel.onAppear()
+            .frame(minWidth: 900, minHeight: 600, alignment: .topLeading)
+            .task {
+                await viewModel.onAppear()
+                focusCurrentNode(with: scrollProxy)
+            }
+            .onChange(of: viewModel.focusedNodeID) { _ in
+                focusCurrentNode(with: scrollProxy)
+            }
         }
     }
 }
 
 extension CanvasView {
-    private func centerPoint(for node: CanvasNode) -> CGPoint {
+    private func centerPoint(
+        for node: CanvasNode,
+        horizontalOffset: Double,
+        verticalOffset: Double
+    ) -> CGPoint {
         CGPoint(
-            x: node.bounds.x + (node.bounds.width / 2),
-            y: node.bounds.y + (node.bounds.height / 2)
+            x: node.bounds.x + (node.bounds.width / 2) + horizontalOffset,
+            y: node.bounds.y + (node.bounds.height / 2) + verticalOffset
         )
+    }
+
+    private func focusCurrentNode(with proxy: ScrollViewProxy) {
+        guard let focusedNodeID = viewModel.focusedNodeID else {
+            return
+        }
+        withAnimation(.easeInOut(duration: 0.18)) {
+            proxy.scrollTo(focusedNodeID, anchor: .center)
+        }
     }
 
     private func editingTextBinding(for nodeID: CanvasNodeID) -> Binding<String> {
