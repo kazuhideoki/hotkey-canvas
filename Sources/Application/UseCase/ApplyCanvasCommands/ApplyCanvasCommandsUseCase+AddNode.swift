@@ -6,9 +6,10 @@ extension ApplyCanvasCommandsUseCase {
     func addNode(in graph: CanvasGraph) throws -> CanvasGraph {
         let node = makeTextNode(bounds: makeAvailableNewNodeBounds(in: graph))
         let graphWithNode = try CanvasGraphCRUDService.createNode(node, in: graph)
+        let graphAfterLayout = resolveAreaOverlaps(around: node.id, in: graphWithNode)
         return CanvasGraph(
-            nodesByID: graphWithNode.nodesByID,
-            edgesByID: graphWithNode.edgesByID,
+            nodesByID: graphAfterLayout.nodesByID,
+            edgesByID: graphAfterLayout.edgesByID,
             focusedNodeID: node.id
         )
     }

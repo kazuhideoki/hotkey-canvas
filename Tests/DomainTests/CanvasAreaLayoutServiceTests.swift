@@ -5,84 +5,26 @@ import Testing
 
 @Test("CanvasAreaLayoutService: parent-child areas are connected components")
 func test_makeParentChildAreas_buildsConnectedComponents() {
-    let nodeA = CanvasNode(
-        id: CanvasNodeID(rawValue: "a"),
-        kind: .text,
-        text: nil,
-        bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 80)
-    )
-    let nodeB = CanvasNode(
-        id: CanvasNodeID(rawValue: "b"),
-        kind: .text,
-        text: nil,
-        bounds: CanvasBounds(x: 140, y: 0, width: 100, height: 80)
-    )
-    let nodeC = CanvasNode(
-        id: CanvasNodeID(rawValue: "c"),
-        kind: .text,
-        text: nil,
-        bounds: CanvasBounds(x: 300, y: 40, width: 100, height: 80)
-    )
-    let nodeD = CanvasNode(
-        id: CanvasNodeID(rawValue: "d"),
-        kind: .text,
-        text: nil,
-        bounds: CanvasBounds(x: -200, y: 300, width: 120, height: 90)
-    )
-
-    let edgeAB = CanvasEdge(
-        id: CanvasEdgeID(rawValue: "edge-a-b"),
-        fromNodeID: nodeA.id,
-        toNodeID: nodeB.id,
-        relationType: .parentChild
-    )
-    let edgeCB = CanvasEdge(
-        id: CanvasEdgeID(rawValue: "edge-c-b"),
-        fromNodeID: nodeC.id,
-        toNodeID: nodeB.id,
-        relationType: .parentChild
-    )
-    let nonHierarchyEdgeDA = CanvasEdge(
-        id: CanvasEdgeID(rawValue: "edge-d-a"),
-        fromNodeID: nodeD.id,
-        toNodeID: nodeA.id,
-        relationType: .normal
-    )
-
-    let graph = CanvasGraph(
-        nodesByID: [
-            nodeA.id: nodeA,
-            nodeB.id: nodeB,
-            nodeC.id: nodeC,
-            nodeD.id: nodeD,
-        ],
-        edgesByID: [
-            edgeAB.id: edgeAB,
-            edgeCB.id: edgeCB,
-            nonHierarchyEdgeDA.id: nonHierarchyEdgeDA,
-        ],
-        focusedNodeID: nodeA.id
-    )
-
-    let areas = CanvasAreaLayoutService.makeParentChildAreas(in: graph)
+    let fixture = makeParentChildAreasFixture()
+    let areas = CanvasAreaLayoutService.makeParentChildAreas(in: fixture.graph)
 
     #expect(areas.count == 2)
-    guard let connectedArea = areas.first(where: { $0.nodeIDs.contains(nodeA.id) }) else {
+    guard let connectedArea = areas.first(where: { $0.nodeIDs.contains(fixture.connectedAreaID) }) else {
         Issue.record("connected area not found")
         return
     }
-    #expect(connectedArea.nodeIDs == Set([nodeA.id, nodeB.id, nodeC.id]))
-    #expect(connectedArea.id == nodeA.id)
+    #expect(connectedArea.nodeIDs == fixture.connectedNodeIDs)
+    #expect(connectedArea.id == fixture.connectedAreaID)
     expectAlmostEqual(connectedArea.bounds.minX, 0)
     expectAlmostEqual(connectedArea.bounds.minY, 0)
     expectAlmostEqual(connectedArea.bounds.width, 400)
     expectAlmostEqual(connectedArea.bounds.height, 120)
 
-    guard let isolatedArea = areas.first(where: { $0.nodeIDs == Set([nodeD.id]) }) else {
+    guard let isolatedArea = areas.first(where: { $0.nodeIDs == Set([fixture.isolatedAreaID]) }) else {
         Issue.record("isolated area not found")
         return
     }
-    #expect(isolatedArea.id == nodeD.id)
+    #expect(isolatedArea.id == fixture.isolatedAreaID)
     expectAlmostEqual(isolatedArea.bounds.minX, -200)
     expectAlmostEqual(isolatedArea.bounds.minY, 300)
     expectAlmostEqual(isolatedArea.bounds.width, 120)
@@ -194,4 +136,70 @@ func test_resolveOverlaps_missingSeed_returnsEmpty() {
 
 private func expectAlmostEqual(_ lhs: Double, _ rhs: Double, tolerance: Double = 0.0001) {
     #expect(abs(lhs - rhs) <= tolerance)
+}
+
+private struct ParentChildAreasFixture {
+    let graph: CanvasGraph
+    let connectedAreaID: CanvasNodeID
+    let connectedNodeIDs: Set<CanvasNodeID>
+    let isolatedAreaID: CanvasNodeID
+}
+
+private func makeParentChildAreasFixture() -> ParentChildAreasFixture {
+    let nodeA = CanvasNode(
+        id: CanvasNodeID(rawValue: "a"),
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 80)
+    )
+    let nodeB = CanvasNode(
+        id: CanvasNodeID(rawValue: "b"),
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 140, y: 0, width: 100, height: 80)
+    )
+    let nodeC = CanvasNode(
+        id: CanvasNodeID(rawValue: "c"),
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 300, y: 40, width: 100, height: 80)
+    )
+    let nodeD = CanvasNode(
+        id: CanvasNodeID(rawValue: "d"),
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: -200, y: 300, width: 120, height: 90)
+    )
+
+    let edgeAB = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-a-b"),
+        fromNodeID: nodeA.id,
+        toNodeID: nodeB.id,
+        relationType: .parentChild
+    )
+    let edgeCB = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-c-b"),
+        fromNodeID: nodeC.id,
+        toNodeID: nodeB.id,
+        relationType: .parentChild
+    )
+    let edgeDA = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-d-a"),
+        fromNodeID: nodeD.id,
+        toNodeID: nodeA.id,
+        relationType: .normal
+    )
+
+    let graph = CanvasGraph(
+        nodesByID: [nodeA.id: nodeA, nodeB.id: nodeB, nodeC.id: nodeC, nodeD.id: nodeD],
+        edgesByID: [edgeAB.id: edgeAB, edgeCB.id: edgeCB, edgeDA.id: edgeDA],
+        focusedNodeID: nodeA.id
+    )
+
+    return ParentChildAreasFixture(
+        graph: graph,
+        connectedAreaID: nodeA.id,
+        connectedNodeIDs: Set([nodeA.id, nodeB.id, nodeC.id]),
+        isolatedAreaID: nodeD.id
+    )
 }

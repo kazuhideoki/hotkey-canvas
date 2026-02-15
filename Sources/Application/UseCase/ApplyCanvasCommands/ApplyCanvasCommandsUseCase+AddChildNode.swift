@@ -21,10 +21,11 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentID, to: childNode.id),
             in: graphWithChild
         )
+        let graphAfterLayout = resolveAreaOverlaps(around: childNode.id, in: graphWithChild)
 
         return CanvasGraph(
-            nodesByID: graphWithChild.nodesByID,
-            edgesByID: graphWithChild.edgesByID,
+            nodesByID: graphAfterLayout.nodesByID,
+            edgesByID: graphAfterLayout.edgesByID,
             focusedNodeID: childNode.id
         )
     }
