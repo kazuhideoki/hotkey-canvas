@@ -29,7 +29,7 @@ func test_apply_moveFocus_movesToNearestNodeInDirection() async throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 420, y: 100, width: 100, height: 100)
-            )
+            ),
         ],
         edgesByID: [:],
         focusedNodeID: centerID
