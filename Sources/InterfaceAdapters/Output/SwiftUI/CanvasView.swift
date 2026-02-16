@@ -35,6 +35,10 @@ public struct CanvasView: View {
     public var body: some View {
         let displayNodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
         let nodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
+        let branchXByParentAndDirection = CanvasEdgeRouting.branchXByParentAndDirection(
+            edges: viewModel.edges,
+            nodesByID: nodesByID
+        )
         return GeometryReader { geometryProxy in
             let viewportSize = CGSize(
                 width: max(geometryProxy.size.width, Self.minimumCanvasWidth),
@@ -111,12 +115,13 @@ public struct CanvasView: View {
 
                 ZStack(alignment: .topLeading) {
                     ForEach(viewModel.edges, id: \.id) { edge in
-                        if let fromNode = nodesByID[edge.fromNodeID], let toNode = nodesByID[edge.toNodeID] {
-                            Path { path in
-                                path.move(to: centerPoint(for: fromNode))
-                                path.addLine(to: centerPoint(for: toNode))
-                            }
-                            .stroke(Color(nsColor: .separatorColor), lineWidth: 1.5)
+                        if let path = CanvasEdgeRouting.path(
+                            for: edge,
+                            nodesByID: nodesByID,
+                            branchXByParentAndDirection: branchXByParentAndDirection
+                        ) {
+                            path
+                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1.5)
                         }
                     }
 
