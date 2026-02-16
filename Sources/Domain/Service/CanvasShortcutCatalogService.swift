@@ -1,0 +1,228 @@
+// Background: Hotkey event handling and command-palette listing must share one shortcut source.
+// Responsibility: Provide the canonical static shortcut catalog and gesture-to-action resolution.
+/// Domain service that owns shortcut definitions and lookup logic.
+public enum CanvasShortcutCatalogService {
+    /// Returns canonical default shortcut definitions.
+    /// - Returns: Ordered shortcut catalog entries.
+    public static func defaultDefinitions() -> [CanvasShortcutDefinition] {
+        defaultDefinitionsStorage
+    }
+
+    /// Resolves shortcut action for a gesture.
+    /// - Parameter gesture: Canonical gesture from input adapter.
+    /// - Returns: Matched action when registered.
+    public static func resolveAction(for gesture: CanvasShortcutGesture) -> CanvasShortcutAction? {
+        definitionsByGesture[gesture]
+    }
+
+    /// Returns command-palette visible shortcuts.
+    /// - Returns: Shortcut entries visible to command palette UI.
+    public static func commandPaletteDefinitions() -> [CanvasShortcutDefinition] {
+        defaultDefinitionsStorage.filter(\.isVisibleInCommandPalette)
+    }
+
+    /// Validates catalog invariants.
+    /// - Parameter definitions: Candidate shortcut definitions.
+    /// - Throws: `CanvasShortcutCatalogError` when invariants are violated.
+    public static func validate(definitions: [CanvasShortcutDefinition]) throws {
+        var seenIDs = Set<CanvasShortcutID>()
+        var seenGestures = Set<CanvasShortcutGesture>()
+
+        for definition in definitions {
+            if definition.id.rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                throw CanvasShortcutCatalogError.emptyID(definition.id)
+            }
+            if definition.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                throw CanvasShortcutCatalogError.emptyName(definition.id)
+            }
+            if definition.shortcutLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                throw CanvasShortcutCatalogError.emptyShortcutLabel(definition.id)
+            }
+            if definition.searchTokens.contains(where: { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+                throw CanvasShortcutCatalogError.emptySearchToken(definition.id)
+            }
+            if seenIDs.contains(definition.id) {
+                throw CanvasShortcutCatalogError.duplicateID(definition.id)
+            }
+            if seenGestures.contains(definition.gesture) {
+                throw CanvasShortcutCatalogError.duplicateGesture(definition.gesture)
+            }
+
+            seenIDs.insert(definition.id)
+            seenGestures.insert(definition.gesture)
+        }
+    }
+}
+
+extension CanvasShortcutCatalogService {
+    private static let defaultDefinitionsStorage: [CanvasShortcutDefinition] = {
+        let definitions = makeDefaultDefinitions()
+        do {
+            try validate(definitions: definitions)
+        } catch {
+            preconditionFailure("Invalid shortcut catalog: \(error)")
+        }
+        return definitions
+    }()
+
+    private static let definitionsByGesture: [CanvasShortcutGesture: CanvasShortcutAction] = {
+        Dictionary(uniqueKeysWithValues: defaultDefinitionsStorage.map { ($0.gesture, $0.action) })
+    }()
+
+    private static func makeDefaultDefinitions() -> [CanvasShortcutDefinition] {
+        commandPaletteTriggerDefinitions()
+            + nodeEditingDefinitions()
+            + navigationDefinitions()
+            + historyDefinitions()
+    }
+
+    private static func commandPaletteTriggerDefinitions() -> [CanvasShortcutDefinition] {
+        [
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "openCommandPalette.commandK"),
+                name: "Open Command Palette",
+                gesture: CanvasShortcutGesture(key: .character("k"), modifiers: [.command]),
+                action: .openCommandPalette,
+                shortcutLabel: "Command + K",
+                searchTokens: ["palette", "command"],
+                isVisibleInCommandPalette: false
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "openCommandPalette.commandShiftP"),
+                name: "Open Command Palette",
+                gesture: CanvasShortcutGesture(key: .character("p"), modifiers: [.command, .shift]),
+                action: .openCommandPalette,
+                shortcutLabel: "Command + Shift + P",
+                searchTokens: ["palette", "command"],
+                isVisibleInCommandPalette: false
+            )
+        ]
+    }
+
+    private static func nodeEditingDefinitions() -> [CanvasShortcutDefinition] {
+        [
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "addChildNode"),
+                name: "Add Child Node",
+                gesture: CanvasShortcutGesture(key: .enter, modifiers: [.command]),
+                action: .apply(commands: [.addChildNode]),
+                shortcutLabel: "Command + Enter"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "addNode"),
+                name: "Add Node",
+                gesture: CanvasShortcutGesture(key: .enter, modifiers: [.shift]),
+                action: .apply(commands: [.addNode]),
+                shortcutLabel: "Shift + Enter"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "addSiblingNodeAbove"),
+                name: "Add Sibling Node Above",
+                gesture: CanvasShortcutGesture(key: .enter, modifiers: [.option]),
+                action: .apply(commands: [.addSiblingNode(position: .above)]),
+                shortcutLabel: "Option + Enter"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "addSiblingNodeBelow"),
+                name: "Add Sibling Node Below",
+                gesture: CanvasShortcutGesture(key: .enter, modifiers: []),
+                action: .apply(commands: [.addSiblingNode(position: .below)]),
+                shortcutLabel: "Enter"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "deleteFocusedNode"),
+                name: "Delete Focused Node",
+                gesture: CanvasShortcutGesture(key: .deleteBackward, modifiers: []),
+                action: .apply(commands: [.deleteFocusedNode]),
+                shortcutLabel: "Delete"
+            )
+        ]
+    }
+
+    private static func navigationDefinitions() -> [CanvasShortcutDefinition] {
+        [
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "moveFocusDown"),
+                name: "Move Focus Down",
+                gesture: CanvasShortcutGesture(key: .arrowDown, modifiers: []),
+                action: .apply(commands: [.moveFocus(.down)]),
+                shortcutLabel: "Down Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "moveFocusLeft"),
+                name: "Move Focus Left",
+                gesture: CanvasShortcutGesture(key: .arrowLeft, modifiers: []),
+                action: .apply(commands: [.moveFocus(.left)]),
+                shortcutLabel: "Left Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "moveFocusRight"),
+                name: "Move Focus Right",
+                gesture: CanvasShortcutGesture(key: .arrowRight, modifiers: []),
+                action: .apply(commands: [.moveFocus(.right)]),
+                shortcutLabel: "Right Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "moveFocusUp"),
+                name: "Move Focus Up",
+                gesture: CanvasShortcutGesture(key: .arrowUp, modifiers: []),
+                action: .apply(commands: [.moveFocus(.up)]),
+                shortcutLabel: "Up Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "moveNodeDown"),
+                name: "Move Node Down",
+                gesture: CanvasShortcutGesture(key: .arrowDown, modifiers: [.command]),
+                action: .apply(commands: [.moveNode(.down)]),
+                shortcutLabel: "Command + Down Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "moveNodeLeft"),
+                name: "Move Node Left",
+                gesture: CanvasShortcutGesture(key: .arrowLeft, modifiers: [.command]),
+                action: .apply(commands: [.moveNode(.left)]),
+                shortcutLabel: "Command + Left Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "moveNodeRight"),
+                name: "Move Node Right",
+                gesture: CanvasShortcutGesture(key: .arrowRight, modifiers: [.command]),
+                action: .apply(commands: [.moveNode(.right)]),
+                shortcutLabel: "Command + Right Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "moveNodeUp"),
+                name: "Move Node Up",
+                gesture: CanvasShortcutGesture(key: .arrowUp, modifiers: [.command]),
+                action: .apply(commands: [.moveNode(.up)]),
+                shortcutLabel: "Command + Up Arrow"
+            )
+        ]
+    }
+
+    private static func historyDefinitions() -> [CanvasShortcutDefinition] {
+        [
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "undo"),
+                name: "Undo",
+                gesture: CanvasShortcutGesture(key: .character("z"), modifiers: [.command]),
+                action: .undo,
+                shortcutLabel: "Command + Z"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "redo.commandShiftZ"),
+                name: "Redo",
+                gesture: CanvasShortcutGesture(key: .character("z"), modifiers: [.command, .shift]),
+                action: .redo,
+                shortcutLabel: "Command + Shift + Z"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "redo.commandY"),
+                name: "Redo",
+                gesture: CanvasShortcutGesture(key: .character("y"), modifiers: [.command]),
+                action: .redo,
+                shortcutLabel: "Command + Y"
+            )
+        ]
+    }
+}

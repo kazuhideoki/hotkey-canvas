@@ -1,3 +1,5 @@
+// Background: Input events must resolve against one canonical shortcut catalog shared with command palette.
+// Responsibility: Normalize AppKit key events and map them to domain shortcut actions.
 import AppKit
 import Domain
 
@@ -10,73 +12,34 @@ public struct CanvasHotkeyTranslator {
     public init() {}
 
     public func historyAction(_ event: NSEvent) -> CanvasHistoryAction? {
-        guard event.type == .keyDown else {
+        switch action(for: event) {
+        case .undo:
+            return .undo
+        case .redo:
+            return .redo
+        case .apply, .openCommandPalette, .none:
             return nil
         }
-        if isUndo(event) {
-            return .undo
-        }
-        if isRedo(event) {
-            return .redo
-        }
-        return nil
     }
 
     // Command-palette trigger is treated as input-adapter concern:
     // it decides UI mode switching only, not domain/application behavior.
     public func shouldOpenCommandPalette(_ event: NSEvent) -> Bool {
-        guard event.type == .keyDown else {
-            return false
-        }
-
-        let flags = normalizedFlags(from: event)
-        let disallowed: NSEvent.ModifierFlags = [.control, .option, .function]
-        guard flags.contains(.command), flags.isDisjoint(with: disallowed) else {
-            return false
-        }
-
-        let normalizedShortcut = normalizedShortcutCharacter(from: event)
-        if flags.contains(.shift), normalizedShortcut == "p" {
-            return true
-        }
-
-        if !flags.contains(.shift), normalizedShortcut == "k" {
-            return true
-        }
-
-        return false
+        action(for: event) == .openCommandPalette
     }
 
     public func translate(_ event: NSEvent) -> [CanvasCommand] {
-        guard event.type == .keyDown else {
+        switch action(for: event) {
+        case .apply(let commands):
+            return commands
+        case .undo, .redo, .openCommandPalette, .none:
             return []
         }
-        if isCommandEnter(event) {
-            return [.addChildNode]
-        }
-        if isOptionEnter(event) {
-            return [.addSiblingNode(position: .above)]
-        }
-        if isEnterWithoutDisallowedModifiers(event) {
-            return [.addSiblingNode(position: .below)]
-        }
-        if isShiftEnter(event) {
-            return [.addNode]
-        }
-        if isDelete(event) {
-            return [.deleteFocusedNode]
-        }
-        if let direction = nodeMoveDirectionIfCommandArrow(event) {
-            return [.moveNode(direction)]
-        }
-        guard let direction = focusDirectionIfArrow(event) else {
-            return []
-        }
-        return [.moveFocus(direction)]
     }
 }
 
 extension CanvasHotkeyTranslator {
+    private static let enterKeyCode: UInt16 = 36
     private static let deleteKeyCode: UInt16 = 51
     private static let forwardDeleteKeyCode: UInt16 = 117
     private static let leftArrowKeyCode: UInt16 = 123
@@ -84,123 +47,92 @@ extension CanvasHotkeyTranslator {
     private static let downArrowKeyCode: UInt16 = 125
     private static let upArrowKeyCode: UInt16 = 126
 
-    private func isShiftEnter(_ event: NSEvent) -> Bool {
-        guard event.keyCode == 36 else {
-            return false
-        }
-
-        let flags = normalizedFlags(from: event)
-        let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .function]
-        return flags.contains(.shift) && flags.isDisjoint(with: disallowed)
-    }
-
-    private func isCommandEnter(_ event: NSEvent) -> Bool {
-        guard event.keyCode == 36 else {
-            return false
-        }
-
-        let flags = normalizedFlags(from: event)
-        let disallowed: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
-        return flags.contains(.command) && flags.isDisjoint(with: disallowed)
-    }
-
-    private func isOptionEnter(_ event: NSEvent) -> Bool {
-        guard event.keyCode == 36 else {
-            return false
-        }
-
-        let flags = normalizedFlags(from: event)
-        let disallowed: NSEvent.ModifierFlags = [.command, .control, .shift, .function]
-        return flags.contains(.option) && flags.isDisjoint(with: disallowed)
-    }
-
-    private func isUndo(_ event: NSEvent) -> Bool {
-        let flags = normalizedFlags(from: event)
-        let disallowed: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
-        return flags.contains(.command)
-            && flags.isDisjoint(with: disallowed)
-            && normalizedShortcutCharacter(from: event) == "z"
-    }
-
-    private func isRedo(_ event: NSEvent) -> Bool {
-        let flags = normalizedFlags(from: event)
-        if flags.contains([.command, .shift]),
-            flags.isDisjoint(with: [.control, .option, .function]),
-            normalizedShortcutCharacter(from: event) == "z"
-        {
-            return true
-        }
-        if flags.contains(.command),
-            flags.isDisjoint(with: [.shift, .control, .option, .function]),
-            normalizedShortcutCharacter(from: event) == "y"
-        {
-            return true
-        }
-        return false
-    }
-
-    private func isEnterWithoutDisallowedModifiers(_ event: NSEvent) -> Bool {
-        guard event.keyCode == 36 else {
-            return false
-        }
-
-        let flags = normalizedFlags(from: event)
-        let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .shift, .function]
-        return flags.isDisjoint(with: disallowed)
-    }
-
-    private func isDelete(_ event: NSEvent) -> Bool {
-        guard event.keyCode == Self.deleteKeyCode || event.keyCode == Self.forwardDeleteKeyCode else {
-            return false
-        }
-
-        let flags = normalizedFlags(from: event)
-        let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .shift]
-        return flags.isDisjoint(with: disallowed)
-    }
-
-    private func focusDirectionIfArrow(_ event: NSEvent) -> CanvasFocusDirection? {
-        let flags = normalizedFlags(from: event)
-        // NOTE: Some environments attach `.function` to arrow-key events.
-        // We only block modifiers that should explicitly change shortcut meaning.
-        let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .shift]
-        guard flags.isDisjoint(with: disallowed) else {
+    private func action(for event: NSEvent) -> CanvasShortcutAction? {
+        guard event.type == .keyDown else {
             return nil
         }
+        guard let gesture = gesture(from: event) else {
+            return nil
+        }
+        if let action = CanvasShortcutCatalogService.resolveAction(for: gesture) {
+            return action
+        }
 
+        guard gesture.modifiers.contains(.function), canIgnoreFunctionModifier(for: gesture.key) else {
+            return nil
+        }
+        var modifiersWithoutFunction = gesture.modifiers
+        modifiersWithoutFunction.remove(.function)
+
+        let normalizedGesture = CanvasShortcutGesture(
+            key: gesture.key,
+            modifiers: modifiersWithoutFunction
+        )
+        return CanvasShortcutCatalogService.resolveAction(for: normalizedGesture)
+    }
+
+    private func gesture(from event: NSEvent) -> CanvasShortcutGesture? {
+        let modifiers = shortcutModifiers(from: event)
+        guard let key = shortcutKey(from: event) else {
+            return nil
+        }
+        return CanvasShortcutGesture(key: key, modifiers: modifiers)
+    }
+
+    private func shortcutKey(from event: NSEvent) -> CanvasShortcutKey? {
         switch event.keyCode {
+        case Self.enterKeyCode:
+            return .enter
+        case Self.deleteKeyCode:
+            return .deleteBackward
+        case Self.forwardDeleteKeyCode:
+            return .deleteBackward
         case Self.upArrowKeyCode:
-            return .up
+            return .arrowUp
         case Self.downArrowKeyCode:
-            return .down
+            return .arrowDown
         case Self.leftArrowKeyCode:
-            return .left
+            return .arrowLeft
         case Self.rightArrowKeyCode:
-            return .right
+            return .arrowRight
         default:
-            return nil
+            guard let character = normalizedShortcutCharacter(from: event) else {
+                return nil
+            }
+            return .character(character)
         }
     }
 
-    private func nodeMoveDirectionIfCommandArrow(_ event: NSEvent) -> CanvasNodeMoveDirection? {
+    private func canIgnoreFunctionModifier(for key: CanvasShortcutKey) -> Bool {
+        switch key {
+        case .arrowUp, .arrowDown, .arrowLeft, .arrowRight, .deleteBackward, .deleteForward:
+            return true
+        case .enter, .character:
+            return false
+        }
+    }
+
+    private func shortcutModifiers(from event: NSEvent) -> CanvasShortcutModifiers {
         let flags = normalizedFlags(from: event)
-        let disallowed: NSEvent.ModifierFlags = [.control, .option, .shift]
-        guard flags.contains(.command), flags.isDisjoint(with: disallowed) else {
-            return nil
+        var modifiers = CanvasShortcutModifiers()
+
+        if flags.contains(.command) {
+            modifiers.insert(.command)
+        }
+        if flags.contains(.shift) {
+            modifiers.insert(.shift)
+        }
+        if flags.contains(.option) {
+            modifiers.insert(.option)
+        }
+        if flags.contains(.control) {
+            modifiers.insert(.control)
+        }
+        if flags.contains(.function) {
+            modifiers.insert(.function)
         }
 
-        switch event.keyCode {
-        case Self.upArrowKeyCode:
-            return .up
-        case Self.downArrowKeyCode:
-            return .down
-        case Self.leftArrowKeyCode:
-            return .left
-        case Self.rightArrowKeyCode:
-            return .right
-        default:
-            return nil
-        }
+        return modifiers
     }
 
     private func normalizedFlags(from event: NSEvent) -> NSEvent.ModifierFlags {

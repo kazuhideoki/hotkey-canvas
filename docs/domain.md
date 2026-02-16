@@ -20,6 +20,7 @@
 | D2 | フォーカス移動 | `CanvasFocusDirection`, `CanvasFocusNavigationService` |
 | D3 | エリアレイアウト | `CanvasNodeArea`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService` |
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
+| D5 | ショートカットカタログ | `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService`, `CanvasShortcutCatalogError` |
 
 ## 4. 各ドメイン詳細
 
@@ -252,16 +253,74 @@
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 
+### D5. ショートカットカタログドメイン
+
+#### 構造
+
+- 値オブジェクト
+  - `CanvasShortcutID`
+  - `CanvasShortcutKey`
+  - `CanvasShortcutModifiers`
+  - `CanvasShortcutGesture`
+- モデル
+  - `CanvasShortcutDefinition`
+- アクション
+  - `CanvasShortcutAction`（`apply(commands:)` / `undo` / `redo` / `openCommandPalette`）
+- エラー
+  - `CanvasShortcutCatalogError`
+- サービス
+  - `CanvasShortcutCatalogService`
+
+#### サービス詳細
+
+`CanvasShortcutCatalogService` はショートカット定義の単一情報源を提供する。
+
+| メソッド | 責務 |
+| --- | --- |
+| `defaultDefinitions()` | 静的に定義された標準ショートカット一覧を返す。 |
+| `resolveAction(for:)` | `CanvasShortcutGesture` から実行アクションを解決する。 |
+| `commandPaletteDefinitions()` | コマンドパレットに表示すべきショートカット定義のみ返す。 |
+| `validate(definitions:)` | ID 重複・ジェスチャ重複・空文字項目を検証する。 |
+
+#### 利用状況（どこから使われるか）
+
+- 入力変換
+  - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`
+    - `NSEvent` を `CanvasShortcutGesture` に正規化し、`resolveAction(for:)` で解決する。
+- UI 表示
+  - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`
+    - `commandPaletteDefinitions()` の結果をコマンドパレット一覧表示に使用する。
+- 主要テスト
+  - `Tests/DomainTests/CanvasShortcutCatalogServiceTests.swift`
+  - `Tests/InterfaceAdaptersTests/CanvasHotkeyTranslatorTests.swift`
+
+#### 不変条件・エラー一覧
+
+- 不変条件
+  - `CanvasShortcutID` は空文字（空白のみを含む）を許容しない。
+  - `name` と `shortcutLabel` は空文字（空白のみを含む）を許容しない。
+  - `searchTokens` に空文字（空白のみを含む）を含めない。
+  - 同一カタログ内で `CanvasShortcutID` は一意である。
+  - 同一カタログ内で `CanvasShortcutGesture` は一意である。
+- エラー（`CanvasShortcutCatalogError`）
+  - `emptyID(CanvasShortcutID)`
+  - `emptyName(CanvasShortcutID)`
+  - `emptyShortcutLabel(CanvasShortcutID)`
+  - `emptySearchToken(CanvasShortcutID)`
+  - `duplicateID(CanvasShortcutID)`
+  - `duplicateGesture(CanvasShortcutGesture)`
+
 ## 5. ドメイン間の関係（依存・データ受け渡し）
 
-1. `CanvasHotkeyTranslator` がキーイベントを `CanvasCommand` に変換する。
-2. `ApplyCanvasCommandsUseCase` がコマンドをディスパッチする。
-3. コマンド種別ごとに Domain サービスを利用する。
+1. `CanvasHotkeyTranslator` がキーイベントを `CanvasShortcutGesture` に正規化する。
+2. `CanvasShortcutCatalogService.resolveAction(for:)` がジェスチャからアクションを解決する。
+3. `CanvasShortcutAction.apply(commands:)` の場合のみ `ApplyCanvasCommandsUseCase` がコマンドをディスパッチする。
+4. コマンド種別ごとに Domain サービスを利用する。
    - 編集: `CanvasGraphCRUDService`
    - フォーカス: `CanvasFocusNavigationService`
    - ツリー再レイアウト: `CanvasTreeLayoutService`
    - エリア衝突解消: `CanvasAreaLayoutService`
-4. 生成された `CanvasGraph` を `ApplyResult` 経由で ViewModel に返し、表示状態を更新する。
+5. 生成された `CanvasGraph` を `ApplyResult` 経由で ViewModel に返し、表示状態を更新する。
 
 共通契約:
 
@@ -275,3 +334,4 @@
 - 2026-02-15: `CanvasCommand.moveNode` と `CanvasNodeMoveDirection` を追加し、`cmd+矢印キー` のネスト移動利用箇所を追記。
 - 2026-02-15: `CanvasTreeLayoutService` の実装を `CanvasTreeLayoutService+Relayout.swift` と `CanvasTreeLayoutService+RelayoutInternals.swift` に分割（挙動変更なし）。
 - 2026-02-15: `moveNode(.left)` の挙動を変更し、トップレベルノードの子からルート親方向への昇格を抑止するガードを追加。
+- 2026-02-16: `CanvasShortcutCatalogService` とショートカット関連モデルを追加し、ホットキー解決とコマンドパレット一覧の情報源をドメインで統一。

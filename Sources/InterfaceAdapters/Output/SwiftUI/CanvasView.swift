@@ -279,13 +279,8 @@ extension CanvasView {
         let id: String
         let title: String
         let shortcutLabel: String
-        let action: CommandPaletteAction
-    }
-
-    fileprivate enum CommandPaletteAction: Equatable {
-        case apply(commands: [CanvasCommand])
-        case undo
-        case redo
+        let searchText: String
+        let action: CanvasShortcutAction
     }
 
     fileprivate static let commandPaletteEscapeKeyCode: UInt16 = 53
@@ -382,108 +377,26 @@ extension CanvasView {
         }
 
         return orderedItems.filter { item in
-            matchesCommandPaletteQuery(item.title, commandPaletteQuery)
+            matchesCommandPaletteQuery(item.searchText, commandPaletteQuery)
         }
     }
 
-    // Intentionally kept in InterfaceAdapters for now: this is UI metadata
-    // (title/shortcut label/search target) mapped to existing application actions.
-    // No new domain rule or use-case orchestration is introduced by this table.
-    // Future direction: move this catalog behind an Application query use case
-    // and let this view consume that output as display data.
     fileprivate func defaultCommandPaletteItems() -> [CommandPaletteItem] {
-        [
-            CommandPaletteItem(
-                id: "addChildNode",
-                title: "Add Child Node",
-                shortcutLabel: "Command + Enter",
-                action: .apply(commands: [.addChildNode])
-            ),
-            CommandPaletteItem(
-                id: "addNode",
-                title: "Add Node",
-                shortcutLabel: "Shift + Enter",
-                action: .apply(commands: [.addNode])
-            ),
-            CommandPaletteItem(
-                id: "addSiblingNodeAbove",
-                title: "Add Sibling Node Above",
-                shortcutLabel: "Option + Enter",
-                action: .apply(commands: [.addSiblingNode(position: .above)])
-            ),
-            CommandPaletteItem(
-                id: "addSiblingNodeBelow",
-                title: "Add Sibling Node Below",
-                shortcutLabel: "Enter",
-                action: .apply(commands: [.addSiblingNode(position: .below)])
-            ),
-            CommandPaletteItem(
-                id: "deleteFocusedNode",
-                title: "Delete Focused Node",
-                shortcutLabel: "Delete",
-                action: .apply(commands: [.deleteFocusedNode])
-            ),
-            CommandPaletteItem(
-                id: "moveFocusDown",
-                title: "Move Focus Down",
-                shortcutLabel: "Down Arrow",
-                action: .apply(commands: [.moveFocus(.down)])
-            ),
-            CommandPaletteItem(
-                id: "moveFocusLeft",
-                title: "Move Focus Left",
-                shortcutLabel: "Left Arrow",
-                action: .apply(commands: [.moveFocus(.left)])
-            ),
-            CommandPaletteItem(
-                id: "moveFocusRight",
-                title: "Move Focus Right",
-                shortcutLabel: "Right Arrow",
-                action: .apply(commands: [.moveFocus(.right)])
-            ),
-            CommandPaletteItem(
-                id: "moveFocusUp",
-                title: "Move Focus Up",
-                shortcutLabel: "Up Arrow",
-                action: .apply(commands: [.moveFocus(.up)])
-            ),
-            CommandPaletteItem(
-                id: "moveNodeDown",
-                title: "Move Node Down",
-                shortcutLabel: "Command + Down Arrow",
-                action: .apply(commands: [.moveNode(.down)])
-            ),
-            CommandPaletteItem(
-                id: "moveNodeLeft",
-                title: "Move Node Left",
-                shortcutLabel: "Command + Left Arrow",
-                action: .apply(commands: [.moveNode(.left)])
-            ),
-            CommandPaletteItem(
-                id: "moveNodeRight",
-                title: "Move Node Right",
-                shortcutLabel: "Command + Right Arrow",
-                action: .apply(commands: [.moveNode(.right)])
-            ),
-            CommandPaletteItem(
-                id: "moveNodeUp",
-                title: "Move Node Up",
-                shortcutLabel: "Command + Up Arrow",
-                action: .apply(commands: [.moveNode(.up)])
-            ),
-            CommandPaletteItem(
-                id: "redo",
-                title: "Redo",
-                shortcutLabel: "Command + Shift + Z / Command + Y",
-                action: .redo
-            ),
-            CommandPaletteItem(
-                id: "undo",
-                title: "Undo",
-                shortcutLabel: "Command + Z",
-                action: .undo
-            ),
-        ]
+        CanvasShortcutCatalogService.commandPaletteDefinitions().compactMap { definition in
+            guard definition.isVisibleInCommandPalette else {
+                return nil
+            }
+            let searchText = ([definition.name, definition.shortcutLabel] + definition.searchTokens).joined(
+                separator: " "
+            )
+            return CommandPaletteItem(
+                id: definition.id.rawValue,
+                title: definition.name,
+                shortcutLabel: definition.shortcutLabel,
+                searchText: searchText,
+                action: definition.action
+            )
+        }
     }
 
     fileprivate func executeSelectedCommandIfNeeded() {
@@ -509,6 +422,8 @@ extension CanvasView {
             Task {
                 await viewModel.redo()
             }
+        case .openCommandPalette:
+            return
         }
         closeCommandPalette()
     }
