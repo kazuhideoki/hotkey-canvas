@@ -13,7 +13,7 @@ func test_nodeCrud_textNode_lifecycleWorks() throws {
         bounds: CanvasBounds(x: 0, y: 0, width: 240, height: 120)
     )
 
-    let createdGraph = try CanvasGraphCRUDService.createNode(initialNode, in: .empty)
+    let createdGraph = try CanvasGraphCRUDService.createNode(initialNode, in: .empty).get()
     #expect(CanvasGraphCRUDService.readNode(id: nodeID, in: createdGraph)?.text == "first")
 
     let updatedNode = CanvasNode(
@@ -23,11 +23,11 @@ func test_nodeCrud_textNode_lifecycleWorks() throws {
         bounds: CanvasBounds(x: 10, y: 20, width: 300, height: 160),
         metadata: ["purpose": "memo"]
     )
-    let updatedGraph = try CanvasGraphCRUDService.updateNode(updatedNode, in: createdGraph)
+    let updatedGraph = try CanvasGraphCRUDService.updateNode(updatedNode, in: createdGraph).get()
     #expect(CanvasGraphCRUDService.readNode(id: nodeID, in: updatedGraph)?.text == "updated")
     #expect(CanvasGraphCRUDService.readNode(id: nodeID, in: updatedGraph)?.metadata["purpose"] == "memo")
 
-    let deletedGraph = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: updatedGraph)
+    let deletedGraph = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: updatedGraph).get()
     #expect(CanvasGraphCRUDService.readNode(id: nodeID, in: deletedGraph) == nil)
 }
 
@@ -46,8 +46,8 @@ func test_edgeCrud_withExistingNodes_lifecycleWorks() throws {
         bounds: CanvasBounds(x: 120, y: 40, width: 100, height: 60)
     )
 
-    var graph = try CanvasGraphCRUDService.createNode(fromNode, in: .empty)
-    graph = try CanvasGraphCRUDService.createNode(toNode, in: graph)
+    var graph = try CanvasGraphCRUDService.createNode(fromNode, in: .empty).get()
+    graph = try CanvasGraphCRUDService.createNode(toNode, in: graph).get()
 
     let edgeID = CanvasEdgeID(rawValue: "edge-1")
     let edge = CanvasEdge(
@@ -57,7 +57,7 @@ func test_edgeCrud_withExistingNodes_lifecycleWorks() throws {
         relationType: .parentChild,
         label: "flow"
     )
-    graph = try CanvasGraphCRUDService.createEdge(edge, in: graph)
+    graph = try CanvasGraphCRUDService.createEdge(edge, in: graph).get()
     #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.label == "flow")
     #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.relationType == .parentChild)
 
@@ -68,11 +68,11 @@ func test_edgeCrud_withExistingNodes_lifecycleWorks() throws {
         relationType: .normal,
         label: "updated"
     )
-    graph = try CanvasGraphCRUDService.updateEdge(updatedEdge, in: graph)
+    graph = try CanvasGraphCRUDService.updateEdge(updatedEdge, in: graph).get()
     #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.label == "updated")
     #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.relationType == .normal)
 
-    graph = try CanvasGraphCRUDService.deleteEdge(id: edgeID, in: graph)
+    graph = try CanvasGraphCRUDService.deleteEdge(id: edgeID, in: graph).get()
     #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph) == nil)
 }
 
@@ -92,14 +92,14 @@ func test_deleteNode_removesConnectedEdges() throws {
     )
     let edgeID = CanvasEdgeID(rawValue: "edge-1")
 
-    var graph = try CanvasGraphCRUDService.createNode(fromNode, in: .empty)
-    graph = try CanvasGraphCRUDService.createNode(toNode, in: graph)
+    var graph = try CanvasGraphCRUDService.createNode(fromNode, in: .empty).get()
+    graph = try CanvasGraphCRUDService.createNode(toNode, in: graph).get()
     graph = try CanvasGraphCRUDService.createEdge(
         CanvasEdge(id: edgeID, fromNodeID: fromNode.id, toNodeID: toNode.id),
         in: graph
-    )
+    ).get()
 
-    let prunedGraph = try CanvasGraphCRUDService.deleteNode(id: fromNode.id, in: graph)
+    let prunedGraph = try CanvasGraphCRUDService.deleteNode(id: fromNode.id, in: graph).get()
     #expect(CanvasGraphCRUDService.readNode(id: fromNode.id, in: prunedGraph) == nil)
     #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: prunedGraph) == nil)
 }
@@ -118,7 +118,7 @@ func test_deleteNode_clearsFocus_whenDeletingFocusedNode() throws {
         focusedNodeID: focusedNode.id
     )
 
-    let prunedGraph = try CanvasGraphCRUDService.deleteNode(id: focusedNode.id, in: graph)
+    let prunedGraph = try CanvasGraphCRUDService.deleteNode(id: focusedNode.id, in: graph).get()
 
     #expect(prunedGraph.focusedNodeID == nil)
 }
@@ -131,10 +131,10 @@ func test_validation_invalidOperations_throwExpectedErrors() throws {
         text: "text",
         bounds: CanvasBounds(x: 0, y: 0, width: 120, height: 80)
     )
-    let graph = try CanvasGraphCRUDService.createNode(node, in: .empty)
+    let graph = try CanvasGraphCRUDService.createNode(node, in: .empty).get()
 
     do {
-        _ = try CanvasGraphCRUDService.createNode(node, in: graph)
+        _ = try CanvasGraphCRUDService.createNode(node, in: graph).get()
         Issue.record("expected duplicate node error")
     } catch let error as CanvasGraphError {
         #expect(error == .nodeAlreadyExists(node.id))
@@ -149,7 +149,7 @@ func test_validation_invalidOperations_throwExpectedErrors() throws {
                 toNodeID: missingNodeID
             ),
             in: graph
-        )
+        ).get()
         Issue.record("expected missing endpoint error")
     } catch let error as CanvasGraphError {
         #expect(error == .edgeEndpointNotFound(missingNodeID))

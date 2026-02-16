@@ -48,14 +48,14 @@
 
 | メソッド | 責務 |
 | --- | --- |
-| `createNode(_:in:)` | ノードを追加し、新しい `CanvasGraph` を返す。 |
+| `createNode(_:in:)` | ノードを追加し、`Result<CanvasGraph, CanvasGraphError>` を返す。 |
 | `readNode(id:in:)` | ノードを参照する。 |
-| `updateNode(_:in:)` | 既存ノードを置換する。 |
-| `deleteNode(id:in:)` | ノードを削除し、接続エッジも同時に除去する。削除対象がフォーカス中なら `focusedNodeID` を `nil` にする。 |
-| `createEdge(_:in:)` | エッジを追加し、新しい `CanvasGraph` を返す。 |
+| `updateNode(_:in:)` | 既存ノードを置換し、`Result<CanvasGraph, CanvasGraphError>` を返す。 |
+| `deleteNode(id:in:)` | ノードを削除し、接続エッジも同時に除去する。削除対象がフォーカス中なら `focusedNodeID` を `nil` にする。返却は `Result<CanvasGraph, CanvasGraphError>`。 |
+| `createEdge(_:in:)` | エッジを追加し、`Result<CanvasGraph, CanvasGraphError>` を返す。 |
 | `readEdge(id:in:)` | エッジを参照する。 |
-| `updateEdge(_:in:)` | 既存エッジを置換する。 |
-| `deleteEdge(id:in:)` | エッジを削除する。 |
+| `updateEdge(_:in:)` | 既存エッジを置換し、`Result<CanvasGraph, CanvasGraphError>` を返す。 |
+| `deleteEdge(id:in:)` | エッジを削除し、`Result<CanvasGraph, CanvasGraphError>` を返す。 |
 
 #### 利用状況（どこから使われるか）
 
@@ -280,7 +280,7 @@
 | `defaultDefinitions()` | 静的に定義された標準ショートカット一覧を返す。 |
 | `resolveAction(for:)` | `CanvasShortcutGesture` から実行アクションを解決する。 |
 | `commandPaletteDefinitions()` | コマンドパレットに表示すべきショートカット定義のみ返す。 |
-| `validate(definitions:)` | ID 重複・ジェスチャ重複・空文字項目を検証する。 |
+| `validate(definitions:)` | ID 重複・ジェスチャ重複・空文字項目を検証し、`Result<Void, CanvasShortcutCatalogError>` を返す。 |
 
 #### 利用状況（どこから使われるか）
 
@@ -326,6 +326,7 @@
 
 - `CanvasEdgeRelationType.parentChild` は、子孫探索・ツリー再配置・エリア分割/衝突解消で共有される。
 - `CanvasGraph` は Application と InterfaceAdapters 間の共通スナップショットとして扱う。
+- Domain サービスは `throw` せず、失敗はドメイン固有エラーの `Result` で返す。
 
 ## 6. 変更履歴
 
@@ -335,3 +336,4 @@
 - 2026-02-15: `CanvasTreeLayoutService` の実装を `CanvasTreeLayoutService+Relayout.swift` と `CanvasTreeLayoutService+RelayoutInternals.swift` に分割（挙動変更なし）。
 - 2026-02-15: `moveNode(.left)` の挙動を変更し、トップレベルノードの子からルート親方向への昇格を抑止するガードを追加。
 - 2026-02-16: `CanvasShortcutCatalogService` とショートカット関連モデルを追加し、ホットキー解決とコマンドパレット一覧の情報源をドメインで統一。
+- 2026-02-16: Domain サービスの失敗表現を `throw` から `Result<..., 各DomainError>` に統一し、Application 側は `.get()` で既存 `throws` 契約を維持。

@@ -23,43 +23,45 @@ public enum CanvasShortcutCatalogService {
 
     /// Validates catalog invariants.
     /// - Parameter definitions: Candidate shortcut definitions.
-    /// - Throws: `CanvasShortcutCatalogError` when invariants are violated.
-    public static func validate(definitions: [CanvasShortcutDefinition]) throws {
+    /// - Returns: `.success(())` when valid, otherwise the corresponding error.
+    public static func validate(definitions: [CanvasShortcutDefinition]) -> Result<Void, CanvasShortcutCatalogError> {
         var seenIDs = Set<CanvasShortcutID>()
         var seenGestures = Set<CanvasShortcutGesture>()
 
         for definition in definitions {
             if definition.id.rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                throw CanvasShortcutCatalogError.emptyID(definition.id)
+                return .failure(.emptyID(definition.id))
             }
             if definition.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                throw CanvasShortcutCatalogError.emptyName(definition.id)
+                return .failure(.emptyName(definition.id))
             }
             if definition.shortcutLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                throw CanvasShortcutCatalogError.emptyShortcutLabel(definition.id)
+                return .failure(.emptyShortcutLabel(definition.id))
             }
             if definition.searchTokens.contains(where: { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
-                throw CanvasShortcutCatalogError.emptySearchToken(definition.id)
+                return .failure(.emptySearchToken(definition.id))
             }
             if seenIDs.contains(definition.id) {
-                throw CanvasShortcutCatalogError.duplicateID(definition.id)
+                return .failure(.duplicateID(definition.id))
             }
             if seenGestures.contains(definition.gesture) {
-                throw CanvasShortcutCatalogError.duplicateGesture(definition.gesture)
+                return .failure(.duplicateGesture(definition.gesture))
             }
 
             seenIDs.insert(definition.id)
             seenGestures.insert(definition.gesture)
         }
+        return .success(())
     }
 }
 
 extension CanvasShortcutCatalogService {
     private static let defaultDefinitionsStorage: [CanvasShortcutDefinition] = {
         let definitions = makeDefaultDefinitions()
-        do {
-            try validate(definitions: definitions)
-        } catch {
+        switch validate(definitions: definitions) {
+        case .success:
+            break
+        case .failure(let error):
             preconditionFailure("Invalid shortcut catalog: \(error)")
         }
         return definitions

@@ -53,3 +53,12 @@ custom_rules:
     severity: error
     match_kinds:
       - identifier
+  no_throw_in_domain:
+    name: "No Throw In Domain"
+    included:
+      - Sources/Domain
+    regex: "\\b(throw|throws|rethrows)\\b"
+    message: "Domain layer must not use throw/throws. Use Result-based modeling."
+    severity: error
+    match_kinds:
+      - keyword

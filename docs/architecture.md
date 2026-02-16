@@ -8,6 +8,7 @@ HotkeyCanvas は、キーボードファーストでキャンバスを編集で�
 設計原則:
 
 - Domain は純粋関数と不変データ中心
+- Domain の失敗表現は `throw` ではなく `Result<Success, DomainError>` を使う
 - Application はユースケースと状態遷移の調停
 - InterfaceAdapters は入出力と外部形式変換
 - Infrastructure は横断的な技術実装
