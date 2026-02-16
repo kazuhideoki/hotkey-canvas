@@ -126,12 +126,14 @@ extension CanvasHotkeyTranslator {
         let flags = normalizedFlags(from: event)
         if flags.contains([.command, .shift]),
             flags.isDisjoint(with: [.control, .option, .function]),
-            normalizedShortcutCharacter(from: event) == "z" {
+            normalizedShortcutCharacter(from: event) == "z"
+        {
             return true
         }
         if flags.contains(.command),
             flags.isDisjoint(with: [.shift, .control, .option, .function]),
-            normalizedShortcutCharacter(from: event) == "y" {
+            normalizedShortcutCharacter(from: event) == "y"
+        {
             return true
         }
         return false

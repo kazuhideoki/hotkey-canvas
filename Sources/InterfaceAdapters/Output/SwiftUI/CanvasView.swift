@@ -77,7 +77,9 @@ public struct CanvasView: View {
                                     .padding(.horizontal, 12)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .contentShape(Rectangle())
-                                    .background(index == selectedCommandPaletteIndex ? Color.accentColor.opacity(0.2) : .clear)
+                                    .background(
+                                        index == selectedCommandPaletteIndex ? Color.accentColor.opacity(0.2) : .clear
+                                    )
                                     .onTapGesture {
                                         selectedCommandPaletteIndex = index
                                         executeSelectedCommand(item)
@@ -272,38 +274,38 @@ public struct CanvasView: View {
     }
 }
 
-private extension CanvasView {
-    struct CommandPaletteItem: Identifiable, Equatable {
+extension CanvasView {
+    fileprivate struct CommandPaletteItem: Identifiable, Equatable {
         let id: String
         let title: String
         let shortcutLabel: String
         let action: CommandPaletteAction
     }
 
-    enum CommandPaletteAction: Equatable {
+    fileprivate enum CommandPaletteAction: Equatable {
         case apply(commands: [CanvasCommand])
         case undo
         case redo
     }
 
-    static let commandPaletteEscapeKeyCode: UInt16 = 53
-    static let commandPaletteReturnKeyCode: UInt16 = 36
-    static let commandPaletteUpArrowKeyCode: UInt16 = 126
-    static let commandPaletteDownArrowKeyCode: UInt16 = 125
-    static let commandPaletteBackspaceKeyCode: UInt16 = 51
-    static let commandPaletteForwardDeleteKeyCode: UInt16 = 117
+    fileprivate static let commandPaletteEscapeKeyCode: UInt16 = 53
+    fileprivate static let commandPaletteReturnKeyCode: UInt16 = 36
+    fileprivate static let commandPaletteUpArrowKeyCode: UInt16 = 126
+    fileprivate static let commandPaletteDownArrowKeyCode: UInt16 = 125
+    fileprivate static let commandPaletteBackspaceKeyCode: UInt16 = 51
+    fileprivate static let commandPaletteForwardDeleteKeyCode: UInt16 = 117
 
-    func openCommandPalette() {
+    fileprivate func openCommandPalette() {
         isCommandPalettePresented = true
         selectedCommandPaletteIndex = 0
         commandPaletteQuery = ""
     }
 
-    func closeCommandPalette() {
+    fileprivate func closeCommandPalette() {
         isCommandPalettePresented = false
     }
 
-    func handleCommandPaletteKeyDown(_ event: NSEvent) -> Bool {
+    fileprivate func handleCommandPaletteKeyDown(_ event: NSEvent) -> Bool {
         let keyCode = event.keyCode
 
         if keyCode == Self.commandPaletteEscapeKeyCode {
@@ -361,7 +363,7 @@ private extension CanvasView {
         guard first != "\r", first != "\n" else {
             return true
         }
-        guard first.isASCII, (first.isLetter || first.isNumber || first.isPunctuation || first == " ") else {
+        guard first.isASCII, first.isLetter || first.isNumber || first.isPunctuation || first == " " else {
             // Ignore non-printable and function-key artifacts so query filtering stays stable.
             return true
         }
@@ -369,7 +371,7 @@ private extension CanvasView {
         return true
     }
 
-    func filteredCommandPaletteItems() -> [CommandPaletteItem] {
+    fileprivate func filteredCommandPaletteItems() -> [CommandPaletteItem] {
         let orderedItems = defaultCommandPaletteItems()
             .sorted { lhs, rhs in
                 lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
@@ -389,7 +391,7 @@ private extension CanvasView {
     // No new domain rule or use-case orchestration is introduced by this table.
     // Future direction: move this catalog behind an Application query use case
     // and let this view consume that output as display data.
-    func defaultCommandPaletteItems() -> [CommandPaletteItem] {
+    fileprivate func defaultCommandPaletteItems() -> [CommandPaletteItem] {
         [
             CommandPaletteItem(
                 id: "addChildNode",
@@ -480,11 +482,11 @@ private extension CanvasView {
                 title: "Undo",
                 shortcutLabel: "Command + Z",
                 action: .undo
-            )
+            ),
         ]
     }
 
-    func executeSelectedCommandIfNeeded() {
+    fileprivate func executeSelectedCommandIfNeeded() {
         let commandItems = filteredCommandPaletteItems()
         guard !commandItems.isEmpty else {
             return
@@ -493,9 +495,9 @@ private extension CanvasView {
         executeSelectedCommand(commandItems[selectedIndex])
     }
 
-    func executeSelectedCommand(_ item: CommandPaletteItem) {
+    fileprivate func executeSelectedCommand(_ item: CommandPaletteItem) {
         switch item.action {
-        case let .apply(commands):
+        case .apply(let commands):
             Task {
                 await viewModel.apply(commands: commands)
             }
@@ -511,7 +513,7 @@ private extension CanvasView {
         closeCommandPalette()
     }
 
-    func matchesCommandPaletteQuery(_ value: String, _ rawQuery: String) -> Bool {
+    fileprivate func matchesCommandPaletteQuery(_ value: String, _ rawQuery: String) -> Bool {
         let valueText = value.lowercased()
         let query = rawQuery.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else {

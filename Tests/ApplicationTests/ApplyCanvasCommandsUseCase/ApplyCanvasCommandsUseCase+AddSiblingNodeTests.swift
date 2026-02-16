@@ -283,7 +283,7 @@ func test_apply_addSiblingNodeAbove_withEqualY_keepsNewNodeAboveFocused() async 
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 240, y: 200, width: 220, height: 120)
-            )
+            ),
         ],
         edgesByID: [
             CanvasEdgeID(rawValue: "edge-root-previous"): CanvasEdge(
@@ -297,7 +297,7 @@ func test_apply_addSiblingNodeAbove_withEqualY_keepsNewNodeAboveFocused() async 
                 fromNodeID: rootID,
                 toNodeID: focusedID,
                 relationType: .parentChild
-            )
+            ),
         ],
         focusedNodeID: focusedID
     )
@@ -354,7 +354,7 @@ private func makeAddSiblingInsertionFixture() -> AddSiblingInsertionFixture {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 140, y: 420, width: 220, height: 120)
-            )
+            ),
         ],
         edgesByID: [
             CanvasEdgeID(rawValue: "edge-root-upper"): CanvasEdge(
@@ -374,7 +374,7 @@ private func makeAddSiblingInsertionFixture() -> AddSiblingInsertionFixture {
                 fromNodeID: rootID,
                 toNodeID: lowerSiblingID,
                 relationType: .parentChild
-            )
+            ),
         ],
         focusedNodeID: focusedChildID
     )

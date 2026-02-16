@@ -106,7 +106,7 @@ extension NodeTextEditor {
         )
         textView.typingAttributes = [
             .foregroundColor: NSColor.labelColor,
-            .font: textView.font ?? NodeTextStyle.font
+            .font: textView.font ?? NodeTextStyle.font,
         ]
     }
 

@@ -55,7 +55,7 @@ func test_relayoutParentChildTrees_keepsRootAnchor() throws {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 360, y: 120, width: 220, height: 120)
-            )
+            ),
         ],
         edgesByID: [
             CanvasEdgeID(rawValue: "edge-root-child"): CanvasEdge(
@@ -113,7 +113,7 @@ private func makeSymmetricLayoutFixture() -> SymmetricLayoutFixture {
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 380, y: 320, width: 220, height: 40)
-            )
+            ),
         ],
         edgesByID: [
             CanvasEdgeID(rawValue: "edge-root-a"): CanvasEdge(
@@ -133,7 +133,7 @@ private func makeSymmetricLayoutFixture() -> SymmetricLayoutFixture {
                 fromNodeID: rootID,
                 toNodeID: childCID,
                 relationType: .parentChild
-            )
+            ),
         ]
     )
 

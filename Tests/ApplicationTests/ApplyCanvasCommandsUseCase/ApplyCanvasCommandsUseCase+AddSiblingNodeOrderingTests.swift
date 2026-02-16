@@ -29,7 +29,7 @@ func test_apply_addSiblingNodeBelow_withEqualY_keepsNewNodeBelowFocused() async 
                 kind: .text,
                 text: nil,
                 bounds: CanvasBounds(x: 240, y: 200, width: 220, height: 120)
-            )
+            ),
         ],
         edgesByID: [
             CanvasEdgeID(rawValue: "edge-root-focused"): CanvasEdge(
@@ -43,7 +43,7 @@ func test_apply_addSiblingNodeBelow_withEqualY_keepsNewNodeBelowFocused() async 
                 fromNodeID: rootID,
                 toNodeID: nextID,
                 relationType: .parentChild
-            )
+            ),
         ],
         focusedNodeID: focusedID
     )
