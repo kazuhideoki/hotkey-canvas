@@ -107,11 +107,11 @@ extension ApplyCanvasCommandsUseCase {
             return graph
         }
 
-        var nextGraph = try CanvasGraphCRUDService.deleteEdge(id: parentEdge.id, in: graph)
+        var nextGraph = try CanvasGraphCRUDService.deleteEdge(id: parentEdge.id, in: graph).get()
         nextGraph = try CanvasGraphCRUDService.createEdge(
             makeParentChildEdge(from: grandparentNode.id, to: focusedNodeID),
             in: nextGraph
-        )
+        ).get()
 
         let updatedFocusedNode = CanvasNode(
             id: focusedNode.id,
@@ -156,12 +156,12 @@ extension ApplyCanvasCommandsUseCase {
 
         var nextGraph = graph
         if let currentParentEdge = parentChildIncomingEdge(of: focusedNodeID, in: graph) {
-            nextGraph = try CanvasGraphCRUDService.deleteEdge(id: currentParentEdge.id, in: nextGraph)
+            nextGraph = try CanvasGraphCRUDService.deleteEdge(id: currentParentEdge.id, in: nextGraph).get()
         }
         nextGraph = try CanvasGraphCRUDService.createEdge(
             makeParentChildEdge(from: newParent.id, to: focusedNodeID),
             in: nextGraph
-        )
+        ).get()
 
         let updatedFocusedNode = CanvasNode(
             id: focusedNode.id,

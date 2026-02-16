@@ -254,7 +254,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                     text: nil,
                     bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
                 )
-                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph)
+                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
                 nextGraph = CanvasGraph(
                     nodesByID: nextGraph.nodesByID,
                     edgesByID: nextGraph.edgesByID,
@@ -343,7 +343,7 @@ extension OverlappingFailureCanvasEditingInputPort {
                     text: nil,
                     bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
                 )
-                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph)
+                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
                 nextGraph = CanvasGraph(
                     nodesByID: nextGraph.nodesByID,
                     edgesByID: nextGraph.edgesByID,
@@ -419,7 +419,7 @@ actor UndoRedoCanvasEditingInputPort: CanvasEditingInputPort {
             text: nil,
             bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
         )
-        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph)
+        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph).get()
         graph = CanvasGraph(
             nodesByID: nextGraph.nodesByID,
             edgesByID: nextGraph.edgesByID,
@@ -578,7 +578,7 @@ actor AddChildCanvasEditingInputPort: CanvasEditingInputPort {
             text: nil,
             bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
         )
-        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph)
+        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph).get()
         graph = CanvasGraph(
             nodesByID: nextGraph.nodesByID,
             edgesByID: nextGraph.edgesByID,
@@ -625,7 +625,7 @@ actor AddSiblingCanvasEditingInputPort: CanvasEditingInputPort {
             text: nil,
             bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
         )
-        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph)
+        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph).get()
         graph = CanvasGraph(
             nodesByID: nextGraph.nodesByID,
             edgesByID: nextGraph.edgesByID,
@@ -683,7 +683,7 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                     text: nil,
                     bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
                 )
-                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph)
+                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
                 nextGraph = CanvasGraph(
                     nodesByID: nextGraph.nodesByID,
                     edgesByID: nextGraph.edgesByID,
@@ -731,7 +731,7 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                     text: nil,
                     bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
                 )
-                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph)
+                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
                 nextGraph = CanvasGraph(
                     nodesByID: nextGraph.nodesByID,
                     edgesByID: nextGraph.edgesByID,

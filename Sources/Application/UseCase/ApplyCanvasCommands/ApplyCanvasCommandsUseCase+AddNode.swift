@@ -5,7 +5,7 @@ import Domain
 extension ApplyCanvasCommandsUseCase {
     func addNode(in graph: CanvasGraph) throws -> CanvasGraph {
         let node = makeTextNode(bounds: makeAvailableNewNodeBounds(in: graph))
-        let graphWithNode = try CanvasGraphCRUDService.createNode(node, in: graph)
+        let graphWithNode = try CanvasGraphCRUDService.createNode(node, in: graph).get()
         let graphAfterLayout = resolveAreaOverlaps(around: node.id, in: graphWithNode)
         return CanvasGraph(
             nodesByID: graphAfterLayout.nodesByID,

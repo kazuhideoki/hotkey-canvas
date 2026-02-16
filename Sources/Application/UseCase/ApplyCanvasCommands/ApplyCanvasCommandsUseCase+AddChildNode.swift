@@ -26,11 +26,11 @@ extension ApplyCanvasCommandsUseCase {
             bounds: calculateChildBounds(for: parentNode, in: graph, avoiding: siblingAreaNodeIDs)
         )
 
-        var graphWithChild = try CanvasGraphCRUDService.createNode(childNode, in: graph)
+        var graphWithChild = try CanvasGraphCRUDService.createNode(childNode, in: graph).get()
         graphWithChild = try CanvasGraphCRUDService.createEdge(
             makeParentChildEdge(from: parentID, to: childNode.id),
             in: graphWithChild
-        )
+        ).get()
         let graphAfterTreeLayout = relayoutParentChildTrees(in: graphWithChild)
         let graphAfterLayout = resolveAreaOverlaps(around: childNode.id, in: graphAfterTreeLayout)
 
