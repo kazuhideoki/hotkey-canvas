@@ -17,7 +17,7 @@ extension ApplyCanvasCommandsUseCase {
             .sorted { $0.rawValue < $1.rawValue }
 
         for nodeID in subtreeNodeIDs {
-            graphAfterDelete = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: graphAfterDelete)
+            graphAfterDelete = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: graphAfterDelete).get()
         }
         let graphAfterTreeLayout = relayoutParentChildTrees(in: graphAfterDelete)
         let nextFocusNodeID = nextFocusedNodeIDAfterDeletion(

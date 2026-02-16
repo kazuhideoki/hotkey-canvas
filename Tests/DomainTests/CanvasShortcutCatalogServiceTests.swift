@@ -8,7 +8,7 @@ func test_defaultDefinitions_areValid() throws {
     let definitions = CanvasShortcutCatalogService.defaultDefinitions()
 
     #expect(!definitions.isEmpty)
-    try CanvasShortcutCatalogService.validate(definitions: definitions)
+    try CanvasShortcutCatalogService.validate(definitions: definitions).get()
 }
 
 @Test("Shortcut catalog: command-enter resolves addChildNode")
@@ -49,7 +49,7 @@ func test_validate_duplicateID_throwsError() {
     )
 
     #expect(throws: CanvasShortcutCatalogError.duplicateID(definition.id)) {
-        try CanvasShortcutCatalogService.validate(definitions: [definition, definition])
+        try CanvasShortcutCatalogService.validate(definitions: [definition, definition]).get()
     }
 }
 
@@ -71,6 +71,6 @@ func test_validate_duplicateGesture_throwsError() {
     )
 
     #expect(throws: CanvasShortcutCatalogError.duplicateGesture(first.gesture)) {
-        try CanvasShortcutCatalogService.validate(definitions: [first, second])
+        try CanvasShortcutCatalogService.validate(definitions: [first, second]).get()
     }
 }

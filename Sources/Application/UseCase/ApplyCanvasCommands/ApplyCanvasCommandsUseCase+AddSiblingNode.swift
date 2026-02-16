@@ -33,11 +33,11 @@ extension ApplyCanvasCommandsUseCase {
             )
         )
 
-        var graphWithSibling = try CanvasGraphCRUDService.createNode(siblingNode, in: graph)
+        var graphWithSibling = try CanvasGraphCRUDService.createNode(siblingNode, in: graph).get()
         graphWithSibling = try CanvasGraphCRUDService.createEdge(
             makeParentChildEdge(from: parentID, to: siblingNode.id),
             in: graphWithSibling
-        )
+        ).get()
         let graphAfterTreeLayout = relayoutParentChildTrees(in: graphWithSibling)
         let graphAfterLayout = resolveAreaOverlaps(around: siblingNode.id, in: graphAfterTreeLayout)
 
