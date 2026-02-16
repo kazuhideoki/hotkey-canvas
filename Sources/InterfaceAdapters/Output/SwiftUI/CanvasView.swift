@@ -15,6 +15,7 @@ public struct CanvasView: View {
     @State private var commandPaletteQuery: String = ""
     @State private var isCommandPalettePresented = false
     @State private var selectedCommandPaletteIndex: Int = 0
+    @State private var manualPanOffset: CGSize = .zero
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
@@ -37,7 +38,12 @@ public struct CanvasView: View {
                 width: max(geometryProxy.size.width, Self.minimumCanvasWidth),
                 height: max(geometryProxy.size.height, Self.minimumCanvasHeight)
             )
-            let cameraOffset = cameraOffset(for: displayNodes, viewportSize: viewportSize)
+            let autoCenterOffset = cameraOffset(for: displayNodes, viewportSize: viewportSize)
+            let cameraOffset = CanvasViewportPanPolicy.combinedOffset(
+                autoCenterOffset: autoCenterOffset,
+                manualPanOffset: manualPanOffset,
+                activeDragOffset: .zero
+            )
             let commandPaletteItems = filteredCommandPaletteItems()
             ZStack(alignment: .topLeading) {
                 Color(nsColor: .textBackgroundColor)
@@ -200,6 +206,24 @@ public struct CanvasView: View {
                 .frame(width: 1, height: 1)
                 // Keep key capture active without intercepting canvas rendering.
                 .allowsHitTesting(false)
+
+                CanvasScrollWheelMonitorView(isEnabled: true) { event in
+                    guard !isCommandPalettePresented else {
+                        return false
+                    }
+                    let translation = CanvasViewportPanPolicy.scrollWheelTranslation(
+                        deltaX: event.scrollingDeltaX,
+                        deltaY: event.scrollingDeltaY,
+                        hasPreciseDeltas: event.hasPreciseScrollingDeltas
+                    )
+                    manualPanOffset = CanvasViewportPanPolicy.updatedManualPanOffset(
+                        current: manualPanOffset,
+                        translation: translation
+                    )
+                    return true
+                }
+                .frame(width: 1, height: 1)
+                .allowsHitTesting(false)
             }
             .frame(
                 minWidth: Self.minimumCanvasWidth,
@@ -270,6 +294,9 @@ public struct CanvasView: View {
                 commandPaletteQuery = ""
                 selectedCommandPaletteIndex = 0
             }
+        }
+        .onChange(of: viewModel.focusedNodeID) { _ in
+            manualPanOffset = .zero
         }
     }
 }

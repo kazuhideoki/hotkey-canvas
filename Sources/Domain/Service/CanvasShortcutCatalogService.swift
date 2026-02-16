@@ -95,7 +95,7 @@ extension CanvasShortcutCatalogService {
                 shortcutLabel: "Command + Shift + P",
                 searchTokens: ["palette", "command"],
                 isVisibleInCommandPalette: false
-            )
+            ),
         ]
     }
 
@@ -135,7 +135,7 @@ extension CanvasShortcutCatalogService {
                 gesture: CanvasShortcutGesture(key: .deleteBackward, modifiers: []),
                 action: .apply(commands: [.deleteFocusedNode]),
                 shortcutLabel: "Delete"
-            )
+            ),
         ]
     }
 
@@ -196,7 +196,7 @@ extension CanvasShortcutCatalogService {
                 gesture: CanvasShortcutGesture(key: .arrowUp, modifiers: [.command]),
                 action: .apply(commands: [.moveNode(.up)]),
                 shortcutLabel: "Command + Up Arrow"
-            )
+            ),
         ]
     }
 
@@ -222,7 +222,7 @@ extension CanvasShortcutCatalogService {
                 gesture: CanvasShortcutGesture(key: .character("y"), modifiers: [.command]),
                 action: .redo,
                 shortcutLabel: "Command + Y"
-            )
+            ),
         ]
     }
 }
