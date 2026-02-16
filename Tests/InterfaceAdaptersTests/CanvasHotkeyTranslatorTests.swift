@@ -393,3 +393,66 @@ func test_historyAction_commandZ_usesCharacterMatching() throws {
 
     #expect(action == .undo)
 }
+
+@Test("CanvasHotkeyTranslator: Command+K opens command palette")
+func test_shouldOpenCommandPalette_commandK_returnsTrue() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "k",
+            charactersIgnoringModifiers: "k",
+            isARepeat: false,
+            keyCode: 40
+        )
+    )
+
+    #expect(sut.shouldOpenCommandPalette(event))
+}
+
+@Test("CanvasHotkeyTranslator: Command+Shift+P opens command palette")
+func test_shouldOpenCommandPalette_commandShiftP_returnsTrue() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "P",
+            charactersIgnoringModifiers: "p",
+            isARepeat: false,
+            keyCode: 35
+        )
+    )
+
+    #expect(sut.shouldOpenCommandPalette(event))
+}
+
+@Test("CanvasHotkeyTranslator: Command+Function+K does not open command palette")
+func test_shouldOpenCommandPalette_commandFunctionK_returnsFalse() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .function],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "k",
+            charactersIgnoringModifiers: "k",
+            isARepeat: false,
+            keyCode: 40
+        )
+    )
+
+    #expect(!sut.shouldOpenCommandPalette(event))
+}
