@@ -6,21 +6,26 @@ public enum CanvasGraphCRUDService {
     /// - Parameters:
     ///   - node: Node to insert.
     ///   - graph: Source graph snapshot.
-    /// - Returns: New graph containing the inserted node.
-    /// - Throws: `CanvasGraphError` when invariants fail or ID already exists.
-    public static func createNode(_ node: CanvasNode, in graph: CanvasGraph) throws -> CanvasGraph {
-        try validate(node: node)
+    /// - Returns: New graph containing the inserted node or a domain validation error.
+    public static func createNode(_ node: CanvasNode, in graph: CanvasGraph) -> Result<CanvasGraph, CanvasGraphError> {
+        switch validate(node: node) {
+        case .success:
+            break
+        case .failure(let error):
+            return .failure(error)
+        }
         guard graph.nodesByID[node.id] == nil else {
-            throw CanvasGraphError.nodeAlreadyExists(node.id)
+            return .failure(.nodeAlreadyExists(node.id))
         }
 
         var nodes = graph.nodesByID
         nodes[node.id] = node
-        return CanvasGraph(
-            nodesByID: nodes,
-            edgesByID: graph.edgesByID,
-            focusedNodeID: graph.focusedNodeID
-        )
+        return .success(
+            CanvasGraph(
+                nodesByID: nodes,
+                edgesByID: graph.edgesByID,
+                focusedNodeID: graph.focusedNodeID
+            ))
     }
 
     /// Reads a node by identifier.
@@ -36,32 +41,36 @@ public enum CanvasGraphCRUDService {
     /// - Parameters:
     ///   - node: New node value.
     ///   - graph: Source graph snapshot.
-    /// - Returns: New graph containing the updated node.
-    /// - Throws: `CanvasGraphError` when invariants fail or node is missing.
-    public static func updateNode(_ node: CanvasNode, in graph: CanvasGraph) throws -> CanvasGraph {
-        try validate(node: node)
+    /// - Returns: New graph containing the updated node or a domain validation error.
+    public static func updateNode(_ node: CanvasNode, in graph: CanvasGraph) -> Result<CanvasGraph, CanvasGraphError> {
+        switch validate(node: node) {
+        case .success:
+            break
+        case .failure(let error):
+            return .failure(error)
+        }
         guard graph.nodesByID[node.id] != nil else {
-            throw CanvasGraphError.nodeNotFound(node.id)
+            return .failure(.nodeNotFound(node.id))
         }
 
         var nodes = graph.nodesByID
         nodes[node.id] = node
-        return CanvasGraph(
-            nodesByID: nodes,
-            edgesByID: graph.edgesByID,
-            focusedNodeID: graph.focusedNodeID
-        )
+        return .success(
+            CanvasGraph(
+                nodesByID: nodes,
+                edgesByID: graph.edgesByID,
+                focusedNodeID: graph.focusedNodeID
+            ))
     }
 
     /// Deletes a node and all connected edges.
     /// - Parameters:
     ///   - id: Node identifier to remove.
     ///   - graph: Source graph snapshot.
-    /// - Returns: New graph without the node and related edges.
-    /// - Throws: `CanvasGraphError.nodeNotFound` when node is missing.
-    public static func deleteNode(id: CanvasNodeID, in graph: CanvasGraph) throws -> CanvasGraph {
+    /// - Returns: New graph without the node and related edges, or `.nodeNotFound`.
+    public static func deleteNode(id: CanvasNodeID, in graph: CanvasGraph) -> Result<CanvasGraph, CanvasGraphError> {
         guard graph.nodesByID[id] != nil else {
-            throw CanvasGraphError.nodeNotFound(id)
+            return .failure(.nodeNotFound(id))
         }
 
         var nodes = graph.nodesByID
@@ -71,32 +80,38 @@ public enum CanvasGraphCRUDService {
         }
 
         let nextFocusedNodeID = graph.focusedNodeID == id ? nil : graph.focusedNodeID
-        return CanvasGraph(
-            nodesByID: nodes,
-            edgesByID: edges,
-            focusedNodeID: nextFocusedNodeID
-        )
+        return .success(
+            CanvasGraph(
+                nodesByID: nodes,
+                edgesByID: edges,
+                focusedNodeID: nextFocusedNodeID
+            ))
     }
 
     /// Inserts an edge into the graph.
     /// - Parameters:
     ///   - edge: Edge to insert.
     ///   - graph: Source graph snapshot.
-    /// - Returns: New graph containing the inserted edge.
-    /// - Throws: `CanvasGraphError` when invariants fail or ID already exists.
-    public static func createEdge(_ edge: CanvasEdge, in graph: CanvasGraph) throws -> CanvasGraph {
-        try validate(edge: edge, in: graph)
+    /// - Returns: New graph containing the inserted edge or a domain validation error.
+    public static func createEdge(_ edge: CanvasEdge, in graph: CanvasGraph) -> Result<CanvasGraph, CanvasGraphError> {
+        switch validate(edge: edge, in: graph) {
+        case .success:
+            break
+        case .failure(let error):
+            return .failure(error)
+        }
         guard graph.edgesByID[edge.id] == nil else {
-            throw CanvasGraphError.edgeAlreadyExists(edge.id)
+            return .failure(.edgeAlreadyExists(edge.id))
         }
 
         var edges = graph.edgesByID
         edges[edge.id] = edge
-        return CanvasGraph(
-            nodesByID: graph.nodesByID,
-            edgesByID: edges,
-            focusedNodeID: graph.focusedNodeID
-        )
+        return .success(
+            CanvasGraph(
+                nodesByID: graph.nodesByID,
+                edgesByID: edges,
+                focusedNodeID: graph.focusedNodeID
+            ))
     }
 
     /// Reads an edge by identifier.
@@ -112,71 +127,78 @@ public enum CanvasGraphCRUDService {
     /// - Parameters:
     ///   - edge: New edge value.
     ///   - graph: Source graph snapshot.
-    /// - Returns: New graph containing the updated edge.
-    /// - Throws: `CanvasGraphError` when invariants fail or edge is missing.
-    public static func updateEdge(_ edge: CanvasEdge, in graph: CanvasGraph) throws -> CanvasGraph {
+    /// - Returns: New graph containing the updated edge or a domain validation error.
+    public static func updateEdge(_ edge: CanvasEdge, in graph: CanvasGraph) -> Result<CanvasGraph, CanvasGraphError> {
         guard graph.edgesByID[edge.id] != nil else {
-            throw CanvasGraphError.edgeNotFound(edge.id)
+            return .failure(.edgeNotFound(edge.id))
         }
-        try validate(edge: edge, in: graph)
+        switch validate(edge: edge, in: graph) {
+        case .success:
+            break
+        case .failure(let error):
+            return .failure(error)
+        }
 
         var edges = graph.edgesByID
         edges[edge.id] = edge
-        return CanvasGraph(
-            nodesByID: graph.nodesByID,
-            edgesByID: edges,
-            focusedNodeID: graph.focusedNodeID
-        )
+        return .success(
+            CanvasGraph(
+                nodesByID: graph.nodesByID,
+                edgesByID: edges,
+                focusedNodeID: graph.focusedNodeID
+            ))
     }
 
     /// Deletes an edge.
     /// - Parameters:
     ///   - id: Edge identifier to remove.
     ///   - graph: Source graph snapshot.
-    /// - Returns: New graph without the target edge.
-    /// - Throws: `CanvasGraphError.edgeNotFound` when edge is missing.
-    public static func deleteEdge(id: CanvasEdgeID, in graph: CanvasGraph) throws -> CanvasGraph {
+    /// - Returns: New graph without the target edge, or `.edgeNotFound`.
+    public static func deleteEdge(id: CanvasEdgeID, in graph: CanvasGraph) -> Result<CanvasGraph, CanvasGraphError> {
         guard graph.edgesByID[id] != nil else {
-            throw CanvasGraphError.edgeNotFound(id)
+            return .failure(.edgeNotFound(id))
         }
 
         var edges = graph.edgesByID
         edges.removeValue(forKey: id)
-        return CanvasGraph(
-            nodesByID: graph.nodesByID,
-            edgesByID: edges,
-            focusedNodeID: graph.focusedNodeID
-        )
+        return .success(
+            CanvasGraph(
+                nodesByID: graph.nodesByID,
+                edgesByID: edges,
+                focusedNodeID: graph.focusedNodeID
+            ))
     }
 }
 
 extension CanvasGraphCRUDService {
     /// Validates node invariants before insert/update.
     /// - Parameter node: Candidate node value.
-    /// - Throws: `CanvasGraphError` when ID or bounds are invalid.
-    fileprivate static func validate(node: CanvasNode) throws {
+    /// - Returns: `.success(())` when valid, otherwise the corresponding error.
+    fileprivate static func validate(node: CanvasNode) -> Result<Void, CanvasGraphError> {
         if node.id.rawValue.isEmpty {
-            throw CanvasGraphError.invalidNodeID
+            return .failure(.invalidNodeID)
         }
         if node.bounds.width <= 0 || node.bounds.height <= 0 {
-            throw CanvasGraphError.invalidNodeBounds
+            return .failure(.invalidNodeBounds)
         }
+        return .success(())
     }
 
     /// Validates edge invariants before insert/update.
     /// - Parameters:
     ///   - edge: Candidate edge value.
     ///   - graph: Graph snapshot used for endpoint existence checks.
-    /// - Throws: `CanvasGraphError` when ID or endpoints are invalid.
-    fileprivate static func validate(edge: CanvasEdge, in graph: CanvasGraph) throws {
+    /// - Returns: `.success(())` when valid, otherwise the corresponding error.
+    fileprivate static func validate(edge: CanvasEdge, in graph: CanvasGraph) -> Result<Void, CanvasGraphError> {
         if edge.id.rawValue.isEmpty {
-            throw CanvasGraphError.invalidEdgeID
+            return .failure(.invalidEdgeID)
         }
         guard graph.nodesByID[edge.fromNodeID] != nil else {
-            throw CanvasGraphError.edgeEndpointNotFound(edge.fromNodeID)
+            return .failure(.edgeEndpointNotFound(edge.fromNodeID))
         }
         guard graph.nodesByID[edge.toNodeID] != nil else {
-            throw CanvasGraphError.edgeEndpointNotFound(edge.toNodeID)
+            return .failure(.edgeEndpointNotFound(edge.toNodeID))
         }
+        return .success(())
     }
 }
