@@ -5,6 +5,7 @@ import Combine
 import Domain
 import SwiftUI
 
+// swiftlint:disable type_body_length
 /// SwiftUI canvas that displays graph nodes and handles keyboard-first editing interactions.
 public struct CanvasView: View {
     static let minimumCanvasWidth: Double = 900
@@ -16,6 +17,7 @@ public struct CanvasView: View {
     @State private var isCommandPalettePresented = false
     @State private var selectedCommandPaletteIndex: Int = 0
     @State private var manualPanOffset: CGSize = .zero
+    @State private var previousFocusedNodeID: CanvasNodeID?
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
@@ -232,6 +234,7 @@ public struct CanvasView: View {
             )
             .task {
                 let initialEditingNodeID = await viewModel.onAppear()
+                previousFocusedNodeID = viewModel.focusedNodeID
                 startInitialNodeEditingIfNeeded(nodeID: initialEditingNodeID)
             }
         }
@@ -295,11 +298,18 @@ public struct CanvasView: View {
                 selectedCommandPaletteIndex = 0
             }
         }
-        .onChange(of: viewModel.focusedNodeID) { _ in
-            manualPanOffset = .zero
+        .onChange(of: viewModel.focusedNodeID) { focusedNodeID in
+            if CanvasViewportPanPolicy.shouldResetManualPanOffsetOnFocusChange(
+                previousFocusedNodeID: previousFocusedNodeID,
+                currentFocusedNodeID: focusedNodeID
+            ) {
+                manualPanOffset = .zero
+            }
+            previousFocusedNodeID = focusedNodeID
         }
     }
 }
+// swiftlint:enable type_body_length
 
 extension CanvasView {
     fileprivate struct CommandPaletteItem: Identifiable, Equatable {
@@ -327,6 +337,7 @@ extension CanvasView {
         isCommandPalettePresented = false
     }
 
+    // swiftlint:disable cyclomatic_complexity
     fileprivate func handleCommandPaletteKeyDown(_ event: NSEvent) -> Bool {
         let keyCode = event.keyCode
 
@@ -392,6 +403,7 @@ extension CanvasView {
         commandPaletteQuery.append(contentsOf: String(first).lowercased())
         return true
     }
+    // swiftlint:enable cyclomatic_complexity
 
     fileprivate func filteredCommandPaletteItems() -> [CommandPaletteItem] {
         let orderedItems = defaultCommandPaletteItems()

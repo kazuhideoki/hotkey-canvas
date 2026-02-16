@@ -35,7 +35,7 @@ public final class CanvasScrollWheelMonitorNSView: NSView {
     var isEnabled: Bool
     var onScrollWheel: (NSEvent) -> Bool
 
-    private var localMonitor: Any?
+    private var localMonitor: (any NSObjectProtocol)?
 
     init(isEnabled: Bool, onScrollWheel: @escaping (NSEvent) -> Bool) {
         self.isEnabled = isEnabled
@@ -65,21 +65,28 @@ public final class CanvasScrollWheelMonitorNSView: NSView {
         guard localMonitor == nil else {
             return
         }
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
-            guard let self else {
-                return event
-            }
-            guard self.isEnabled else {
-                return event
-            }
-            guard event.window === self.window else {
-                return event
-            }
-            if self.onScrollWheel(event) {
-                return nil
-            }
-            return event
+        guard
+            let monitor = NSEvent.addLocalMonitorForEvents(
+                matching: .scrollWheel,
+                handler: { [weak self] event in
+                    guard let self else {
+                        return event
+                    }
+                    guard self.isEnabled else {
+                        return event
+                    }
+                    guard event.window === self.window else {
+                        return event
+                    }
+                    if self.onScrollWheel(event) {
+                        return nil
+                    }
+                    return event
+                }) as? any NSObjectProtocol
+        else {
+            preconditionFailure("Failed to create local scroll-wheel monitor token.")
         }
+        localMonitor = monitor
     }
 
     private func removeMonitorIfNeeded() {
