@@ -5,7 +5,6 @@ import AppKit
 /// Result of text layout measurement used by both editing and display paths.
 struct NodeTextLayoutMetrics: Equatable {
     let nodeHeight: CGFloat
-    let renderedLineCount: Int
 }
 
 /// Measures node height for a given text and node width using AppKit layout primitives.
@@ -53,7 +52,7 @@ struct NodeTextHeightMeasurer {
     /// - Parameters:
     ///   - text: Current editor text.
     ///   - nodeWidth: Node width in canvas coordinates.
-    /// - Returns: Height and rendered line count derived from AppKit layout.
+    /// - Returns: Height derived from AppKit layout.
     func measureLayout(text: String, nodeWidth: CGFloat) -> NodeTextLayoutMetrics {
         let textContainerWidth = max(
             nodeWidth
@@ -68,8 +67,7 @@ struct NodeTextHeightMeasurer {
             + (textContainerInset.height * 2)
         let clampedHeight = min(ceil(max(nodeHeight, minimumNodeHeight)), maximumNodeHeight)
         return NodeTextLayoutMetrics(
-            nodeHeight: clampedHeight,
-            renderedLineCount: textLayout.renderedLineCount
+            nodeHeight: clampedHeight
         )
     }
 }
@@ -77,7 +75,6 @@ struct NodeTextHeightMeasurer {
 extension NodeTextHeightMeasurer {
     private struct TextLayoutMeasurement {
         let contentHeight: CGFloat
-        let renderedLineCount: Int
     }
 
     private func measuredTextLayout(text: String, width: CGFloat) -> TextLayoutMeasurement {
@@ -103,15 +100,12 @@ extension NodeTextHeightMeasurer {
         }
 
         var measuredHeight = lineHeights.reduce(0, +)
-        var renderedLineCount = lineHeights.count
         let defaultLineHeight = layoutManager.defaultLineHeight(for: font)
         if layoutManager.extraLineFragmentTextContainer != nil {
             measuredHeight += lineHeights.last ?? defaultLineHeight
-            renderedLineCount += 1
         }
         return TextLayoutMeasurement(
-            contentHeight: max(measuredHeight, defaultLineHeight),
-            renderedLineCount: max(renderedLineCount, 1)
+            contentHeight: max(measuredHeight, defaultLineHeight)
         )
     }
 }

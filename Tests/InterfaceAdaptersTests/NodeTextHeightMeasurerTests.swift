@@ -52,24 +52,3 @@ func test_measure_longText_isClampedToMaximumHeight() {
 
     #expect(height == 140)
 }
-
-@Test("NodeTextHeightMeasurer: explicit newline increases rendered line count")
-func test_measureLayout_explicitNewline_reportsMultipleLines() {
-    let sut = NodeTextHeightMeasurer()
-
-    let oneLine = sut.measureLayout(text: "abc", nodeWidth: 220)
-    let twoLines = sut.measureLayout(text: "abc\ndef", nodeWidth: 220)
-
-    #expect(twoLines.renderedLineCount > oneLine.renderedLineCount)
-}
-
-@Test("NodeTextHeightMeasurer: narrow width increases rendered line count by wrapping")
-func test_measureLayout_narrowWidth_reportsMoreWrappedLines() {
-    let sut = NodeTextHeightMeasurer()
-    let text = "This is a long sentence to verify wrapped line counting behavior."
-
-    let wideMetrics = sut.measureLayout(text: text, nodeWidth: 260)
-    let narrowMetrics = sut.measureLayout(text: text, nodeWidth: 120)
-
-    #expect(narrowMetrics.renderedLineCount > wideMetrics.renderedLineCount)
-}
