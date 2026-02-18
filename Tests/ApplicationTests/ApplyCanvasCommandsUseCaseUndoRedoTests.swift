@@ -57,3 +57,28 @@ func test_undo_respectsMaxHistoryCount() async throws {
     let secondUndo = await sut.undo()
     #expect(secondUndo.newState.nodesByID.count == 1)
 }
+
+@Test("ApplyCanvasCommandsUseCase: undo emits viewport intent when focus changes")
+func test_undo_emitsViewportIntent_whenFocusChanges() async throws {
+    let sut = ApplyCanvasCommandsUseCase()
+
+    _ = try await sut.apply(commands: [.addNode])
+    _ = try await sut.apply(commands: [.addNode])
+    let undone = await sut.undo()
+
+    #expect(undone.newState.focusedNodeID != nil)
+    #expect(undone.viewportIntent == .resetManualPanOffset)
+}
+
+@Test("ApplyCanvasCommandsUseCase: redo emits viewport intent when focus changes")
+func test_redo_emitsViewportIntent_whenFocusChanges() async throws {
+    let sut = ApplyCanvasCommandsUseCase()
+
+    _ = try await sut.apply(commands: [.addNode])
+    _ = try await sut.apply(commands: [.addNode])
+    _ = await sut.undo()
+    let redone = await sut.redo()
+
+    #expect(redone.newState.focusedNodeID != nil)
+    #expect(redone.viewportIntent == .resetManualPanOffset)
+}

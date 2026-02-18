@@ -17,7 +17,6 @@ public struct CanvasView: View {
     @State private var isCommandPalettePresented = false
     @State private var selectedCommandPaletteIndex: Int = 0
     @State private var manualPanOffset: CGSize = .zero
-    @State private var previousFocusedNodeID: CanvasNodeID?
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
@@ -239,7 +238,6 @@ public struct CanvasView: View {
             )
             .task {
                 let initialEditingNodeID = await viewModel.onAppear()
-                previousFocusedNodeID = viewModel.focusedNodeID
                 startInitialNodeEditingIfNeeded(nodeID: initialEditingNodeID)
             }
         }
@@ -303,14 +301,15 @@ public struct CanvasView: View {
                 selectedCommandPaletteIndex = 0
             }
         }
-        .onChange(of: viewModel.focusedNodeID) { focusedNodeID in
-            if CanvasViewportPanPolicy.shouldResetManualPanOffsetOnFocusChange(
-                previousFocusedNodeID: previousFocusedNodeID,
-                currentFocusedNodeID: focusedNodeID
-            ) {
+        .onReceive(viewModel.$viewportIntent) { viewportIntent in
+            guard let viewportIntent else {
+                return
+            }
+            switch viewportIntent {
+            case .resetManualPanOffset:
                 manualPanOffset = .zero
             }
-            previousFocusedNodeID = focusedNodeID
+            viewModel.consumeViewportIntent()
         }
     }
 }

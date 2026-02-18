@@ -158,8 +158,15 @@ extension CanvasCommandPipelineCoordinator {
     }
 
     private func runFocusNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {
-        // Safe mode: legacy handlers already resolved focus transitions.
-        graph
+        let normalizedFocusedNodeID = normalizedFocusedNodeID(in: graph)
+        guard normalizedFocusedNodeID != graph.focusedNodeID else {
+            return graph
+        }
+        return CanvasGraph(
+            nodesByID: graph.nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: normalizedFocusedNodeID
+        )
     }
 
     private func runViewportIntentStage(
@@ -175,5 +182,26 @@ extension CanvasCommandPipelineCoordinator {
     private func hasAddedNode(from oldGraph: CanvasGraph, to newGraph: CanvasGraph) -> Bool {
         let previousNodeIDs = Set(oldGraph.nodesByID.keys)
         return newGraph.nodesByID.keys.contains { !previousNodeIDs.contains($0) }
+    }
+
+    private func normalizedFocusedNodeID(in graph: CanvasGraph) -> CanvasNodeID? {
+        guard !graph.nodesByID.isEmpty else {
+            return nil
+        }
+        if let focusedNodeID = graph.focusedNodeID, graph.nodesByID[focusedNodeID] != nil {
+            return focusedNodeID
+        }
+        return graph.nodesByID.values
+            .sorted { lhs, rhs in
+                if lhs.bounds.y != rhs.bounds.y {
+                    return lhs.bounds.y < rhs.bounds.y
+                }
+                if lhs.bounds.x != rhs.bounds.x {
+                    return lhs.bounds.x < rhs.bounds.x
+                }
+                return lhs.id.rawValue < rhs.id.rawValue
+            }
+            .first?
+            .id
     }
 }

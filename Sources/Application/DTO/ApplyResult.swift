@@ -6,6 +6,7 @@ public struct ApplyResult: Equatable, Sendable {
     public let newState: CanvasGraph
     public let canUndo: Bool
     public let canRedo: Bool
+    public let viewportIntent: CanvasViewportIntent?
     /// `true` when the apply operation introduced at least one new node into the graph.
     public let didAddNode: Bool
 
@@ -13,11 +14,13 @@ public struct ApplyResult: Equatable, Sendable {
         newState: CanvasGraph,
         canUndo: Bool = false,
         canRedo: Bool = false,
+        viewportIntent: CanvasViewportIntent? = nil,
         didAddNode: Bool = false
     ) {
         self.newState = newState
         self.canUndo = canUndo
         self.canRedo = canRedo
+        self.viewportIntent = viewportIntent
         self.didAddNode = didAddNode
     }
 }

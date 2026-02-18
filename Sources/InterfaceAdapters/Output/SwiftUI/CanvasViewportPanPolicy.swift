@@ -2,10 +2,9 @@ import CoreGraphics
 // Background: Canvas viewport can be temporarily panned by pointer input
 // while still supporting focus-centered navigation.
 // Responsibility: Provide deterministic rules to combine auto-centering and manual panning offsets.
-import Domain
 import Foundation
 
-/// Policy for composing viewport offsets and deciding when manual pan should reset.
+/// Policy for composing viewport offsets from auto-centering and pointer interactions.
 enum CanvasViewportPanPolicy {
     /// Combines offsets in rendering order: auto-centering + persisted manual pan + active drag translation.
     /// - Parameters:
@@ -52,17 +51,5 @@ enum CanvasViewportPanPolicy {
             width: -deltaX * scale,
             height: -deltaY * scale
         )
-    }
-
-    /// Returns true when focused node identity changed by any action.
-    /// - Parameters:
-    ///   - previousFocusedNodeID: Focused node before state transition.
-    ///   - currentFocusedNodeID: Focused node after state transition.
-    /// - Returns: True when focus changed and viewport should return to center-following mode.
-    static func shouldResetManualPanOffsetOnFocusChange(
-        previousFocusedNodeID: CanvasNodeID?,
-        currentFocusedNodeID: CanvasNodeID?
-    ) -> Bool {
-        previousFocusedNodeID != currentFocusedNodeID
     }
 }

@@ -28,8 +28,8 @@ func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async thro
     let replayResult = try await sut.runPipelineCommandSequence(commands: commands, from: baseGraph)
 
     #expect(pipelineResult.graph == replayResult.graph)
-    #expect(pipelineResult.graph.focusedNodeID == rootID)
-    #expect(pipelineResult.graph.nodesByID.count == 1)
+    #expect(pipelineResult.graph.focusedNodeID == secondChildID)
+    #expect(pipelineResult.graph.nodesByID.count == 2)
     #expect(pipelineResult.viewportIntent == .resetManualPanOffset)
     #expect(!pipelineResult.didAddNode)
 }
@@ -99,6 +99,35 @@ func test_pipelineMode_didAddNode_isFalseForTransientAdd() async throws {
     #expect(!result.didAddNode)
 }
 
+@Test("ApplyCanvasCommandsUseCase: apply returns viewport intent when focus changes")
+func test_apply_returnsViewportIntent_whenFocusChanges() async throws {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let childID = CanvasNodeID(rawValue: "child")
+    let rootNode = CanvasNode(
+        id: rootID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 48, y: 48, width: 220, height: 120)
+    )
+    let childNode = CanvasNode(
+        id: childID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 48, y: 240, width: 220, height: 120)
+    )
+    let graph = CanvasGraph(
+        nodesByID: [rootID: rootNode, childID: childNode],
+        edgesByID: [:],
+        focusedNodeID: rootID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let applyResult = try await sut.apply(commands: [.moveFocus(.down)])
+
+    #expect(applyResult.newState.focusedNodeID == childID)
+    #expect(applyResult.viewportIntent == .resetManualPanOffset)
+}
+
 @Test("CanvasCommandPipelineCoordinator: tree/area stages are idempotent")
 func test_pipelineCoordinator_treeAreaStages_areIdempotent() {
     let rootID = CanvasNodeID(rawValue: "root")
@@ -163,6 +192,50 @@ func test_pipelineCoordinator_treeAreaStages_areIdempotent() {
     )
 
     #expect(secondPass.graph == firstPass.graph)
+}
+
+@Test("CanvasCommandPipelineCoordinator: focus normalization resolves invalid focused node to deterministic fallback")
+func test_pipelineCoordinator_focusNormalization_resolvesInvalidFocus() {
+    let upperID = CanvasNodeID(rawValue: "upper")
+    let lowerID = CanvasNodeID(rawValue: "lower")
+    let invalidFocusedNodeID = CanvasNodeID(rawValue: "missing")
+    let upperNode = CanvasNode(
+        id: upperID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 80, y: 40, width: 220, height: 80)
+    )
+    let lowerNode = CanvasNode(
+        id: lowerID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 80, y: 180, width: 220, height: 80)
+    )
+    let graphWithInvalidFocus = CanvasGraph(
+        nodesByID: [upperID: upperNode, lowerID: lowerNode],
+        edgesByID: [:],
+        focusedNodeID: invalidFocusedNodeID
+    )
+    let coordinator = CanvasCommandPipelineCoordinator()
+
+    let result = coordinator.run(
+        on: graphWithInvalidFocus,
+        mutationResults: [
+            CanvasMutationResult(
+                graphBeforeMutation: graphWithInvalidFocus,
+                graphAfterMutation: graphWithInvalidFocus,
+                effects: CanvasMutationEffects(
+                    didMutateGraph: true,
+                    needsTreeLayout: false,
+                    needsAreaLayout: false,
+                    needsFocusNormalization: true
+                )
+            )
+        ]
+    )
+
+    #expect(result.graph.focusedNodeID == upperID)
+    #expect(result.viewportIntent == .resetManualPanOffset)
 }
 
 private func makePipelineParityBaseGraph(

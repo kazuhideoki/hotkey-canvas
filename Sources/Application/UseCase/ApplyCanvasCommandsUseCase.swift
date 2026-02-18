@@ -30,25 +30,43 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
         appendUndoSnapshot(graph)
         graph = nextGraph
         redoStack.removeAll(keepingCapacity: true)
-        return makeApplyResult(newState: nextGraph, didAddNode: pipelineResult.didAddNode)
+        return makeApplyResult(
+            newState: nextGraph,
+            viewportIntent: pipelineResult.viewportIntent,
+            didAddNode: pipelineResult.didAddNode
+        )
     }
 
     public func undo() async -> ApplyResult {
         guard let previousGraph = undoStack.popLast() else {
             return makeApplyResult(newState: graph)
         }
+        let graphBeforeUndo = graph
         appendRedoSnapshot(graph)
         graph = previousGraph
-        return makeApplyResult(newState: previousGraph)
+        return makeApplyResult(
+            newState: previousGraph,
+            viewportIntent: viewportIntentForFocusChange(
+                from: graphBeforeUndo.focusedNodeID,
+                to: previousGraph.focusedNodeID
+            )
+        )
     }
 
     public func redo() async -> ApplyResult {
         guard let nextGraph = redoStack.popLast() else {
             return makeApplyResult(newState: graph)
         }
+        let graphBeforeRedo = graph
         appendUndoSnapshot(graph)
         graph = nextGraph
-        return makeApplyResult(newState: nextGraph)
+        return makeApplyResult(
+            newState: nextGraph,
+            viewportIntent: viewportIntentForFocusChange(
+                from: graphBeforeRedo.focusedNodeID,
+                to: nextGraph.focusedNodeID
+            )
+        )
     }
 
     public func getCurrentResult() async -> ApplyResult {
@@ -100,13 +118,28 @@ extension ApplyCanvasCommandsUseCase {
         return newGraph.nodesByID.keys.contains { !previousNodeIDs.contains($0) }
     }
 
-    private func makeApplyResult(newState: CanvasGraph, didAddNode: Bool = false) -> ApplyResult {
+    private func makeApplyResult(
+        newState: CanvasGraph,
+        viewportIntent: CanvasViewportIntent? = nil,
+        didAddNode: Bool = false
+    ) -> ApplyResult {
         ApplyResult(
             newState: newState,
             canUndo: !undoStack.isEmpty,
             canRedo: !redoStack.isEmpty,
+            viewportIntent: viewportIntent,
             didAddNode: didAddNode
         )
+    }
+
+    private func viewportIntentForFocusChange(
+        from previousFocusedNodeID: CanvasNodeID?,
+        to currentFocusedNodeID: CanvasNodeID?
+    ) -> CanvasViewportIntent? {
+        guard previousFocusedNodeID != currentFocusedNodeID else {
+            return nil
+        }
+        return .resetManualPanOffset
     }
 
     private func appendUndoSnapshot(_ snapshot: CanvasGraph) {

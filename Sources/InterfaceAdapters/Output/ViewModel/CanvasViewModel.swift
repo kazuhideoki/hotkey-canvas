@@ -8,6 +8,7 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var edges: [CanvasEdge] = []
     @Published public private(set) var focusedNodeID: CanvasNodeID?
     @Published public private(set) var pendingEditingNodeID: CanvasNodeID?
+    @Published public private(set) var viewportIntent: CanvasViewportIntent?
     @Published public private(set) var canUndo: Bool = false
     @Published public private(set) var canRedo: Bool = false
 
@@ -111,6 +112,10 @@ public final class CanvasViewModel: ObservableObject {
     public func consumePendingEditingNodeID() {
         pendingEditingNodeID = nil
     }
+
+    public func consumeViewportIntent() {
+        viewportIntent = nil
+    }
 }
 
 extension CanvasViewModel {
@@ -155,6 +160,7 @@ extension CanvasViewModel {
         nodes = sortedNodes(in: result.newState)
         edges = sortedEdges(in: result.newState)
         focusedNodeID = result.newState.focusedNodeID
+        viewportIntent = result.viewportIntent
         canUndo = result.canUndo
         canRedo = result.canRedo
     }
