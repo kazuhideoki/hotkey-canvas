@@ -105,7 +105,6 @@ public struct CanvasView: View {
                     .animation(.easeInOut(duration: 0.15), value: commandPaletteItems.count)
                     .zIndex(10)
                 }
-
                 ZStack(alignment: .topLeading) {
                     ForEach(viewModel.edges, id: \.id) { edge in
                         if let path = CanvasEdgeRouting.path(
@@ -181,7 +180,6 @@ public struct CanvasView: View {
                         openCommandPalette()
                         return true
                     }
-
                     if let historyAction = hotkeyTranslator.historyAction(event) {
                         Task {
                             switch historyAction {
@@ -272,7 +270,6 @@ public struct CanvasView: View {
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width,
                             nodeHeight: Double(measuredLayout.nodeHeight),
-                            lineCount: measuredLayout.renderedLineCount,
                             initialCursorPlacement: .end
                         )
                         guard pendingEditingRequestID == requestID else {
@@ -500,16 +497,4 @@ extension CanvasView {
         return true
     }
 
-    @ViewBuilder
-    fileprivate func nonEditingNodeText(text: String, nodeWidth: Double) -> some View {
-        let textWidth = max(CGFloat(nodeWidth) - 24, 1)
-        Text(text)
-            .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
-            .lineLimit(nil)
-            .multilineTextAlignment(.leading)
-            .frame(width: textWidth, alignment: .topLeading)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(12)
-    }
 }

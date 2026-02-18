@@ -154,7 +154,6 @@ extension CanvasView {
             text: context.text,
             nodeWidth: node.bounds.width,
             nodeHeight: Double(measuredLayout.nodeHeight),
-            lineCount: measuredLayout.renderedLineCount,
             initialCursorPlacement: context.initialCursorPlacement
         )
         return true
@@ -194,12 +193,10 @@ extension CanvasView {
         guard roundedHeight.isFinite, roundedHeight > 0 else {
             return
         }
-        let nextLineCount = max(metrics.renderedLineCount, 1)
-        guard context.nodeHeight != roundedHeight || context.lineCount != nextLineCount else {
+        guard context.nodeHeight != roundedHeight else {
             return
         }
         context.nodeHeight = roundedHeight
-        context.lineCount = nextLineCount
         editingContext = context
     }
 
@@ -220,9 +217,21 @@ extension CanvasView {
             text: node.text ?? "",
             nodeWidth: node.bounds.width,
             nodeHeight: Double(measuredLayout.nodeHeight),
-            lineCount: measuredLayout.renderedLineCount,
             initialCursorPlacement: .end
         )
+    }
+
+    @ViewBuilder
+    func nonEditingNodeText(text: String, nodeWidth: Double) -> some View {
+        let textWidth = max(CGFloat(nodeWidth) - 24, 1)
+        Text(text)
+            .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
+            .lineLimit(nil)
+            .multilineTextAlignment(.leading)
+            .frame(width: textWidth, alignment: .topLeading)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(12)
     }
 }
 
@@ -232,6 +241,5 @@ struct NodeEditingContext: Equatable {
     var text: String
     let nodeWidth: Double
     var nodeHeight: Double
-    var lineCount: Int
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
 }
