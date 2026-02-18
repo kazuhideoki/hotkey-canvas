@@ -5,5 +5,7 @@ public enum CanvasShortcutAction: Equatable, Sendable {
     case apply(commands: [CanvasCommand])
     case undo
     case redo
+    case zoomIn
+    case zoomOut
     case openCommandPalette
 }

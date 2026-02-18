@@ -38,6 +38,24 @@ func test_resolveAction_commandShiftP_returnsOpenCommandPalette() {
     #expect(action == .openCommandPalette)
 }
 
+@Test("Shortcut catalog: command-shift-equals resolves zoom in")
+func test_resolveAction_commandShiftEquals_returnsZoomIn() {
+    let gesture = CanvasShortcutGesture(key: .character("="), modifiers: [.command, .shift])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .zoomIn)
+}
+
+@Test("Shortcut catalog: command-minus resolves zoom out")
+func test_resolveAction_commandMinus_returnsZoomOut() {
+    let gesture = CanvasShortcutGesture(key: .character("-"), modifiers: [.command])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .zoomOut)
+}
+
 @Test("Shortcut catalog: command palette definitions exclude open palette trigger")
 func test_commandPaletteDefinitions_excludeOpenPaletteAction() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions()
@@ -82,4 +100,22 @@ func test_validate_duplicateGesture_throwsError() {
     #expect(throws: CanvasShortcutCatalogError.duplicateGesture(first.gesture)) {
         try CanvasShortcutCatalogService.validate(definitions: [first, second]).get()
     }
+}
+
+@Test("Shortcut catalog: command-plus resolves zoom in")
+func test_resolveAction_commandPlus_returnsZoomIn() {
+    let gesture = CanvasShortcutGesture(key: .character("+"), modifiers: [.command])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .zoomIn)
+}
+
+@Test("Shortcut catalog: command-shift-semicolon resolves zoom in")
+func test_resolveAction_commandShiftSemicolon_returnsZoomIn() {
+    let gesture = CanvasShortcutGesture(key: .character(";"), modifiers: [.command, .shift])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .zoomIn)
 }

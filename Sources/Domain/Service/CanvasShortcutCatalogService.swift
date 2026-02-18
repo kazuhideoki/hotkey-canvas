@@ -75,6 +75,7 @@ extension CanvasShortcutCatalogService {
         commandPaletteTriggerDefinitions()
             + nodeEditingDefinitions()
             + navigationDefinitions()
+            + zoomDefinitions()
             + historyDefinitions()
     }
 
@@ -247,6 +248,51 @@ extension CanvasShortcutCatalogService {
                 gesture: CanvasShortcutGesture(key: .character("y"), modifiers: [.command]),
                 action: .redo,
                 shortcutLabel: "Command + Y"
+            ),
+        ]
+    }
+
+    private static func zoomDefinitions() -> [CanvasShortcutDefinition] {
+        [
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "zoomIn.commandPlus"),
+                name: "Zoom In",
+                gesture: CanvasShortcutGesture(key: .character("+"), modifiers: [.command]),
+                action: .zoomIn,
+                shortcutLabel: "Command + +",
+                searchTokens: ["zoom", "in", "scale"]
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "zoomIn.commandShiftSemicolon"),
+                name: "Zoom In",
+                gesture: CanvasShortcutGesture(key: .character(";"), modifiers: [.command, .shift]),
+                action: .zoomIn,
+                shortcutLabel: "Command + +",
+                searchTokens: ["zoom", "in", "scale"]
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "zoomIn.commandShiftEquals"),
+                name: "Zoom In",
+                gesture: CanvasShortcutGesture(key: .character("="), modifiers: [.command, .shift]),
+                action: .zoomIn,
+                shortcutLabel: "Command + +",
+                searchTokens: ["zoom", "in", "scale"]
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "zoomIn.commandEquals"),
+                name: "Zoom In",
+                gesture: CanvasShortcutGesture(key: .character("="), modifiers: [.command]),
+                action: .zoomIn,
+                shortcutLabel: "Command + =",
+                searchTokens: ["zoom", "in", "scale"]
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "zoomOut.commandMinus"),
+                name: "Zoom Out",
+                gesture: CanvasShortcutGesture(key: .character("-"), modifiers: [.command]),
+                action: .zoomOut,
+                shortcutLabel: "Command + -",
+                searchTokens: ["zoom", "out", "scale"]
             ),
         ]
     }
