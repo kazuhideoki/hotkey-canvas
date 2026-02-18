@@ -199,6 +199,7 @@ private enum NodeTextEditorTextViewMeasurement {
     static func nodeHeight(
         for textView: NSTextView,
         outerVerticalPadding: CGFloat = 6,
+        verticalSafetyPadding: CGFloat = 1,
         maximumNodeHeight: CGFloat = 320
     ) -> CGFloat {
         guard
@@ -209,17 +210,18 @@ private enum NodeTextEditorTextViewMeasurement {
         }
 
         let glyphRange = layoutManager.glyphRange(for: textContainer)
-        var lineHeights: [CGFloat] = []
-        layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { _, usedRect, _, _, _ in
-            lineHeights.append(usedRect.height)
-        }
-
-        var contentHeight = lineHeights.reduce(0, +)
+        layoutManager.ensureLayout(forGlyphRange: glyphRange)
         let defaultLineHeight = layoutManager.defaultLineHeight(
             for: textView.font ?? NodeTextStyle.font
         )
+        var lineHeights: [CGFloat] = []
+        layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { _, usedRect, _, _, _ in
+            lineHeights.append(max(usedRect.height, defaultLineHeight))
+        }
+
+        var contentHeight = lineHeights.reduce(0, +)
         if layoutManager.extraLineFragmentTextContainer != nil {
-            contentHeight += lineHeights.last ?? defaultLineHeight
+            contentHeight += max(lineHeights.last ?? 0, defaultLineHeight)
         }
 
         contentHeight = max(contentHeight, defaultLineHeight)
@@ -227,6 +229,7 @@ private enum NodeTextEditorTextViewMeasurement {
             contentHeight
             + (textView.textContainerInset.height * 2)
             + (outerVerticalPadding * 2)
+            + verticalSafetyPadding
         return min(ceil(nodeHeight), maximumNodeHeight)
     }
 }
