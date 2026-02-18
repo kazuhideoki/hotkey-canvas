@@ -147,7 +147,7 @@ public struct CanvasView: View {
                             branchXByParentAndDirection: branchXByParentAndDirection
                         ) {
                             path
-                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1.5)
+                                .stroke(Color(nsColor: .separatorColor), lineWidth: 2.25)
                         }
                     }
                     ForEach(displayNodes, id: \.id) { node in
@@ -161,7 +161,7 @@ public struct CanvasView: View {
                                         isEditing
                                             ? Color(nsColor: .systemPink)
                                             : (isFocused ? Color.accentColor : Color(nsColor: .separatorColor)),
-                                        lineWidth: (isEditing || isFocused) ? 2 : 1
+                                        lineWidth: (isEditing || isFocused) ? 3 : 2.25
                                     )
                             )
                             .overlay(alignment: .topLeading) {
