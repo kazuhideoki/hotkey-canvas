@@ -22,6 +22,18 @@
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
 | D5 | ショートカットカタログ | `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService`, `CanvasShortcutCatalogError` |
 
+### D5 追加仕様（ズームショートカット）
+
+- `CanvasShortcutAction` に `zoomIn` / `zoomOut` を追加した。
+- `CanvasShortcutCatalogService` の標準定義に以下を追加した。
+- `Command + +`（`Command + Shift + =` / `Command + Shift + ;` / `Command + +` 記号入力）: `zoomIn`
+- `Command + =`: `zoomIn`
+- `Command + -`: `zoomOut`
+- 利用先:
+- `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)`）
+- `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
+- `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+CommandPalette.swift`（コマンドパレットからのズーム実行）
+
 ## 4. 各ドメイン詳細
 
 ### D1. キャンバスグラフ編集ドメイン

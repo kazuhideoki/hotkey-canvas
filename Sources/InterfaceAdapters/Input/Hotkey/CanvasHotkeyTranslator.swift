@@ -8,6 +8,11 @@ public enum CanvasHistoryAction: Equatable, Sendable {
     case redo
 }
 
+public enum CanvasZoomAction: Equatable, Sendable {
+    case zoomIn
+    case zoomOut
+}
+
 public struct CanvasHotkeyTranslator {
     public init() {}
 
@@ -17,7 +22,18 @@ public struct CanvasHotkeyTranslator {
             return .undo
         case .redo:
             return .redo
-        case .apply, .openCommandPalette, .none:
+        case .apply, .zoomIn, .zoomOut, .openCommandPalette, .none:
+            return nil
+        }
+    }
+
+    public func zoomAction(_ event: NSEvent) -> CanvasZoomAction? {
+        switch action(for: event) {
+        case .zoomIn:
+            return .zoomIn
+        case .zoomOut:
+            return .zoomOut
+        case .apply, .undo, .redo, .openCommandPalette, .none:
             return nil
         }
     }
@@ -32,7 +48,7 @@ public struct CanvasHotkeyTranslator {
         switch action(for: event) {
         case .apply(let commands):
             return commands
-        case .undo, .redo, .openCommandPalette, .none:
+        case .undo, .redo, .zoomIn, .zoomOut, .openCommandPalette, .none:
             return []
         }
     }
@@ -47,10 +63,17 @@ extension CanvasHotkeyTranslator {
     private static let downArrowKeyCode: UInt16 = 125
     private static let upArrowKeyCode: UInt16 = 126
     private static let lKeyCode: UInt16 = 37
+    private static let equalsKeyCode: UInt16 = 24
+    private static let minusKeyCode: UInt16 = 27
+    private static let semicolonKeyCode: UInt16 = 41
+    private static let keypadPlusKeyCode: UInt16 = 69
 
     private func action(for event: NSEvent) -> CanvasShortcutAction? {
         guard event.type == .keyDown else {
             return nil
+        }
+        if let zoomAction = zoomActionByKeyCode(from: event) {
+            return zoomAction
         }
         guard let gesture = gesture(from: event) else {
             return nil
@@ -70,6 +93,24 @@ extension CanvasHotkeyTranslator {
             modifiers: modifiersWithoutFunction
         )
         return CanvasShortcutCatalogService.resolveAction(for: normalizedGesture)
+    }
+
+    private func zoomActionByKeyCode(from event: NSEvent) -> CanvasShortcutAction? {
+        let flags = normalizedFlags(from: event)
+        guard flags.contains(.command) else {
+            return nil
+        }
+
+        if event.keyCode == Self.minusKeyCode {
+            return .zoomOut
+        }
+        if event.keyCode == Self.keypadPlusKeyCode {
+            return .zoomIn
+        }
+        if flags.contains(.shift), event.keyCode == Self.equalsKeyCode || event.keyCode == Self.semicolonKeyCode {
+            return .zoomIn
+        }
+        return nil
     }
 
     private func gesture(from event: NSEvent) -> CanvasShortcutGesture? {
@@ -143,6 +184,9 @@ extension CanvasHotkeyTranslator {
     }
 
     private func normalizedShortcutCharacter(from event: NSEvent) -> String? {
+        if let shiftedCharacter = normalizedSymbolCharacter(from: event) {
+            return shiftedCharacter
+        }
         guard let charactersIgnoringModifiers = event.charactersIgnoringModifiers else {
             return nil
         }
@@ -151,5 +195,17 @@ extension CanvasHotkeyTranslator {
             return nil
         }
         return normalized
+    }
+
+    private func normalizedSymbolCharacter(from event: NSEvent) -> String? {
+        guard let characters = event.characters?.lowercased(), characters.count == 1 else {
+            return nil
+        }
+        switch characters {
+        case "+", "-":
+            return characters
+        default:
+            return nil
+        }
     }
 }

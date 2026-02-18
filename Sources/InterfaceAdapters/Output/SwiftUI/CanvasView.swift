@@ -19,6 +19,7 @@ public struct CanvasView: View {
     @State var hasInitializedCameraAnchor = false
     @State var cameraAnchorPoint: CGPoint = .zero
     @State var manualPanOffset: CGSize = .zero
+    @State var zoomScale: Double = 1.0
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
@@ -44,8 +45,12 @@ public struct CanvasView: View {
                 height: max(geometryProxy.size.height, Self.minimumCanvasHeight)
             )
             let autoCenterOffset = cameraOffset(viewportSize: viewportSize)
+            let scaledAutoCenterOffset = CGSize(
+                width: autoCenterOffset.width * zoomScale,
+                height: autoCenterOffset.height * zoomScale
+            )
             let cameraOffset = CanvasViewportPanPolicy.combinedOffset(
-                autoCenterOffset: autoCenterOffset,
+                autoCenterOffset: scaledAutoCenterOffset,
                 manualPanOffset: manualPanOffset,
                 activeDragOffset: .zero
             )
@@ -199,6 +204,12 @@ public struct CanvasView: View {
                             )
                     }
                 }
+                .frame(
+                    width: viewportSize.width,
+                    height: viewportSize.height,
+                    alignment: .topLeading
+                )
+                .scaleEffect(zoomScale, anchor: .center)
                 .offset(x: cameraOffset.width, y: cameraOffset.height)
                 if isCommandPalettePresented {
                     Color.clear
@@ -211,6 +222,10 @@ public struct CanvasView: View {
                     }
                     if hotkeyTranslator.shouldOpenCommandPalette(event) {
                         openCommandPalette()
+                        return true
+                    }
+                    if let zoomAction = hotkeyTranslator.zoomAction(event) {
+                        applyZoom(action: zoomAction)
                         return true
                     }
                     if let historyAction = hotkeyTranslator.historyAction(event) {
