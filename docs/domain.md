@@ -123,6 +123,9 @@
 
 - Application ユースケース
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveFocus.swift`
+  - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
+    - `needsFocusNormalization` が `true` のときに Focus Normalization Stage が実行される。
+    - `focusedNodeID` が無効な場合は `y -> x -> id` 順で先頭ノードへ正規化する。
 - コマンド発行
   - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（矢印キー -> `.moveFocus`、`cmd+矢印キー` -> `.moveNode`）
 - 主要テスト
@@ -243,6 +246,24 @@
   - 同一入力に対して決定的な結果を返す（順序 tie-break を含む）。
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
+
+## 5. Application パイプライン連携（Phase4）
+
+- 対象
+  - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
+  - `Sources/Application/DTO/CanvasMutationEffects.swift`
+  - `Sources/Application/DTO/CanvasViewportIntent.swift`
+- ステージ順序（固定）
+  - Mutation -> Tree Layout -> Area Layout -> Focus Normalization -> Viewport Intent
+- 実行条件
+  - Tree: `didMutateGraph && needsTreeLayout`
+  - Area: `didMutateGraph && needsAreaLayout`
+  - Focus: `didMutateGraph && needsFocusNormalization`
+  - Viewport Intent: `focusedNodeID` が `before/after` で変化した場合に `.resetManualPanOffset`
+- 境界責務
+  - Domain は純粋状態変換のみを担当する。
+  - Application はステージ実行順と `CanvasViewportIntent` 生成を担当する。
+  - InterfaceAdapters は `CanvasViewportIntent` を UI 状態へ反映する（`CanvasView` の手動パンリセットなど）。
 
 ### D5. ショートカットカタログドメイン
 

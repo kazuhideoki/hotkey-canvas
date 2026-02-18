@@ -1,5 +1,4 @@
 import CoreGraphics
-import Domain
 import Testing
 
 @testable import InterfaceAdapters
@@ -49,56 +48,4 @@ func test_scrollWheelTranslation_keepsPreciseDeltas() {
 
     #expect(translation.width == 1.5)
     #expect(translation.height == -4)
-}
-
-@Test("CanvasViewportPanPolicy: focus unchanged does not reset manual pan")
-func test_shouldResetManualPanOffsetOnFocusChange_returnsFalse_whenFocusUnchanged() {
-    let focusedNodeID = CanvasNodeID(rawValue: "node-1")
-
-    let shouldReset = CanvasViewportPanPolicy.shouldResetManualPanOffsetOnFocusChange(
-        previousFocusedNodeID: focusedNodeID,
-        currentFocusedNodeID: focusedNodeID
-    )
-
-    #expect(!shouldReset)
-}
-
-@Test("CanvasViewportPanPolicy: nil to nil focus does not reset manual pan")
-func test_shouldResetManualPanOffsetOnFocusChange_returnsFalse_whenFocusBothNil() {
-    let shouldReset = CanvasViewportPanPolicy.shouldResetManualPanOffsetOnFocusChange(
-        previousFocusedNodeID: nil,
-        currentFocusedNodeID: nil
-    )
-
-    #expect(!shouldReset)
-}
-
-@Test("CanvasViewportPanPolicy: nil to value focus resets manual pan")
-func test_shouldResetManualPanOffsetOnFocusChange_returnsTrue_whenFocusBecomesNonNil() {
-    let shouldReset = CanvasViewportPanPolicy.shouldResetManualPanOffsetOnFocusChange(
-        previousFocusedNodeID: nil,
-        currentFocusedNodeID: CanvasNodeID(rawValue: "node-1")
-    )
-
-    #expect(shouldReset)
-}
-
-@Test("CanvasViewportPanPolicy: value to nil focus resets manual pan")
-func test_shouldResetManualPanOffsetOnFocusChange_returnsTrue_whenFocusBecomesNil() {
-    let shouldReset = CanvasViewportPanPolicy.shouldResetManualPanOffsetOnFocusChange(
-        previousFocusedNodeID: CanvasNodeID(rawValue: "node-1"),
-        currentFocusedNodeID: nil
-    )
-
-    #expect(shouldReset)
-}
-
-@Test("CanvasViewportPanPolicy: value to different value focus resets manual pan")
-func test_shouldResetManualPanOffsetOnFocusChange_returnsTrue_whenFocusChangesNode() {
-    let shouldReset = CanvasViewportPanPolicy.shouldResetManualPanOffsetOnFocusChange(
-        previousFocusedNodeID: CanvasNodeID(rawValue: "node-1"),
-        currentFocusedNodeID: CanvasNodeID(rawValue: "node-2")
-    )
-
-    #expect(shouldReset)
 }

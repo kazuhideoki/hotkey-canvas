@@ -234,6 +234,19 @@ func test_apply_addSiblingNode_setsPendingEditingNodeID() async throws {
     #expect(viewModel.pendingEditingNodeID == CanvasNodeID(rawValue: "sibling-1"))
 }
 
+@MainActor
+@Test("CanvasViewModel: apply publishes viewport intent from input port")
+func test_apply_setsViewportIntent_fromApplyResult() async throws {
+    let inputPort = ViewportIntentCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.apply(commands: [.moveFocus(.down)])
+
+    #expect(viewModel.viewportIntent == .resetManualPanOffset)
+    viewModel.consumeViewportIntent()
+    #expect(viewModel.viewportIntent == nil)
+}
+
 actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
     private var graph: CanvasGraph = .empty
     private let getDelayNanoseconds: UInt64
@@ -648,6 +661,45 @@ actor AddSiblingCanvasEditingInputPort: CanvasEditingInputPort {
 
     func getCurrentResult() async -> ApplyResult {
         ApplyResult(newState: graph)
+    }
+}
+
+actor ViewportIntentCanvasEditingInputPort: CanvasEditingInputPort {
+    private let focusedNodeID = CanvasNodeID(rawValue: "focused")
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        let graph = CanvasGraph(
+            nodesByID: [
+                focusedNodeID: CanvasNode(
+                    id: focusedNodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+            ],
+            edgesByID: [:],
+            focusedNodeID: focusedNodeID
+        )
+        return ApplyResult(
+            newState: graph,
+            viewportIntent: .resetManualPanOffset
+        )
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: .empty)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: .empty)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        .empty
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: .empty)
     }
 }
 
