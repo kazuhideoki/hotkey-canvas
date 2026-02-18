@@ -21,7 +21,7 @@ struct NodeTextHeightMeasurer {
         lineFragmentPadding: CGFloat = 0,
         verticalSafetyPadding: CGFloat = 1,
         minimumNodeHeight: CGFloat? = nil,
-        maximumNodeHeight: CGFloat = 320
+        maximumNodeHeight: CGFloat = .greatestFiniteMagnitude
     ) {
         self.font = font
         self.outerHorizontalPadding = outerHorizontalPadding
