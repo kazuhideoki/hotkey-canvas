@@ -52,3 +52,13 @@ func test_measure_longText_isClampedToMaximumHeight() {
 
     #expect(height == 140)
 }
+
+@Test("NodeTextHeightMeasurer: default configuration can grow beyond legacy cap")
+func test_measure_manyLines_exceedsLegacyCap() {
+    let sut = NodeTextHeightMeasurer()
+    let text = String(repeating: "line\n", count: 80)
+
+    let height = sut.measure(text: text, nodeWidth: 220)
+
+    #expect(height > 320)
+}

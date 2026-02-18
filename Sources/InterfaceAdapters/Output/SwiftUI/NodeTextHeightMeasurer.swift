@@ -14,6 +14,7 @@ struct NodeTextHeightMeasurer {
     private let outerVerticalPadding: CGFloat
     private let textContainerInset: NSSize
     private let lineFragmentPadding: CGFloat
+    private let verticalSafetyPadding: CGFloat
     private let minimumNodeHeight: CGFloat
     private let maximumNodeHeight: CGFloat
 
@@ -23,14 +24,16 @@ struct NodeTextHeightMeasurer {
         outerVerticalPadding: CGFloat = 6,
         textContainerInset: NSSize = NSSize(width: 6, height: 6),
         lineFragmentPadding: CGFloat = 0,
+        verticalSafetyPadding: CGFloat = 1,
         minimumNodeHeight: CGFloat? = nil,
-        maximumNodeHeight: CGFloat = 320
+        maximumNodeHeight: CGFloat = .greatestFiniteMagnitude
     ) {
         self.font = font
         self.outerHorizontalPadding = outerHorizontalPadding
         self.outerVerticalPadding = outerVerticalPadding
         self.textContainerInset = textContainerInset
         self.lineFragmentPadding = lineFragmentPadding
+        self.verticalSafetyPadding = verticalSafetyPadding
         let oneLineHeight =
             NSLayoutManager().defaultLineHeight(for: font)
             + (outerVerticalPadding * 2)
@@ -65,10 +68,15 @@ struct NodeTextHeightMeasurer {
             textLayout.contentHeight
             + (outerVerticalPadding * 2)
             + (textContainerInset.height * 2)
+<<<<<<< HEAD
         let clampedHeight = min(ceil(max(nodeHeight, minimumNodeHeight)), maximumNodeHeight)
         return NodeTextLayoutMetrics(
             nodeHeight: clampedHeight
         )
+=======
+            + verticalSafetyPadding
+        return min(ceil(max(nodeHeight, minimumNodeHeight)), maximumNodeHeight)
+>>>>>>> main
     }
 }
 
@@ -94,15 +102,16 @@ extension NodeTextHeightMeasurer {
         textStorage.addLayoutManager(layoutManager)
 
         let glyphRange = layoutManager.glyphRange(for: textContainer)
+        layoutManager.ensureLayout(forGlyphRange: glyphRange)
+        let defaultLineHeight = layoutManager.defaultLineHeight(for: font)
         var lineHeights: [CGFloat] = []
         layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { _, usedRect, _, _, _ in
-            lineHeights.append(usedRect.height)
+            lineHeights.append(max(usedRect.height, defaultLineHeight))
         }
 
         var measuredHeight = lineHeights.reduce(0, +)
-        let defaultLineHeight = layoutManager.defaultLineHeight(for: font)
         if layoutManager.extraLineFragmentTextContainer != nil {
-            measuredHeight += lineHeights.last ?? defaultLineHeight
+            measuredHeight += max(lineHeights.last ?? 0, defaultLineHeight)
         }
         return TextLayoutMeasurement(
             contentHeight: max(measuredHeight, defaultLineHeight)
