@@ -572,7 +572,9 @@ func test_zoomAction_commandShiftSemicolon_returnsZoomIn() throws {
     #expect(action == .zoomIn)
 }
 
-@Test("CanvasHotkeyTranslator: Command+Shift+equals keycode maps to zoomIn action even when character normalization differs")
+@Test(
+    "CanvasHotkeyTranslator: Command+Shift+equals keycode maps to zoomIn action even when character normalization differs"
+)
 func test_zoomAction_commandShiftEqualsKeyCode_returnsZoomIn() throws {
     let sut = CanvasHotkeyTranslator()
     let event = try #require(

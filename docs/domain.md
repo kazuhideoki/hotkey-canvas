@@ -20,7 +20,7 @@
 | D2 | フォーカス移動 | `CanvasFocusDirection`, `CanvasFocusNavigationService` |
 | D3 | エリアレイアウト | `CanvasNodeArea`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService` |
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
-| D5 | ショートカットカタログ | `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService`, `CanvasShortcutCatalogError` |
+| D5 | ショートカットカタログ | `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService` |
 
 ### D5 追加仕様（ズームショートカット）
 
@@ -62,12 +62,9 @@
 | メソッド | 責務 |
 | --- | --- |
 | `createNode(_:in:)` | ノードを追加し、`Result<CanvasGraph, CanvasGraphError>` を返す。 |
-| `readNode(id:in:)` | ノードを参照する。 |
 | `updateNode(_:in:)` | 既存ノードを置換し、`Result<CanvasGraph, CanvasGraphError>` を返す。 |
 | `deleteNode(id:in:)` | ノードを削除し、接続エッジも同時に除去する。削除対象がフォーカス中なら `focusedNodeID` を `nil` にする。返却は `Result<CanvasGraph, CanvasGraphError>`。 |
 | `createEdge(_:in:)` | エッジを追加し、`Result<CanvasGraph, CanvasGraphError>` を返す。 |
-| `readEdge(id:in:)` | エッジを参照する。 |
-| `updateEdge(_:in:)` | 既存エッジを置換し、`Result<CanvasGraph, CanvasGraphError>` を返す。 |
 | `deleteEdge(id:in:)` | エッジを削除し、`Result<CanvasGraph, CanvasGraphError>` を返す。 |
 
 #### 利用状況（どこから使われるか）
@@ -299,8 +296,6 @@
   - `CanvasShortcutDefinition`
 - アクション
   - `CanvasShortcutAction`（`apply(commands:)` / `undo` / `redo` / `openCommandPalette`）
-- エラー
-  - `CanvasShortcutCatalogError`
 - サービス
   - `CanvasShortcutCatalogService`
 
@@ -310,10 +305,8 @@
 
 | メソッド | 責務 |
 | --- | --- |
-| `defaultDefinitions()` | 静的に定義された標準ショートカット一覧を返す。 |
 | `resolveAction(for:)` | `CanvasShortcutGesture` から実行アクションを解決する。 |
 | `commandPaletteDefinitions()` | コマンドパレットに表示すべきショートカット定義のみ返す。 |
-| `validate(definitions:)` | ID 重複・ジェスチャ重複・空文字項目を検証し、`Result<Void, CanvasShortcutCatalogError>` を返す。 |
 
 #### 利用状況（どこから使われるか）
 
@@ -330,18 +323,9 @@
 #### 不変条件・エラー一覧
 
 - 不変条件
-  - `CanvasShortcutID` は空文字（空白のみを含む）を許容しない。
-  - `name` と `shortcutLabel` は空文字（空白のみを含む）を許容しない。
-  - `searchTokens` に空文字（空白のみを含む）を含めない。
-  - 同一カタログ内で `CanvasShortcutID` は一意である。
-  - 同一カタログ内で `CanvasShortcutGesture` は一意である。
-- エラー（`CanvasShortcutCatalogError`）
-  - `emptyID(CanvasShortcutID)`
-  - `emptyName(CanvasShortcutID)`
-  - `emptyShortcutLabel(CanvasShortcutID)`
-  - `emptySearchToken(CanvasShortcutID)`
-  - `duplicateID(CanvasShortcutID)`
-  - `duplicateGesture(CanvasShortcutGesture)`
+  - 標準ショートカット定義は実装内の静的配列で管理し、入力解決とコマンドパレット表示で共有する。
+- エラー
+  - ドメインエラー型は持たず、`throws` しない。
 
 ## 5. ドメイン間の関係（依存・データ受け渡し）
 
@@ -372,3 +356,4 @@
 - 2026-02-16: Domain サービスの失敗表現を `throw` から `Result<..., 各DomainError>` に統一し、Application 側は `.get()` で既存 `throws` 契約を維持。
 - 2026-02-18: Viewport Intent の運用を更新し、Application から `.resetManualPanOffset` を生成しない仕様へ変更（初期中央化/画面外補正は `CanvasView` の表示ルールで実施）。
 - 2026-02-18: `ctrl+l` の `centerFocusedNode` コマンドを追加し、`apply` フローで `resetManualPanOffset` を返却することで、現在フォーカスノードを画面中央へ再配置する。
+- 2026-02-18: 未使用だった Domain 公開 API（`CanvasGraphCRUDService.readNode/readEdge/updateEdge`、`CanvasShortcutCatalogService.defaultDefinitions/validate`、`CanvasShortcutCatalogError`）を削除。
