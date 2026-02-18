@@ -334,6 +334,8 @@ extension CanvasView {
     fileprivate static let commandPaletteReturnKeyCode: UInt16 = 36
     fileprivate static let commandPaletteUpArrowKeyCode: UInt16 = 126
     fileprivate static let commandPaletteDownArrowKeyCode: UInt16 = 125
+    fileprivate static let commandPaletteControlPKeyCode: UInt16 = 35
+    fileprivate static let commandPaletteControlNKeyCode: UInt16 = 45
     fileprivate static let commandPaletteBackspaceKeyCode: UInt16 = 51
     fileprivate static let commandPaletteForwardDeleteKeyCode: UInt16 = 117
 
@@ -370,6 +372,23 @@ extension CanvasView {
         }
 
         if keyCode == Self.commandPaletteDownArrowKeyCode {
+            guard !filteredCommandPaletteItems().isEmpty else {
+                return true
+            }
+            let maxIndex = max(0, filteredCommandPaletteItems().count - 1)
+            selectedCommandPaletteIndex = min(maxIndex, selectedCommandPaletteIndex + 1)
+            return true
+        }
+
+        if event.modifierFlags.contains(.control) && keyCode == Self.commandPaletteControlPKeyCode {
+            guard !filteredCommandPaletteItems().isEmpty else {
+                return true
+            }
+            selectedCommandPaletteIndex = max(0, selectedCommandPaletteIndex - 1)
+            return true
+        }
+
+        if event.modifierFlags.contains(.control) && keyCode == Self.commandPaletteControlNKeyCode {
             guard !filteredCommandPaletteItems().isEmpty else {
                 return true
             }
