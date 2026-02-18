@@ -64,7 +64,11 @@
 
 - コマンドハンドラは `CanvasMutationResult` を返す。
   - `graphAfterMutation`
-  - `effects`（例: `affectsHierarchy`, `affectsNodeGeometry`, `affectsAreaPlacement`, `affectsFocus`）
+  - `effects`
+    - `didMutateGraph`
+    - `needsTreeLayout`
+    - `needsAreaLayout`
+    - `needsFocusNormalization`
 - Coordinatorは `PipelineResult` を返す。
   - `graph`
   - `viewportIntent`
@@ -87,6 +91,20 @@
 - 非決定要素（ID生成など）は Service内で生成せず、Applicationから注入する。
 - `Area Layout Stage` は「停止保証」と「非重なり達成保証」を満たす実装に限定する。
 
+### 5.4 effects とステージ実行条件（フェーズ1で固定）
+
+| Stage | 実行条件 |
+| --- | --- |
+| Mutation Stage | 常に実行 |
+| Tree Layout Stage | `didMutateGraph && needsTreeLayout` |
+| Area Layout Stage | `didMutateGraph && needsAreaLayout` |
+| Focus Normalization Stage | `didMutateGraph && needsFocusNormalization` |
+| Viewport Intent Stage | `focusedNodeID` が `before` と `after` で変化した場合に実行 |
+
+- 備考:
+  - ステージ実行条件はコマンド種別ではなく `effects` を基準に判定する。
+  - Viewportのリセット判定は現行 `CanvasViewportPanPolicy.shouldResetManualPanOffsetOnFocusChange` と同じ意味論で固定する。
+
 ## 6. Domain再設計案
 
 - D1: Graph Mutation Domain
@@ -102,24 +120,67 @@
 
 ## 7. 実施手順と各フェーズの決定ポイント
 
-### フェーズ1: 仕様固定の土台作成（挙動は変えない）
+### フェーズ1: 仕様固定の土台作成 ✅
 
 - 目的:
   - 現行挙動をテストで固定し、以降の段階的移行での回帰検知を可能にする。
   - `effects` とステージ実行条件の判定基準を明文化する。
 - このフェーズで決める仕様:
-  - `effects` の最小集合と各コマンドへの割り当て方針。
-  - 決定性確認の比較単位（`CanvasState` 全体、または対象サブ構造単位）。
+  - `effects` の最小集合（`didMutateGraph`, `needsTreeLayout`, `needsAreaLayout`, `needsFocusNormalization`）。
+  - ステージ実行条件は `effects` 基準で判定する。
+  - 決定性確認は `CanvasGraph` の構造同値比較で行う（自動生成IDは正規化して比較）。
 - 生成物:
-  - コマンドごとの `effects` 判定表。
+  - コマンドごとの `effects` 判定表（成功時/no-op時）。
   - ステージ実行条件表（Tree/Area/Focus/Viewport）。
   - 現行挙動を固定する Characterization tests。
 - 実装方針:
   - コード変更は最小限とし、主にテストと仕様表の追加を行う。
   - 既存実装の実行経路は変更しない。
 - 完了条件:
-  - 主要コマンドの期待挙動がテストで固定されている。
+  - 全コマンドの成功経路 + no-op経路 + Undo/Redo整合がテストで固定されている。
+  - add系コマンドの決定性が「構造同値比較（ID正規化）」で固定されている。
   - `swift test` が通り、現行仕様のまま動作する。
+
+#### フェーズ1で固定する `effects` 割り当て（成功時）
+
+| Command | didMutateGraph | needsTreeLayout | needsAreaLayout | needsFocusNormalization |
+| --- | --- | --- | --- | --- |
+| `addNode` | `true` | `false` | `true` | `false` |
+| `addChildNode` | `true` | `true` | `true` | `false` |
+| `addSiblingNode` | `true` | `true` | `true` | `false` |
+| `moveNode` | `true` | `true` | `true` | `false` |
+| `deleteFocusedNode`（削除後に次フォーカスあり） | `true` | `true` | `true` | `true` |
+| `deleteFocusedNode`（削除後に次フォーカスなし） | `true` | `true` | `false` | `true` |
+| `moveFocus`（フォーカス変化あり） | `true` | `false` | `false` | `true` |
+| `setNodeText`（実変更あり） | `true` | `true` | `true` | `false` |
+
+#### フェーズ1で固定する no-op 共通ルール
+
+- no-op の場合は全コマンドで `didMutateGraph=false`、かつ他 `effects` も全て `false`。
+- no-op の代表条件:
+  - `addChildNode`: `focusedNodeID` 不在/無効、または `requiresTopLevelParent=true` かつトップレベル親でない。
+  - `addSiblingNode`: `focusedNodeID` 不在/無効、または親ノード不在。
+  - `moveFocus`: 移動先候補なし（または結果としてフォーカス不変）。
+  - `moveNode`: 移動先なし、または階層変更が成立しない。
+  - `deleteFocusedNode`: `focusedNodeID` 不在/無効。
+  - `setNodeText`: 対象ノード不在、または `text` と `height` がともに不変。
+
+#### フェーズ1で固定する決定性比較ルール（構造同値）
+
+- 比較対象は `CanvasGraph` の構造同値とし、UUID由来の自動生成IDは正規化する。
+- 正規化後の比較項目:
+  - ノード: `kind`, `text`, `bounds`, `metadata`
+  - エッジ: 正規化済み端点IDと `relationType`
+  - フォーカス: 正規化済み `focusedNodeID`
+- 既存IDは保持し、追加されたIDのみを安定順で仮想IDに写像して比較する。
+
+#### フェーズ1 Characterization tests の固定範囲
+
+- 全コマンドの成功経路。
+- 全コマンドの主要 no-op 経路。
+- `apply(commands:)` の複数コマンド順序適用。
+- Undo/Redo（履歴深さ制限、redoクリア含む）。
+- Viewportリセット判定（`focusedNodeID` 変化時のみ）。
 
 ### フェーズ2: Coordinator骨格導入（接続は安全モード）
 
