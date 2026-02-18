@@ -36,7 +36,7 @@ Canonical commands:
 - Lint/type safety rules:
   - `Any` is prohibited (SwiftLint `custom_rules.no_any_type` as `error`).
   - Prefer concrete types, generics, or `any Protocol`.
-  - Run lint with `./scripts/lint.sh` (Swift Package Plugin based; no global SwiftLint required).
+  - Run lint with `./scripts/lint_and_format.sh` (Swift Package Plugin based; no global SwiftLint required).
 
 ## Comment Policy
 

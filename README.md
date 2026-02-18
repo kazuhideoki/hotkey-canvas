@@ -8,7 +8,7 @@ HotkeyCanvas is a macOS application for keyboard-first canvas editing.
 swift run HotkeyCanvasApp
 swift build
 swift test
-./scripts/lint.sh
+./scripts/lint_and_format.sh
 ```
 
 ## Roadmap

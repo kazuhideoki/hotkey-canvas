@@ -7,27 +7,34 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
     private var undoStack: [CanvasGraph]
     private var redoStack: [CanvasGraph]
     private let maxHistoryCount: Int
+    private let pipelineCoordinator: CanvasCommandPipelineCoordinator
 
     public init(initialGraph: CanvasGraph = .empty, maxHistoryCount: Int = 100) {
         graph = initialGraph
         undoStack = []
         redoStack = []
         self.maxHistoryCount = max(0, maxHistoryCount)
+        pipelineCoordinator = CanvasCommandPipelineCoordinator()
     }
 
     public func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
-        var nextGraph = graph
-        for command in commands {
-            nextGraph = try apply(command: command, to: nextGraph)
-        }
+        let sequenceResult = try runLegacyCommandSequenceWithMutationResults(
+            commands: commands,
+            from: graph
+        )
+        let nextGraph = sequenceResult.graph
+        let pipelineResult = pipelineCoordinator.run(
+            on: graph,
+            mutationResults: sequenceResult.mutationResults
+        )
+
         guard nextGraph != graph else {
             return makeApplyResult(newState: graph)
         }
-        let didAddNode = hasAddedNode(from: graph, to: nextGraph)
         appendUndoSnapshot(graph)
         graph = nextGraph
         redoStack.removeAll(keepingCapacity: true)
-        return makeApplyResult(newState: nextGraph, didAddNode: didAddNode)
+        return makeApplyResult(newState: nextGraph, didAddNode: pipelineResult.didAddNode)
     }
 
     public func undo() async -> ApplyResult {
@@ -58,6 +65,50 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
 }
 
 extension ApplyCanvasCommandsUseCase {
+    func runLegacyCommandSequenceWithMutationResults(
+        commands: [CanvasCommand],
+        from baseGraph: CanvasGraph
+    ) throws -> (graph: CanvasGraph, mutationResults: [CanvasMutationResult]) {
+        var nextGraph = baseGraph
+        var mutationResults: [CanvasMutationResult] = []
+        mutationResults.reserveCapacity(commands.count)
+
+        for command in commands {
+            let graphBeforeMutation = nextGraph
+            nextGraph = try apply(command: command, to: nextGraph)
+            mutationResults.append(
+                CanvasMutationResult.classify(
+                    command: command,
+                    graphBeforeMutation: graphBeforeMutation,
+                    graphAfterMutation: nextGraph
+                )
+            )
+        }
+
+        return (graph: nextGraph, mutationResults: mutationResults)
+    }
+
+    func runLegacyCommandSequence(
+        commands: [CanvasCommand],
+        from baseGraph: CanvasGraph
+    ) throws -> CanvasGraph {
+        try runLegacyCommandSequenceWithMutationResults(
+            commands: commands,
+            from: baseGraph
+        ).graph
+    }
+
+    func runPipelineCommandSequence(
+        commands: [CanvasCommand],
+        from baseGraph: CanvasGraph
+    ) throws -> CanvasPipelineResult {
+        let sequenceResult = try runLegacyCommandSequenceWithMutationResults(
+            commands: commands,
+            from: baseGraph
+        )
+        return pipelineCoordinator.run(on: baseGraph, mutationResults: sequenceResult.mutationResults)
+    }
+
     private func makeApplyResult(newState: CanvasGraph, didAddNode: Bool = false) -> ApplyResult {
         ApplyResult(
             newState: newState,
@@ -65,11 +116,6 @@ extension ApplyCanvasCommandsUseCase {
             canRedo: !redoStack.isEmpty,
             didAddNode: didAddNode
         )
-    }
-
-    private func hasAddedNode(from oldGraph: CanvasGraph, to newGraph: CanvasGraph) -> Bool {
-        let previousNodeIDs = Set(oldGraph.nodesByID.keys)
-        return newGraph.nodesByID.keys.contains { !previousNodeIDs.contains($0) }
     }
 
     private func appendUndoSnapshot(_ snapshot: CanvasGraph) {
