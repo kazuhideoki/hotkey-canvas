@@ -42,32 +42,30 @@ extension ApplyCanvasCommandsUseCase {
     /// - Parameter graph: Current canvas graph.
     /// - Returns: First available node bounds from the insertion anchor.
     func makeAvailableNewNodeBounds(in graph: CanvasGraph) -> CanvasBounds {
-        let focusedNode = graph.focusedNodeID.flatMap { graph.nodesByID[$0] }
-        let startX = focusedNode?.bounds.x ?? Self.defaultNewNodeX
-        var startY =
-            if let focusedNode {
-                focusedNode.bounds.y + focusedNode.bounds.height + Self.newNodeVerticalSpacing
-            } else {
-                Self.defaultNewNodeY
-            }
-
-        if let focusedNodeID = graph.focusedNodeID {
-            if let focusedNode {
-                if let focusedArea = parentChildArea(containing: focusedNodeID, in: graph) {
-                    let focusedNodeBottom = focusedNode.bounds.y + focusedNode.bounds.height
-                    if focusedArea.bounds.maxY > focusedNodeBottom {
-                        startY = max(startY, focusedArea.bounds.maxY + Self.areaCollisionSpacing)
-                    }
-                }
-            }
+        let anchor = addNodePlacementAnchor(in: graph)
+        let startX = anchor?.parentNode.bounds.x ?? Self.defaultNewNodeX
+        let startY: Double
+        if let parentNode = anchor?.parentNode {
+            startY = parentNode.bounds.y + parentNode.bounds.height + Self.newNodeVerticalSpacing
+        } else {
+            startY = Self.defaultNewNodeY
         }
-
-        return CanvasBounds(
+        var candidate = CanvasBounds(
             x: startX,
             y: startY,
             width: Self.newNodeWidth,
             height: Self.newNodeHeight
         )
+        let areas = CanvasAreaLayoutService.makeParentChildAreas(in: graph)
+        while let overlappedArea = firstOverlappedArea(for: candidate, in: areas) {
+            candidate = CanvasBounds(
+                x: candidate.x,
+                y: overlappedArea.bounds.maxY + Self.areaCollisionSpacing,
+                width: candidate.width,
+                height: candidate.height
+            )
+        }
+        return candidate
     }
 
     /// Computes bounds for a newly inserted node while avoiding overlap against the given node set.
@@ -232,5 +230,93 @@ extension ApplyCanvasCommandsUseCase {
             candidate = CanvasBounds(x: x, y: y, width: width, height: height)
         }
         return candidate
+    }
+
+    /// Chooses the insertion anchor for top-level node creation from the bottom-most area.
+    /// - Parameter graph: Current canvas graph.
+    /// - Returns: Parent node and area used for placement, or `nil` when graph is empty.
+    private func addNodePlacementAnchor(in graph: CanvasGraph) -> (parentNode: CanvasNode, area: CanvasNodeArea)? {
+        let areas = CanvasAreaLayoutService.makeParentChildAreas(in: graph)
+        guard let bottomArea = areas.max(by: isAreaHigher(_:_:)) else {
+            return nil
+        }
+
+        let parentNodes = bottomArea.nodeIDs
+            .compactMap { graph.nodesByID[$0] }
+            .filter { isTopLevelParent($0.id, in: graph) }
+            .sorted(by: isNodeAbove(_:_:))
+        if let parentNode = parentNodes.first {
+            return (parentNode, bottomArea)
+        }
+
+        // Cyclic or malformed graphs may have no top-level parent; use stable visual order.
+        guard
+            let fallbackNode = bottomArea.nodeIDs
+                .compactMap({ graph.nodesByID[$0] })
+                .sorted(by: isNodeAbove(_:_:))
+                .first
+        else {
+            return nil
+        }
+        return (fallbackNode, bottomArea)
+    }
+
+    /// Returns the first existing area that overlaps the candidate with required area spacing.
+    /// - Parameters:
+    ///   - candidate: Node bounds under evaluation.
+    ///   - areas: Existing parent-child areas.
+    /// - Returns: First overlapped area in deterministic order, or `nil`.
+    private func firstOverlappedArea(for candidate: CanvasBounds, in areas: [CanvasNodeArea]) -> CanvasNodeArea? {
+        let candidateRect = CanvasRect(
+            minX: candidate.x,
+            minY: candidate.y,
+            width: candidate.width,
+            height: candidate.height
+        )
+        let expandedCandidate = candidateRect.expanded(
+            horizontal: Self.areaCollisionSpacing / 2,
+            vertical: Self.areaCollisionSpacing / 2
+        )
+
+        return
+            areas
+            .sorted(by: isAreaAbove(_:_:))
+            .first { area in
+                let expandedArea = area.bounds.expanded(
+                    horizontal: Self.areaCollisionSpacing / 2,
+                    vertical: Self.areaCollisionSpacing / 2
+                )
+                return expandedCandidate.intersects(expandedArea)
+            }
+    }
+
+    /// Returns deterministic visual ordering for nodes.
+    private func isNodeAbove(_ lhs: CanvasNode, _ rhs: CanvasNode) -> Bool {
+        if lhs.bounds.y == rhs.bounds.y {
+            if lhs.bounds.x == rhs.bounds.x {
+                return lhs.id.rawValue < rhs.id.rawValue
+            }
+            return lhs.bounds.x < rhs.bounds.x
+        }
+        return lhs.bounds.y < rhs.bounds.y
+    }
+
+    /// Returns deterministic visual ordering for areas.
+    private func isAreaAbove(_ lhs: CanvasNodeArea, _ rhs: CanvasNodeArea) -> Bool {
+        if lhs.bounds.minY == rhs.bounds.minY {
+            if lhs.bounds.minX == rhs.bounds.minX {
+                return lhs.id.rawValue < rhs.id.rawValue
+            }
+            return lhs.bounds.minX < rhs.bounds.minX
+        }
+        return lhs.bounds.minY < rhs.bounds.minY
+    }
+
+    /// Returns whether lhs should be ordered before rhs when selecting bottom-most area.
+    private func isAreaHigher(_ lhs: CanvasNodeArea, _ rhs: CanvasNodeArea) -> Bool {
+        if lhs.bounds.maxY == rhs.bounds.maxY {
+            return isAreaAbove(lhs, rhs)
+        }
+        return lhs.bounds.maxY < rhs.bounds.maxY
     }
 }
