@@ -73,23 +73,36 @@ extension CanvasView {
         }
 
         let autoCenterOffset = cameraOffset(viewportSize: viewportSize)
+        let scaledAutoCenterOffset = CGSize(
+            width: autoCenterOffset.width * zoomScale,
+            height: autoCenterOffset.height * zoomScale
+        )
         let effectiveOffset = CanvasViewportPanPolicy.combinedOffset(
-            autoCenterOffset: autoCenterOffset,
+            autoCenterOffset: scaledAutoCenterOffset,
             manualPanOffset: manualPanOffset,
             activeDragOffset: .zero
         )
-        let compensation = CanvasViewportPanPolicy.overflowCompensation(
-            focusRect: focusRect(for: focusNode),
+        let visibleFocusRect = focusRectOnScreen(
+            for: focusNode,
             viewportSize: viewportSize,
             effectiveOffset: effectiveOffset
+        )
+        let compensation = CanvasViewportPanPolicy.overflowCompensation(
+            focusRect: visibleFocusRect,
+            viewportSize: viewportSize,
+            effectiveOffset: .zero
         )
         guard compensation != .zero else {
             return
         }
 
+        let nextScaledAutoCenterOffset = CGSize(
+            width: scaledAutoCenterOffset.width + compensation.width,
+            height: scaledAutoCenterOffset.height + compensation.height
+        )
         let nextAutoCenterOffset = CGSize(
-            width: autoCenterOffset.width + compensation.width,
-            height: autoCenterOffset.height + compensation.height
+            width: nextScaledAutoCenterOffset.width / zoomScale,
+            height: nextScaledAutoCenterOffset.height / zoomScale
         )
         cameraAnchorPoint = CGPoint(
             x: (viewportSize.width / 2) - nextAutoCenterOffset.width,
@@ -110,6 +123,31 @@ extension CanvasView {
             y: node.bounds.y,
             width: node.bounds.width,
             height: node.bounds.height
+        )
+    }
+
+    func focusRectOnScreen(
+        for node: CanvasNode,
+        viewportSize: CGSize,
+        effectiveOffset: CGSize
+    ) -> CGRect {
+        let worldRect = focusRect(for: node)
+        let viewportCenter = CGPoint(x: viewportSize.width / 2, y: viewportSize.height / 2)
+
+        let minPoint = CGPoint(
+            x: viewportCenter.x + ((worldRect.minX - viewportCenter.x) * zoomScale) + effectiveOffset.width,
+            y: viewportCenter.y + ((worldRect.minY - viewportCenter.y) * zoomScale) + effectiveOffset.height
+        )
+        let maxPoint = CGPoint(
+            x: viewportCenter.x + ((worldRect.maxX - viewportCenter.x) * zoomScale) + effectiveOffset.width,
+            y: viewportCenter.y + ((worldRect.maxY - viewportCenter.y) * zoomScale) + effectiveOffset.height
+        )
+
+        return CGRect(
+            x: min(minPoint.x, maxPoint.x),
+            y: min(minPoint.y, maxPoint.y),
+            width: abs(maxPoint.x - minPoint.x),
+            height: abs(maxPoint.y - minPoint.y)
         )
     }
 
