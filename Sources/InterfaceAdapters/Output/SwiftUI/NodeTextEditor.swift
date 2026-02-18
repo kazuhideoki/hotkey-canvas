@@ -203,48 +203,6 @@ extension NodeTextEditor {
     }
 }
 
-<<<<<<< HEAD
-=======
-private enum NodeTextEditorTextViewMeasurement {
-    static func nodeHeight(
-        for textView: NSTextView,
-        outerVerticalPadding: CGFloat = 6,
-        verticalSafetyPadding: CGFloat = 1,
-        maximumNodeHeight: CGFloat = .greatestFiniteMagnitude
-    ) -> CGFloat {
-        guard
-            let layoutManager = textView.layoutManager,
-            let textContainer = textView.textContainer
-        else {
-            return max(1, textView.frame.height)
-        }
-
-        let glyphRange = layoutManager.glyphRange(for: textContainer)
-        layoutManager.ensureLayout(forGlyphRange: glyphRange)
-        let defaultLineHeight = layoutManager.defaultLineHeight(
-            for: textView.font ?? NodeTextStyle.font
-        )
-        var lineHeights: [CGFloat] = []
-        layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { _, usedRect, _, _, _ in
-            lineHeights.append(max(usedRect.height, defaultLineHeight))
-        }
-
-        var contentHeight = lineHeights.reduce(0, +)
-        if layoutManager.extraLineFragmentTextContainer != nil {
-            contentHeight += max(lineHeights.last ?? 0, defaultLineHeight)
-        }
-
-        contentHeight = max(contentHeight, defaultLineHeight)
-        let nodeHeight =
-            contentHeight
-            + (textView.textContainerInset.height * 2)
-            + (outerVerticalPadding * 2)
-            + verticalSafetyPadding
-        return min(ceil(nodeHeight), maximumNodeHeight)
-    }
-}
-
->>>>>>> main
 /// NSTextView subclass that commits with Enter, cancels with Escape, and inserts newline with Option+Enter.
 final class NodeTextEditorTextView: NSTextView {
     private static let enterKeyCode: UInt16 = 36
