@@ -157,6 +157,9 @@ extension ApplyCanvasCommandsUseCase {
         guard let focusedNode = graph.nodesByID[focusedNodeID] else {
             return graph
         }
+        guard !isTopLevelParent(focusedNodeID, in: graph) else {
+            return graph
+        }
 
         let peers = orderedPeerNodes(of: focusedNodeID, in: graph)
         guard let focusedIndex = peers.firstIndex(where: { $0.id == focusedNodeID }) else {
