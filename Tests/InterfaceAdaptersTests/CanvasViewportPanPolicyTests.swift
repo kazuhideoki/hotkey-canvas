@@ -49,3 +49,26 @@ func test_scrollWheelTranslation_keepsPreciseDeltas() {
     #expect(translation.width == 1.5)
     #expect(translation.height == -4)
 }
+
+@Test("CanvasViewportPanPolicy: returns zero compensation when focused node is fully visible")
+func test_overflowCompensation_returnsZero_whenFocusRectIsVisible() {
+    let compensation = CanvasViewportPanPolicy.overflowCompensation(
+        focusRect: CGRect(x: 120, y: 80, width: 200, height: 120),
+        viewportSize: CGSize(width: 800, height: 600),
+        effectiveOffset: CGSize(width: 0, height: 0)
+    )
+
+    #expect(compensation == .zero)
+}
+
+@Test("CanvasViewportPanPolicy: compensates overflow on each axis by minimal amount")
+func test_overflowCompensation_returnsMinimalOverflowAmount() {
+    let compensation = CanvasViewportPanPolicy.overflowCompensation(
+        focusRect: CGRect(x: 760, y: -20, width: 120, height: 80),
+        viewportSize: CGSize(width: 800, height: 600),
+        effectiveOffset: CGSize(width: 0, height: 0)
+    )
+
+    #expect(compensation.width == -80)
+    #expect(compensation.height == 20)
+}

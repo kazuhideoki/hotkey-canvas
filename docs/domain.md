@@ -267,11 +267,11 @@
   - Tree: `didMutateGraph && needsTreeLayout`
   - Area: `didMutateGraph && needsAreaLayout`
   - Focus: `didMutateGraph && needsFocusNormalization`
-  - Viewport Intent: `focusedNodeID` が `before/after` で変化した場合に `.resetManualPanOffset`
+  - Viewport Intent: 現行ルールでは常に `nil`（`CanvasView` 側で初期中央化と画面外補正を行うため、Application から手動パンリセット意図は送らない）
 - 境界責務
   - Domain は純粋状態変換のみを担当する。
   - Application はステージ実行順と `CanvasViewportIntent` 生成を担当する。
-  - InterfaceAdapters は `CanvasViewportIntent` を UI 状態へ反映する（`CanvasView` の手動パンリセットなど）。
+  - InterfaceAdapters は `CanvasViewportIntent` を UI 状態へ反映し、表示ルール（初期中央化・画面外補正）を担う。
 
 ### D5. ショートカットカタログドメイン
 
@@ -357,3 +357,4 @@
 - 2026-02-15: `moveNode(.left)` の挙動を変更し、トップレベルノードの子からルート親方向への昇格を抑止するガードを追加。
 - 2026-02-16: `CanvasShortcutCatalogService` とショートカット関連モデルを追加し、ホットキー解決とコマンドパレット一覧の情報源をドメインで統一。
 - 2026-02-16: Domain サービスの失敗表現を `throw` から `Result<..., 各DomainError>` に統一し、Application 側は `.get()` で既存 `throws` 契約を維持。
+- 2026-02-18: Viewport Intent の運用を更新し、Application から `.resetManualPanOffset` を生成しない仕様へ変更（初期中央化/画面外補正は `CanvasView` の表示ルールで実施）。

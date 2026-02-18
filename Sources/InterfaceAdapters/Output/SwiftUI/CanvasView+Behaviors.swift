@@ -42,21 +42,74 @@ extension CanvasView {
         )
     }
 
-    func cameraOffset(for nodes: [CanvasNode], viewportSize: CGSize) -> CGSize {
-        guard !nodes.isEmpty else {
+    func cameraOffset(viewportSize: CGSize) -> CGSize {
+        let nodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
+        guard !nodes.isEmpty, let focusNode = currentFocusNode(in: nodes) else {
             return .zero
         }
-
-        let focusNode =
-            if let focusedNodeID = viewModel.focusedNodeID {
-                nodes.first(where: { $0.id == focusedNodeID }) ?? nodes[0]
-            } else {
-                nodes[0]
-            }
-        let focusCenter = centerPoint(for: focusNode)
+        let anchorPoint = hasInitializedCameraAnchor ? cameraAnchorPoint : centerPoint(for: focusNode)
         return CGSize(
-            width: (viewportSize.width / 2) - focusCenter.x,
-            height: (viewportSize.height / 2) - focusCenter.y
+            width: (viewportSize.width / 2) - anchorPoint.x,
+            height: (viewportSize.height / 2) - anchorPoint.y
+        )
+    }
+
+    func applyFocusVisibilityRule(viewportSize: CGSize) {
+        let nodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
+        guard !nodes.isEmpty else {
+            hasInitializedCameraAnchor = false
+            cameraAnchorPoint = .zero
+            manualPanOffset = .zero
+            return
+        }
+        guard let focusNode = currentFocusNode(in: nodes) else {
+            return
+        }
+
+        if !hasInitializedCameraAnchor {
+            cameraAnchorPoint = centerPoint(for: focusNode)
+            hasInitializedCameraAnchor = true
+            manualPanOffset = .zero
+        }
+
+        let autoCenterOffset = cameraOffset(viewportSize: viewportSize)
+        let effectiveOffset = CanvasViewportPanPolicy.combinedOffset(
+            autoCenterOffset: autoCenterOffset,
+            manualPanOffset: manualPanOffset,
+            activeDragOffset: .zero
+        )
+        let compensation = CanvasViewportPanPolicy.overflowCompensation(
+            focusRect: focusRect(for: focusNode),
+            viewportSize: viewportSize,
+            effectiveOffset: effectiveOffset
+        )
+        guard compensation != .zero else {
+            return
+        }
+
+        let nextAutoCenterOffset = CGSize(
+            width: autoCenterOffset.width + compensation.width,
+            height: autoCenterOffset.height + compensation.height
+        )
+        cameraAnchorPoint = CGPoint(
+            x: (viewportSize.width / 2) - nextAutoCenterOffset.width,
+            y: (viewportSize.height / 2) - nextAutoCenterOffset.height
+        )
+    }
+
+    func currentFocusNode(in nodes: [CanvasNode]) -> CanvasNode? {
+        if let focusedNodeID = viewModel.focusedNodeID {
+            return nodes.first(where: { $0.id == focusedNodeID }) ?? nodes.first
+        }
+        return nodes.first
+    }
+
+    func focusRect(for node: CanvasNode) -> CGRect {
+        CGRect(
+            x: node.bounds.x,
+            y: node.bounds.y,
+            width: node.bounds.width,
+            height: node.bounds.height
         )
     }
 

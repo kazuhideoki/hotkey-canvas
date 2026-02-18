@@ -176,10 +176,9 @@ extension CanvasCommandPipelineCoordinator {
         graphBeforeMutation: CanvasGraph,
         graphAfterPipeline: CanvasGraph
     ) -> CanvasViewportIntent? {
-        guard graphBeforeMutation.focusedNodeID != graphAfterPipeline.focusedNodeID else {
-            return nil
-        }
-        return .resetManualPanOffset
+        _ = graphBeforeMutation
+        _ = graphAfterPipeline
+        return nil
     }
 
     private func hasAddedNode(from oldGraph: CanvasGraph, to newGraph: CanvasGraph) -> Bool {

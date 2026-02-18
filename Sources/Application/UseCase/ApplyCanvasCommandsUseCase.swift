@@ -136,10 +136,9 @@ extension ApplyCanvasCommandsUseCase {
         from previousFocusedNodeID: CanvasNodeID?,
         to currentFocusedNodeID: CanvasNodeID?
     ) -> CanvasViewportIntent? {
-        guard previousFocusedNodeID != currentFocusedNodeID else {
-            return nil
-        }
-        return .resetManualPanOffset
+        _ = previousFocusedNodeID
+        _ = currentFocusedNodeID
+        return nil
     }
 
     private func appendUndoSnapshot(_ snapshot: CanvasGraph) {
