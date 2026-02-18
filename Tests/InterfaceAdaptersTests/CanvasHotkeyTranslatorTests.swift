@@ -479,3 +479,210 @@ func test_shouldOpenCommandPalette_commandFunctionK_returnsFalse() throws {
 
     #expect(!sut.shouldOpenCommandPalette(event))
 }
+
+@Test("CanvasHotkeyTranslator: Command+Shift+= maps to zoomIn action")
+func test_zoomAction_commandShiftEquals_returnsZoomIn() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "+",
+            charactersIgnoringModifiers: "=",
+            isARepeat: false,
+            keyCode: 24
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == .zoomIn)
+}
+
+@Test("CanvasHotkeyTranslator: Command+- maps to zoomOut action")
+func test_zoomAction_commandMinus_returnsZoomOut() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "-",
+            charactersIgnoringModifiers: "-",
+            isARepeat: false,
+            keyCode: 27
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == .zoomOut)
+}
+
+@Test("CanvasHotkeyTranslator: Command+- does not emit canvas command")
+func test_translate_commandMinus_returnsNoCanvasCommand() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "-",
+            charactersIgnoringModifiers: "-",
+            isARepeat: false,
+            keyCode: 27
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands.isEmpty)
+}
+
+@Test("CanvasHotkeyTranslator: Command+Shift+semicolon maps to zoomIn action")
+func test_zoomAction_commandShiftSemicolon_returnsZoomIn() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "+",
+            charactersIgnoringModifiers: ";",
+            isARepeat: false,
+            keyCode: 41
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == .zoomIn)
+}
+
+@Test("CanvasHotkeyTranslator: Command+Shift+equals keycode maps to zoomIn action even when character normalization differs")
+func test_zoomAction_commandShiftEqualsKeyCode_returnsZoomIn() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "=",
+            charactersIgnoringModifiers: "=",
+            isARepeat: false,
+            keyCode: 24
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == .zoomIn)
+}
+
+@Test("CanvasHotkeyTranslator: Command+minus keycode maps to zoomOut action")
+func test_zoomAction_commandMinusKeyCode_returnsZoomOut() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "-",
+            charactersIgnoringModifiers: "-",
+            isARepeat: false,
+            keyCode: 27
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == .zoomOut)
+}
+
+@Test("CanvasHotkeyTranslator: Command+Option+- does not map to zoom action")
+func test_zoomAction_commandOptionMinus_returnsNil() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .option],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "-",
+            charactersIgnoringModifiers: "-",
+            isARepeat: false,
+            keyCode: 27
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == nil)
+}
+
+@Test("CanvasHotkeyTranslator: Command+Shift+- does not map to zoom action")
+func test_zoomAction_commandShiftMinus_returnsNil() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "_",
+            charactersIgnoringModifiers: "-",
+            isARepeat: false,
+            keyCode: 27
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == nil)
+}
+
+@Test("CanvasHotkeyTranslator: Command+Control+Shift+= does not map to zoom action")
+func test_zoomAction_commandControlShiftEquals_returnsNil() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .control, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "+",
+            charactersIgnoringModifiers: "=",
+            isARepeat: false,
+            keyCode: 24
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == nil)
+}

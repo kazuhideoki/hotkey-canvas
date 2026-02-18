@@ -178,6 +178,10 @@ extension CanvasView {
             Task {
                 await viewModel.redo()
             }
+        case .zoomIn:
+            applyZoom(action: .zoomIn)
+        case .zoomOut:
+            applyZoom(action: .zoomOut)
         case .openCommandPalette:
             return
         }
