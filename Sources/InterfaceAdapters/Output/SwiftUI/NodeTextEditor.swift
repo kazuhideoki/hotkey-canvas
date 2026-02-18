@@ -15,6 +15,7 @@ struct NodeTextEditor: NSViewRepresentable {
     let nodeWidth: CGFloat
     let selectAllOnFirstFocus: Bool
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
+    let initialTypingEvent: NSEvent?
     let onLayoutMetricsChange: (NodeTextLayoutMetrics) -> Void
     let onCommit: () -> Void
     let onCancel: () -> Void
@@ -39,6 +40,7 @@ struct NodeTextEditor: NSViewRepresentable {
         nsView.typingAttributes[.font] = nsView.font ?? NodeTextStyle.font
         nsView.textColor = .labelColor
         nsView.insertionPointColor = .labelColor
+        context.coordinator.pendingTypingEvent = initialTypingEvent
         context.coordinator.pushLayoutMetrics(for: nsView.string)
         focusEditorIfNeeded(nsView, coordinator: context.coordinator)
     }
@@ -49,6 +51,7 @@ struct NodeTextEditor: NSViewRepresentable {
             nodeWidth: nodeWidth,
             selectAllOnFirstFocus: selectAllOnFirstFocus,
             initialCursorPlacement: initialCursorPlacement,
+            initialTypingEvent: initialTypingEvent,
             onLayoutMetricsChange: onLayoutMetricsChange
         )
     }
@@ -60,6 +63,8 @@ extension NodeTextEditor {
         var nodeWidth: CGFloat
         let selectAllOnFirstFocus: Bool
         let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
+        var pendingTypingEvent: NSEvent?
+        var lastReplayedTypingEventTimestamp: TimeInterval = -1
         let onLayoutMetricsChange: (NodeTextLayoutMetrics) -> Void
         let nodeTextHeightMeasurer = NodeTextHeightMeasurer()
         var hasFocusedEditor: Bool = false
@@ -71,12 +76,14 @@ extension NodeTextEditor {
             nodeWidth: CGFloat,
             selectAllOnFirstFocus: Bool,
             initialCursorPlacement: NodeTextEditorInitialCursorPlacement,
+            initialTypingEvent: NSEvent?,
             onLayoutMetricsChange: @escaping (NodeTextLayoutMetrics) -> Void
         ) {
             self.text = text
             self.nodeWidth = nodeWidth
             self.selectAllOnFirstFocus = selectAllOnFirstFocus
             self.initialCursorPlacement = initialCursorPlacement
+            self.pendingTypingEvent = initialTypingEvent
             self.onLayoutMetricsChange = onLayoutMetricsChange
         }
 
@@ -160,6 +167,10 @@ extension NodeTextEditor {
             }
 
             guard window.firstResponder !== textView else {
+                self.replayPendingTypingEventIfNeeded(
+                    textView,
+                    coordinator: coordinator
+                )
                 coordinator.hasFocusedEditor = true
                 return
             }
@@ -183,8 +194,26 @@ extension NodeTextEditor {
             } else if !coordinator.hasFocusedEditor {
                 placeInitialCursor(textView, placement: coordinator.initialCursorPlacement)
             }
+            self.replayPendingTypingEventIfNeeded(
+                textView,
+                coordinator: coordinator
+            )
             coordinator.hasFocusedEditor = true
         }
+    }
+
+    private func replayPendingTypingEventIfNeeded(
+        _ textView: NodeTextEditorTextView,
+        coordinator: Coordinator
+    ) {
+        guard let event = coordinator.pendingTypingEvent else {
+            return
+        }
+        guard coordinator.lastReplayedTypingEventTimestamp != event.timestamp else {
+            return
+        }
+        textView.interpretKeyEvents([event])
+        coordinator.lastReplayedTypingEventTimestamp = event.timestamp
     }
 
     private func placeInitialCursor(
