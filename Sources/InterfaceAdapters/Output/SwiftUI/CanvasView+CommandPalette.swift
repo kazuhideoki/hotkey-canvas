@@ -17,6 +17,8 @@ extension CanvasView {
     private static let commandPaletteReturnKeyCode: UInt16 = 36
     private static let commandPaletteUpArrowKeyCode: UInt16 = 126
     private static let commandPaletteDownArrowKeyCode: UInt16 = 125
+    private static let commandPaletteLeftArrowKeyCode: UInt16 = 123
+    private static let commandPaletteRightArrowKeyCode: UInt16 = 124
     private static let commandPaletteControlPKeyCode: UInt16 = 35
     private static let commandPaletteControlNKeyCode: UInt16 = 45
     private static let commandPaletteBackspaceKeyCode: UInt16 = 51
@@ -26,6 +28,7 @@ extension CanvasView {
         isCommandPalettePresented = true
         selectedCommandPaletteIndex = 0
         commandPaletteQuery = ""
+        commandPaletteCursorIndex = 0
     }
 
     func closeCommandPalette() {
@@ -66,7 +69,8 @@ extension CanvasView {
             // Ignore non-printable and function-key artifacts so query filtering stays stable.
             return true
         }
-        commandPaletteQuery.append(contentsOf: String(first).lowercased())
+        let normalizedCharacter = String(first).lowercased().first ?? first
+        insertCommandPaletteQueryCharacter(normalizedCharacter)
         return true
     }
 
@@ -86,6 +90,14 @@ extension CanvasView {
             movePaletteSelection(offset: 1)
             return true
         }
+        if keyCode == Self.commandPaletteLeftArrowKeyCode {
+            moveCommandPaletteCursor(offset: -1)
+            return true
+        }
+        if keyCode == Self.commandPaletteRightArrowKeyCode {
+            moveCommandPaletteCursor(offset: 1)
+            return true
+        }
         return false
     }
 
@@ -99,15 +111,15 @@ extension CanvasView {
     }
 
     private func handlePaletteDeletionKeys(keyCode: UInt16) -> Bool {
-        let deletionKeys: Set<UInt16> = [Self.commandPaletteBackspaceKeyCode, Self.commandPaletteForwardDeleteKeyCode]
-        guard deletionKeys.contains(keyCode) else {
-            return false
-        }
-        guard !commandPaletteQuery.isEmpty else {
+        if keyCode == Self.commandPaletteBackspaceKeyCode {
+            deleteCommandPaletteCharacterBackward()
             return true
         }
-        commandPaletteQuery.removeLast()
-        return true
+        if keyCode == Self.commandPaletteForwardDeleteKeyCode {
+            deleteCommandPaletteCharacterForward()
+            return true
+        }
+        return false
     }
 
     func filteredCommandPaletteItems() -> [CommandPaletteItem] {
@@ -191,4 +203,55 @@ extension CanvasView {
         }
         return true
     }
+
+    private func moveCommandPaletteCursor(offset: Int) {
+        commandPaletteCursorIndex = CommandPaletteQueryEditing.movedCursorIndex(
+            from: commandPaletteCursorIndex,
+            offset: offset,
+            in: commandPaletteQuery
+        )
+    }
+
+    private func insertCommandPaletteQueryCharacter(_ character: Character) {
+        let result = CommandPaletteQueryEditing.inserting(
+            character,
+            into: commandPaletteQuery,
+            cursorIndex: commandPaletteCursorIndex
+        )
+        commandPaletteQuery = result.query
+        commandPaletteCursorIndex = result.cursorIndex
+    }
+
+    private func deleteCommandPaletteCharacterBackward() {
+        let result = CommandPaletteQueryEditing.deletingBackward(
+            in: commandPaletteQuery,
+            cursorIndex: commandPaletteCursorIndex
+        )
+        commandPaletteQuery = result.query
+        commandPaletteCursorIndex = result.cursorIndex
+    }
+
+    private func deleteCommandPaletteCharacterForward() {
+        let result = CommandPaletteQueryEditing.deletingForward(
+            in: commandPaletteQuery,
+            cursorIndex: commandPaletteCursorIndex
+        )
+        commandPaletteQuery = result.query
+        commandPaletteCursorIndex = result.cursorIndex
+    }
+
+    func commandPaletteQueryPrefixText() -> String {
+        CommandPaletteQueryEditing.split(
+            commandPaletteQuery,
+            cursorIndex: commandPaletteCursorIndex
+        ).prefix
+    }
+
+    func commandPaletteQuerySuffixText() -> String {
+        CommandPaletteQueryEditing.split(
+            commandPaletteQuery,
+            cursorIndex: commandPaletteCursorIndex
+        ).suffix
+    }
+
 }
