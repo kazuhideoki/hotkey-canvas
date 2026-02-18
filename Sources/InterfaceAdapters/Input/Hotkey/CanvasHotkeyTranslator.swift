@@ -46,6 +46,7 @@ extension CanvasHotkeyTranslator {
     private static let rightArrowKeyCode: UInt16 = 124
     private static let downArrowKeyCode: UInt16 = 125
     private static let upArrowKeyCode: UInt16 = 126
+    private static let lKeyCode: UInt16 = 37
 
     private func action(for event: NSEvent) -> CanvasShortcutAction? {
         guard event.type == .keyDown else {
@@ -87,6 +88,8 @@ extension CanvasHotkeyTranslator {
             return .deleteBackward
         case Self.forwardDeleteKeyCode:
             return .deleteBackward
+        case Self.lKeyCode:
+            return .character("l")
         case Self.upArrowKeyCode:
             return .arrowUp
         case Self.downArrowKeyCode:

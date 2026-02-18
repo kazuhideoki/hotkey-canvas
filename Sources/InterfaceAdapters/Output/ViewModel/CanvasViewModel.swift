@@ -151,7 +151,7 @@ extension CanvasViewModel {
         switch command {
         case .addNode, .addChildNode, .addSiblingNode:
             return true
-        case .moveFocus, .moveNode, .deleteFocusedNode, .setNodeText:
+        case .moveFocus, .moveNode, .centerFocusedNode, .deleteFocusedNode, .setNodeText:
             return false
         }
     }

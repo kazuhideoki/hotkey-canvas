@@ -18,21 +18,35 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
     }
 
     public func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        let shouldCenterFocusedNode = commands.contains(.centerFocusedNode)
         let pipelineResult = try runPipelineCommandSequence(
             commands: commands,
             from: graph
         )
         let nextGraph = pipelineResult.graph
+        let viewportIntent =
+            shouldCenterFocusedNode && nextGraph.focusedNodeID != nil
+            ? CanvasViewportIntent.resetManualPanOffset
+            : pipelineResult.viewportIntent
+        let graphDidMutate = nextGraph != graph
 
-        guard nextGraph != graph else {
+        guard graphDidMutate || shouldCenterFocusedNode else {
             return makeApplyResult(newState: graph)
         }
+        guard graphDidMutate else {
+            return makeApplyResult(
+                newState: graph,
+                viewportIntent: viewportIntent,
+                didAddNode: pipelineResult.didAddNode
+            )
+        }
+
         appendUndoSnapshot(graph)
         graph = nextGraph
         redoStack.removeAll(keepingCapacity: true)
         return makeApplyResult(
             newState: nextGraph,
-            viewportIntent: pipelineResult.viewportIntent,
+            viewportIntent: viewportIntent,
             didAddNode: pipelineResult.didAddNode
         )
     }

@@ -20,6 +20,15 @@ func test_resolveAction_commandEnter_returnsAddChildNode() {
     #expect(action == .apply(commands: [.addChildNode]))
 }
 
+@Test("Shortcut catalog: control+l resolves centerFocusedNode")
+func test_resolveAction_controlL_returnsCenterFocusedNode() {
+    let gesture = CanvasShortcutGesture(key: .character("l"), modifiers: [.control])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .apply(commands: [.centerFocusedNode]))
+}
+
 @Test("Shortcut catalog: command-shift-p resolves open command palette")
 func test_resolveAction_commandShiftP_returnsOpenCommandPalette() {
     let gesture = CanvasShortcutGesture(key: .character("p"), modifiers: [.command, .shift])

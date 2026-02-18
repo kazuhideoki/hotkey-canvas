@@ -71,7 +71,8 @@ public struct CanvasView: View {
                         ScrollViewReader { scrollProxy in
                             ScrollView {
                                 VStack(spacing: 0) {
-                                    ForEach(Array(commandPaletteItems.enumerated()), id: \.element.id) { (index, item) in
+                                    ForEach(Array(commandPaletteItems.enumerated()), id: \.element.id) {
+                                        (index, item) in
                                         HStack {
                                             Text(item.title)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -85,7 +86,8 @@ public struct CanvasView: View {
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .contentShape(Rectangle())
                                         .background(
-                                            index == selectedCommandPaletteIndex ? Color.accentColor.opacity(0.2) : .clear
+                                            index == selectedCommandPaletteIndex
+                                                ? Color.accentColor.opacity(0.2) : .clear
                                         )
                                         .id(item.id)
                                         .onTapGesture {
@@ -98,7 +100,8 @@ public struct CanvasView: View {
                             .frame(maxHeight: 280)
                             .onAppear {
                                 guard isCommandPalettePresented,
-                                      let firstItem = commandPaletteItems.first else {
+                                    let firstItem = commandPaletteItems.first
+                                else {
                                     return
                                 }
                                 scrollProxy.scrollTo(firstItem.id, anchor: .top)
