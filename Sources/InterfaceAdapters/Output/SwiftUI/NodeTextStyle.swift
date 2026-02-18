@@ -4,7 +4,7 @@ import AppKit
 
 /// Shared defaults used for node text rendering and measurement.
 enum NodeTextStyle {
-    static let fontSize: CGFloat = 16
+    static let fontSize: CGFloat = 20
     static let fontWeight: NSFont.Weight = .medium
 
     static var font: NSFont {
