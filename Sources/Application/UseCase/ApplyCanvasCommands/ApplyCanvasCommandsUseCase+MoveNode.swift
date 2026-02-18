@@ -9,17 +9,33 @@ extension ApplyCanvasCommandsUseCase {
     ///   - direction: Move direction bound to command-arrow shortcuts.
     /// - Returns: Updated graph, or the original graph when movement is not applicable.
     /// - Throws: Propagates graph mutation errors from edge updates.
-    func moveNode(in graph: CanvasGraph, direction: CanvasNodeMoveDirection) throws -> CanvasGraph {
+    func moveNode(in graph: CanvasGraph, direction: CanvasNodeMoveDirection) throws -> CanvasMutationResult {
+        let graphAfterMutation: CanvasGraph
         switch direction {
         case .up:
-            return try moveNodeVertically(in: graph, offset: -1)
+            graphAfterMutation = try moveNodeVertically(in: graph, offset: -1)
         case .down:
-            return try moveNodeVertically(in: graph, offset: 1)
+            graphAfterMutation = try moveNodeVertically(in: graph, offset: 1)
         case .left:
-            return try outdentNode(in: graph)
+            graphAfterMutation = try outdentNode(in: graph)
         case .right:
-            return try indentNode(in: graph)
+            graphAfterMutation = try indentNode(in: graph)
         }
+
+        guard graphAfterMutation != graph else {
+            return noOpMutationResult(for: graph)
+        }
+        return CanvasMutationResult(
+            graphBeforeMutation: graph,
+            graphAfterMutation: graphAfterMutation,
+            effects: CanvasMutationEffects(
+                didMutateGraph: true,
+                needsTreeLayout: true,
+                needsAreaLayout: true,
+                needsFocusNormalization: false
+            ),
+            areaLayoutSeedNodeID: graphAfterMutation.focusedNodeID
+        )
     }
 }
 
@@ -83,8 +99,7 @@ extension ApplyCanvasCommandsUseCase {
             edgesByID: graph.edgesByID,
             focusedNodeID: focusedNodeID
         )
-        let graphAfterTreeLayout = relayoutParentChildTrees(in: graphAfterSwap)
-        return resolveAreaOverlaps(around: focusedNodeID, in: graphAfterTreeLayout)
+        return graphAfterSwap
     }
 
     private func outdentNode(in graph: CanvasGraph) throws -> CanvasGraph {
@@ -132,8 +147,7 @@ extension ApplyCanvasCommandsUseCase {
             focusedNodeID: focusedNodeID
         )
 
-        let graphAfterTreeLayout = relayoutParentChildTrees(in: nextGraph)
-        return resolveAreaOverlaps(around: focusedNodeID, in: graphAfterTreeLayout)
+        return nextGraph
     }
 
     private func indentNode(in graph: CanvasGraph) throws -> CanvasGraph {
@@ -182,8 +196,7 @@ extension ApplyCanvasCommandsUseCase {
             focusedNodeID: focusedNodeID
         )
 
-        let graphAfterTreeLayout = relayoutParentChildTrees(in: nextGraph)
-        return resolveAreaOverlaps(around: focusedNodeID, in: graphAfterTreeLayout)
+        return nextGraph
     }
 
     private func orderedPeerNodes(of nodeID: CanvasNodeID, in graph: CanvasGraph) -> [CanvasNode] {

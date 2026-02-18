@@ -3,12 +3,12 @@ import Domain
 // Background: Focus behavior after node deletion needs deterministic hierarchy-aware priority.
 // Responsibility: Delete the focused subtree and choose next focus by upper-sibling, parent, then nearest node.
 extension ApplyCanvasCommandsUseCase {
-    func deleteFocusedNode(in graph: CanvasGraph) throws -> CanvasGraph {
+    func deleteFocusedNode(in graph: CanvasGraph) throws -> CanvasMutationResult {
         guard let focusedNodeID = graph.focusedNodeID else {
-            return graph
+            return noOpMutationResult(for: graph)
         }
         guard let focusedNode = graph.nodesByID[focusedNodeID] else {
-            return graph
+            return noOpMutationResult(for: graph)
         }
 
         var graphAfterDelete = graph
@@ -19,24 +19,29 @@ extension ApplyCanvasCommandsUseCase {
         for nodeID in subtreeNodeIDs {
             graphAfterDelete = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: graphAfterDelete).get()
         }
-        let graphAfterTreeLayout = relayoutParentChildTrees(in: graphAfterDelete)
+        let graphAfterTreeLayoutPreview = relayoutParentChildTrees(in: graphAfterDelete)
         let nextFocusNodeID = nextFocusedNodeIDAfterDeletion(
             deleting: focusedNodeID,
             focusedNode: focusedNode,
             in: graph,
-            graphAfterDelete: graphAfterTreeLayout
+            graphAfterDelete: graphAfterTreeLayoutPreview
         )
-        let graphAfterAreaLayout =
-            if let nextFocusNodeID {
-                resolveAreaOverlaps(around: nextFocusNodeID, in: graphAfterTreeLayout)
-            } else {
-                graphAfterTreeLayout
-            }
 
-        return CanvasGraph(
-            nodesByID: graphAfterAreaLayout.nodesByID,
-            edgesByID: graphAfterAreaLayout.edgesByID,
+        let nextGraph = CanvasGraph(
+            nodesByID: graphAfterDelete.nodesByID,
+            edgesByID: graphAfterDelete.edgesByID,
             focusedNodeID: nextFocusNodeID
+        )
+        return CanvasMutationResult(
+            graphBeforeMutation: graph,
+            graphAfterMutation: nextGraph,
+            effects: CanvasMutationEffects(
+                didMutateGraph: true,
+                needsTreeLayout: true,
+                needsAreaLayout: nextFocusNodeID != nil,
+                needsFocusNormalization: true
+            ),
+            areaLayoutSeedNodeID: nextFocusNodeID
         )
     }
 
