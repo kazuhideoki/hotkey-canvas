@@ -2,8 +2,8 @@ import Application
 import Domain
 import Testing
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode focuses upper sibling first")
-func test_apply_deleteFocusedNode_focusesUpperSibling_whenSiblingExists() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode focuses sibling when sibling exists")
+func test_apply_deleteFocusedNode_focusesSibling_whenSiblingExists() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let upperSiblingID = CanvasNodeID(rawValue: "upper-sibling")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -64,6 +64,57 @@ func test_apply_deleteFocusedNode_focusesUpperSibling_whenSiblingExists() async 
 
     #expect(result.newState.nodesByID[focusedID] == nil)
     #expect(result.newState.focusedNodeID == upperSiblingID)
+}
+
+@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode focuses lower sibling when upper sibling does not exist")
+func test_apply_deleteFocusedNode_focusesLowerSibling_whenUpperSiblingDoesNotExist() async throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let lowerSiblingID = CanvasNodeID(rawValue: "lower-sibling")
+
+    let graph = CanvasGraph(
+        nodesByID: [
+            parentID: CanvasNode(
+                id: parentID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 80)
+            ),
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 200, y: 240, width: 100, height: 80)
+            ),
+            lowerSiblingID: CanvasNode(
+                id: lowerSiblingID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 200, y: 360, width: 100, height: 80)
+            ),
+        ],
+        edgesByID: [
+            CanvasEdgeID(rawValue: "edge-parent-focused"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-parent-focused"),
+                fromNodeID: parentID,
+                toNodeID: focusedID,
+                relationType: .parentChild
+            ),
+            CanvasEdgeID(rawValue: "edge-parent-lower"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-parent-lower"),
+                fromNodeID: parentID,
+                toNodeID: lowerSiblingID,
+                relationType: .parentChild
+            ),
+        ],
+        focusedNodeID: focusedID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.deleteFocusedNode])
+
+    #expect(result.newState.nodesByID[focusedID] == nil)
+    #expect(result.newState.focusedNodeID == lowerSiblingID)
 }
 
 @Test("ApplyCanvasCommandsUseCase: deleteFocusedNode focuses parent when no sibling exists")

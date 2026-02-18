@@ -1,7 +1,7 @@
 import Domain
 
 // Background: Focus behavior after node deletion needs deterministic hierarchy-aware priority.
-// Responsibility: Delete the focused subtree and choose next focus by upper-sibling, parent, then nearest node.
+// Responsibility: Delete the focused subtree and choose next focus by sibling, parent, then nearest node.
 extension ApplyCanvasCommandsUseCase {
     func deleteFocusedNode(in graph: CanvasGraph) throws -> CanvasMutationResult {
         guard let focusedNodeID = graph.focusedNodeID else {
@@ -51,10 +51,12 @@ extension ApplyCanvasCommandsUseCase {
         in graphBeforeDelete: CanvasGraph,
         graphAfterDelete: CanvasGraph
     ) -> CanvasNodeID? {
-        if let upperSiblingID = upperSiblingNodeID(of: focusedNodeID, in: graphBeforeDelete),
-            graphAfterDelete.nodesByID[upperSiblingID] != nil
-        {
-            return upperSiblingID
+        if let siblingID = siblingNodeID(
+            of: focusedNodeID,
+            in: graphBeforeDelete,
+            excluding: graphAfterDelete
+        ) {
+            return siblingID
         }
 
         if let parentID = parentNodeID(of: focusedNodeID, in: graphBeforeDelete),
@@ -84,13 +86,18 @@ extension ApplyCanvasCommandsUseCase {
         }?.id
     }
 
-    private func upperSiblingNodeID(of nodeID: CanvasNodeID, in graph: CanvasGraph) -> CanvasNodeID? {
+    private func siblingNodeID(
+        of nodeID: CanvasNodeID,
+        in graph: CanvasGraph,
+        excluding graphAfterDelete: CanvasGraph
+    ) -> CanvasNodeID? {
         guard let parentID = parentNodeID(of: nodeID, in: graph) else {
             return nil
         }
         guard let targetNode = graph.nodesByID[nodeID] else {
             return nil
         }
+        let targetCenter = nodeCenter(for: targetNode)
 
         let siblingNodes = graph.edgesByID.values
             .filter {
@@ -99,18 +106,22 @@ extension ApplyCanvasCommandsUseCase {
                     && $0.toNodeID != nodeID
             }
             .compactMap { graph.nodesByID[$0.toNodeID] }
-            .sorted(by: isNodeOrderedBefore)
+            .filter { graphAfterDelete.nodesByID[$0.id] != nil }
 
-        return siblingNodes.last(where: { isNodeOrderedBefore($0, targetNode) })?.id
+        return siblingNodes.min { lhs, rhs in
+            let lhsDistance = squaredDistance(from: targetCenter, to: nodeCenter(for: lhs))
+            let rhsDistance = squaredDistance(from: targetCenter, to: nodeCenter(for: rhs))
+            if lhsDistance != rhsDistance {
+                return lhsDistance < rhsDistance
+            }
+            if lhs.bounds.y != rhs.bounds.y {
+                return lhs.bounds.y < rhs.bounds.y
+            }
+            if lhs.bounds.x != rhs.bounds.x {
+                return lhs.bounds.x < rhs.bounds.x
+            }
+            return lhs.id.rawValue < rhs.id.rawValue
+        }?.id
     }
 
-    private func isNodeOrderedBefore(_ lhs: CanvasNode, _ rhs: CanvasNode) -> Bool {
-        if lhs.bounds.y != rhs.bounds.y {
-            return lhs.bounds.y < rhs.bounds.y
-        }
-        if lhs.bounds.x != rhs.bounds.x {
-            return lhs.bounds.x < rhs.bounds.x
-        }
-        return lhs.id.rawValue < rhs.id.rawValue
-    }
 }
