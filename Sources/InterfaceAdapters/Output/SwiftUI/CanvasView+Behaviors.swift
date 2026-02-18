@@ -148,12 +148,13 @@ extension CanvasView {
             return false
         }
 
-        let measuredHeight = measuredNodeHeight(text: context.text, nodeWidth: node.bounds.width)
+        let measuredLayout = measuredNodeLayout(text: context.text, nodeWidth: node.bounds.width)
         editingContext = NodeEditingContext(
             nodeID: context.nodeID,
             text: context.text,
             nodeWidth: node.bounds.width,
-            nodeHeight: measuredHeight,
+            nodeHeight: Double(measuredLayout.nodeHeight),
+            lineCount: measuredLayout.renderedLineCount,
             initialCursorPlacement: context.initialCursorPlacement
         )
         return true
@@ -185,23 +186,25 @@ extension CanvasView {
         editingContext = nil
     }
 
-    func updateEditingNodeHeight(for nodeID: CanvasNodeID, measuredHeight: CGFloat) {
+    func updateEditingNodeLayout(for nodeID: CanvasNodeID, metrics: NodeTextLayoutMetrics) {
         guard var context = editingContext, context.nodeID == nodeID else {
             return
         }
-        let roundedHeight = Double(ceil(measuredHeight))
+        let roundedHeight = Double(ceil(metrics.nodeHeight))
         guard roundedHeight.isFinite, roundedHeight > 0 else {
             return
         }
-        guard context.nodeHeight != roundedHeight else {
+        let nextLineCount = max(metrics.renderedLineCount, 1)
+        guard context.nodeHeight != roundedHeight || context.lineCount != nextLineCount else {
             return
         }
         context.nodeHeight = roundedHeight
+        context.lineCount = nextLineCount
         editingContext = context
     }
 
-    func measuredNodeHeight(text: String, nodeWidth: Double) -> Double {
-        Double(nodeTextHeightMeasurer.measure(text: text, nodeWidth: CGFloat(nodeWidth)))
+    func measuredNodeLayout(text: String, nodeWidth: Double) -> NodeTextLayoutMetrics {
+        nodeTextHeightMeasurer.measureLayout(text: text, nodeWidth: CGFloat(nodeWidth))
     }
 
     func startInitialNodeEditingIfNeeded(nodeID: CanvasNodeID?) {
@@ -211,12 +214,13 @@ extension CanvasView {
         guard let node = viewModel.nodes.first(where: { $0.id == nodeID }) else {
             return
         }
-        let measuredHeight = measuredNodeHeight(text: node.text ?? "", nodeWidth: node.bounds.width)
+        let measuredLayout = measuredNodeLayout(text: node.text ?? "", nodeWidth: node.bounds.width)
         editingContext = NodeEditingContext(
             nodeID: nodeID,
             text: node.text ?? "",
             nodeWidth: node.bounds.width,
-            nodeHeight: measuredHeight,
+            nodeHeight: Double(measuredLayout.nodeHeight),
+            lineCount: measuredLayout.renderedLineCount,
             initialCursorPlacement: .end
         )
     }
@@ -228,5 +232,6 @@ struct NodeEditingContext: Equatable {
     var text: String
     let nodeWidth: Double
     var nodeHeight: Double
+    var lineCount: Int
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
 }

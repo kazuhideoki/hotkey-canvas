@@ -135,10 +135,11 @@ public struct CanvasView: View {
                                 if editingContext?.nodeID == node.id {
                                     NodeTextEditor(
                                         text: editingTextBinding(for: node.id),
+                                        nodeWidth: CGFloat(node.bounds.width),
                                         selectAllOnFirstFocus: false,
                                         initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
-                                        onMeasuredHeightChange: { measuredHeight in
-                                            updateEditingNodeHeight(for: node.id, measuredHeight: measuredHeight)
+                                        onLayoutMetricsChange: { metrics in
+                                            updateEditingNodeLayout(for: node.id, metrics: metrics)
                                         },
                                         onCommit: {
                                             commitNodeEditing()
@@ -149,9 +150,10 @@ public struct CanvasView: View {
                                     )
                                     .padding(6)
                                 } else {
-                                    Text(node.text ?? "")
-                                        .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
-                                        .padding(12)
+                                    nonEditingNodeText(
+                                        text: node.text ?? "",
+                                        nodeWidth: node.bounds.width
+                                    )
                                 }
                             }
                             .frame(
@@ -261,7 +263,7 @@ public struct CanvasView: View {
                         return
                     }
                     if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
-                        let measuredHeight = measuredNodeHeight(
+                        let measuredLayout = measuredNodeLayout(
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width
                         )
@@ -269,7 +271,8 @@ public struct CanvasView: View {
                             nodeID: nodeID,
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width,
-                            nodeHeight: measuredHeight,
+                            nodeHeight: Double(measuredLayout.nodeHeight),
+                            lineCount: measuredLayout.renderedLineCount,
                             initialCursorPlacement: .end
                         )
                         guard pendingEditingRequestID == requestID else {
@@ -495,5 +498,18 @@ extension CanvasView {
             valueIndex = valueText.index(after: valueIndex)
         }
         return true
+    }
+
+    @ViewBuilder
+    fileprivate func nonEditingNodeText(text: String, nodeWidth: Double) -> some View {
+        let textWidth = max(CGFloat(nodeWidth) - 24, 1)
+        Text(text)
+            .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
+            .lineLimit(nil)
+            .multilineTextAlignment(.leading)
+            .frame(width: textWidth, alignment: .topLeading)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(12)
     }
 }
