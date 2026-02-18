@@ -28,15 +28,6 @@ public enum CanvasGraphCRUDService {
             ))
     }
 
-    /// Reads a node by identifier.
-    /// - Parameters:
-    ///   - id: Target node ID.
-    ///   - graph: Source graph snapshot.
-    /// - Returns: Matching node, or `nil` when missing.
-    public static func readNode(id: CanvasNodeID, in graph: CanvasGraph) -> CanvasNode? {
-        graph.nodesByID[id]
-    }
-
     /// Replaces an existing node.
     /// - Parameters:
     ///   - node: New node value.
@@ -102,41 +93,6 @@ public enum CanvasGraphCRUDService {
         }
         guard graph.edgesByID[edge.id] == nil else {
             return .failure(.edgeAlreadyExists(edge.id))
-        }
-
-        var edges = graph.edgesByID
-        edges[edge.id] = edge
-        return .success(
-            CanvasGraph(
-                nodesByID: graph.nodesByID,
-                edgesByID: edges,
-                focusedNodeID: graph.focusedNodeID
-            ))
-    }
-
-    /// Reads an edge by identifier.
-    /// - Parameters:
-    ///   - id: Target edge ID.
-    ///   - graph: Source graph snapshot.
-    /// - Returns: Matching edge, or `nil` when missing.
-    public static func readEdge(id: CanvasEdgeID, in graph: CanvasGraph) -> CanvasEdge? {
-        graph.edgesByID[id]
-    }
-
-    /// Replaces an existing edge.
-    /// - Parameters:
-    ///   - edge: New edge value.
-    ///   - graph: Source graph snapshot.
-    /// - Returns: New graph containing the updated edge or a domain validation error.
-    public static func updateEdge(_ edge: CanvasEdge, in graph: CanvasGraph) -> Result<CanvasGraph, CanvasGraphError> {
-        guard graph.edgesByID[edge.id] != nil else {
-            return .failure(.edgeNotFound(edge.id))
-        }
-        switch validate(edge: edge, in: graph) {
-        case .success:
-            break
-        case .failure(let error):
-            return .failure(error)
         }
 
         var edges = graph.edgesByID
