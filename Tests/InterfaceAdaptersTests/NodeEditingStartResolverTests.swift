@@ -4,7 +4,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("NodeEditingStartResolver: character key starts editing with typed text")
+@Test("NodeEditingStartResolver: character key starts editing from empty text")
 func test_resolve_characterKey_returnsTypedTextContext() throws {
     let sut = NodeEditingStartResolver()
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
@@ -34,8 +34,9 @@ func test_resolve_characterKey_returnsTypedTextContext() throws {
     let context = sut.resolve(from: event, focusedNodeID: focusedNodeID, nodesByID: nodesByID)
 
     #expect(context?.nodeID == focusedNodeID)
-    #expect(context?.text == "x")
+    #expect(context?.text == "")
     #expect(context?.initialCursorPlacement == .end)
+    #expect(context?.initialTypingEvent != nil)
 }
 
 @Test("NodeEditingStartResolver: Ctrl+E starts editing at end with existing text")
@@ -70,6 +71,7 @@ func test_resolve_ctrlE_returnsExistingTextWithEndCursor() throws {
     #expect(context?.nodeID == focusedNodeID)
     #expect(context?.text == "existing")
     #expect(context?.initialCursorPlacement == .end)
+    #expect(context?.initialTypingEvent == nil)
 }
 
 @Test("NodeEditingStartResolver: Ctrl+A starts editing at start with existing text")
@@ -104,6 +106,7 @@ func test_resolve_ctrlA_returnsExistingTextWithStartCursor() throws {
     #expect(context?.nodeID == focusedNodeID)
     #expect(context?.text == "existing")
     #expect(context?.initialCursorPlacement == .start)
+    #expect(context?.initialTypingEvent == nil)
 }
 
 @Test("NodeEditingStartResolver: Ctrl+non target key does not start editing")

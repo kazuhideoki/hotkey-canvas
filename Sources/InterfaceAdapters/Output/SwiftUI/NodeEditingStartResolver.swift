@@ -4,10 +4,11 @@ import AppKit
 import Domain
 
 /// Resolved context used to start inline editing for the focused node.
-struct NodeEditingStartContext: Equatable {
+struct NodeEditingStartContext {
     let nodeID: CanvasNodeID
     let text: String
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
+    let initialTypingEvent: NSEvent?
 }
 
 /// Resolves key events into an inline editing start context.
@@ -25,18 +26,20 @@ struct NodeEditingStartResolver {
             return NodeEditingStartContext(
                 nodeID: focusedNodeID,
                 text: focusedNode.text ?? "",
-                initialCursorPlacement: placement
+                initialCursorPlacement: placement,
+                initialTypingEvent: nil
             )
         }
 
-        guard let typedCharacters = typedCharactersForInputStart(from: event) else {
+        guard isTypingCharacterEvent(event) else {
             return nil
         }
 
         return NodeEditingStartContext(
             nodeID: focusedNodeID,
-            text: typedCharacters,
-            initialCursorPlacement: .end
+            text: "",
+            initialCursorPlacement: .end,
+            initialTypingEvent: event
         )
     }
 }
@@ -45,20 +48,20 @@ extension NodeEditingStartResolver {
     private static let aKeyLowercase = "a"
     private static let eKeyLowercase = "e"
 
-    private func typedCharactersForInputStart(from event: NSEvent) -> String? {
+    private func isTypingCharacterEvent(_ event: NSEvent) -> Bool {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let disallowed: NSEvent.ModifierFlags = [.command, .control, .option, .function]
         guard flags.isDisjoint(with: disallowed) else {
-            return nil
+            return false
         }
 
         guard let characters = event.characters, !characters.isEmpty else {
-            return nil
+            return false
         }
         if characters.rangeOfCharacter(from: .controlCharacters) != nil {
-            return nil
+            return false
         }
-        return characters
+        return true
     }
 
     private func controlCursorPlacementForInputStart(

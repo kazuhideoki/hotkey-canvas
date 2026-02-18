@@ -197,6 +197,7 @@ public struct CanvasView: View {
                                         nodeWidth: CGFloat(node.bounds.width),
                                         selectAllOnFirstFocus: false,
                                         initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
+                                        initialTypingEvent: editingContext?.initialTypingEvent,
                                         onLayoutMetricsChange: { metrics in
                                             updateEditingNodeLayout(for: node.id, metrics: metrics)
                                         },
@@ -343,7 +344,8 @@ public struct CanvasView: View {
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width,
                             nodeHeight: Double(measuredLayout.nodeHeight),
-                            initialCursorPlacement: .end
+                            initialCursorPlacement: .end,
+                            initialTypingEvent: nil
                         )
                         guard pendingEditingRequestID == requestID else {
                             return

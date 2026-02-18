@@ -192,7 +192,8 @@ extension CanvasView {
             text: context.text,
             nodeWidth: node.bounds.width,
             nodeHeight: Double(measuredLayout.nodeHeight),
-            initialCursorPlacement: context.initialCursorPlacement
+            initialCursorPlacement: context.initialCursorPlacement,
+            initialTypingEvent: context.initialTypingEvent
         )
         return true
     }
@@ -255,7 +256,8 @@ extension CanvasView {
             text: node.text ?? "",
             nodeWidth: node.bounds.width,
             nodeHeight: Double(measuredLayout.nodeHeight),
-            initialCursorPlacement: .end
+            initialCursorPlacement: .end,
+            initialTypingEvent: nil
         )
     }
 
@@ -280,4 +282,14 @@ struct NodeEditingContext: Equatable {
     let nodeWidth: Double
     var nodeHeight: Double
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
+    let initialTypingEvent: NSEvent?
+
+    static func == (lhs: NodeEditingContext, rhs: NodeEditingContext) -> Bool {
+        lhs.nodeID == rhs.nodeID &&
+            lhs.text == rhs.text &&
+            lhs.nodeWidth == rhs.nodeWidth &&
+            lhs.nodeHeight == rhs.nodeHeight &&
+            lhs.initialCursorPlacement == rhs.initialCursorPlacement &&
+            lhs.initialTypingEvent?.timestamp == rhs.initialTypingEvent?.timestamp
+    }
 }
