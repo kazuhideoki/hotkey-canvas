@@ -100,8 +100,8 @@ public struct CanvasView: View {
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
                     )
-                    .padding(.leading, 20)
                     .padding(.top, 20)
+                    .frame(maxWidth: .infinity, alignment: .center)
                     .animation(.easeInOut(duration: 0.15), value: commandPaletteItems.count)
                     .zIndex(10)
                 }
