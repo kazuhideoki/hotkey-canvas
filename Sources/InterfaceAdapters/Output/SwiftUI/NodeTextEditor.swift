@@ -12,9 +12,10 @@ enum NodeTextEditorInitialCursorPlacement: Equatable {
 /// Inline editor used for canvas node text editing.
 struct NodeTextEditor: NSViewRepresentable {
     @Binding var text: String
+    let nodeWidth: CGFloat
     let selectAllOnFirstFocus: Bool
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
-    let onMeasuredHeightChange: (CGFloat) -> Void
+    let onLayoutMetricsChange: (NodeTextLayoutMetrics) -> Void
     let onCommit: () -> Void
     let onCancel: () -> Void
 
@@ -31,21 +32,24 @@ struct NodeTextEditor: NSViewRepresentable {
         if nsView.string != text {
             nsView.string = text
         }
+        context.coordinator.nodeWidth = nodeWidth
         nsView.onCommit = onCommit
         nsView.onCancel = onCancel
         nsView.typingAttributes[.foregroundColor] = NSColor.labelColor
         nsView.typingAttributes[.font] = nsView.font ?? NodeTextStyle.font
         nsView.textColor = .labelColor
         nsView.insertionPointColor = .labelColor
+        context.coordinator.pushLayoutMetrics(for: nsView.string)
         focusEditorIfNeeded(nsView, coordinator: context.coordinator)
     }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(
             text: $text,
+            nodeWidth: nodeWidth,
             selectAllOnFirstFocus: selectAllOnFirstFocus,
             initialCursorPlacement: initialCursorPlacement,
-            onMeasuredHeightChange: onMeasuredHeightChange
+            onLayoutMetricsChange: onLayoutMetricsChange
         )
     }
 }
@@ -53,23 +57,27 @@ struct NodeTextEditor: NSViewRepresentable {
 extension NodeTextEditor {
     final class Coordinator: NSObject, NSTextViewDelegate {
         var text: Binding<String>
+        var nodeWidth: CGFloat
         let selectAllOnFirstFocus: Bool
         let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
-        let onMeasuredHeightChange: (CGFloat) -> Void
+        let onLayoutMetricsChange: (NodeTextLayoutMetrics) -> Void
+        let nodeTextHeightMeasurer = NodeTextHeightMeasurer()
         var hasFocusedEditor: Bool = false
         /// Monotonic token used to cancel stale focus retries from older update cycles.
         var focusRequestID: UInt64 = 0
 
         init(
             text: Binding<String>,
+            nodeWidth: CGFloat,
             selectAllOnFirstFocus: Bool,
             initialCursorPlacement: NodeTextEditorInitialCursorPlacement,
-            onMeasuredHeightChange: @escaping (CGFloat) -> Void
+            onLayoutMetricsChange: @escaping (NodeTextLayoutMetrics) -> Void
         ) {
             self.text = text
+            self.nodeWidth = nodeWidth
             self.selectAllOnFirstFocus = selectAllOnFirstFocus
             self.initialCursorPlacement = initialCursorPlacement
-            self.onMeasuredHeightChange = onMeasuredHeightChange
+            self.onLayoutMetricsChange = onLayoutMetricsChange
         }
 
         func textDidChange(_ notification: Notification) {
@@ -77,14 +85,15 @@ extension NodeTextEditor {
                 return
             }
             text.wrappedValue = textView.string
-            pushMeasuredHeightIfReady(from: textView)
+            pushLayoutMetrics(for: textView.string)
         }
 
-        func pushMeasuredHeightIfReady(from textView: NSTextView) {
-            guard textView.bounds.width > 1 else {
-                return
-            }
-            onMeasuredHeightChange(NodeTextEditorTextViewMeasurement.nodeHeight(for: textView))
+        func pushLayoutMetrics(for text: String) {
+            let metrics = nodeTextHeightMeasurer.measureLayout(
+                text: text,
+                nodeWidth: nodeWidth
+            )
+            onLayoutMetricsChange(metrics)
         }
     }
 
@@ -174,7 +183,6 @@ extension NodeTextEditor {
             } else if !coordinator.hasFocusedEditor {
                 placeInitialCursor(textView, placement: coordinator.initialCursorPlacement)
             }
-            coordinator.pushMeasuredHeightIfReady(from: textView)
             coordinator.hasFocusedEditor = true
         }
     }
@@ -192,42 +200,6 @@ extension NodeTextEditor {
             location = textLength
         }
         textView.setSelectedRange(NSRange(location: location, length: 0))
-    }
-}
-
-private enum NodeTextEditorTextViewMeasurement {
-    static func nodeHeight(
-        for textView: NSTextView,
-        outerVerticalPadding: CGFloat = 6,
-        maximumNodeHeight: CGFloat = 320
-    ) -> CGFloat {
-        guard
-            let layoutManager = textView.layoutManager,
-            let textContainer = textView.textContainer
-        else {
-            return max(1, textView.frame.height)
-        }
-
-        let glyphRange = layoutManager.glyphRange(for: textContainer)
-        var lineHeights: [CGFloat] = []
-        layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { _, usedRect, _, _, _ in
-            lineHeights.append(usedRect.height)
-        }
-
-        var contentHeight = lineHeights.reduce(0, +)
-        let defaultLineHeight = layoutManager.defaultLineHeight(
-            for: textView.font ?? NodeTextStyle.font
-        )
-        if layoutManager.extraLineFragmentTextContainer != nil {
-            contentHeight += lineHeights.last ?? defaultLineHeight
-        }
-
-        contentHeight = max(contentHeight, defaultLineHeight)
-        let nodeHeight =
-            contentHeight
-            + (textView.textContainerInset.height * 2)
-            + (outerVerticalPadding * 2)
-        return min(ceil(nodeHeight), maximumNodeHeight)
     }
 }
 
