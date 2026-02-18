@@ -15,6 +15,7 @@ public struct CanvasView: View {
     @State private var commandPaletteQuery: String = ""
     @State private var isCommandPalettePresented = false
     @State private var selectedCommandPaletteIndex: Int = 0
+    @State private var previousSelectedCommandPaletteIndex: Int = 0
     @State var hasInitializedCameraAnchor = false
     @State var cameraAnchorPoint: CGPoint = .zero
     @State var manualPanOffset: CGSize = .zero
@@ -67,32 +68,62 @@ public struct CanvasView: View {
                             .fill(Color(nsColor: .separatorColor))
                             .frame(height: 1)
                             .padding(.top, 10)
-                        ScrollView {
-                            VStack(spacing: 0) {
-                                ForEach(Array(commandPaletteItems.enumerated()), id: \.element.id) { (index, item) in
-                                    HStack {
-                                        Text(item.title)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                        Text(item.shortcutLabel)
-                                            .foregroundStyle(.secondary)
-                                            .frame(maxWidth: 170, alignment: .trailing)
-                                    }
-                                    .font(.system(size: 13, weight: .medium))
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .contentShape(Rectangle())
-                                    .background(
-                                        index == selectedCommandPaletteIndex ? Color.accentColor.opacity(0.2) : .clear
-                                    )
-                                    .onTapGesture {
-                                        selectedCommandPaletteIndex = index
-                                        executeSelectedCommand(item)
+                        ScrollViewReader { scrollProxy in
+                            ScrollView {
+                                VStack(spacing: 0) {
+                                    ForEach(Array(commandPaletteItems.enumerated()), id: \.element.id) { (index, item) in
+                                        HStack {
+                                            Text(item.title)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                            Text(item.shortcutLabel)
+                                                .foregroundStyle(.secondary)
+                                                .frame(maxWidth: 170, alignment: .trailing)
+                                        }
+                                        .font(.system(size: 13, weight: .medium))
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .contentShape(Rectangle())
+                                        .background(
+                                            index == selectedCommandPaletteIndex ? Color.accentColor.opacity(0.2) : .clear
+                                        )
+                                        .id(item.id)
+                                        .onTapGesture {
+                                            selectedCommandPaletteIndex = index
+                                            executeSelectedCommand(item)
+                                        }
                                     }
                                 }
                             }
+                            .frame(maxHeight: 280)
+                            .onAppear {
+                                guard isCommandPalettePresented,
+                                      let firstItem = commandPaletteItems.first else {
+                                    return
+                                }
+                                scrollProxy.scrollTo(firstItem.id, anchor: .top)
+                            }
+                            .onChange(of: selectedCommandPaletteIndex) { selectedIndex in
+                                guard commandPaletteItems.indices.contains(selectedIndex) else {
+                                    return
+                                }
+                                let isMovingDown = selectedIndex > previousSelectedCommandPaletteIndex
+                                previousSelectedCommandPaletteIndex = selectedIndex
+                                scrollProxy.scrollTo(
+                                    commandPaletteItems[selectedIndex].id,
+                                    anchor: isMovingDown ? .bottom : .top
+                                )
+                            }
+                            .onChange(of: commandPaletteQuery) { _ in
+                                guard isCommandPalettePresented else {
+                                    return
+                                }
+                                guard let firstItem = commandPaletteItems.first else {
+                                    return
+                                }
+                                scrollProxy.scrollTo(firstItem.id, anchor: .top)
+                            }
                         }
-                        .frame(maxHeight: 280)
                     }
                     .frame(width: 520)
                     .background(.regularMaterial)
@@ -105,7 +136,6 @@ public struct CanvasView: View {
                     .animation(.easeInOut(duration: 0.15), value: commandPaletteItems.count)
                     .zIndex(10)
                 }
-
                 ZStack(alignment: .topLeading) {
                     ForEach(viewModel.edges, id: \.id) { edge in
                         if let path = CanvasEdgeRouting.path(
@@ -135,10 +165,11 @@ public struct CanvasView: View {
                                 if editingContext?.nodeID == node.id {
                                     NodeTextEditor(
                                         text: editingTextBinding(for: node.id),
+                                        nodeWidth: CGFloat(node.bounds.width),
                                         selectAllOnFirstFocus: false,
                                         initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
-                                        onMeasuredHeightChange: { measuredHeight in
-                                            updateEditingNodeHeight(for: node.id, measuredHeight: measuredHeight)
+                                        onLayoutMetricsChange: { metrics in
+                                            updateEditingNodeLayout(for: node.id, metrics: metrics)
                                         },
                                         onCommit: {
                                             commitNodeEditing()
@@ -149,9 +180,10 @@ public struct CanvasView: View {
                                     )
                                     .padding(6)
                                 } else {
-                                    Text(node.text ?? "")
-                                        .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
-                                        .padding(12)
+                                    nonEditingNodeText(
+                                        text: node.text ?? "",
+                                        nodeWidth: node.bounds.width
+                                    )
                                 }
                             }
                             .frame(
@@ -179,7 +211,6 @@ public struct CanvasView: View {
                         openCommandPalette()
                         return true
                     }
-
                     if let historyAction = hotkeyTranslator.historyAction(event) {
                         Task {
                             switch historyAction {
@@ -261,7 +292,7 @@ public struct CanvasView: View {
                         return
                     }
                     if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
-                        let measuredHeight = measuredNodeHeight(
+                        let measuredLayout = measuredNodeLayout(
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width
                         )
@@ -269,7 +300,7 @@ public struct CanvasView: View {
                             nodeID: nodeID,
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width,
-                            nodeHeight: measuredHeight,
+                            nodeHeight: Double(measuredLayout.nodeHeight),
                             initialCursorPlacement: .end
                         )
                         guard pendingEditingRequestID == requestID else {
@@ -515,4 +546,5 @@ extension CanvasView {
         }
         return true
     }
+
 }
