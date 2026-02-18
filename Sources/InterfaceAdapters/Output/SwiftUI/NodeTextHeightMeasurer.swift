@@ -2,6 +2,11 @@
 // Responsibility: Measure node height from actual AppKit text layout instead of line-count heuristics.
 import AppKit
 
+/// Result of text layout measurement used by both editing and display paths.
+struct NodeTextLayoutMetrics: Equatable {
+    let nodeHeight: CGFloat
+}
+
 /// Measures node height for a given text and node width using AppKit layout primitives.
 struct NodeTextHeightMeasurer {
     private let font: NSFont
@@ -43,24 +48,40 @@ struct NodeTextHeightMeasurer {
     ///   - nodeWidth: Node width in canvas coordinates.
     /// - Returns: Height clamped between configured minimum and maximum.
     func measure(text: String, nodeWidth: CGFloat) -> CGFloat {
+        measureLayout(text: text, nodeWidth: nodeWidth).nodeHeight
+    }
+
+    /// Measures node layout metrics for the supplied text content.
+    /// - Parameters:
+    ///   - text: Current editor text.
+    ///   - nodeWidth: Node width in canvas coordinates.
+    /// - Returns: Height derived from AppKit layout.
+    func measureLayout(text: String, nodeWidth: CGFloat) -> NodeTextLayoutMetrics {
         let textContainerWidth = max(
             nodeWidth
                 - (outerHorizontalPadding * 2)
                 - (textContainerInset.width * 2),
             1
         )
-        let textHeight = measuredTextHeight(text: text, width: textContainerWidth)
+        let textLayout = measuredTextLayout(text: text, width: textContainerWidth)
         let nodeHeight =
-            textHeight
+            textLayout.contentHeight
             + (outerVerticalPadding * 2)
             + (textContainerInset.height * 2)
             + verticalSafetyPadding
-        return min(ceil(max(nodeHeight, minimumNodeHeight)), maximumNodeHeight)
+        let clampedHeight = min(ceil(max(nodeHeight, minimumNodeHeight)), maximumNodeHeight)
+        return NodeTextLayoutMetrics(
+            nodeHeight: clampedHeight
+        )
     }
 }
 
 extension NodeTextHeightMeasurer {
-    private func measuredTextHeight(text: String, width: CGFloat) -> CGFloat {
+    private struct TextLayoutMeasurement {
+        let contentHeight: CGFloat
+    }
+
+    private func measuredTextLayout(text: String, width: CGFloat) -> TextLayoutMeasurement {
         let textStorage = NSTextStorage(
             string: text,
             attributes: [.font: font]
@@ -88,6 +109,8 @@ extension NodeTextHeightMeasurer {
         if layoutManager.extraLineFragmentTextContainer != nil {
             measuredHeight += max(lineHeights.last ?? 0, defaultLineHeight)
         }
-        return max(measuredHeight, defaultLineHeight)
+        return TextLayoutMeasurement(
+            contentHeight: max(measuredHeight, defaultLineHeight)
+        )
     }
 }

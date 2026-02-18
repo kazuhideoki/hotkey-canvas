@@ -148,12 +148,12 @@ extension CanvasView {
             return false
         }
 
-        let measuredHeight = measuredNodeHeight(text: context.text, nodeWidth: node.bounds.width)
+        let measuredLayout = measuredNodeLayout(text: context.text, nodeWidth: node.bounds.width)
         editingContext = NodeEditingContext(
             nodeID: context.nodeID,
             text: context.text,
             nodeWidth: node.bounds.width,
-            nodeHeight: measuredHeight,
+            nodeHeight: Double(measuredLayout.nodeHeight),
             initialCursorPlacement: context.initialCursorPlacement
         )
         return true
@@ -185,11 +185,11 @@ extension CanvasView {
         editingContext = nil
     }
 
-    func updateEditingNodeHeight(for nodeID: CanvasNodeID, measuredHeight: CGFloat) {
+    func updateEditingNodeLayout(for nodeID: CanvasNodeID, metrics: NodeTextLayoutMetrics) {
         guard var context = editingContext, context.nodeID == nodeID else {
             return
         }
-        let roundedHeight = Double(ceil(measuredHeight))
+        let roundedHeight = Double(ceil(metrics.nodeHeight))
         guard roundedHeight.isFinite, roundedHeight > 0 else {
             return
         }
@@ -200,8 +200,8 @@ extension CanvasView {
         editingContext = context
     }
 
-    func measuredNodeHeight(text: String, nodeWidth: Double) -> Double {
-        Double(nodeTextHeightMeasurer.measure(text: text, nodeWidth: CGFloat(nodeWidth)))
+    func measuredNodeLayout(text: String, nodeWidth: Double) -> NodeTextLayoutMetrics {
+        nodeTextHeightMeasurer.measureLayout(text: text, nodeWidth: CGFloat(nodeWidth))
     }
 
     func startInitialNodeEditingIfNeeded(nodeID: CanvasNodeID?) {
@@ -211,14 +211,27 @@ extension CanvasView {
         guard let node = viewModel.nodes.first(where: { $0.id == nodeID }) else {
             return
         }
-        let measuredHeight = measuredNodeHeight(text: node.text ?? "", nodeWidth: node.bounds.width)
+        let measuredLayout = measuredNodeLayout(text: node.text ?? "", nodeWidth: node.bounds.width)
         editingContext = NodeEditingContext(
             nodeID: nodeID,
             text: node.text ?? "",
             nodeWidth: node.bounds.width,
-            nodeHeight: measuredHeight,
+            nodeHeight: Double(measuredLayout.nodeHeight),
             initialCursorPlacement: .end
         )
+    }
+
+    @ViewBuilder
+    func nonEditingNodeText(text: String, nodeWidth: Double) -> some View {
+        let textWidth = max(CGFloat(nodeWidth) - 24, 1)
+        Text(text)
+            .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
+            .lineLimit(nil)
+            .multilineTextAlignment(.leading)
+            .frame(width: textWidth, alignment: .topLeading)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding(12)
     }
 }
 

@@ -131,12 +131,11 @@ public struct CanvasView: View {
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
                     )
-                    .padding(.leading, 20)
                     .padding(.top, 20)
+                    .frame(maxWidth: .infinity, alignment: .center)
                     .animation(.easeInOut(duration: 0.15), value: commandPaletteItems.count)
                     .zIndex(10)
                 }
-
                 ZStack(alignment: .topLeading) {
                     ForEach(viewModel.edges, id: \.id) { edge in
                         if let path = CanvasEdgeRouting.path(
@@ -166,10 +165,11 @@ public struct CanvasView: View {
                                 if editingContext?.nodeID == node.id {
                                     NodeTextEditor(
                                         text: editingTextBinding(for: node.id),
+                                        nodeWidth: CGFloat(node.bounds.width),
                                         selectAllOnFirstFocus: false,
                                         initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
-                                        onMeasuredHeightChange: { measuredHeight in
-                                            updateEditingNodeHeight(for: node.id, measuredHeight: measuredHeight)
+                                        onLayoutMetricsChange: { metrics in
+                                            updateEditingNodeLayout(for: node.id, metrics: metrics)
                                         },
                                         onCommit: {
                                             commitNodeEditing()
@@ -180,9 +180,10 @@ public struct CanvasView: View {
                                     )
                                     .padding(6)
                                 } else {
-                                    Text(node.text ?? "")
-                                        .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
-                                        .padding(12)
+                                    nonEditingNodeText(
+                                        text: node.text ?? "",
+                                        nodeWidth: node.bounds.width
+                                    )
                                 }
                             }
                             .frame(
@@ -210,7 +211,6 @@ public struct CanvasView: View {
                         openCommandPalette()
                         return true
                     }
-
                     if let historyAction = hotkeyTranslator.historyAction(event) {
                         Task {
                             switch historyAction {
@@ -292,7 +292,7 @@ public struct CanvasView: View {
                         return
                     }
                     if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
-                        let measuredHeight = measuredNodeHeight(
+                        let measuredLayout = measuredNodeLayout(
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width
                         )
@@ -300,7 +300,7 @@ public struct CanvasView: View {
                             nodeID: nodeID,
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width,
-                            nodeHeight: measuredHeight,
+                            nodeHeight: Double(measuredLayout.nodeHeight),
                             initialCursorPlacement: .end
                         )
                         guard pendingEditingRequestID == requestID else {
@@ -527,4 +527,5 @@ extension CanvasView {
         }
         return true
     }
+
 }
