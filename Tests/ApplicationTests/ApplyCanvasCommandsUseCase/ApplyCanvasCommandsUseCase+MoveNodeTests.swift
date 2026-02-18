@@ -191,6 +191,52 @@ func test_apply_moveNodeRight_indentsUnderPreviousSibling() async throws {
     #expect(result.newState.focusedNodeID == focusedID)
 }
 
+@Test("ApplyCanvasCommandsUseCase: moveNode right does not indent top-level root node")
+func test_apply_moveNodeRight_doesNotIndentTopLevelRootNode() async throws {
+    let firstRootID = CanvasNodeID(rawValue: "first-root")
+    let focusedRootID = CanvasNodeID(rawValue: "focused-root")
+    let focusedChildID = CanvasNodeID(rawValue: "focused-child")
+
+    let firstRoot = CanvasNode(
+        id: firstRootID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)
+    )
+    let focusedRoot = CanvasNode(
+        id: focusedRootID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 200, width: 220, height: 120)
+    )
+    let focusedChild = CanvasNode(
+        id: focusedChildID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 260, y: 200, width: 220, height: 120)
+    )
+    let focusedRootToChild = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-focused-root-child"),
+        fromNodeID: focusedRootID,
+        toNodeID: focusedChildID,
+        relationType: .parentChild
+    )
+    let graph = CanvasGraph(
+        nodesByID: [
+            firstRootID: firstRoot,
+            focusedRootID: focusedRoot,
+            focusedChildID: focusedChild,
+        ],
+        edgesByID: [focusedRootToChild.id: focusedRootToChild],
+        focusedNodeID: focusedRootID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.right)])
+
+    #expect(result.newState == graph)
+}
+
 private func makeSiblingGraph(
     rootID: CanvasNodeID,
     childIDs: [CanvasNodeID],
