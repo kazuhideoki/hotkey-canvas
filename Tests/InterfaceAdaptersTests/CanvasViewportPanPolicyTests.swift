@@ -34,8 +34,8 @@ func test_scrollWheelTranslation_scalesLineBasedDeltas() {
         hasPreciseDeltas: false
     )
 
-    #expect(translation.width == -32)
-    #expect(translation.height == 48)
+    #expect(translation.width == 32)
+    #expect(translation.height == -48)
 }
 
 @Test("CanvasViewportPanPolicy: keeps precise scroll wheel deltas unscaled")
@@ -46,6 +46,6 @@ func test_scrollWheelTranslation_keepsPreciseDeltas() {
         hasPreciseDeltas: true
     )
 
-    #expect(translation.width == 1.5)
-    #expect(translation.height == -4)
+    #expect(translation.width == -1.5)
+    #expect(translation.height == 4)
 }
