@@ -13,6 +13,7 @@ public struct CanvasView: View {
     @StateObject var viewModel: CanvasViewModel
     @State var editingContext: NodeEditingContext?
     @State var commandPaletteQuery: String = ""
+    @State var commandPaletteCursorIndex: Int = 0
     @State var isCommandPalettePresented = false
     @State var selectedCommandPaletteIndex: Int = 0
     @State private var previousSelectedCommandPaletteIndex: Int = 0
@@ -60,8 +61,29 @@ public struct CanvasView: View {
                             .font(.headline)
                             .padding(.horizontal, 12)
                             .padding(.top, 10)
-                        TextField("Search commands", text: $commandPaletteQuery)
-                            .textFieldStyle(.roundedBorder)
+                        HStack(spacing: 0) {
+                            Text(commandPaletteQueryPrefixText())
+                            Rectangle()
+                                .fill(Color.accentColor)
+                                .frame(width: 1, height: 15)
+                            Text(commandPaletteQuerySuffixText())
+                            if commandPaletteQuery.isEmpty {
+                                Text("Search commands")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .font(.system(size: 13, weight: .regular, design: .monospaced))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color(nsColor: .textBackgroundColor))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                        )
                             .padding(.horizontal, 12)
                             .padding(.top, 8)
                         Rectangle()
@@ -331,10 +353,15 @@ public struct CanvasView: View {
         }
         .onChange(of: commandPaletteQuery) { _ in
             selectedCommandPaletteIndex = 0
+            commandPaletteCursorIndex = CommandPaletteQueryEditing.clampedCursorIndex(
+                commandPaletteCursorIndex,
+                in: commandPaletteQuery
+            )
         }
         .onChange(of: isCommandPalettePresented) { isVisible in
             if !isVisible {
                 commandPaletteQuery = ""
+                commandPaletteCursorIndex = 0
                 selectedCommandPaletteIndex = 0
             }
         }
