@@ -200,7 +200,7 @@ private enum NodeTextEditorTextViewMeasurement {
         for textView: NSTextView,
         outerVerticalPadding: CGFloat = 6,
         verticalSafetyPadding: CGFloat = 1,
-        maximumNodeHeight: CGFloat = 320
+        maximumNodeHeight: CGFloat = .greatestFiniteMagnitude
     ) -> CGFloat {
         guard
             let layoutManager = textView.layoutManager,
