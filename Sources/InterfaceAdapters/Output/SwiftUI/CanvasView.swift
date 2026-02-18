@@ -10,19 +10,19 @@ import SwiftUI
 public struct CanvasView: View {
     static let minimumCanvasWidth: Double = 900
     static let minimumCanvasHeight: Double = 600
-
     @StateObject var viewModel: CanvasViewModel
     @State var editingContext: NodeEditingContext?
     @State private var commandPaletteQuery: String = ""
     @State private var isCommandPalettePresented = false
     @State private var selectedCommandPaletteIndex: Int = 0
-    @State private var manualPanOffset: CGSize = .zero
+    @State var hasInitializedCameraAnchor = false
+    @State var cameraAnchorPoint: CGPoint = .zero
+    @State var manualPanOffset: CGSize = .zero
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
     let editingStartResolver = NodeEditingStartResolver()
     let nodeTextHeightMeasurer = NodeTextHeightMeasurer()
-
     public init(
         viewModel: CanvasViewModel,
         hotkeyTranslator: CanvasHotkeyTranslator = CanvasHotkeyTranslator()
@@ -30,7 +30,6 @@ public struct CanvasView: View {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.hotkeyTranslator = hotkeyTranslator
     }
-
     public var body: some View {
         let displayNodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
         let nodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
@@ -43,7 +42,7 @@ public struct CanvasView: View {
                 width: max(geometryProxy.size.width, Self.minimumCanvasWidth),
                 height: max(geometryProxy.size.height, Self.minimumCanvasHeight)
             )
-            let autoCenterOffset = cameraOffset(for: displayNodes, viewportSize: viewportSize)
+            let autoCenterOffset = cameraOffset(viewportSize: viewportSize)
             let cameraOffset = CanvasViewportPanPolicy.combinedOffset(
                 autoCenterOffset: autoCenterOffset,
                 manualPanOffset: manualPanOffset,
@@ -54,31 +53,26 @@ public struct CanvasView: View {
                 Color(nsColor: .textBackgroundColor)
                     .ignoresSafeArea()
                     .contentShape(Rectangle())
-
                 if isCommandPalettePresented {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Command Palette")
                             .font(.headline)
                             .padding(.horizontal, 12)
                             .padding(.top, 10)
-
                         TextField("Search commands", text: $commandPaletteQuery)
                             .textFieldStyle(.roundedBorder)
                             .padding(.horizontal, 12)
                             .padding(.top, 8)
-
                         Rectangle()
                             .fill(Color(nsColor: .separatorColor))
                             .frame(height: 1)
                             .padding(.top, 10)
-
                         ScrollView {
                             VStack(spacing: 0) {
                                 ForEach(Array(commandPaletteItems.enumerated()), id: \.element.id) { (index, item) in
                                     HStack {
                                         Text(item.title)
                                             .frame(maxWidth: .infinity, alignment: .leading)
-
                                         Text(item.shortcutLabel)
                                             .foregroundStyle(.secondary)
                                             .frame(maxWidth: 170, alignment: .trailing)
@@ -123,7 +117,6 @@ public struct CanvasView: View {
                                 .stroke(Color(nsColor: .separatorColor), lineWidth: 1.5)
                         }
                     }
-
                     ForEach(displayNodes, id: \.id) { node in
                         let isFocused = viewModel.focusedNodeID == node.id
                         let isEditing = editingContext?.nodeID == node.id
@@ -173,18 +166,15 @@ public struct CanvasView: View {
                     }
                 }
                 .offset(x: cameraOffset.width, y: cameraOffset.height)
-
                 if isCommandPalettePresented {
                     Color.clear
                         .contentShape(Rectangle())
                         .allowsHitTesting(false)
                 }
-
                 CanvasHotkeyCaptureView(isEnabled: editingContext == nil) { event in
                     if isCommandPalettePresented {
                         return handleCommandPaletteKeyDown(event)
                     }
-
                     if hotkeyTranslator.shouldOpenCommandPalette(event) {
                         openCommandPalette()
                         return true
@@ -212,7 +202,6 @@ public struct CanvasView: View {
                 .frame(width: 1, height: 1)
                 // Keep key capture active without intercepting canvas rendering.
                 .allowsHitTesting(false)
-
                 CanvasScrollWheelMonitorView(isEnabled: true) { event in
                     guard !isCommandPalettePresented else {
                         return false
@@ -239,6 +228,21 @@ public struct CanvasView: View {
             .task {
                 let initialEditingNodeID = await viewModel.onAppear()
                 startInitialNodeEditingIfNeeded(nodeID: initialEditingNodeID)
+            }
+            .onAppear {
+                applyFocusVisibilityRule(viewportSize: viewportSize)
+            }
+            .onChange(of: viewModel.focusedNodeID) { _ in
+                applyFocusVisibilityRule(viewportSize: viewportSize)
+            }
+            .onChange(of: viewModel.nodes) { _ in
+                applyFocusVisibilityRule(viewportSize: viewportSize)
+            }
+            .onChange(of: editingContext) { _ in
+                applyFocusVisibilityRule(viewportSize: viewportSize)
+            }
+            .onChange(of: viewportSize) { _ in
+                applyFocusVisibilityRule(viewportSize: viewportSize)
             }
         }
         .onReceive(viewModel.$pendingEditingNodeID) { pendingNodeID in
@@ -308,6 +312,8 @@ public struct CanvasView: View {
             switch viewportIntent {
             case .resetManualPanOffset:
                 manualPanOffset = .zero
+                hasInitializedCameraAnchor = false
+                cameraAnchorPoint = .zero
             }
             viewModel.consumeViewportIntent()
         }

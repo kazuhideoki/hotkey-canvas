@@ -52,4 +52,41 @@ enum CanvasViewportPanPolicy {
             height: -deltaY * scale
         )
     }
+
+    /// Computes the minimal offset delta required to keep a focused node fully visible.
+    /// - Parameters:
+    ///   - focusRect: Focused node frame in canvas/world coordinates.
+    ///   - viewportSize: Current viewport size.
+    ///   - effectiveOffset: Current effective offset applied to canvas rendering.
+    /// - Returns: Offset delta to add so the focused node stays within viewport bounds.
+    static func overflowCompensation(
+        focusRect: CGRect,
+        viewportSize: CGSize,
+        effectiveOffset: CGSize
+    ) -> CGSize {
+        let minXOnScreen = focusRect.minX + effectiveOffset.width
+        let maxXOnScreen = focusRect.maxX + effectiveOffset.width
+        let minYOnScreen = focusRect.minY + effectiveOffset.height
+        let maxYOnScreen = focusRect.maxY + effectiveOffset.height
+
+        let dx: Double
+        if minXOnScreen < 0 {
+            dx = -minXOnScreen
+        } else if maxXOnScreen > viewportSize.width {
+            dx = viewportSize.width - maxXOnScreen
+        } else {
+            dx = 0
+        }
+
+        let dy: Double
+        if minYOnScreen < 0 {
+            dy = -minYOnScreen
+        } else if maxYOnScreen > viewportSize.height {
+            dy = viewportSize.height - maxYOnScreen
+        } else {
+            dy = 0
+        }
+
+        return CGSize(width: dx, height: dy)
+    }
 }

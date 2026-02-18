@@ -4,7 +4,7 @@ import Testing
 @testable import Application
 
 // Background: Phase-3 routes tree/area recomputation through the coordinator pipeline.
-// Responsibility: Verify pipeline execution still produces stable graph and viewport intent outputs.
+// Responsibility: Verify pipeline execution still produces stable graph outputs.
 @Test("ApplyCanvasCommandsUseCase: pipeline mode produces deterministic result for mixed command sequence")
 func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
@@ -30,7 +30,7 @@ func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async thro
     #expect(pipelineResult.graph == replayResult.graph)
     #expect(pipelineResult.graph.focusedNodeID == secondChildID)
     #expect(pipelineResult.graph.nodesByID.count == 2)
-    #expect(pipelineResult.viewportIntent == .resetManualPanOffset)
+    #expect(pipelineResult.viewportIntent == nil)
     #expect(!pipelineResult.didAddNode)
 }
 
@@ -99,8 +99,8 @@ func test_pipelineMode_didAddNode_isFalseForTransientAdd() async throws {
     #expect(!result.didAddNode)
 }
 
-@Test("ApplyCanvasCommandsUseCase: apply returns viewport intent when focus changes")
-func test_apply_returnsViewportIntent_whenFocusChanges() async throws {
+@Test("ApplyCanvasCommandsUseCase: apply does not return viewport intent when focus changes")
+func test_apply_doesNotReturnViewportIntent_whenFocusChanges() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
     let rootNode = CanvasNode(
@@ -125,7 +125,7 @@ func test_apply_returnsViewportIntent_whenFocusChanges() async throws {
     let applyResult = try await sut.apply(commands: [.moveFocus(.down)])
 
     #expect(applyResult.newState.focusedNodeID == childID)
-    #expect(applyResult.viewportIntent == .resetManualPanOffset)
+    #expect(applyResult.viewportIntent == nil)
 }
 
 @Test("CanvasCommandPipelineCoordinator: tree/area stages are idempotent")
@@ -235,7 +235,7 @@ func test_pipelineCoordinator_focusNormalization_resolvesInvalidFocus() {
     )
 
     #expect(result.graph.focusedNodeID == upperID)
-    #expect(result.viewportIntent == .resetManualPanOffset)
+    #expect(result.viewportIntent == nil)
 }
 
 private func makePipelineParityBaseGraph(
