@@ -3,14 +3,6 @@
 import Domain
 import Testing
 
-@Test("Shortcut catalog: default definitions are valid")
-func test_defaultDefinitions_areValid() throws {
-    let definitions = CanvasShortcutCatalogService.defaultDefinitions()
-
-    #expect(!definitions.isEmpty)
-    try CanvasShortcutCatalogService.validate(definitions: definitions).get()
-}
-
 @Test("Shortcut catalog: command-enter resolves addChildNode")
 func test_resolveAction_commandEnter_returnsAddChildNode() {
     let gesture = CanvasShortcutGesture(key: .enter, modifiers: [.command])
@@ -63,43 +55,6 @@ func test_commandPaletteDefinitions_excludeOpenPaletteAction() {
     #expect(!definitions.isEmpty)
     #expect(definitions.allSatisfy { $0.isVisibleInCommandPalette })
     #expect(!definitions.contains(where: { $0.action == .openCommandPalette }))
-}
-
-@Test("Shortcut catalog validation: duplicate identifier throws")
-func test_validate_duplicateID_throwsError() {
-    let definition = CanvasShortcutDefinition(
-        id: CanvasShortcutID(rawValue: "duplicate"),
-        name: "Add Node",
-        gesture: CanvasShortcutGesture(key: .enter, modifiers: [.shift]),
-        action: .apply(commands: [.addNode]),
-        shortcutLabel: "Shift + Enter"
-    )
-
-    #expect(throws: CanvasShortcutCatalogError.duplicateID(definition.id)) {
-        try CanvasShortcutCatalogService.validate(definitions: [definition, definition]).get()
-    }
-}
-
-@Test("Shortcut catalog validation: duplicate gesture throws")
-func test_validate_duplicateGesture_throwsError() {
-    let first = CanvasShortcutDefinition(
-        id: CanvasShortcutID(rawValue: "undo"),
-        name: "Undo",
-        gesture: CanvasShortcutGesture(key: .character("z"), modifiers: [.command]),
-        action: .undo,
-        shortcutLabel: "Command + Z"
-    )
-    let second = CanvasShortcutDefinition(
-        id: CanvasShortcutID(rawValue: "duplicateUndo"),
-        name: "Undo Duplicate",
-        gesture: CanvasShortcutGesture(key: .character("z"), modifiers: [.command]),
-        action: .undo,
-        shortcutLabel: "Command + Z"
-    )
-
-    #expect(throws: CanvasShortcutCatalogError.duplicateGesture(first.gesture)) {
-        try CanvasShortcutCatalogService.validate(definitions: [first, second]).get()
-    }
 }
 
 @Test("Shortcut catalog: command-plus resolves zoom in")

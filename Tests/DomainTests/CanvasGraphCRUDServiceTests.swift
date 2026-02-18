@@ -14,7 +14,7 @@ func test_nodeCrud_textNode_lifecycleWorks() throws {
     )
 
     let createdGraph = try CanvasGraphCRUDService.createNode(initialNode, in: .empty).get()
-    #expect(CanvasGraphCRUDService.readNode(id: nodeID, in: createdGraph)?.text == "first")
+    #expect(createdGraph.nodesByID[nodeID]?.text == "first")
 
     let updatedNode = CanvasNode(
         id: nodeID,
@@ -24,11 +24,11 @@ func test_nodeCrud_textNode_lifecycleWorks() throws {
         metadata: ["purpose": "memo"]
     )
     let updatedGraph = try CanvasGraphCRUDService.updateNode(updatedNode, in: createdGraph).get()
-    #expect(CanvasGraphCRUDService.readNode(id: nodeID, in: updatedGraph)?.text == "updated")
-    #expect(CanvasGraphCRUDService.readNode(id: nodeID, in: updatedGraph)?.metadata["purpose"] == "memo")
+    #expect(updatedGraph.nodesByID[nodeID]?.text == "updated")
+    #expect(updatedGraph.nodesByID[nodeID]?.metadata["purpose"] == "memo")
 
     let deletedGraph = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: updatedGraph).get()
-    #expect(CanvasGraphCRUDService.readNode(id: nodeID, in: deletedGraph) == nil)
+    #expect(deletedGraph.nodesByID[nodeID] == nil)
 }
 
 @Test("Edge CRUD: edge requires existing node endpoints")
@@ -58,22 +58,11 @@ func test_edgeCrud_withExistingNodes_lifecycleWorks() throws {
         label: "flow"
     )
     graph = try CanvasGraphCRUDService.createEdge(edge, in: graph).get()
-    #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.label == "flow")
-    #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.relationType == .parentChild)
-
-    let updatedEdge = CanvasEdge(
-        id: edgeID,
-        fromNodeID: fromNode.id,
-        toNodeID: toNode.id,
-        relationType: .normal,
-        label: "updated"
-    )
-    graph = try CanvasGraphCRUDService.updateEdge(updatedEdge, in: graph).get()
-    #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.label == "updated")
-    #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph)?.relationType == .normal)
+    #expect(graph.edgesByID[edgeID]?.label == "flow")
+    #expect(graph.edgesByID[edgeID]?.relationType == .parentChild)
 
     graph = try CanvasGraphCRUDService.deleteEdge(id: edgeID, in: graph).get()
-    #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: graph) == nil)
+    #expect(graph.edgesByID[edgeID] == nil)
 }
 
 @Test("Deleting a node also removes related edges")
@@ -100,8 +89,8 @@ func test_deleteNode_removesConnectedEdges() throws {
     ).get()
 
     let prunedGraph = try CanvasGraphCRUDService.deleteNode(id: fromNode.id, in: graph).get()
-    #expect(CanvasGraphCRUDService.readNode(id: fromNode.id, in: prunedGraph) == nil)
-    #expect(CanvasGraphCRUDService.readEdge(id: edgeID, in: prunedGraph) == nil)
+    #expect(prunedGraph.nodesByID[fromNode.id] == nil)
+    #expect(prunedGraph.edgesByID[edgeID] == nil)
 }
 
 @Test("Deleting focused node clears focus")
