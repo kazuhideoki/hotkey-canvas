@@ -292,6 +292,9 @@ public struct CanvasView: View {
             .onChange(of: viewportSize) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
             }
+            .onChange(of: zoomScale) { _ in
+                applyFocusVisibilityRule(viewportSize: viewportSize)
+            }
         }
         .onReceive(viewModel.$pendingEditingNodeID) { pendingNodeID in
             pendingEditingRequestID &+= 1
