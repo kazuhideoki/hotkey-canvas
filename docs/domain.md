@@ -37,6 +37,7 @@
   - `CanvasCommand`
   - `CanvasNodeMoveDirection`
   - `CanvasSiblingNodePosition`
+  - `CanvasCommand.centerFocusedNode`
 - エラー
   - `CanvasGraphError`
 - サービス
@@ -267,7 +268,7 @@
   - Tree: `didMutateGraph && needsTreeLayout`
   - Area: `didMutateGraph && needsAreaLayout`
   - Focus: `didMutateGraph && needsFocusNormalization`
-  - Viewport Intent: 現行ルールでは常に `nil`（`CanvasView` 側で初期中央化と画面外補正を行うため、Application から手動パンリセット意図は送らない）
+  - Viewport Intent: `centerFocusedNode` コマンド時は `resetManualPanOffset`
 - 境界責務
   - Domain は純粋状態変換のみを担当する。
   - Application はステージ実行順と `CanvasViewportIntent` 生成を担当する。
@@ -358,3 +359,4 @@
 - 2026-02-16: `CanvasShortcutCatalogService` とショートカット関連モデルを追加し、ホットキー解決とコマンドパレット一覧の情報源をドメインで統一。
 - 2026-02-16: Domain サービスの失敗表現を `throw` から `Result<..., 各DomainError>` に統一し、Application 側は `.get()` で既存 `throws` 契約を維持。
 - 2026-02-18: Viewport Intent の運用を更新し、Application から `.resetManualPanOffset` を生成しない仕様へ変更（初期中央化/画面外補正は `CanvasView` の表示ルールで実施）。
+- 2026-02-18: `ctrl+l` の `centerFocusedNode` コマンドを追加し、`apply` フローで `resetManualPanOffset` を返却することで、現在フォーカスノードを画面中央へ再配置する。

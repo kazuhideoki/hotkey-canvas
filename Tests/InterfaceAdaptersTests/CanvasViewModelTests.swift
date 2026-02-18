@@ -274,7 +274,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
                 didAddNode = true
-            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .setNodeText:
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .centerFocusedNode, .setNodeText:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -363,7 +363,7 @@ extension OverlappingFailureCanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
                 didAddNode = true
-            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .setNodeText:
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .centerFocusedNode, .setNodeText:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -552,7 +552,8 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nextGraph.focusedNodeID
                 )
-            case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .deleteFocusedNode:
+            case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .centerFocusedNode,
+                .deleteFocusedNode:
                 continue
             }
         }
@@ -741,7 +742,8 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nodeID
                 )
-            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .setNodeText, .deleteFocusedNode:
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .centerFocusedNode, .setNodeText,
+                .deleteFocusedNode:
                 continue
             }
         }
@@ -789,7 +791,8 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nodeID
                 )
-            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .setNodeText, .deleteFocusedNode:
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .centerFocusedNode, .setNodeText,
+                .deleteFocusedNode:
                 continue
             }
         }

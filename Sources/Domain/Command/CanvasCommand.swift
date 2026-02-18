@@ -4,6 +4,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case addSiblingNode(position: CanvasSiblingNodePosition)
     case moveFocus(CanvasFocusDirection)
     case moveNode(CanvasNodeMoveDirection)
+    case centerFocusedNode
     case deleteFocusedNode
     case setNodeText(nodeID: CanvasNodeID, text: String, nodeHeight: Double)
 }

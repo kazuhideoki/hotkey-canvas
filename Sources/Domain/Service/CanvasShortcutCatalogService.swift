@@ -199,6 +199,13 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.moveNode(.up)]),
                 shortcutLabel: "Command + Up Arrow"
             ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "centerFocusedNode"),
+                name: "Center Focused Node",
+                gesture: CanvasShortcutGesture(key: .character("l"), modifiers: [.control]),
+                action: .apply(commands: [.centerFocusedNode]),
+                shortcutLabel: "Control + L"
+            ),
         ]
     }
 

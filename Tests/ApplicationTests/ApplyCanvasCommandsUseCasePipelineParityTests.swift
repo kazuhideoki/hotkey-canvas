@@ -128,6 +128,30 @@ func test_apply_doesNotReturnViewportIntent_whenFocusChanges() async throws {
     #expect(applyResult.viewportIntent == nil)
 }
 
+@Test("ApplyCanvasCommandsUseCase: centerFocusedNode command emits viewport reset intent")
+func test_apply_centerFocusedNode_emitsViewportIntent() async throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 48, y: 48, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let applyResult = try await sut.apply(commands: [.centerFocusedNode])
+
+    #expect(applyResult.newState == graph)
+    #expect(!applyResult.canUndo)
+    #expect(applyResult.viewportIntent == .resetManualPanOffset)
+}
+
 @Test("CanvasCommandPipelineCoordinator: tree/area stages are idempotent")
 func test_pipelineCoordinator_treeAreaStages_areIdempotent() {
     let rootID = CanvasNodeID(rawValue: "root")

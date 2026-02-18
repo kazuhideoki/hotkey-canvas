@@ -118,6 +118,29 @@ func test_translate_commandEnter_returnsAddChildNode() throws {
     #expect(commands == [.addChildNode])
 }
 
+@Test("CanvasHotkeyTranslator: Control+L maps to centerFocusedNode")
+func test_translate_controlL_returnsCenterFocusedNode() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.control],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "l",
+            charactersIgnoringModifiers: "l",
+            isARepeat: false,
+            keyCode: 37
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.centerFocusedNode])
+}
+
 @Test("CanvasHotkeyTranslator: Up arrow maps to moveFocus up")
 func test_translate_upArrow_returnsMoveFocusUp() throws {
     let sut = CanvasHotkeyTranslator()

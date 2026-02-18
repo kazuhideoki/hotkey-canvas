@@ -15,6 +15,8 @@ extension ApplyCanvasCommandsUseCase {
             return moveFocus(in: graph, direction: direction)
         case .moveNode(let direction):
             return try moveNode(in: graph, direction: direction)
+        case .centerFocusedNode:
+            return noOpMutationResult(for: graph)
         case .deleteFocusedNode:
             return try deleteFocusedNode(in: graph)
         case .setNodeText(let nodeID, let text, let nodeHeight):
