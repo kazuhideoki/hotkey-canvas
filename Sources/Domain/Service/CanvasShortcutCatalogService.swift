@@ -142,6 +142,12 @@ extension CanvasShortcutCatalogService {
     }
 
     private static func navigationDefinitions() -> [CanvasShortcutDefinition] {
+        focusNavigationDefinitions()
+            + nodeNavigationDefinitions()
+            + canvasNavigationDefinitions()
+    }
+
+    private static func focusNavigationDefinitions() -> [CanvasShortcutDefinition] {
         [
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "moveFocusDown"),
@@ -171,6 +177,11 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.moveFocus(.up)]),
                 shortcutLabel: "Up Arrow"
             ),
+        ]
+    }
+
+    private static func nodeNavigationDefinitions() -> [CanvasShortcutDefinition] {
+        [
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "moveNodeDown"),
                 name: "Move Node Down",
@@ -199,13 +210,18 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.moveNode(.up)]),
                 shortcutLabel: "Command + Up Arrow"
             ),
+        ]
+    }
+
+    private static func canvasNavigationDefinitions() -> [CanvasShortcutDefinition] {
+        [
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "centerFocusedNode"),
                 name: "Center Focused Node",
                 gesture: CanvasShortcutGesture(key: .character("l"), modifiers: [.control]),
                 action: .apply(commands: [.centerFocusedNode]),
                 shortcutLabel: "Control + L"
-            ),
+            )
         ]
     }
 
