@@ -183,6 +183,8 @@
 - Application 共有ヘルパー（配置候補計算）
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers+Graph.swift`
     - `parentChildArea(...)`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers.swift`
+    - `addNode` の初期配置で最下エリアとエリア間隔を参照し、追加直後からエリア干渉しない候補座標を算出する。
 - 幾何モデルの利用
   - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasContentBoundsCalculator.swift`（`CanvasRect`）
 - 主要テスト
