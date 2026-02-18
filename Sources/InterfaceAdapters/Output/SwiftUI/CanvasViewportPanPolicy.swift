@@ -48,8 +48,8 @@ enum CanvasViewportPanPolicy {
     ) -> CGSize {
         let scale = hasPreciseDeltas ? 1.0 : 16.0
         return CGSize(
-            width: -deltaX * scale,
-            height: -deltaY * scale
+            width: deltaX * scale,
+            height: deltaY * scale
         )
     }
 
