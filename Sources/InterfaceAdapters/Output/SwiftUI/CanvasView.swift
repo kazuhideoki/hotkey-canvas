@@ -15,6 +15,7 @@ public struct CanvasView: View {
     @State private var commandPaletteQuery: String = ""
     @State private var isCommandPalettePresented = false
     @State private var selectedCommandPaletteIndex: Int = 0
+    @State private var previousSelectedCommandPaletteIndex: Int = 0
     @State var hasInitializedCameraAnchor = false
     @State var cameraAnchorPoint: CGPoint = .zero
     @State var manualPanOffset: CGSize = .zero
@@ -67,32 +68,62 @@ public struct CanvasView: View {
                             .fill(Color(nsColor: .separatorColor))
                             .frame(height: 1)
                             .padding(.top, 10)
-                        ScrollView {
-                            VStack(spacing: 0) {
-                                ForEach(Array(commandPaletteItems.enumerated()), id: \.element.id) { (index, item) in
-                                    HStack {
-                                        Text(item.title)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                        Text(item.shortcutLabel)
-                                            .foregroundStyle(.secondary)
-                                            .frame(maxWidth: 170, alignment: .trailing)
-                                    }
-                                    .font(.system(size: 13, weight: .medium))
-                                    .padding(.vertical, 8)
-                                    .padding(.horizontal, 12)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .contentShape(Rectangle())
-                                    .background(
-                                        index == selectedCommandPaletteIndex ? Color.accentColor.opacity(0.2) : .clear
-                                    )
-                                    .onTapGesture {
-                                        selectedCommandPaletteIndex = index
-                                        executeSelectedCommand(item)
+                        ScrollViewReader { scrollProxy in
+                            ScrollView {
+                                VStack(spacing: 0) {
+                                    ForEach(Array(commandPaletteItems.enumerated()), id: \.element.id) { (index, item) in
+                                        HStack {
+                                            Text(item.title)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                            Text(item.shortcutLabel)
+                                                .foregroundStyle(.secondary)
+                                                .frame(maxWidth: 170, alignment: .trailing)
+                                        }
+                                        .font(.system(size: 13, weight: .medium))
+                                        .padding(.vertical, 8)
+                                        .padding(.horizontal, 12)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .contentShape(Rectangle())
+                                        .background(
+                                            index == selectedCommandPaletteIndex ? Color.accentColor.opacity(0.2) : .clear
+                                        )
+                                        .id(item.id)
+                                        .onTapGesture {
+                                            selectedCommandPaletteIndex = index
+                                            executeSelectedCommand(item)
+                                        }
                                     }
                                 }
                             }
+                            .frame(maxHeight: 280)
+                            .onAppear {
+                                guard isCommandPalettePresented,
+                                      let firstItem = commandPaletteItems.first else {
+                                    return
+                                }
+                                scrollProxy.scrollTo(firstItem.id, anchor: .top)
+                            }
+                            .onChange(of: selectedCommandPaletteIndex) { selectedIndex in
+                                guard commandPaletteItems.indices.contains(selectedIndex) else {
+                                    return
+                                }
+                                let isMovingDown = selectedIndex > previousSelectedCommandPaletteIndex
+                                previousSelectedCommandPaletteIndex = selectedIndex
+                                scrollProxy.scrollTo(
+                                    commandPaletteItems[selectedIndex].id,
+                                    anchor: isMovingDown ? .bottom : .top
+                                )
+                            }
+                            .onChange(of: commandPaletteQuery) { _ in
+                                guard isCommandPalettePresented else {
+                                    return
+                                }
+                                guard let firstItem = commandPaletteItems.first else {
+                                    return
+                                }
+                                scrollProxy.scrollTo(firstItem.id, anchor: .top)
+                            }
                         }
-                        .frame(maxHeight: 280)
                     }
                     .frame(width: 520)
                     .background(.regularMaterial)
