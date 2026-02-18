@@ -18,15 +18,11 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
     }
 
     public func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
-        let sequenceResult = try runLegacyCommandSequenceWithMutationResults(
+        let pipelineResult = try runPipelineCommandSequence(
             commands: commands,
             from: graph
         )
-        let nextGraph = sequenceResult.graph
-        let pipelineResult = pipelineCoordinator.run(
-            on: graph,
-            mutationResults: sequenceResult.mutationResults
-        )
+        let nextGraph = pipelineResult.graph
 
         guard nextGraph != graph else {
             return makeApplyResult(newState: graph)
@@ -65,48 +61,43 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
 }
 
 extension ApplyCanvasCommandsUseCase {
-    func runLegacyCommandSequenceWithMutationResults(
-        commands: [CanvasCommand],
-        from baseGraph: CanvasGraph
-    ) throws -> (graph: CanvasGraph, mutationResults: [CanvasMutationResult]) {
-        var nextGraph = baseGraph
-        var mutationResults: [CanvasMutationResult] = []
-        mutationResults.reserveCapacity(commands.count)
-
-        for command in commands {
-            let graphBeforeMutation = nextGraph
-            nextGraph = try apply(command: command, to: nextGraph)
-            mutationResults.append(
-                CanvasMutationResult.classify(
-                    command: command,
-                    graphBeforeMutation: graphBeforeMutation,
-                    graphAfterMutation: nextGraph
-                )
-            )
-        }
-
-        return (graph: nextGraph, mutationResults: mutationResults)
-    }
-
-    func runLegacyCommandSequence(
-        commands: [CanvasCommand],
-        from baseGraph: CanvasGraph
-    ) throws -> CanvasGraph {
-        try runLegacyCommandSequenceWithMutationResults(
-            commands: commands,
-            from: baseGraph
-        ).graph
-    }
-
     func runPipelineCommandSequence(
         commands: [CanvasCommand],
         from baseGraph: CanvasGraph
     ) throws -> CanvasPipelineResult {
-        let sequenceResult = try runLegacyCommandSequenceWithMutationResults(
-            commands: commands,
-            from: baseGraph
+        var nextGraph = baseGraph
+        var lastViewportIntent: CanvasViewportIntent?
+
+        for command in commands {
+            let mutationResult = try applyMutation(command: command, to: nextGraph)
+            let stepResult = pipelineCoordinator.run(
+                on: nextGraph,
+                mutationResults: [mutationResult]
+            )
+            nextGraph = stepResult.graph
+            if let viewportIntent = stepResult.viewportIntent {
+                lastViewportIntent = viewportIntent
+            }
+        }
+
+        return CanvasPipelineResult(
+            graph: nextGraph,
+            viewportIntent: lastViewportIntent,
+            didAddNode: hasAddedNode(from: baseGraph, to: nextGraph)
         )
-        return pipelineCoordinator.run(on: baseGraph, mutationResults: sequenceResult.mutationResults)
+    }
+
+    func noOpMutationResult(for graph: CanvasGraph) -> CanvasMutationResult {
+        CanvasMutationResult(
+            graphBeforeMutation: graph,
+            graphAfterMutation: graph,
+            effects: .noEffect
+        )
+    }
+
+    private func hasAddedNode(from oldGraph: CanvasGraph, to newGraph: CanvasGraph) -> Bool {
+        let previousNodeIDs = Set(oldGraph.nodesByID.keys)
+        return newGraph.nodesByID.keys.contains { !previousNodeIDs.contains($0) }
     }
 
     private func makeApplyResult(newState: CanvasGraph, didAddNode: Bool = false) -> ApplyResult {

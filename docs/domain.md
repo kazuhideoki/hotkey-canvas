@@ -174,15 +174,12 @@
 
 #### 利用状況（どこから使われるか）
 
-- Application 共有ヘルパー
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers.swift`
+- Application Coordinator
+  - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
+    - `runAreaLayoutStage(on:seedNodeID:)`
+- Application 共有ヘルパー（配置候補計算）
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers+Graph.swift`
     - `parentChildArea(...)`
-    - `resolveAreaOverlaps(...)`
-- 間接利用（ノード追加系）
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
 - 幾何モデルの利用
   - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasContentBoundsCalculator.swift`（`CanvasRect`）
 - 主要テスト
@@ -231,15 +228,9 @@
 
 #### 利用状況（どこから使われるか）
 
-- Application 共有ヘルパー
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers.swift`
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SharedHelpers+Graph.swift`
-    - `relayoutParentChildTrees(in:)`
-- 間接利用（構造変更・サイズ変更系）
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
+- Application Coordinator
+  - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
+    - `runTreeLayoutStage(on:)`
 - 主要テスト
   - `Tests/DomainTests/CanvasTreeLayoutServiceTests.swift`
 

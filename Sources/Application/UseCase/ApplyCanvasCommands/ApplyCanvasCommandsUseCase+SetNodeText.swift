@@ -13,9 +13,9 @@ extension ApplyCanvasCommandsUseCase {
         nodeID: CanvasNodeID,
         text: String,
         nodeHeight: Double
-    ) throws -> CanvasGraph {
+    ) throws -> CanvasMutationResult {
         guard let node = graph.nodesByID[nodeID] else {
-            return graph
+            return noOpMutationResult(for: graph)
         }
 
         let normalizedText = text.isEmpty ? nil : text
@@ -28,7 +28,7 @@ extension ApplyCanvasCommandsUseCase {
         let proposedHeight = nodeHeight.isFinite ? nodeHeight : fallbackHeight
         let normalizedHeight = max(proposedHeight, Self.minimumNodeHeight)
         if node.text == normalizedText, node.bounds.height == normalizedHeight {
-            return graph
+            return noOpMutationResult(for: graph)
         }
 
         let updatedBounds = CanvasBounds(
@@ -44,8 +44,17 @@ extension ApplyCanvasCommandsUseCase {
             bounds: updatedBounds,
             metadata: node.metadata
         )
-        let updatedGraph = try CanvasGraphCRUDService.updateNode(updatedNode, in: graph).get()
-        let graphAfterTreeLayout = relayoutParentChildTrees(in: updatedGraph)
-        return resolveAreaOverlaps(around: nodeID, in: graphAfterTreeLayout)
+        let nextGraph = try CanvasGraphCRUDService.updateNode(updatedNode, in: graph).get()
+        return CanvasMutationResult(
+            graphBeforeMutation: graph,
+            graphAfterMutation: nextGraph,
+            effects: CanvasMutationEffects(
+                didMutateGraph: true,
+                needsTreeLayout: true,
+                needsAreaLayout: true,
+                needsFocusNormalization: false
+            ),
+            areaLayoutSeedNodeID: nodeID
+        )
     }
 }

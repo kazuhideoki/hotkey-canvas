@@ -1,5 +1,5 @@
-// Background: Pipeline migration requires a centralized execution order without changing external behavior yet.
-// Responsibility: Execute stage order in safe mode while preserving legacy command mutation output.
+// Background: Pipeline migration requires a centralized execution order for command mutation and recomputation.
+// Responsibility: Execute fixed stage order from mutation outputs and return final pipeline state.
 import Domain
 
 /// Coordinator that evaluates fixed pipeline stage order from phase-1 effect contracts.
@@ -55,7 +55,10 @@ extension CanvasCommandPipelineCoordinator {
             graph = runTreeLayoutStage(on: graph)
         }
         if effects.didMutateGraph && effects.needsAreaLayout {
-            graph = runAreaLayoutStage(on: graph)
+            graph = runAreaLayoutStage(
+                on: graph,
+                seedNodeID: mutationResult.areaLayoutSeedNodeID
+            )
         }
         if effects.didMutateGraph && effects.needsFocusNormalization {
             graph = runFocusNormalizationStage(on: graph)
@@ -65,13 +68,93 @@ extension CanvasCommandPipelineCoordinator {
     }
 
     private func runTreeLayoutStage(on graph: CanvasGraph) -> CanvasGraph {
-        // Safe mode: legacy handlers already applied tree relayout.
-        graph
+        let updatedBoundsByNodeID = CanvasTreeLayoutService.relayoutParentChildTrees(
+            in: graph,
+            verticalSpacing: 24,
+            horizontalSpacing: 32,
+            rootSpacing: 48
+        )
+        guard !updatedBoundsByNodeID.isEmpty else {
+            return graph
+        }
+
+        var nodesByID = graph.nodesByID
+        for nodeID in updatedBoundsByNodeID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let bounds = updatedBoundsByNodeID[nodeID] else {
+                continue
+            }
+            guard let node = nodesByID[nodeID] else {
+                continue
+            }
+            nodesByID[nodeID] = CanvasNode(
+                id: node.id,
+                kind: node.kind,
+                text: node.text,
+                bounds: bounds,
+                metadata: node.metadata
+            )
+        }
+
+        return CanvasGraph(
+            nodesByID: nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: graph.focusedNodeID
+        )
     }
 
-    private func runAreaLayoutStage(on graph: CanvasGraph) -> CanvasGraph {
-        // Safe mode: legacy handlers already applied area overlap resolution.
-        graph
+    private func runAreaLayoutStage(on graph: CanvasGraph, seedNodeID: CanvasNodeID?) -> CanvasGraph {
+        guard let seedNodeID else {
+            return graph
+        }
+        let areas = CanvasAreaLayoutService.makeParentChildAreas(in: graph)
+        guard let seedArea = areas.first(where: { $0.nodeIDs.contains(seedNodeID) }) else {
+            return graph
+        }
+
+        let translationsByAreaID = CanvasAreaLayoutService.resolveOverlaps(
+            areas: areas,
+            seedAreaID: seedArea.id,
+            minimumSpacing: 32
+        )
+        guard !translationsByAreaID.isEmpty else {
+            return graph
+        }
+
+        let areasByID = Dictionary(uniqueKeysWithValues: areas.map { ($0.id, $0) })
+        var nodesByID = graph.nodesByID
+
+        for areaID in translationsByAreaID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let translation = translationsByAreaID[areaID] else {
+                continue
+            }
+            guard let area = areasByID[areaID] else {
+                continue
+            }
+
+            for nodeID in area.nodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
+                guard let node = nodesByID[nodeID] else {
+                    continue
+                }
+                nodesByID[nodeID] = CanvasNode(
+                    id: node.id,
+                    kind: node.kind,
+                    text: node.text,
+                    bounds: CanvasBounds(
+                        x: node.bounds.x + translation.dx,
+                        y: node.bounds.y + translation.dy,
+                        width: node.bounds.width,
+                        height: node.bounds.height
+                    ),
+                    metadata: node.metadata
+                )
+            }
+        }
+
+        return CanvasGraph(
+            nodesByID: nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: graph.focusedNodeID
+        )
     }
 
     private func runFocusNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {

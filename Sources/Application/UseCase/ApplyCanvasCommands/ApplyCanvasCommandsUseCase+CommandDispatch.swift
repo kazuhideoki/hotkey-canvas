@@ -3,7 +3,7 @@ import Domain
 // Background: Canvas editing supports multiple command kinds behind a single apply entry point.
 // Responsibility: Dispatch each command to the corresponding operation handler.
 extension ApplyCanvasCommandsUseCase {
-    func apply(command: CanvasCommand, to graph: CanvasGraph) throws -> CanvasGraph {
+    func applyMutation(command: CanvasCommand, to graph: CanvasGraph) throws -> CanvasMutationResult {
         switch command {
         case .addNode:
             return try addNode(in: graph)

@@ -10,18 +10,18 @@ extension ApplyCanvasCommandsUseCase {
     /// - Returns: Updated graph focused on the newly created sibling node,
     ///   or the original graph when creation is not applicable.
     /// - Throws: Propagates graph mutation errors from node or edge creation.
-    func addSiblingNode(in graph: CanvasGraph, position: CanvasSiblingNodePosition) throws -> CanvasGraph {
+    func addSiblingNode(in graph: CanvasGraph, position: CanvasSiblingNodePosition) throws -> CanvasMutationResult {
         guard let focusedNodeID = graph.focusedNodeID else {
-            return graph
+            return noOpMutationResult(for: graph)
         }
         guard let focusedNode = graph.nodesByID[focusedNodeID] else {
-            return graph
+            return noOpMutationResult(for: graph)
         }
         guard let parentID = parentNodeID(of: focusedNodeID, in: graph) else {
-            return graph
+            return noOpMutationResult(for: graph)
         }
         guard graph.nodesByID[parentID] != nil else {
-            return graph
+            return noOpMutationResult(for: graph)
         }
 
         let siblingNode = makeTextNode(
@@ -38,13 +38,21 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentID, to: siblingNode.id),
             in: graphWithSibling
         ).get()
-        let graphAfterTreeLayout = relayoutParentChildTrees(in: graphWithSibling)
-        let graphAfterLayout = resolveAreaOverlaps(around: siblingNode.id, in: graphAfterTreeLayout)
-
-        return CanvasGraph(
-            nodesByID: graphAfterLayout.nodesByID,
-            edgesByID: graphAfterLayout.edgesByID,
+        let nextGraph = CanvasGraph(
+            nodesByID: graphWithSibling.nodesByID,
+            edgesByID: graphWithSibling.edgesByID,
             focusedNodeID: siblingNode.id
+        )
+        return CanvasMutationResult(
+            graphBeforeMutation: graph,
+            graphAfterMutation: nextGraph,
+            effects: CanvasMutationEffects(
+                didMutateGraph: true,
+                needsTreeLayout: true,
+                needsAreaLayout: true,
+                needsFocusNormalization: false
+            ),
+            areaLayoutSeedNodeID: siblingNode.id
         )
     }
 }

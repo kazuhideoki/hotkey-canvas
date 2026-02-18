@@ -10,15 +10,15 @@ extension ApplyCanvasCommandsUseCase {
     /// - Returns: Updated graph focused on the newly created child node,
     ///   or the original graph when creation is not applicable.
     /// - Throws: Propagates graph mutation errors from node or edge creation.
-    func addChildNode(in graph: CanvasGraph, requiresTopLevelParent: Bool) throws -> CanvasGraph {
+    func addChildNode(in graph: CanvasGraph, requiresTopLevelParent: Bool) throws -> CanvasMutationResult {
         guard let parentID = graph.focusedNodeID else {
-            return graph
+            return noOpMutationResult(for: graph)
         }
         guard let parentNode = graph.nodesByID[parentID] else {
-            return graph
+            return noOpMutationResult(for: graph)
         }
         if requiresTopLevelParent && !isTopLevelParent(parentID, in: graph) {
-            return graph
+            return noOpMutationResult(for: graph)
         }
 
         let siblingAreaNodeIDs = parentChildAreaNodeIDs(containing: parentID, in: graph)
@@ -31,13 +31,21 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentID, to: childNode.id),
             in: graphWithChild
         ).get()
-        let graphAfterTreeLayout = relayoutParentChildTrees(in: graphWithChild)
-        let graphAfterLayout = resolveAreaOverlaps(around: childNode.id, in: graphAfterTreeLayout)
-
-        return CanvasGraph(
-            nodesByID: graphAfterLayout.nodesByID,
-            edgesByID: graphAfterLayout.edgesByID,
+        let nextGraph = CanvasGraph(
+            nodesByID: graphWithChild.nodesByID,
+            edgesByID: graphWithChild.edgesByID,
             focusedNodeID: childNode.id
+        )
+        return CanvasMutationResult(
+            graphBeforeMutation: graph,
+            graphAfterMutation: nextGraph,
+            effects: CanvasMutationEffects(
+                didMutateGraph: true,
+                needsTreeLayout: true,
+                needsAreaLayout: true,
+                needsFocusNormalization: false
+            ),
+            areaLayoutSeedNodeID: childNode.id
         )
     }
 }

@@ -3,10 +3,10 @@ import Testing
 
 @testable import Application
 
-// Background: Phase-2 introduces a coordinator skeleton while keeping legacy mutation behavior unchanged.
-// Responsibility: Verify coordinator safe mode remains graph-equivalent to legacy command sequencing.
-@Test("ApplyCanvasCommandsUseCase: pipeline safe mode matches legacy sequence result")
-func test_pipelineSafeMode_matchesLegacySequenceResult() async throws {
+// Background: Phase-3 routes tree/area recomputation through the coordinator pipeline.
+// Responsibility: Verify pipeline execution still produces stable graph and viewport intent outputs.
+@Test("ApplyCanvasCommandsUseCase: pipeline mode produces deterministic result for mixed command sequence")
+func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let firstChildID = CanvasNodeID(rawValue: "first-child")
     let secondChildID = CanvasNodeID(rawValue: "second-child")
@@ -24,16 +24,18 @@ func test_pipelineSafeMode_matchesLegacySequenceResult() async throws {
         .deleteFocusedNode,
     ]
 
-    let legacyGraph = try await sut.runLegacyCommandSequence(commands: commands, from: baseGraph)
     let pipelineResult = try await sut.runPipelineCommandSequence(commands: commands, from: baseGraph)
+    let replayResult = try await sut.runPipelineCommandSequence(commands: commands, from: baseGraph)
 
-    #expect(pipelineResult.graph == legacyGraph)
+    #expect(pipelineResult.graph == replayResult.graph)
+    #expect(pipelineResult.graph.focusedNodeID == rootID)
+    #expect(pipelineResult.graph.nodesByID.count == 1)
     #expect(pipelineResult.viewportIntent == .resetManualPanOffset)
     #expect(!pipelineResult.didAddNode)
 }
 
-@Test("ApplyCanvasCommandsUseCase: pipeline safe mode keeps no-op sequence unchanged")
-func test_pipelineSafeMode_keepsNoOpSequenceUnchanged() async throws {
+@Test("ApplyCanvasCommandsUseCase: pipeline mode keeps no-op sequence unchanged")
+func test_pipelineMode_keepsNoOpSequenceUnchanged() async throws {
     let sut = ApplyCanvasCommandsUseCase(initialGraph: .empty)
     let commands: [CanvasCommand] = [
         .moveFocus(.left),
@@ -41,13 +43,126 @@ func test_pipelineSafeMode_keepsNoOpSequenceUnchanged() async throws {
         .addSiblingNode(position: .above),
     ]
 
-    let legacyGraph = try await sut.runLegacyCommandSequence(commands: commands, from: .empty)
     let pipelineResult = try await sut.runPipelineCommandSequence(commands: commands, from: .empty)
 
-    #expect(legacyGraph == .empty)
-    #expect(pipelineResult.graph == legacyGraph)
+    #expect(pipelineResult.graph == .empty)
     #expect(pipelineResult.viewportIntent == nil)
     #expect(!pipelineResult.didAddNode)
+}
+
+@Test("ApplyCanvasCommandsUseCase: batched pipeline command sequence matches staged step-by-step execution")
+func test_pipelineMode_batchedSequence_matchesStepByStepExecution() async throws {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let firstChildID = CanvasNodeID(rawValue: "first-child")
+    let secondChildID = CanvasNodeID(rawValue: "second-child")
+    let baseGraph = makePipelineParityBaseGraph(
+        rootID: rootID,
+        firstChildID: firstChildID,
+        secondChildID: secondChildID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: baseGraph)
+
+    let firstCommand = CanvasCommand.setNodeText(
+        nodeID: firstChildID,
+        text: "expanded",
+        nodeHeight: 220
+    )
+    let secondCommand = CanvasCommand.moveFocus(.down)
+
+    let batchedResult = try await sut.runPipelineCommandSequence(
+        commands: [firstCommand, secondCommand],
+        from: baseGraph
+    )
+    let firstStep = try await sut.runPipelineCommandSequence(
+        commands: [firstCommand],
+        from: baseGraph
+    )
+    let secondStep = try await sut.runPipelineCommandSequence(
+        commands: [secondCommand],
+        from: firstStep.graph
+    )
+
+    #expect(batchedResult.graph == secondStep.graph)
+    #expect(batchedResult.viewportIntent == secondStep.viewportIntent)
+}
+
+@Test("ApplyCanvasCommandsUseCase: didAddNode is false when added node does not remain in final graph")
+func test_pipelineMode_didAddNode_isFalseForTransientAdd() async throws {
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: .empty)
+
+    let result = try await sut.runPipelineCommandSequence(
+        commands: [.addNode, .deleteFocusedNode],
+        from: .empty
+    )
+
+    #expect(result.graph == .empty)
+    #expect(!result.didAddNode)
+}
+
+@Test("CanvasCommandPipelineCoordinator: tree/area stages are idempotent")
+func test_pipelineCoordinator_treeAreaStages_areIdempotent() {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let childID = CanvasNodeID(rawValue: "child")
+
+    let rootNode = CanvasNode(
+        id: rootID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 48, y: 48, width: 220, height: 120)
+    )
+    let childNode = CanvasNode(
+        id: childID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 320, y: 220, width: 220, height: 120)
+    )
+    let edge = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-root-child"),
+        fromNodeID: rootID,
+        toNodeID: childID,
+        relationType: .parentChild
+    )
+    let baseGraph = CanvasGraph(
+        nodesByID: [rootID: rootNode, childID: childNode],
+        edgesByID: [edge.id: edge],
+        focusedNodeID: childID
+    )
+    let coordinator = CanvasCommandPipelineCoordinator()
+
+    let firstPass = coordinator.run(
+        on: baseGraph,
+        mutationResults: [
+            CanvasMutationResult(
+                graphBeforeMutation: baseGraph,
+                graphAfterMutation: baseGraph,
+                effects: CanvasMutationEffects(
+                    didMutateGraph: true,
+                    needsTreeLayout: true,
+                    needsAreaLayout: true,
+                    needsFocusNormalization: false
+                ),
+                areaLayoutSeedNodeID: childID
+            )
+        ]
+    )
+    let secondPass = coordinator.run(
+        on: firstPass.graph,
+        mutationResults: [
+            CanvasMutationResult(
+                graphBeforeMutation: firstPass.graph,
+                graphAfterMutation: firstPass.graph,
+                effects: CanvasMutationEffects(
+                    didMutateGraph: true,
+                    needsTreeLayout: true,
+                    needsAreaLayout: true,
+                    needsFocusNormalization: false
+                ),
+                areaLayoutSeedNodeID: childID
+            )
+        ]
+    )
+
+    #expect(secondPass.graph == firstPass.graph)
 }
 
 private func makePipelineParityBaseGraph(
