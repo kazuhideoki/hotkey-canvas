@@ -29,7 +29,10 @@ extension ApplyCanvasCommandsUseCase {
     ///   - graph: Graph to resolve.
     /// - Returns: Graph with translated node bounds after area overlap resolution.
     func resolveAreaOverlaps(around seedNodeID: CanvasNodeID, in graph: CanvasGraph) -> CanvasGraph {
-        let areas = CanvasAreaLayoutService.makeParentChildAreas(in: graph)
+        let areas = CanvasAreaLayoutService.makeParentChildAreas(
+            in: graph,
+            shapeKind: .convexHull
+        )
         guard let seedArea = areas.first(where: { $0.nodeIDs.contains(seedNodeID) }) else {
             return graph
         }

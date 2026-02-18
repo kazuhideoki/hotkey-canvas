@@ -5,14 +5,19 @@ import Foundation
 /// Pure domain service for hierarchy-aware area extraction and overlap resolution.
 public enum CanvasAreaLayoutService {
     /// Epsilon used for floating-point stability checks.
-    private static let numericEpsilon: Double = 1e-9
+    static let numericEpsilon: Double = 1e-9
 
     // MARK: - Public API
 
     /// Builds connected areas using parent-child links as an undirected graph.
-    /// - Parameter graph: Source graph snapshot.
+    /// - Parameters:
+    ///   - graph: Source graph snapshot.
+    ///   - shapeKind: Shape strategy used when constructing area outlines.
     /// - Returns: Deterministically ordered connected areas.
-    public static func makeParentChildAreas(in graph: CanvasGraph) -> [CanvasNodeArea] {
+    public static func makeParentChildAreas(
+        in graph: CanvasGraph,
+        shapeKind: CanvasAreaShapeKind = .rectangle
+    ) -> [CanvasNodeArea] {
         let sortedNodeIDs = graph.nodesByID.keys.sorted { $0.rawValue < $1.rawValue }
         guard !sortedNodeIDs.isEmpty else {
             return []
@@ -35,30 +40,26 @@ public enum CanvasAreaLayoutService {
         var areas: [CanvasNodeArea] = []
 
         for startNodeID in sortedNodeIDs where !visited.contains(startNodeID) {
-            var queue: [CanvasNodeID] = [startNodeID]
-            var componentNodeIDs: [CanvasNodeID] = []
-            visited.insert(startNodeID)
-
-            while !queue.isEmpty {
-                let currentNodeID = queue.removeFirst()
-                componentNodeIDs.append(currentNodeID)
-
-                let neighbors = adjacencyByNodeID[currentNodeID, default: []]
-                    .sorted { $0.rawValue < $1.rawValue }
-                for neighborNodeID in neighbors where !visited.contains(neighborNodeID) {
-                    visited.insert(neighborNodeID)
-                    queue.append(neighborNodeID)
-                }
-            }
-
+            let componentNodeIDs = bfsComponent(
+                from: startNodeID,
+                adjacencyByNodeID: adjacencyByNodeID,
+                visited: &visited
+            )
             let componentSet = Set(componentNodeIDs)
             let representativeNodeID = componentNodeIDs.min { $0.rawValue < $1.rawValue } ?? startNodeID
             let bounds = makeBounds(for: componentSet, in: graph)
+            let shape = makeShape(
+                for: componentSet,
+                in: graph,
+                shapeKind: shapeKind
+            )
+
             areas.append(
                 CanvasNodeArea(
                     id: representativeNodeID,
                     nodeIDs: componentSet,
-                    bounds: bounds
+                    bounds: bounds,
+                    shape: shape
                 )
             )
         }
@@ -83,10 +84,9 @@ public enum CanvasAreaLayoutService {
             return [:]
         }
 
-        var boundsByAreaID = makeBoundsByAreaID(from: areas)
         guard
             var state = makeInitialResolutionState(
-                boundsByAreaID: &boundsByAreaID,
+                areas: areas,
                 seedAreaID: seedAreaID,
                 spacing: max(0, minimumSpacing)
             )
@@ -104,132 +104,42 @@ public enum CanvasAreaLayoutService {
 }
 
 extension CanvasAreaLayoutService {
-    private struct OverlapResolutionState {
+    struct OverlapResolutionState {
         var boundsByAreaID: [CanvasNodeID: CanvasRect]
+        var shapesByAreaID: [CanvasNodeID: CanvasAreaShape]
         var translationsByAreaID: [CanvasNodeID: CanvasTranslation]
         var propagationQueue: [CanvasNodeID]
     }
 
-    // MARK: - Internal Geometry Helpers
-
-    private static func makeBoundsByAreaID(from areas: [CanvasNodeArea]) -> [CanvasNodeID: CanvasRect] {
-        var boundsByAreaID: [CanvasNodeID: CanvasRect] = [:]
-        for area in areas {
-            boundsByAreaID[area.id] = area.bounds
-        }
-        return boundsByAreaID
+    struct AreaOutline {
+        let bounds: CanvasRect
+        let shape: CanvasAreaShape
     }
 
-    private static func makeInitialResolutionState(
-        boundsByAreaID: inout [CanvasNodeID: CanvasRect],
-        seedAreaID: CanvasNodeID,
-        spacing: Double
-    ) -> OverlapResolutionState? {
-        guard
-            let firstCollidedAreaID = firstOverlappedAreaID(
-                of: seedAreaID,
-                in: boundsByAreaID,
-                spacing: spacing
-            )
-        else {
-            return nil
-        }
-        guard let seedBounds = boundsByAreaID[seedAreaID],
-            let firstCollidedBounds = boundsByAreaID[firstCollidedAreaID]
-        else {
-            return nil
-        }
+    // MARK: - Internal Helpers
 
-        var translationsByAreaID: [CanvasNodeID: CanvasTranslation] = [:]
-        let initialSeparation = requiredSeparation(
-            moving: firstCollidedBounds,
-            awayFrom: seedBounds,
-            spacing: spacing,
-            tieBreakDirection: seedAreaID.rawValue < firstCollidedAreaID.rawValue ? 1 : -1
-        )
-        let didMoveSeedArea = applyTranslation(
-            to: seedAreaID,
-            dx: -(initialSeparation.dx / 2),
-            dy: -(initialSeparation.dy / 2),
-            boundsByAreaID: &boundsByAreaID,
-            translationsByAreaID: &translationsByAreaID
-        )
-        let didMoveFirstCollidedArea = applyTranslation(
-            to: firstCollidedAreaID,
-            dx: initialSeparation.dx / 2,
-            dy: initialSeparation.dy / 2,
-            boundsByAreaID: &boundsByAreaID,
-            translationsByAreaID: &translationsByAreaID
-        )
-        guard didMoveSeedArea || didMoveFirstCollidedArea else { return nil }
+    private static func bfsComponent(
+        from startNodeID: CanvasNodeID,
+        adjacencyByNodeID: [CanvasNodeID: Set<CanvasNodeID>],
+        visited: inout Set<CanvasNodeID>
+    ) -> [CanvasNodeID] {
+        var queue: [CanvasNodeID] = [startNodeID]
+        var componentNodeIDs: [CanvasNodeID] = []
+        visited.insert(startNodeID)
 
-        return OverlapResolutionState(
-            boundsByAreaID: boundsByAreaID,
-            translationsByAreaID: translationsByAreaID,
-            propagationQueue: [seedAreaID, firstCollidedAreaID]
-        )
-    }
+        while !queue.isEmpty {
+            let currentNodeID = queue.removeFirst()
+            componentNodeIDs.append(currentNodeID)
 
-    private static func propagateOverlaps(
-        state: inout OverlapResolutionState,
-        spacing: Double,
-        maxIterations: Int
-    ) {
-        var movementCount = 0
-        while !state.propagationQueue.isEmpty, movementCount < maxIterations {
-            let moverAreaID = state.propagationQueue.removeFirst()
-            guard let moverBounds = state.boundsByAreaID[moverAreaID] else {
-                continue
-            }
-
-            let targetAreaIDs = state.boundsByAreaID.keys
-                .filter { $0 != moverAreaID }
+            let neighbors = adjacencyByNodeID[currentNodeID, default: []]
                 .sorted { $0.rawValue < $1.rawValue }
-
-            for targetAreaID in targetAreaIDs where movementCount < maxIterations {
-                if moveTargetAreaIfNeeded(
-                    moverAreaID: moverAreaID,
-                    moverBounds: moverBounds,
-                    targetAreaID: targetAreaID,
-                    spacing: spacing,
-                    state: &state
-                ) {
-                    movementCount += 1
-                }
+            for neighborNodeID in neighbors where !visited.contains(neighborNodeID) {
+                visited.insert(neighborNodeID)
+                queue.append(neighborNodeID)
             }
         }
-    }
 
-    private static func moveTargetAreaIfNeeded(
-        moverAreaID: CanvasNodeID,
-        moverBounds: CanvasRect,
-        targetAreaID: CanvasNodeID,
-        spacing: Double,
-        state: inout OverlapResolutionState
-    ) -> Bool {
-        guard let targetBounds = state.boundsByAreaID[targetAreaID] else {
-            return false
-        }
-        guard boundsOverlap(moverBounds, targetBounds, spacing: spacing) else {
-            return false
-        }
-
-        let separation = requiredSeparation(
-            moving: targetBounds,
-            awayFrom: moverBounds,
-            spacing: spacing,
-            tieBreakDirection: moverAreaID.rawValue < targetAreaID.rawValue ? 1 : -1
-        )
-        let didMoveTargetArea = applyTranslation(
-            to: targetAreaID,
-            dx: separation.dx,
-            dy: separation.dy,
-            boundsByAreaID: &state.boundsByAreaID,
-            translationsByAreaID: &state.translationsByAreaID
-        )
-        guard didMoveTargetArea else { return false }
-        state.propagationQueue.append(targetAreaID)
-        return true
+        return componentNodeIDs
     }
 
     /// Calculates a single area bounding rectangle from contained node bounds.
@@ -265,30 +175,179 @@ extension CanvasAreaLayoutService {
         )
     }
 
+    private static func makeInitialResolutionState(
+        areas: [CanvasNodeArea],
+        seedAreaID: CanvasNodeID,
+        spacing: Double
+    ) -> OverlapResolutionState? {
+        var boundsByAreaID: [CanvasNodeID: CanvasRect] = [:]
+        var shapesByAreaID: [CanvasNodeID: CanvasAreaShape] = [:]
+        for area in areas {
+            boundsByAreaID[area.id] = area.bounds
+            shapesByAreaID[area.id] = area.shape
+        }
+
+        guard
+            let firstCollidedAreaID = firstOverlappedAreaID(
+                of: seedAreaID,
+                in: boundsByAreaID,
+                shapesByAreaID: shapesByAreaID,
+                spacing: spacing
+            ),
+            let seedBounds = boundsByAreaID[seedAreaID],
+            let seedShape = shapesByAreaID[seedAreaID],
+            let firstCollidedBounds = boundsByAreaID[firstCollidedAreaID],
+            let firstCollidedShape = shapesByAreaID[firstCollidedAreaID]
+        else {
+            return nil
+        }
+
+        var state = OverlapResolutionState(
+            boundsByAreaID: boundsByAreaID,
+            shapesByAreaID: shapesByAreaID,
+            translationsByAreaID: [:],
+            propagationQueue: [seedAreaID, firstCollidedAreaID]
+        )
+
+        let initialSeparation = requiredSeparation(
+            moving: AreaOutline(bounds: firstCollidedBounds, shape: firstCollidedShape),
+            fixed: AreaOutline(bounds: seedBounds, shape: seedShape),
+            spacing: spacing,
+            tieBreakDirection: seedAreaID.rawValue < firstCollidedAreaID.rawValue ? 1 : -1
+        )
+
+        let didMoveSeed = applyTranslation(
+            to: seedAreaID,
+            translation: CanvasTranslation(
+                dx: -(initialSeparation.dx / 2),
+                dy: -(initialSeparation.dy / 2)
+            ),
+            state: &state
+        )
+        let didMoveCollided = applyTranslation(
+            to: firstCollidedAreaID,
+            translation: CanvasTranslation(
+                dx: initialSeparation.dx / 2,
+                dy: initialSeparation.dy / 2
+            ),
+            state: &state
+        )
+
+        guard didMoveSeed || didMoveCollided else {
+            return nil
+        }
+        return state
+    }
+
+    private static func propagateOverlaps(
+        state: inout OverlapResolutionState,
+        spacing: Double,
+        maxIterations: Int
+    ) {
+        var movementCount = 0
+
+        while !state.propagationQueue.isEmpty, movementCount < maxIterations {
+            let moverAreaID = state.propagationQueue.removeFirst()
+            let targetAreaIDs = state.boundsByAreaID.keys
+                .filter { $0 != moverAreaID }
+                .sorted { $0.rawValue < $1.rawValue }
+
+            for targetAreaID in targetAreaIDs where movementCount < maxIterations {
+                if moveTargetAreaIfNeeded(
+                    moverAreaID: moverAreaID,
+                    targetAreaID: targetAreaID,
+                    spacing: spacing,
+                    state: &state
+                ) {
+                    movementCount += 1
+                }
+            }
+        }
+    }
+
+    private static func moveTargetAreaIfNeeded(
+        moverAreaID: CanvasNodeID,
+        targetAreaID: CanvasNodeID,
+        spacing: Double,
+        state: inout OverlapResolutionState
+    ) -> Bool {
+        guard
+            let moverBounds = state.boundsByAreaID[moverAreaID],
+            let moverShape = state.shapesByAreaID[moverAreaID],
+            let targetBounds = state.boundsByAreaID[targetAreaID],
+            let targetShape = state.shapesByAreaID[targetAreaID]
+        else {
+            return false
+        }
+
+        guard
+            areasOverlap(
+                AreaOutline(bounds: moverBounds, shape: moverShape),
+                AreaOutline(bounds: targetBounds, shape: targetShape),
+                spacing: spacing
+            )
+        else {
+            return false
+        }
+
+        let separation = requiredSeparation(
+            moving: AreaOutline(bounds: targetBounds, shape: targetShape),
+            fixed: AreaOutline(bounds: moverBounds, shape: moverShape),
+            spacing: spacing,
+            tieBreakDirection: moverAreaID.rawValue < targetAreaID.rawValue ? 1 : -1
+        )
+
+        let didMoveTarget = applyTranslation(
+            to: targetAreaID,
+            translation: separation,
+            state: &state
+        )
+        guard didMoveTarget else {
+            return false
+        }
+
+        state.propagationQueue.append(targetAreaID)
+        return true
+    }
+
     /// Finds the first area that overlaps the specified source area.
     /// - Parameters:
     ///   - areaID: Source area identifier.
     ///   - boundsByAreaID: Area bounds indexed by area identifier.
+    ///   - shapesByAreaID: Area shapes indexed by area identifier.
     ///   - spacing: Required spacing between area bounds.
     /// - Returns: Overlapped area identifier, or `nil` when none overlaps.
     private static func firstOverlappedAreaID(
         of areaID: CanvasNodeID,
         in boundsByAreaID: [CanvasNodeID: CanvasRect],
+        shapesByAreaID: [CanvasNodeID: CanvasAreaShape],
         spacing: Double
     ) -> CanvasNodeID? {
-        guard let sourceBounds = boundsByAreaID[areaID] else {
+        guard
+            let sourceBounds = boundsByAreaID[areaID],
+            let sourceShape = shapesByAreaID[areaID]
+        else {
             return nil
         }
 
+        let source = AreaOutline(bounds: sourceBounds, shape: sourceShape)
         let sortedTargetAreaIDs = boundsByAreaID.keys
             .filter { $0 != areaID }
             .sorted { $0.rawValue < $1.rawValue }
 
         for targetAreaID in sortedTargetAreaIDs {
-            guard let targetBounds = boundsByAreaID[targetAreaID] else {
+            guard
+                let targetBounds = boundsByAreaID[targetAreaID],
+                let targetShape = shapesByAreaID[targetAreaID]
+            else {
                 continue
             }
-            if boundsOverlap(sourceBounds, targetBounds, spacing: spacing) {
+
+            if areasOverlap(
+                source,
+                AreaOutline(bounds: targetBounds, shape: targetShape),
+                spacing: spacing
+            ) {
                 return targetAreaID
             }
         }
@@ -296,89 +355,41 @@ extension CanvasAreaLayoutService {
         return nil
     }
 
-    /// Returns whether two area bounds overlap after spacing expansion.
-    /// - Parameters:
-    ///   - lhs: First area bounds.
-    ///   - rhs: Second area bounds.
-    ///   - spacing: Required spacing between areas.
-    /// - Returns: `true` when the two expanded rectangles overlap.
-    private static func boundsOverlap(
-        _ lhs: CanvasRect,
-        _ rhs: CanvasRect,
-        spacing: Double
-    ) -> Bool {
-        let halfSpacing = max(0, spacing) / 2
-        let expandedLHS = lhs.expanded(horizontal: halfSpacing, vertical: halfSpacing)
-        let expandedRHS = rhs.expanded(horizontal: halfSpacing, vertical: halfSpacing)
-        return expandedLHS.intersects(expandedRHS)
-    }
-
-    /// Computes the translation needed to move one area out of another on a single axis.
-    /// - Parameters:
-    ///   - targetBounds: Area bounds to be moved.
-    ///   - fixedBounds: Area bounds that stays fixed.
-    ///   - spacing: Required spacing between area bounds.
-    ///   - tieBreakDirection: Fallback horizontal direction when area centers are identical.
-    /// - Returns: Translation that resolves overlap for the target area.
-    private static func requiredSeparation(
-        moving targetBounds: CanvasRect,
-        awayFrom fixedBounds: CanvasRect,
-        spacing: Double,
-        tieBreakDirection: Double
-    ) -> CanvasTranslation {
-        let halfSpacing = max(0, spacing) / 2
-        let expandedFixed = fixedBounds.expanded(horizontal: halfSpacing, vertical: halfSpacing)
-        let expandedTarget = targetBounds.expanded(horizontal: halfSpacing, vertical: halfSpacing)
-
-        let overlapX = min(expandedFixed.maxX, expandedTarget.maxX) - max(expandedFixed.minX, expandedTarget.minX)
-        let overlapY = min(expandedFixed.maxY, expandedTarget.maxY) - max(expandedFixed.minY, expandedTarget.minY)
-        guard overlapX > 0, overlapY > 0 else {
-            return .zero
-        }
-
-        var directionX = expandedTarget.centerX - expandedFixed.centerX
-        var directionY = expandedTarget.centerY - expandedFixed.centerY
-        if abs(directionX) <= numericEpsilon, abs(directionY) <= numericEpsilon {
-            directionX = tieBreakDirection >= 0 ? 1 : -1
-            directionY = 0
-        }
-
-        if abs(directionX) >= abs(directionY) {
-            let moveSignX: Double = directionX >= 0 ? 1 : -1
-            return CanvasTranslation(dx: moveSignX * overlapX, dy: 0)
-        }
-
-        let moveSignY: Double = directionY >= 0 ? 1 : -1
-        return CanvasTranslation(dx: 0, dy: moveSignY * overlapY)
-    }
-
     /// Applies translation to area bounds and accumulates the area's total translation.
     /// - Parameters:
     ///   - areaID: Target area identifier.
-    ///   - dx: Horizontal translation amount.
-    ///   - dy: Vertical translation amount.
-    ///   - boundsByAreaID: Mutable area bounds dictionary.
-    ///   - translationsByAreaID: Mutable accumulated translation dictionary.
+    ///   - translation: Translation amount.
+    ///   - state: Mutable overlap-resolution state.
     /// - Returns: `true` when a non-zero translation was applied.
     private static func applyTranslation(
         to areaID: CanvasNodeID,
-        dx: Double,
-        dy: Double,
-        boundsByAreaID: inout [CanvasNodeID: CanvasRect],
-        translationsByAreaID: inout [CanvasNodeID: CanvasTranslation]
+        translation: CanvasTranslation,
+        state: inout OverlapResolutionState
     ) -> Bool {
-        guard abs(dx) > numericEpsilon || abs(dy) > numericEpsilon else {
+        guard abs(translation.dx) > numericEpsilon || abs(translation.dy) > numericEpsilon else {
             return false
         }
-        guard let currentBounds = boundsByAreaID[areaID] else {
+        guard
+            let currentBounds = state.boundsByAreaID[areaID],
+            let currentShape = state.shapesByAreaID[areaID]
+        else {
             return false
         }
 
-        boundsByAreaID[areaID] = currentBounds.translated(dx: dx, dy: dy)
-        let currentTranslation = translationsByAreaID[areaID] ?? .zero
-        translationsByAreaID[areaID] = CanvasTranslation(
-            dx: currentTranslation.dx + dx,
-            dy: currentTranslation.dy + dy
+        state.boundsByAreaID[areaID] = currentBounds.translated(
+            dx: translation.dx,
+            dy: translation.dy
+        )
+        state.shapesByAreaID[areaID] = translateShape(
+            currentShape,
+            dx: translation.dx,
+            dy: translation.dy
+        )
+
+        let currentTranslation = state.translationsByAreaID[areaID] ?? .zero
+        state.translationsByAreaID[areaID] = CanvasTranslation(
+            dx: currentTranslation.dx + translation.dx,
+            dy: currentTranslation.dy + translation.dy
         )
         return true
     }

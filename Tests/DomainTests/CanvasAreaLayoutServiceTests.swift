@@ -15,6 +15,7 @@ func test_makeParentChildAreas_buildsConnectedComponents() {
     }
     #expect(connectedArea.nodeIDs == fixture.connectedNodeIDs)
     #expect(connectedArea.id == fixture.connectedAreaID)
+    #expect(connectedArea.shape == .rectangle)
     expectAlmostEqual(connectedArea.bounds.minX, 0)
     expectAlmostEqual(connectedArea.bounds.minY, 0)
     expectAlmostEqual(connectedArea.bounds.width, 400)
@@ -25,10 +26,32 @@ func test_makeParentChildAreas_buildsConnectedComponents() {
         return
     }
     #expect(isolatedArea.id == fixture.isolatedAreaID)
+    #expect(isolatedArea.shape == .rectangle)
     expectAlmostEqual(isolatedArea.bounds.minX, -200)
     expectAlmostEqual(isolatedArea.bounds.minY, 300)
     expectAlmostEqual(isolatedArea.bounds.width, 120)
     expectAlmostEqual(isolatedArea.bounds.height, 90)
+}
+
+@Test("CanvasAreaLayoutService: convex hull shape can be selected during area extraction")
+func test_makeParentChildAreas_convexHullShape_isStoredInArea() {
+    let fixture = makeParentChildAreasFixture()
+    let areas = CanvasAreaLayoutService.makeParentChildAreas(
+        in: fixture.graph,
+        shapeKind: .convexHull
+    )
+
+    guard let connectedArea = areas.first(where: { $0.id == fixture.connectedAreaID }) else {
+        Issue.record("connected area not found")
+        return
+    }
+
+    switch connectedArea.shape {
+    case .rectangle:
+        Issue.record("convex hull was expected")
+    case .convexHull(let vertices):
+        #expect(vertices.count >= 4)
+    }
 }
 
 @Test("CanvasAreaLayoutService: initial collision moves seed and first collided area equally")
@@ -246,6 +269,41 @@ func test_resolveOverlaps_missingSeed_returnsEmpty() {
     let translations = CanvasAreaLayoutService.resolveOverlaps(
         areas: [areaA],
         seedAreaID: CanvasNodeID(rawValue: "missing")
+    )
+
+    #expect(translations.isEmpty)
+}
+
+@Test("CanvasAreaLayoutService: convex hull avoids rectangle-based false positives")
+func test_resolveOverlaps_convexHullFalsePositive_returnsEmpty() {
+    let areaA = CanvasNodeArea(
+        id: CanvasNodeID(rawValue: "a"),
+        nodeIDs: Set([CanvasNodeID(rawValue: "a")]),
+        bounds: CanvasRect(minX: 0, minY: 0, width: 100, height: 100),
+        shape: .convexHull(
+            vertices: [
+                CanvasPoint(x: 0, y: 0),
+                CanvasPoint(x: 100, y: 0),
+                CanvasPoint(x: 0, y: 100),
+            ]
+        )
+    )
+    let areaB = CanvasNodeArea(
+        id: CanvasNodeID(rawValue: "b"),
+        nodeIDs: Set([CanvasNodeID(rawValue: "b")]),
+        bounds: CanvasRect(minX: 80, minY: 80, width: 100, height: 100),
+        shape: .convexHull(
+            vertices: [
+                CanvasPoint(x: 180, y: 80),
+                CanvasPoint(x: 180, y: 180),
+                CanvasPoint(x: 80, y: 180),
+            ]
+        )
+    )
+
+    let translations = CanvasAreaLayoutService.resolveOverlaps(
+        areas: [areaA, areaB],
+        seedAreaID: areaA.id
     )
 
     #expect(translations.isEmpty)

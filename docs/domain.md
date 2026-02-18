@@ -147,6 +147,9 @@
 
 - モデル
   - `CanvasNodeArea`: 親子接続成分をひとまとまりの領域として表現する。
+  - `CanvasAreaShapeKind`: 領域形状の生成戦略（矩形/凸包）を表現する。
+  - `CanvasAreaShape`: 領域の外周形状（矩形/凸包頂点列）を表現する。
+  - `CanvasPoint`: 凸包頂点や投影計算に使う 2D 座標値オブジェクト。
   - `CanvasRect`: 軸平行矩形の幾何計算を担う。
   - `CanvasTranslation`: 2D 平行移動量。
 - 参照契約
@@ -160,7 +163,7 @@
 
 | メソッド | 責務 |
 | --- | --- |
-| `makeParentChildAreas(in:)` | `parentChild` エッジを無向辺として連結成分を作り、各成分の外接矩形を計算して返す。 |
+| `makeParentChildAreas(in:shapeKind:)` | `parentChild` エッジを無向辺として連結成分を作り、指定戦略で領域形状（矩形/凸包）を構築して返す。 |
 | `resolveOverlaps(areas:seedAreaID:minimumSpacing:maxIterations:)` | seed 領域を起点に衝突を伝播解消し、領域ごとの移動量を返す。 |
 
 アルゴリズム要点:
@@ -169,9 +172,11 @@
   - ノード ID 昇順で探索し、BFS で連結成分を抽出。
   - ノードが存在しないエッジ終端は無視。
   - 領域 ID は成分内の最小ノード ID を代表値として使う。
+  - `shapeKind` が `.convexHull` の場合は、成分内ノード矩形の四隅点から凸包を生成して `CanvasNodeArea.shape` に保持する（退化ケースは矩形へフォールバック）。
 - `resolveOverlaps(...)`
   - 初期衝突では seed 領域と最初の衝突領域を半分ずつ移動。
   - その後はキュー駆動で衝突先を順次押し出す。
+  - 矩形同士は高速な矩形交差判定を使い、凸包を含む場合は SAT（分離軸定理）で衝突判定する。
   - 中心差分ベクトルを使って押し出し軸を決定し、移動方向は上下左右の4方向に限定する（`|dx| >= |dy|` なら X 軸、そうでなければ Y 軸）。
   - 同一中心時は ID 順に tie-break し、決定性を維持。
   - `numericEpsilon` 未満の移動は無効として切り捨てる。

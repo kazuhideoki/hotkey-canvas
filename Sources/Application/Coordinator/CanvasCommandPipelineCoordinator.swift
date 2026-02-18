@@ -106,7 +106,10 @@ extension CanvasCommandPipelineCoordinator {
         guard let seedNodeID else {
             return graph
         }
-        let areas = CanvasAreaLayoutService.makeParentChildAreas(in: graph)
+        let areas = CanvasAreaLayoutService.makeParentChildAreas(
+            in: graph,
+            shapeKind: .convexHull
+        )
         guard let seedArea = areas.first(where: { $0.nodeIDs.contains(seedNodeID) }) else {
             return graph
         }
