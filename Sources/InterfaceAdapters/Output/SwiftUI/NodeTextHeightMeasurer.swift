@@ -68,15 +68,11 @@ struct NodeTextHeightMeasurer {
             textLayout.contentHeight
             + (outerVerticalPadding * 2)
             + (textContainerInset.height * 2)
-<<<<<<< HEAD
+            + verticalSafetyPadding
         let clampedHeight = min(ceil(max(nodeHeight, minimumNodeHeight)), maximumNodeHeight)
         return NodeTextLayoutMetrics(
             nodeHeight: clampedHeight
         )
-=======
-            + verticalSafetyPadding
-        return min(ceil(max(nodeHeight, minimumNodeHeight)), maximumNodeHeight)
->>>>>>> main
     }
 }
 
