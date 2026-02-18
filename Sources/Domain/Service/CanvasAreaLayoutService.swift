@@ -66,7 +66,7 @@ public enum CanvasAreaLayoutService {
         return areas.sorted { $0.id.rawValue < $1.id.rawValue }
     }
 
-    /// Resolves area overlaps by moving areas on the line between area centers.
+    /// Resolves area overlaps by moving areas on one of four cardinal directions.
     /// - Parameters:
     ///   - areas: Areas to resolve.
     ///   - seedAreaID: Area where a new node was inserted.
@@ -313,7 +313,7 @@ extension CanvasAreaLayoutService {
         return expandedLHS.intersects(expandedRHS)
     }
 
-    /// Computes the translation needed to move one area out of another along center direction.
+    /// Computes the translation needed to move one area out of another on a single axis.
     /// - Parameters:
     ///   - targetBounds: Area bounds to be moved.
     ///   - fixedBounds: Area bounds that stays fixed.
@@ -343,26 +343,13 @@ extension CanvasAreaLayoutService {
             directionY = 0
         }
 
-        let directionLength = sqrt((directionX * directionX) + (directionY * directionY))
-        guard directionLength > numericEpsilon else {
-            return .zero
+        if abs(directionX) >= abs(directionY) {
+            let moveSignX: Double = directionX >= 0 ? 1 : -1
+            return CanvasTranslation(dx: moveSignX * overlapX, dy: 0)
         }
 
-        let unitX = directionX / directionLength
-        let unitY = directionY / directionLength
-
-        var distanceCandidates: [Double] = []
-        if abs(unitX) > numericEpsilon {
-            distanceCandidates.append(overlapX / abs(unitX))
-        }
-        if abs(unitY) > numericEpsilon {
-            distanceCandidates.append(overlapY / abs(unitY))
-        }
-        guard let distance = distanceCandidates.min() else {
-            return .zero
-        }
-
-        return CanvasTranslation(dx: unitX * distance, dy: unitY * distance)
+        let moveSignY: Double = directionY >= 0 ? 1 : -1
+        return CanvasTranslation(dx: 0, dy: moveSignY * overlapY)
     }
 
     /// Applies translation to area bounds and accumulates the area's total translation.
