@@ -285,11 +285,8 @@ struct NodeEditingContext: Equatable {
     let initialTypingEvent: NSEvent?
 
     static func == (lhs: NodeEditingContext, rhs: NodeEditingContext) -> Bool {
-        lhs.nodeID == rhs.nodeID &&
-            lhs.text == rhs.text &&
-            lhs.nodeWidth == rhs.nodeWidth &&
-            lhs.nodeHeight == rhs.nodeHeight &&
-            lhs.initialCursorPlacement == rhs.initialCursorPlacement &&
-            lhs.initialTypingEvent?.timestamp == rhs.initialTypingEvent?.timestamp
+        lhs.nodeID == rhs.nodeID && lhs.text == rhs.text && lhs.nodeWidth == rhs.nodeWidth
+            && lhs.nodeHeight == rhs.nodeHeight && lhs.initialCursorPlacement == rhs.initialCursorPlacement
+            && lhs.initialTypingEvent?.timestamp == rhs.initialTypingEvent?.timestamp
     }
 }
