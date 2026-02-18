@@ -617,3 +617,72 @@ func test_zoomAction_commandMinusKeyCode_returnsZoomOut() throws {
 
     #expect(action == .zoomOut)
 }
+
+@Test("CanvasHotkeyTranslator: Command+Option+- does not map to zoom action")
+func test_zoomAction_commandOptionMinus_returnsNil() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .option],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "-",
+            charactersIgnoringModifiers: "-",
+            isARepeat: false,
+            keyCode: 27
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == nil)
+}
+
+@Test("CanvasHotkeyTranslator: Command+Shift+- does not map to zoom action")
+func test_zoomAction_commandShiftMinus_returnsNil() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "_",
+            charactersIgnoringModifiers: "-",
+            isARepeat: false,
+            keyCode: 27
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == nil)
+}
+
+@Test("CanvasHotkeyTranslator: Command+Control+Shift+= does not map to zoom action")
+func test_zoomAction_commandControlShiftEquals_returnsNil() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .control, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "+",
+            charactersIgnoringModifiers: "=",
+            isARepeat: false,
+            keyCode: 24
+        )
+    )
+
+    let action = sut.zoomAction(event)
+
+    #expect(action == nil)
+}

@@ -97,20 +97,38 @@ extension CanvasHotkeyTranslator {
 
     private func zoomActionByKeyCode(from event: NSEvent) -> CanvasShortcutAction? {
         let flags = normalizedFlags(from: event)
-        guard flags.contains(.command) else {
-            return nil
-        }
+        let isCommandOnly = hasExactZoomModifiers(flags, requiresShift: false)
+        let isCommandShiftOnly = hasExactZoomModifiers(flags, requiresShift: true)
 
-        if event.keyCode == Self.minusKeyCode {
+        if event.keyCode == Self.minusKeyCode, isCommandOnly {
             return .zoomOut
         }
-        if event.keyCode == Self.keypadPlusKeyCode {
+        if event.keyCode == Self.keypadPlusKeyCode, isCommandOnly {
             return .zoomIn
         }
-        if flags.contains(.shift), event.keyCode == Self.equalsKeyCode || event.keyCode == Self.semicolonKeyCode {
+        if event.keyCode == Self.equalsKeyCode, isCommandOnly || isCommandShiftOnly {
+            return .zoomIn
+        }
+        if event.keyCode == Self.semicolonKeyCode, isCommandShiftOnly {
             return .zoomIn
         }
         return nil
+    }
+
+    private func hasExactZoomModifiers(_ flags: NSEvent.ModifierFlags, requiresShift: Bool) -> Bool {
+        let hasCommand = flags.contains(.command)
+        let hasShift = flags.contains(.shift)
+        let hasOption = flags.contains(.option)
+        let hasControl = flags.contains(.control)
+        let hasFunction = flags.contains(.function)
+
+        guard hasCommand else {
+            return false
+        }
+        guard hasShift == requiresShift else {
+            return false
+        }
+        return !hasOption && !hasControl && !hasFunction
     }
 
     private func gesture(from event: NSEvent) -> CanvasShortcutGesture? {
