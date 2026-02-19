@@ -17,6 +17,9 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
         pipelineCoordinator = CanvasCommandPipelineCoordinator()
     }
 
+    /// Applies commands in order, then commits snapshot/history only when graph mutation occurred.
+    /// - Parameter commands: Command sequence from input adapters.
+    /// - Returns: Latest graph state with undo/redo flags and optional viewport intent.
     public func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
         let shouldCenterFocusedNode = commands.contains(.centerFocusedNode)
         let pipelineResult = try runPipelineCommandSequence(
@@ -51,6 +54,7 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
         )
     }
 
+    /// Restores the previous graph snapshot and records the current state for redo.
     public func undo() async -> ApplyResult {
         guard let previousGraph = undoStack.popLast() else {
             return makeApplyResult(newState: graph)
@@ -67,6 +71,7 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
         )
     }
 
+    /// Reapplies a reverted snapshot and records the current state for undo.
     public func redo() async -> ApplyResult {
         guard let nextGraph = redoStack.popLast() else {
             return makeApplyResult(newState: graph)
@@ -83,16 +88,19 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
         )
     }
 
+    /// Returns the current in-memory graph wrapped as an apply result contract.
     public func getCurrentResult() async -> ApplyResult {
         makeApplyResult(newState: graph)
     }
 
+    /// Exposes raw graph state for read-only consumers that do not need apply metadata.
     public func getCurrentGraph() async -> CanvasGraph {
         graph
     }
 }
 
 extension ApplyCanvasCommandsUseCase {
+    /// Executes command mutation one-by-one and feeds each mutation into the coordinator pipeline.
     func runPipelineCommandSequence(
         commands: [CanvasCommand],
         from baseGraph: CanvasGraph
@@ -119,6 +127,7 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 
+    /// Builds a canonical no-op mutation result that keeps all stage effects disabled.
     func noOpMutationResult(for graph: CanvasGraph) -> CanvasMutationResult {
         CanvasMutationResult(
             graphBeforeMutation: graph,
@@ -132,6 +141,7 @@ extension ApplyCanvasCommandsUseCase {
         return newGraph.nodesByID.keys.contains { !previousNodeIDs.contains($0) }
     }
 
+    /// Normalizes apply-return payload construction to keep use case exits consistent.
     private func makeApplyResult(
         newState: CanvasGraph,
         viewportIntent: CanvasViewportIntent? = nil,
@@ -146,6 +156,7 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 
+    /// Converts focus transitions into viewport policy intent.
     private func viewportIntentForFocusChange(
         from previousFocusedNodeID: CanvasNodeID?,
         to currentFocusedNodeID: CanvasNodeID?
@@ -155,6 +166,7 @@ extension ApplyCanvasCommandsUseCase {
         return nil
     }
 
+    /// Pushes a snapshot to undo history and enforces history length limits.
     private func appendUndoSnapshot(_ snapshot: CanvasGraph) {
         guard maxHistoryCount > 0 else {
             return
@@ -163,6 +175,7 @@ extension ApplyCanvasCommandsUseCase {
         trimHistoryIfNeeded(&undoStack)
     }
 
+    /// Pushes a snapshot to redo history and enforces history length limits.
     private func appendRedoSnapshot(_ snapshot: CanvasGraph) {
         guard maxHistoryCount > 0 else {
             return
@@ -171,6 +184,7 @@ extension ApplyCanvasCommandsUseCase {
         trimHistoryIfNeeded(&redoStack)
     }
 
+    /// Trims oldest snapshots first so history capacity remains bounded.
     private func trimHistoryIfNeeded(_ stack: inout [CanvasGraph]) {
         let overflowCount = stack.count - maxHistoryCount
         guard overflowCount > 0 else {
