@@ -191,6 +191,28 @@ func test_apply_moveNodeRight_indentsUnderPreviousSibling() async throws {
     #expect(result.newState.focusedNodeID == focusedID)
 }
 
+@Test("ApplyCanvasCommandsUseCase: moveNode right appends node as last child of previous sibling")
+func test_apply_moveNodeRight_appendsAsLastChildOfPreviousSibling() async throws {
+    let fixture = makeMoveNodeRightAppendFixture()
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.right)])
+    let previousChildIDs = childNodeIDs(of: fixture.previousID, in: result.newState)
+
+    #expect(previousChildIDs == [fixture.firstChildID, fixture.secondChildID, fixture.focusedID])
+}
+
+@Test("ApplyCanvasCommandsUseCase: moveNode right appends below deepest child bottom")
+func test_apply_moveNodeRight_appendsBelowDeepestChildBottom() async throws {
+    let fixture = makeMoveNodeRightAppendDeepestBottomFixture()
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.right)])
+    let previousChildIDs = childNodeIDs(of: fixture.previousID, in: result.newState)
+
+    #expect(previousChildIDs == [fixture.tallChildID, fixture.shortLowerChildID, fixture.focusedID])
+}
+
 @Test("ApplyCanvasCommandsUseCase: moveNode right focuses collapsed new parent")
 func test_apply_moveNodeRight_focusesCollapsedNewParent() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
@@ -320,4 +342,133 @@ private func hasParentChildEdge(from parentID: CanvasNodeID, to childID: CanvasN
             && $0.fromNodeID == parentID
             && $0.toNodeID == childID
     }
+}
+
+private struct MoveNodeRightAppendFixture {
+    let graph: CanvasGraph
+    let previousID: CanvasNodeID
+    let focusedID: CanvasNodeID
+    let firstChildID: CanvasNodeID
+    let secondChildID: CanvasNodeID
+}
+
+private func makeMoveNodeRightAppendFixture() -> MoveNodeRightAppendFixture {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let previousID = CanvasNodeID(rawValue: "previous")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let firstChildID = CanvasNodeID(rawValue: "first-child")
+    let secondChildID = CanvasNodeID(rawValue: "second-child")
+    let baseGraph = makeSiblingGraph(
+        rootID: rootID,
+        childIDs: [previousID, focusedID],
+        focusedID: focusedID
+    )
+    let firstChild = CanvasNode(
+        id: firstChildID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 520, y: 0, width: 220, height: 120)
+    )
+    let secondChild = CanvasNode(
+        id: secondChildID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 520, y: 200, width: 220, height: 120)
+    )
+    let edgePreviousFirstChild = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-previous-first-child"),
+        fromNodeID: previousID,
+        toNodeID: firstChildID,
+        relationType: .parentChild
+    )
+    let edgePreviousSecondChild = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-previous-second-child"),
+        fromNodeID: previousID,
+        toNodeID: secondChildID,
+        relationType: .parentChild
+    )
+    let graph = CanvasGraph(
+        nodesByID: baseGraph.nodesByID.merging(
+            [firstChildID: firstChild, secondChildID: secondChild],
+            uniquingKeysWith: { _, new in new }
+        ),
+        edgesByID: baseGraph.edgesByID.merging(
+            [edgePreviousFirstChild.id: edgePreviousFirstChild, edgePreviousSecondChild.id: edgePreviousSecondChild],
+            uniquingKeysWith: { _, new in new }
+        ),
+        focusedNodeID: focusedID
+    )
+
+    return MoveNodeRightAppendFixture(
+        graph: graph,
+        previousID: previousID,
+        focusedID: focusedID,
+        firstChildID: firstChildID,
+        secondChildID: secondChildID
+    )
+}
+
+private struct MoveNodeRightAppendDeepestBottomFixture {
+    let graph: CanvasGraph
+    let previousID: CanvasNodeID
+    let focusedID: CanvasNodeID
+    let tallChildID: CanvasNodeID
+    let shortLowerChildID: CanvasNodeID
+}
+
+private func makeMoveNodeRightAppendDeepestBottomFixture() -> MoveNodeRightAppendDeepestBottomFixture {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let previousID = CanvasNodeID(rawValue: "previous")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let tallChildID = CanvasNodeID(rawValue: "tall-child")
+    let shortLowerChildID = CanvasNodeID(rawValue: "short-lower-child")
+
+    let baseGraph = makeSiblingGraph(
+        rootID: rootID,
+        childIDs: [previousID, focusedID],
+        focusedID: focusedID
+    )
+    let tallChild = CanvasNode(
+        id: tallChildID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 520, y: 0, width: 220, height: 300)
+    )
+    let shortLowerChild = CanvasNode(
+        id: shortLowerChildID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 520, y: 200, width: 220, height: 40)
+    )
+    let edgeTallChild = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-previous-tall-child"),
+        fromNodeID: previousID,
+        toNodeID: tallChildID,
+        relationType: .parentChild
+    )
+    let edgeShortLowerChild = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-previous-short-lower-child"),
+        fromNodeID: previousID,
+        toNodeID: shortLowerChildID,
+        relationType: .parentChild
+    )
+    let graph = CanvasGraph(
+        nodesByID: baseGraph.nodesByID.merging(
+            [tallChildID: tallChild, shortLowerChildID: shortLowerChild],
+            uniquingKeysWith: { _, new in new }
+        ),
+        edgesByID: baseGraph.edgesByID.merging(
+            [edgeTallChild.id: edgeTallChild, edgeShortLowerChild.id: edgeShortLowerChild],
+            uniquingKeysWith: { _, new in new }
+        ),
+        focusedNodeID: focusedID
+    )
+
+    return MoveNodeRightAppendDeepestBottomFixture(
+        graph: graph,
+        previousID: previousID,
+        focusedID: focusedID,
+        tallChildID: tallChildID,
+        shortLowerChildID: shortLowerChildID
+    )
 }
