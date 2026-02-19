@@ -191,6 +191,27 @@ func test_apply_moveNodeRight_indentsUnderPreviousSibling() async throws {
     #expect(result.newState.focusedNodeID == focusedID)
 }
 
+@Test("ApplyCanvasCommandsUseCase: moveNode right focuses collapsed new parent")
+func test_apply_moveNodeRight_focusesCollapsedNewParent() async throws {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let previousID = CanvasNodeID(rawValue: "previous")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let baseGraph = makeSiblingGraph(rootID: rootID, childIDs: [previousID, focusedID], focusedID: focusedID)
+    let graph = CanvasGraph(
+        nodesByID: baseGraph.nodesByID,
+        edgesByID: baseGraph.edgesByID,
+        focusedNodeID: focusedID,
+        collapsedRootNodeIDs: [previousID]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.right)])
+
+    #expect(hasParentChildEdge(from: previousID, to: focusedID, in: result.newState))
+    #expect(result.newState.focusedNodeID == previousID)
+    #expect(result.newState.collapsedRootNodeIDs == [previousID])
+}
+
 @Test("ApplyCanvasCommandsUseCase: moveNode right does not indent top-level root node")
 func test_apply_moveNodeRight_doesNotIndentTopLevelRootNode() async throws {
     let firstRootID = CanvasNodeID(rawValue: "first-root")
