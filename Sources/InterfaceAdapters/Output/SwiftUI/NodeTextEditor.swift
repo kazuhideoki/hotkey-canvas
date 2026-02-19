@@ -233,7 +233,7 @@ extension NodeTextEditor {
 }
 
 /// NSTextView subclass that commits with Enter, cancels with Escape, and inserts newline with Option+Enter.
-final class NodeTextEditorTextView: NSTextView {
+class NodeTextEditorTextView: NSTextView {
     private static let enterKeyCode: UInt16 = 36
     private static let escapeKeyCode: UInt16 = 53
 
@@ -255,13 +255,20 @@ final class NodeTextEditorTextView: NSTextView {
             super.keyDown(with: event)
             return
         }
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
         // During IME composition, Enter must confirm marked text in NSTextView.
         guard !hasMarkedText() else {
+            let disallowed: NSEvent.ModifierFlags = [.control, .option, .shift, .function]
+            if flags.contains(.command), flags.isDisjoint(with: disallowed) {
+                unmarkText()
+                onCommit?()
+                return
+            }
             super.keyDown(with: event)
             return
         }
 
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         if flags.contains(.option), flags.isDisjoint(with: [.command, .control]) {
             insertNewline(nil)
             return
