@@ -3,6 +3,10 @@ import Domain
 // Background: Focus behavior after node deletion needs deterministic hierarchy-aware priority.
 // Responsibility: Delete the focused subtree and choose next focus by sibling, parent, then nearest node.
 extension ApplyCanvasCommandsUseCase {
+    /// Deletes the focused subtree and chooses deterministic next focus before pipeline recomputation.
+    /// - Parameter graph: Current graph snapshot.
+    /// - Returns: Mutation result with deletion effects and optional area-layout seed.
+    /// - Throws: Propagates node deletion failures from CRUD service.
     func deleteFocusedNode(in graph: CanvasGraph) throws -> CanvasMutationResult {
         guard let focusedNodeID = graph.focusedNodeID else {
             return noOpMutationResult(for: graph)
@@ -48,6 +52,7 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 
+    /// Picks next focus by sibling, then parent, then geometric nearest node fallback.
     private func nextFocusedNodeIDAfterDeletion(
         deleting focusedNodeID: CanvasNodeID,
         focusedNode: CanvasNode,
@@ -71,6 +76,7 @@ extension ApplyCanvasCommandsUseCase {
         return nearestNodeID(to: focusedNode, in: graphAfterDelete)
     }
 
+    /// Finds nearest node center to preserve editing continuity after deletion.
     private func nearestNodeID(to sourceNode: CanvasNode, in graph: CanvasGraph) -> CanvasNodeID? {
         let sourceCenter = nodeCenter(for: sourceNode)
         return graph.nodesByID.values.min { lhs, rhs in
@@ -89,6 +95,7 @@ extension ApplyCanvasCommandsUseCase {
         }?.id
     }
 
+    /// Selects a surviving sibling under the same parent using deterministic distance and tie-break ordering.
     private func siblingNodeID(
         of nodeID: CanvasNodeID,
         in graph: CanvasGraph,

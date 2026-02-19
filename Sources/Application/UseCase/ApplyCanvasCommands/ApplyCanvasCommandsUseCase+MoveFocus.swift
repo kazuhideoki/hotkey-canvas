@@ -3,6 +3,11 @@ import Domain
 // Background: Keyboard-driven navigation needs deterministic next-focus selection.
 // Responsibility: Resolve next focus by delegating directional candidate selection to domain service.
 extension ApplyCanvasCommandsUseCase {
+    /// Moves focus in the visible graph and requests focus normalization without layout recomputation.
+    /// - Parameters:
+    ///   - graph: Current graph snapshot.
+    ///   - direction: Direction for navigation.
+    /// - Returns: Mutation result with updated focus, or no-op when navigation fails.
     func moveFocus(in graph: CanvasGraph, direction: CanvasFocusDirection) -> CanvasMutationResult {
         let visibleGraph = CanvasFoldedSubtreeVisibilityService.visibleGraph(from: graph)
         guard
