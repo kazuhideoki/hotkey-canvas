@@ -172,6 +172,11 @@ extension ApplyCanvasCommandsUseCase {
             return graph
         }
         let newParent = peers[previousIndex]
+        let newParentChildren = childNodes(of: newParent.id, in: graph)
+        let appendedChildY = appendedChildY(
+            under: newParent,
+            existingChildren: newParentChildren
+        )
 
         var nextGraph = graph
         if let currentParentEdge = parentChildIncomingEdge(of: focusedNodeID, in: graph) {
@@ -188,7 +193,7 @@ extension ApplyCanvasCommandsUseCase {
             text: focusedNode.text,
             bounds: CanvasBounds(
                 x: newParent.bounds.x + newParent.bounds.width + Self.indentHorizontalGap,
-                y: newParent.bounds.y,
+                y: appendedChildY,
                 width: focusedNode.bounds.width,
                 height: focusedNode.bounds.height
             ),
@@ -203,6 +208,20 @@ extension ApplyCanvasCommandsUseCase {
         )
 
         return nextGraph
+    }
+
+    private func appendedChildY(
+        under newParent: CanvasNode,
+        existingChildren: [CanvasNode]
+    ) -> Double {
+        guard !existingChildren.isEmpty else {
+            return newParent.bounds.y
+        }
+        let deepestBottomY =
+            existingChildren
+            .map { $0.bounds.y + $0.bounds.height }
+            .max() ?? newParent.bounds.y
+        return deepestBottomY + Self.newNodeVerticalSpacing
     }
 
     private func orderedPeerNodes(of nodeID: CanvasNodeID, in graph: CanvasGraph) -> [CanvasNode] {
