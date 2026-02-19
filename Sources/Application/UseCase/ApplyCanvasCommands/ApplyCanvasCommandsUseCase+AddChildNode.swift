@@ -31,10 +31,13 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentID, to: childNode.id),
             in: graphWithChild
         ).get()
+        var nextCollapsedRootNodeIDs = graphWithChild.collapsedRootNodeIDs
+        nextCollapsedRootNodeIDs.remove(parentID)
         let nextGraph = CanvasGraph(
             nodesByID: graphWithChild.nodesByID,
             edgesByID: graphWithChild.edgesByID,
-            focusedNodeID: childNode.id
+            focusedNodeID: childNode.id,
+            collapsedRootNodeIDs: nextCollapsedRootNodeIDs
         )
         return CanvasMutationResult(
             graphBeforeMutation: graph,

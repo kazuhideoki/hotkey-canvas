@@ -41,7 +41,8 @@ extension ApplyCanvasCommandsUseCase {
         let nextGraph = CanvasGraph(
             nodesByID: graphWithSibling.nodesByID,
             edgesByID: graphWithSibling.edgesByID,
-            focusedNodeID: siblingNode.id
+            focusedNodeID: siblingNode.id,
+            collapsedRootNodeIDs: graphWithSibling.collapsedRootNodeIDs
         )
         return CanvasMutationResult(
             graphBeforeMutation: graph,

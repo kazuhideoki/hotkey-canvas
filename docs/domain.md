@@ -21,14 +21,16 @@
 | D3 | エリアレイアウト | `CanvasNodeArea`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService` |
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
 | D5 | ショートカットカタログ | `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService` |
+| D6 | 折りたたみ可視性 | `CanvasFoldedSubtreeVisibilityService` |
 
-### D5 追加仕様（ズームショートカット）
+### D5 追加仕様（ズーム/折りたたみショートカット）
 
 - `CanvasShortcutAction` に `zoomIn` / `zoomOut` を追加した。
 - `CanvasShortcutCatalogService` の標準定義に以下を追加した。
 - `Command + +`（`Command + Shift + =` / `Command + Shift + ;` / `Command + +` 記号入力）: `zoomIn`
 - `Command + =`: `zoomIn`
 - `Command + -`: `zoomOut`
+- `Option + .`: `toggleFoldFocusedSubtree`
 - 利用先:
 - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)`）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
@@ -41,7 +43,7 @@
 #### 構造
 
 - 集約
-  - `CanvasGraph`: ノード/エッジ/フォーカスを保持する不変スナップショット。
+  - `CanvasGraph`: ノード/エッジ/フォーカス/折りたたみルートを保持する不変スナップショット。
 - エンティティ/値オブジェクト
   - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`
@@ -50,6 +52,7 @@
   - `CanvasNodeMoveDirection`
   - `CanvasSiblingNodePosition`
   - `CanvasCommand.centerFocusedNode`
+  - `CanvasCommand.toggleFoldFocusedSubtree`
 - エラー
   - `CanvasGraphError`
 - サービス
@@ -327,6 +330,54 @@
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 
+### D6. 折りたたみ可視性ドメイン
+
+#### 構造
+
+- 参照モデル
+  - `CanvasGraph`
+  - `CanvasEdgeRelationType.parentChild`
+- サービス
+  - `CanvasFoldedSubtreeVisibilityService`
+
+#### サービス詳細
+
+`CanvasFoldedSubtreeVisibilityService` は折りたたみ状態から可視ノード集合を導出する純粋計算を担当する。
+
+| メソッド | 責務 |
+| --- | --- |
+| `descendantNodeIDs(of:in:)` | 親子エッジを辿って子孫ノード集合を返す。 |
+| `hasDescendants(of:in:)` | 指定ノードが子孫を持つか判定する。 |
+| `normalizedCollapsedRootNodeIDs(in:)` | 存在しないノードや葉ノードを折りたたみルート集合から除外する。 |
+| `hiddenNodeIDs(in:)` | 折りたたみルート配下の子孫ノード集合を返す。 |
+| `visibleNodeIDs(in:)` | 非表示ノードを除いた可視ノード集合を返す。 |
+| `visibleGraph(from:)` | 可視ノード/可視エッジのみを持つ `CanvasGraph` を返す。 |
+
+#### 利用状況（どこから使われるか）
+
+- Application ユースケース
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ToggleFoldFocusedSubtree.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveFocus.swift`
+- Application Coordinator
+  - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
+    - グラフ更新後に折りたたみルート集合を正規化する。
+    - Focus Normalization は可視グラフを基準に行う。
+- InterfaceAdapters 出力
+  - `Sources/InterfaceAdapters/Output/ViewModel/CanvasViewModel.swift`
+    - 可視グラフのみを画面描画用 state として公開する。
+- 主要テスト
+  - `Tests/DomainTests/CanvasFoldedSubtreeVisibilityServiceTests.swift`
+  - `Tests/ApplicationTests/ApplyCanvasCommandsUseCase/ApplyCanvasCommandsUseCase+ToggleFoldFocusedSubtreeTests.swift`
+
+#### 不変条件・エラー一覧
+
+- 不変条件
+  - 折りたたみは「ルート自体は可視、子孫のみ非表示」で扱う。
+  - 折りたたみルートは、存在するノードかつ子孫を持つノードのみ有効。
+  - 可視グラフ上で無効なフォーカス ID は `nil` として扱う。
+- エラー
+  - ドメインエラー型は持たず、`throws` しない。
+
 ## 5. ドメイン間の関係（依存・データ受け渡し）
 
 1. `CanvasHotkeyTranslator` がキーイベントを `CanvasShortcutGesture` に正規化する。
@@ -337,6 +388,7 @@
    - フォーカス: `CanvasFocusNavigationService`
    - ツリー再レイアウト: `CanvasTreeLayoutService`
    - エリア衝突解消: `CanvasAreaLayoutService`
+   - 折りたたみ可視性: `CanvasFoldedSubtreeVisibilityService`
 5. 生成された `CanvasGraph` を `ApplyResult` 経由で ViewModel に返し、表示状態を更新する。
 
 共通契約:
@@ -357,3 +409,4 @@
 - 2026-02-18: Viewport Intent の運用を更新し、Application から `.resetManualPanOffset` を生成しない仕様へ変更（初期中央化/画面外補正は `CanvasView` の表示ルールで実施）。
 - 2026-02-18: `ctrl+l` の `centerFocusedNode` コマンドを追加し、`apply` フローで `resetManualPanOffset` を返却することで、現在フォーカスノードを画面中央へ再配置する。
 - 2026-02-18: 未使用だった Domain 公開 API（`CanvasGraphCRUDService.readNode/readEdge/updateEdge`、`CanvasShortcutCatalogService.defaultDefinitions/validate`、`CanvasShortcutCatalogError`）を削除。
+- 2026-02-19: `toggleFoldFocusedSubtree` コマンドと `Option + .` ショートカットを追加し、`CanvasFoldedSubtreeVisibilityService` で折りたたみ可視性の計算を Domain に集約。

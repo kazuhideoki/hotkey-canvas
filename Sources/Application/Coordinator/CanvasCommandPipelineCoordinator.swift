@@ -60,6 +60,9 @@ extension CanvasCommandPipelineCoordinator {
                 seedNodeID: mutationResult.areaLayoutSeedNodeID
             )
         }
+        if effects.didMutateGraph {
+            graph = runCollapsedRootNormalizationStage(on: graph)
+        }
         if effects.didMutateGraph && effects.needsFocusNormalization {
             graph = runFocusNormalizationStage(on: graph)
         }
@@ -98,7 +101,8 @@ extension CanvasCommandPipelineCoordinator {
         return CanvasGraph(
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
-            focusedNodeID: graph.focusedNodeID
+            focusedNodeID: graph.focusedNodeID,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs
         )
     }
 
@@ -156,7 +160,22 @@ extension CanvasCommandPipelineCoordinator {
         return CanvasGraph(
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
-            focusedNodeID: graph.focusedNodeID
+            focusedNodeID: graph.focusedNodeID,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs
+        )
+    }
+
+    private func runCollapsedRootNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {
+        let normalizedCollapsedRootNodeIDs =
+            CanvasFoldedSubtreeVisibilityService.normalizedCollapsedRootNodeIDs(in: graph)
+        guard normalizedCollapsedRootNodeIDs != graph.collapsedRootNodeIDs else {
+            return graph
+        }
+        return CanvasGraph(
+            nodesByID: graph.nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: graph.focusedNodeID,
+            collapsedRootNodeIDs: normalizedCollapsedRootNodeIDs
         )
     }
 
@@ -168,7 +187,8 @@ extension CanvasCommandPipelineCoordinator {
         return CanvasGraph(
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
-            focusedNodeID: normalizedFocusedNodeID
+            focusedNodeID: normalizedFocusedNodeID,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs
         )
     }
 
@@ -187,13 +207,14 @@ extension CanvasCommandPipelineCoordinator {
     }
 
     private func normalizedFocusedNodeID(in graph: CanvasGraph) -> CanvasNodeID? {
-        guard !graph.nodesByID.isEmpty else {
+        let visibleGraph = CanvasFoldedSubtreeVisibilityService.visibleGraph(from: graph)
+        guard !visibleGraph.nodesByID.isEmpty else {
             return nil
         }
-        if let focusedNodeID = graph.focusedNodeID, graph.nodesByID[focusedNodeID] != nil {
+        if let focusedNodeID = visibleGraph.focusedNodeID, visibleGraph.nodesByID[focusedNodeID] != nil {
             return focusedNodeID
         }
-        return graph.nodesByID.values
+        return visibleGraph.nodesByID.values
             .sorted { lhs, rhs in
                 if lhs.bounds.y != rhs.bounds.y {
                     return lhs.bounds.y < rhs.bounds.y

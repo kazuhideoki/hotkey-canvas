@@ -178,6 +178,7 @@ public struct CanvasView: View {
                     }
                     ForEach(displayNodes, id: \.id) { node in
                         let isFocused = viewModel.focusedNodeID == node.id
+                        let isCollapsedRoot = viewModel.collapsedRootNodeIDs.contains(node.id)
                         let isEditing = editingContext?.nodeID == node.id
                         RoundedRectangle(cornerRadius: 10)
                             .fill(Color(nsColor: .windowBackgroundColor))
@@ -214,6 +215,16 @@ public struct CanvasView: View {
                                         text: node.text ?? "",
                                         nodeWidth: node.bounds.width
                                     )
+                                }
+                            }
+                            .overlay(alignment: .trailing) {
+                                if isCollapsedRoot {
+                                    Image(systemName: "chevron.right.circle.fill")
+                                        .foregroundStyle(
+                                            isFocused ? Color.accentColor : Color(nsColor: .secondaryLabelColor)
+                                        )
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .offset(x: 11)
                                 }
                             }
                             .frame(

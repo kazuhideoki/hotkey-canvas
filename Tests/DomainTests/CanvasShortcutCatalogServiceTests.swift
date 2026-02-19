@@ -21,6 +21,15 @@ func test_resolveAction_controlL_returnsCenterFocusedNode() {
     #expect(action == .apply(commands: [.centerFocusedNode]))
 }
 
+@Test("Shortcut catalog: option+period resolves toggleFoldFocusedSubtree")
+func test_resolveAction_optionPeriod_returnsToggleFoldFocusedSubtree() {
+    let gesture = CanvasShortcutGesture(key: .character("."), modifiers: [.option])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .apply(commands: [.toggleFoldFocusedSubtree]))
+}
+
 @Test("Shortcut catalog: command-shift-p resolves open command palette")
 func test_resolveAction_commandShiftP_returnsOpenCommandPalette() {
     let gesture = CanvasShortcutGesture(key: .character("p"), modifiers: [.command, .shift])

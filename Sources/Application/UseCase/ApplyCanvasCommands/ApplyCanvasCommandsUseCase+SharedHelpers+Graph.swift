@@ -74,7 +74,8 @@ extension ApplyCanvasCommandsUseCase {
         return CanvasGraph(
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
-            focusedNodeID: graph.focusedNodeID
+            focusedNodeID: graph.focusedNodeID,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs
         )
     }
 

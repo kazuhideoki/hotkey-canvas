@@ -152,6 +152,48 @@ func test_onAppear_reflectsHistoryFlags() async throws {
 }
 
 @MainActor
+@Test("CanvasViewModel: onAppear hides folded descendants from published nodes and edges")
+func test_onAppear_hidesFoldedDescendants_fromPublishedGraph() async throws {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let childID = CanvasNodeID(rawValue: "child")
+    let edgeID = CanvasEdgeID(rawValue: "edge-root-child")
+    let graph = CanvasGraph(
+        nodesByID: [
+            rootID: CanvasNode(
+                id: rootID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+            ),
+            childID: CanvasNode(
+                id: childID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 260, y: 0, width: 200, height: 100)
+            ),
+        ],
+        edgesByID: [
+            edgeID: CanvasEdge(
+                id: edgeID,
+                fromNodeID: rootID,
+                toNodeID: childID,
+                relationType: .parentChild
+            )
+        ],
+        focusedNodeID: rootID,
+        collapsedRootNodeIDs: [rootID]
+    )
+    let inputPort = StaticCanvasEditingInputPort(graph: graph)
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.onAppear()
+
+    #expect(viewModel.nodes.map(\.id) == [rootID])
+    #expect(viewModel.edges.isEmpty)
+    #expect(viewModel.collapsedRootNodeIDs == [rootID])
+}
+
+@MainActor
 @Test("CanvasViewModel: add-node apply publishes pending editing node")
 func test_apply_addNode_setsPendingEditingNodeID() async throws {
     let inputPort = UndoRedoCanvasEditingInputPort()
@@ -274,7 +316,8 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
                 didAddNode = true
-            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .centerFocusedNode, .setNodeText:
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
+                .centerFocusedNode, .setNodeText:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -363,7 +406,8 @@ extension OverlappingFailureCanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
                 didAddNode = true
-            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .centerFocusedNode, .setNodeText:
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
+                .centerFocusedNode, .setNodeText:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -552,7 +596,8 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nextGraph.focusedNodeID
                 )
-            case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .centerFocusedNode,
+            case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .moveNode,
+                .toggleFoldFocusedSubtree, .centerFocusedNode,
                 .deleteFocusedNode:
                 continue
             }
@@ -742,7 +787,8 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nodeID
                 )
-            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .centerFocusedNode, .setNodeText,
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
+                .centerFocusedNode, .setNodeText,
                 .deleteFocusedNode:
                 continue
             }
@@ -791,7 +837,8 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nodeID
                 )
-            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .centerFocusedNode, .setNodeText,
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
+                .centerFocusedNode, .setNodeText,
                 .deleteFocusedNode:
                 continue
             }

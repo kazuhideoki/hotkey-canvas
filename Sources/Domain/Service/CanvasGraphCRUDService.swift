@@ -24,7 +24,8 @@ public enum CanvasGraphCRUDService {
             CanvasGraph(
                 nodesByID: nodes,
                 edgesByID: graph.edgesByID,
-                focusedNodeID: graph.focusedNodeID
+                focusedNodeID: graph.focusedNodeID,
+                collapsedRootNodeIDs: graph.collapsedRootNodeIDs
             ))
     }
 
@@ -50,7 +51,8 @@ public enum CanvasGraphCRUDService {
             CanvasGraph(
                 nodesByID: nodes,
                 edgesByID: graph.edgesByID,
-                focusedNodeID: graph.focusedNodeID
+                focusedNodeID: graph.focusedNodeID,
+                collapsedRootNodeIDs: graph.collapsedRootNodeIDs
             ))
     }
 
@@ -75,7 +77,8 @@ public enum CanvasGraphCRUDService {
             CanvasGraph(
                 nodesByID: nodes,
                 edgesByID: edges,
-                focusedNodeID: nextFocusedNodeID
+                focusedNodeID: nextFocusedNodeID,
+                collapsedRootNodeIDs: graph.collapsedRootNodeIDs
             ))
     }
 
@@ -101,7 +104,8 @@ public enum CanvasGraphCRUDService {
             CanvasGraph(
                 nodesByID: graph.nodesByID,
                 edgesByID: edges,
-                focusedNodeID: graph.focusedNodeID
+                focusedNodeID: graph.focusedNodeID,
+                collapsedRootNodeIDs: graph.collapsedRootNodeIDs
             ))
     }
 
@@ -121,7 +125,8 @@ public enum CanvasGraphCRUDService {
             CanvasGraph(
                 nodesByID: graph.nodesByID,
                 edgesByID: edges,
-                focusedNodeID: graph.focusedNodeID
+                focusedNodeID: graph.focusedNodeID,
+                collapsedRootNodeIDs: graph.collapsedRootNodeIDs
             ))
     }
 }
