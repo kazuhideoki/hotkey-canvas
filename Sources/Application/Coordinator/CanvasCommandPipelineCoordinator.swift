@@ -6,6 +6,11 @@ import Domain
 public struct CanvasCommandPipelineCoordinator: Sendable {
     public init() {}
 
+    /// Runs mutation outputs through the fixed pipeline order and returns the last aggregated result.
+    /// - Parameters:
+    ///   - baseGraph: Snapshot before executing the current command sequence.
+    ///   - mutationResults: Mutation outputs that already classify stage requirements via effects.
+    /// - Returns: Final graph and viewport intent after all eligible stages are evaluated.
     public func run(
         on baseGraph: CanvasGraph,
         mutationResults: [CanvasMutationResult]
@@ -39,6 +44,7 @@ public struct CanvasCommandPipelineCoordinator: Sendable {
 }
 
 extension CanvasCommandPipelineCoordinator {
+    /// Applies deterministic stage gating from the phase-1 effects contract.
     private func runStages(
         from graphBeforeMutation: CanvasGraph,
         with mutationResult: CanvasMutationResult
@@ -70,6 +76,7 @@ extension CanvasCommandPipelineCoordinator {
         return graph
     }
 
+    /// Recomputes parent-child tree bounds when structural mutation requests tree layout.
     private func runTreeLayoutStage(on graph: CanvasGraph) -> CanvasGraph {
         let updatedBoundsByNodeID = CanvasTreeLayoutService.relayoutParentChildTrees(
             in: graph,
@@ -106,6 +113,7 @@ extension CanvasCommandPipelineCoordinator {
         )
     }
 
+    /// Resolves overlap translations for the connected area that contains the mutation seed node.
     private func runAreaLayoutStage(on graph: CanvasGraph, seedNodeID: CanvasNodeID?) -> CanvasGraph {
         guard let seedNodeID else {
             return graph
@@ -165,6 +173,7 @@ extension CanvasCommandPipelineCoordinator {
         )
     }
 
+    /// Drops collapsed roots that are no longer valid after graph mutation.
     private func runCollapsedRootNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {
         let normalizedCollapsedRootNodeIDs =
             CanvasFoldedSubtreeVisibilityService.normalizedCollapsedRootNodeIDs(in: graph)
@@ -179,6 +188,7 @@ extension CanvasCommandPipelineCoordinator {
         )
     }
 
+    /// Ensures focus points to a visible existing node after mutation and layout.
     private func runFocusNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {
         let normalizedFocusedNodeID = normalizedFocusedNodeID(in: graph)
         guard normalizedFocusedNodeID != graph.focusedNodeID else {
@@ -192,6 +202,7 @@ extension CanvasCommandPipelineCoordinator {
         )
     }
 
+    /// Emits viewport intent only when pipeline-level policy defines one.
     private func runViewportIntentStage(
         graphBeforeMutation: CanvasGraph,
         graphAfterPipeline: CanvasGraph
@@ -201,11 +212,13 @@ extension CanvasCommandPipelineCoordinator {
         return nil
     }
 
+    /// Detects node insertion across the whole sequence for UI behaviors that depend on add operations.
     private func hasAddedNode(from oldGraph: CanvasGraph, to newGraph: CanvasGraph) -> Bool {
         let previousNodeIDs = Set(oldGraph.nodesByID.keys)
         return newGraph.nodesByID.keys.contains { !previousNodeIDs.contains($0) }
     }
 
+    /// Normalizes focus to the first visible node in stable order when current focus is invalid.
     private func normalizedFocusedNodeID(in graph: CanvasGraph) -> CanvasNodeID? {
         let visibleGraph = CanvasFoldedSubtreeVisibilityService.visibleGraph(from: graph)
         guard !visibleGraph.nodesByID.isEmpty else {

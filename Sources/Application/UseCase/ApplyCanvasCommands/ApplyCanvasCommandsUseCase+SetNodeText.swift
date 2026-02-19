@@ -8,6 +8,14 @@ import Domain
 extension ApplyCanvasCommandsUseCase {
     private static let minimumNodeHeight: Double = 1
 
+    /// Updates node text and height, then requests tree/area layout to keep structure and collision consistent.
+    /// - Parameters:
+    ///   - graph: Current graph snapshot.
+    ///   - nodeID: Target node identifier.
+    ///   - text: Edited text (empty string becomes `nil`).
+    ///   - nodeHeight: Measured node height from UI.
+    /// - Returns: Mutation result with relayout effects, or no-op when values are unchanged.
+    /// - Throws: Propagates node update failure from CRUD service.
     func setNodeText(
         in graph: CanvasGraph,
         nodeID: CanvasNodeID,

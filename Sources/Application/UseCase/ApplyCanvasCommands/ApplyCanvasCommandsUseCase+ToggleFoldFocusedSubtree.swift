@@ -3,6 +3,9 @@ import Domain
 // Background: Folding a focused subtree should be represented as an undoable graph-state transition.
 // Responsibility: Toggle collapsed state for descendants under the currently focused node.
 extension ApplyCanvasCommandsUseCase {
+    /// Toggles collapsed-root membership of the focused node without triggering layout stages.
+    /// - Parameter graph: Current graph snapshot.
+    /// - Returns: Mutation result with updated collapsed-root set, or no-op when not applicable.
     func toggleFoldFocusedSubtree(in graph: CanvasGraph) -> CanvasMutationResult {
         guard let focusedNodeID = graph.focusedNodeID else {
             return noOpMutationResult(for: graph)
