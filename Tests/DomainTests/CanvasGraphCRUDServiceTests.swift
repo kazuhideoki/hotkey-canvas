@@ -112,6 +112,42 @@ func test_deleteNode_clearsFocus_whenDeletingFocusedNode() throws {
     #expect(prunedGraph.focusedNodeID == nil)
 }
 
+@Test("Graph CRUD preserves collapsed root state")
+func test_crud_preservesCollapsedRootState() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let parentNode = CanvasNode(
+        id: parentID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 60)
+    )
+    let childNode = CanvasNode(
+        id: childID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 140, y: 0, width: 100, height: 60)
+    )
+    var graph = try CanvasGraphCRUDService.createNode(parentNode, in: .empty).get()
+    graph = try CanvasGraphCRUDService.createNode(childNode, in: graph).get()
+    graph = CanvasGraph(
+        nodesByID: graph.nodesByID,
+        edgesByID: graph.edgesByID,
+        focusedNodeID: parentID,
+        collapsedRootNodeIDs: [parentID]
+    )
+
+    let updatedChildNode = CanvasNode(
+        id: childID,
+        kind: .text,
+        text: "updated",
+        bounds: childNode.bounds
+    )
+    let updatedGraph = try CanvasGraphCRUDService.updateNode(updatedChildNode, in: graph).get()
+
+    #expect(updatedGraph.collapsedRootNodeIDs == [parentID])
+}
+
 @Test("Validation: creating invalid edge or duplicate node fails")
 func test_validation_invalidOperations_throwExpectedErrors() throws {
     let node = CanvasNode(

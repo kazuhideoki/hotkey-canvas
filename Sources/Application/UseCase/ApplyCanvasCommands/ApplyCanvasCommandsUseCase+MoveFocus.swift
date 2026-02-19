@@ -4,9 +4,10 @@ import Domain
 // Responsibility: Resolve next focus by delegating directional candidate selection to domain service.
 extension ApplyCanvasCommandsUseCase {
     func moveFocus(in graph: CanvasGraph, direction: CanvasFocusDirection) -> CanvasMutationResult {
+        let visibleGraph = CanvasFoldedSubtreeVisibilityService.visibleGraph(from: graph)
         guard
             let nextFocusedNodeID = CanvasFocusNavigationService.nextFocusedNodeID(
-                in: graph,
+                in: visibleGraph,
                 moving: direction
             )
         else {
@@ -20,7 +21,8 @@ extension ApplyCanvasCommandsUseCase {
         let nextGraph = CanvasGraph(
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
-            focusedNodeID: nextFocusedNodeID
+            focusedNodeID: nextFocusedNodeID,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs
         )
         return CanvasMutationResult(
             graphBeforeMutation: graph,

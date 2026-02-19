@@ -30,7 +30,10 @@ extension ApplyCanvasCommandsUseCase {
         let nextGraph = CanvasGraph(
             nodesByID: graphAfterDelete.nodesByID,
             edgesByID: graphAfterDelete.edgesByID,
-            focusedNodeID: nextFocusNodeID
+            focusedNodeID: nextFocusNodeID,
+            collapsedRootNodeIDs: CanvasFoldedSubtreeVisibilityService.normalizedCollapsedRootNodeIDs(
+                in: graphAfterDelete
+            )
         )
         return CanvasMutationResult(
             graphBeforeMutation: graph,

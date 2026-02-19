@@ -9,7 +9,8 @@ extension ApplyCanvasCommandsUseCase {
         let nextGraph = CanvasGraph(
             nodesByID: graphAfterMutation.nodesByID,
             edgesByID: graphAfterMutation.edgesByID,
-            focusedNodeID: node.id
+            focusedNodeID: node.id,
+            collapsedRootNodeIDs: graphAfterMutation.collapsedRootNodeIDs
         )
         return CanvasMutationResult(
             graphBeforeMutation: graph,

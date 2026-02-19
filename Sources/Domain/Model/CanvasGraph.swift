@@ -8,6 +8,8 @@ public struct CanvasGraph: Equatable, Sendable {
     public let edgesByID: [CanvasEdgeID: CanvasEdge]
     /// Currently focused node identifier.
     public let focusedNodeID: CanvasNodeID?
+    /// Root node identifiers whose descendant subtrees are folded in UI.
+    public let collapsedRootNodeIDs: Set<CanvasNodeID>
 
     /// Creates an immutable graph snapshot.
     /// - Parameters:
@@ -17,11 +19,13 @@ public struct CanvasGraph: Equatable, Sendable {
     public init(
         nodesByID: [CanvasNodeID: CanvasNode] = [:],
         edgesByID: [CanvasEdgeID: CanvasEdge] = [:],
-        focusedNodeID: CanvasNodeID? = nil
+        focusedNodeID: CanvasNodeID? = nil,
+        collapsedRootNodeIDs: Set<CanvasNodeID> = []
     ) {
         self.nodesByID = nodesByID
         self.edgesByID = edgesByID
         self.focusedNodeID = focusedNodeID
+        self.collapsedRootNodeIDs = collapsedRootNodeIDs
     }
 
     /// Empty graph constant used as an initial state.

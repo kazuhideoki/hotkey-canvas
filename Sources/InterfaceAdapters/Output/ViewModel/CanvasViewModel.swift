@@ -7,6 +7,7 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var nodes: [CanvasNode] = []
     @Published public private(set) var edges: [CanvasEdge] = []
     @Published public private(set) var focusedNodeID: CanvasNodeID?
+    @Published public private(set) var collapsedRootNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var pendingEditingNodeID: CanvasNodeID?
     @Published public private(set) var viewportIntent: CanvasViewportIntent?
     @Published public private(set) var canUndo: Bool = false
@@ -151,15 +152,20 @@ extension CanvasViewModel {
         switch command {
         case .addNode, .addChildNode, .addSiblingNode:
             return true
-        case .moveFocus, .moveNode, .centerFocusedNode, .deleteFocusedNode, .setNodeText:
+        case .moveFocus, .moveNode, .toggleFoldFocusedSubtree, .centerFocusedNode, .deleteFocusedNode,
+            .setNodeText:
             return false
         }
     }
 
     private func updateDisplay(with result: ApplyResult) {
-        nodes = sortedNodes(in: result.newState)
-        edges = sortedEdges(in: result.newState)
-        focusedNodeID = result.newState.focusedNodeID
+        let visibleGraph = CanvasFoldedSubtreeVisibilityService.visibleGraph(from: result.newState)
+        nodes = sortedNodes(in: visibleGraph)
+        edges = sortedEdges(in: visibleGraph)
+        focusedNodeID = visibleGraph.focusedNodeID
+        collapsedRootNodeIDs = CanvasFoldedSubtreeVisibilityService.normalizedCollapsedRootNodeIDs(
+            in: result.newState
+        )
         viewportIntent = result.viewportIntent
         canUndo = result.canUndo
         canRedo = result.canRedo

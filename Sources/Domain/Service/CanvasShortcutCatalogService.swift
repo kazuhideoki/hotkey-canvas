@@ -174,7 +174,15 @@ extension CanvasShortcutCatalogService {
                 gesture: CanvasShortcutGesture(key: .character("l"), modifiers: [.control]),
                 action: .apply(commands: [.centerFocusedNode]),
                 shortcutLabel: "Control + L"
-            )
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "toggleFoldFocusedSubtree"),
+                name: "Toggle Fold Focused Subtree",
+                gesture: CanvasShortcutGesture(key: .character("."), modifiers: [.option]),
+                action: .apply(commands: [.toggleFoldFocusedSubtree]),
+                shortcutLabel: "Option + .",
+                searchTokens: ["fold", "collapse", "expand", "subtree"]
+            ),
         ]
     }
 

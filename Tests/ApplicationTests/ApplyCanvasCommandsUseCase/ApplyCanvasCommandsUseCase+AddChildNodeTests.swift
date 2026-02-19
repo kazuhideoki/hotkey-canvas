@@ -115,6 +115,28 @@ func test_apply_addChildNode_avoidsOccupiedSlotWithinSameArea() async throws {
     #expect(newChild.bounds.y >= existingChildAfter.bounds.y + existingChildAfter.bounds.height + 24)
 }
 
+@Test("ApplyCanvasCommandsUseCase: addChildNode expands collapsed focused parent")
+func test_apply_addChildNode_expandsCollapsedFocusedParent() async throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let parent = CanvasNode(
+        id: parentID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 100, y: 100, width: 220, height: 120)
+    )
+    let graph = CanvasGraph(
+        nodesByID: [parentID: parent],
+        edgesByID: [:],
+        focusedNodeID: parentID,
+        collapsedRootNodeIDs: [parentID]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addChildNode])
+
+    #expect(!result.newState.collapsedRootNodeIDs.contains(parentID))
+}
+
 private func enclosingBounds(of nodes: [CanvasNode]) -> CanvasBounds {
     guard let first = nodes.first else {
         return CanvasBounds(x: 0, y: 0, width: 0, height: 0)

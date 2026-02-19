@@ -97,7 +97,8 @@ extension ApplyCanvasCommandsUseCase {
                 uniquingKeysWith: { _, new in new }
             ),
             edgesByID: graph.edgesByID,
-            focusedNodeID: focusedNodeID
+            focusedNodeID: focusedNodeID,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs
         )
         return graphAfterSwap
     }
@@ -144,7 +145,8 @@ extension ApplyCanvasCommandsUseCase {
             nodesByID: nextGraph.nodesByID.merging(
                 [focusedNodeID: updatedFocusedNode], uniquingKeysWith: { _, new in new }),
             edgesByID: nextGraph.edgesByID,
-            focusedNodeID: focusedNodeID
+            focusedNodeID: focusedNodeID,
+            collapsedRootNodeIDs: nextGraph.collapsedRootNodeIDs
         )
 
         return nextGraph
@@ -196,7 +198,8 @@ extension ApplyCanvasCommandsUseCase {
             nodesByID: nextGraph.nodesByID.merging(
                 [focusedNodeID: updatedFocusedNode], uniquingKeysWith: { _, new in new }),
             edgesByID: nextGraph.edgesByID,
-            focusedNodeID: focusedNodeID
+            focusedNodeID: focusedNodeID,
+            collapsedRootNodeIDs: nextGraph.collapsedRootNodeIDs
         )
 
         return nextGraph

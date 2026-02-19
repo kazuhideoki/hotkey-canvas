@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import AppKit
 import Domain
 import InterfaceAdapters
@@ -139,6 +140,29 @@ func test_translate_controlL_returnsCenterFocusedNode() throws {
     let commands = sut.translate(event)
 
     #expect(commands == [.centerFocusedNode])
+}
+
+@Test("CanvasHotkeyTranslator: Option+Period maps to toggleFoldFocusedSubtree")
+func test_translate_optionPeriod_returnsToggleFoldFocusedSubtree() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.option],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "≥",
+            charactersIgnoringModifiers: ".",
+            isARepeat: false,
+            keyCode: 47
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.toggleFoldFocusedSubtree])
 }
 
 @Test("CanvasHotkeyTranslator: Up arrow maps to moveFocus up")
@@ -573,7 +597,7 @@ func test_zoomAction_commandShiftSemicolon_returnsZoomIn() throws {
 }
 
 @Test(
-    "CanvasHotkeyTranslator: Command+Shift+equals keycode maps to zoomIn action even when character normalization differs"
+    "CanvasHotkeyTranslator: Command+Shift+equals keycode maps to zoomIn despite character normalization"
 )
 func test_zoomAction_commandShiftEqualsKeyCode_returnsZoomIn() throws {
     let sut = CanvasHotkeyTranslator()
