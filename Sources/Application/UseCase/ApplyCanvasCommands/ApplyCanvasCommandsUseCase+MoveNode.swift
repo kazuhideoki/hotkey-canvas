@@ -198,7 +198,7 @@ extension ApplyCanvasCommandsUseCase {
             nodesByID: nextGraph.nodesByID.merging(
                 [focusedNodeID: updatedFocusedNode], uniquingKeysWith: { _, new in new }),
             edgesByID: nextGraph.edgesByID,
-            focusedNodeID: focusedNodeID,
+            focusedNodeID: nextGraph.collapsedRootNodeIDs.contains(newParent.id) ? newParent.id : focusedNodeID,
             collapsedRootNodeIDs: nextGraph.collapsedRootNodeIDs
         )
 
