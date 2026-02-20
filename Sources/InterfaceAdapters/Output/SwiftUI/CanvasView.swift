@@ -192,16 +192,18 @@ public struct CanvasView: View {
                             let isFocused = viewModel.focusedNodeID == node.id
                             let isCollapsedRoot = viewModel.collapsedRootNodeIDs.contains(node.id)
                             let isEditing = editingContext?.nodeID == node.id
-                            RoundedRectangle(cornerRadius: 10)
+                            RoundedRectangle(cornerRadius: NodeTextStyle.cornerRadius)
                                 .fill(Color(nsColor: .windowBackgroundColor))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
+                                    RoundedRectangle(cornerRadius: NodeTextStyle.cornerRadius)
                                         .stroke(
                                             isEditing
                                                 ? Color(nsColor: .systemPink)
                                                 : (isFocused
                                                     ? Color.accentColor : Color(nsColor: .separatorColor)),
-                                            lineWidth: (isEditing || isFocused) ? 3 : 2.25
+                                            lineWidth: (isEditing || isFocused)
+                                                ? NodeTextStyle.focusedBorderLineWidth
+                                                : NodeTextStyle.borderLineWidth
                                         )
                                 )
                                 .overlay(alignment: .topLeading) {
@@ -223,7 +225,7 @@ public struct CanvasView: View {
                                                 cancelNodeEditing()
                                             }
                                         )
-                                        .padding(6 * CGFloat(zoomScale))
+                                        .padding(NodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
                                     } else {
                                         nonEditingNodeText(
                                             text: node.text ?? "",
@@ -242,11 +244,15 @@ public struct CanvasView: View {
                                             )
                                             .font(
                                                 .system(
-                                                    size: 15 * CGFloat(zoomScale),
+                                                    size: NodeTextStyle.collapsedBadgeFontSize
+                                                        * CGFloat(zoomScale),
                                                     weight: .semibold
                                                 )
                                             )
-                                            .offset(x: 11 * CGFloat(zoomScale))
+                                            .offset(
+                                                x: NodeTextStyle.collapsedBadgeTrailingOffset
+                                                    * CGFloat(zoomScale)
+                                            )
                                     }
                                 }
                                 .frame(

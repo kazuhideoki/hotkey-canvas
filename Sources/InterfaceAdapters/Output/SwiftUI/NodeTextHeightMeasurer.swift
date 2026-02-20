@@ -20,9 +20,12 @@ struct NodeTextHeightMeasurer {
 
     init(
         font: NSFont = .systemFont(ofSize: NodeTextStyle.fontSize, weight: NodeTextStyle.fontWeight),
-        outerHorizontalPadding: CGFloat = 6,
-        outerVerticalPadding: CGFloat = 6,
-        textContainerInset: NSSize = NSSize(width: 6, height: 6),
+        outerHorizontalPadding: CGFloat = NodeTextStyle.editorContainerPadding,
+        outerVerticalPadding: CGFloat = NodeTextStyle.editorContainerPadding,
+        textContainerInset: NSSize = NSSize(
+            width: NodeTextStyle.textContainerInset,
+            height: NodeTextStyle.textContainerInset
+        ),
         lineFragmentPadding: CGFloat = 0,
         verticalSafetyPadding: CGFloat = 1,
         minimumNodeHeight: CGFloat? = nil,
