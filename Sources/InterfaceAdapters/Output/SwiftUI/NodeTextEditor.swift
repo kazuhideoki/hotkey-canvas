@@ -13,6 +13,7 @@ enum NodeTextEditorInitialCursorPlacement: Equatable {
 struct NodeTextEditor: NSViewRepresentable {
     @Binding var text: String
     let nodeWidth: CGFloat
+    let zoomScale: Double
     let selectAllOnFirstFocus: Bool
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
     let initialTypingEvent: NSEvent?
@@ -25,7 +26,7 @@ struct NodeTextEditor: NSViewRepresentable {
         textView.delegate = context.coordinator
         textView.onCommit = onCommit
         textView.onCancel = onCancel
-        configureTextViewAppearance(textView)
+        configureTextViewAppearance(textView, zoomScale: zoomScale)
         return textView
     }
 
@@ -34,8 +35,10 @@ struct NodeTextEditor: NSViewRepresentable {
             nsView.string = text
         }
         context.coordinator.nodeWidth = nodeWidth
+        context.coordinator.zoomScale = zoomScale
         nsView.onCommit = onCommit
         nsView.onCancel = onCancel
+        configureTextViewAppearance(nsView, zoomScale: zoomScale)
         nsView.typingAttributes[.foregroundColor] = NSColor.labelColor
         nsView.typingAttributes[.font] = nsView.font ?? NodeTextStyle.font
         nsView.textColor = .labelColor
@@ -49,6 +52,7 @@ struct NodeTextEditor: NSViewRepresentable {
         Coordinator(
             text: $text,
             nodeWidth: nodeWidth,
+            zoomScale: zoomScale,
             selectAllOnFirstFocus: selectAllOnFirstFocus,
             initialCursorPlacement: initialCursorPlacement,
             initialTypingEvent: initialTypingEvent,
@@ -61,6 +65,7 @@ extension NodeTextEditor {
     final class Coordinator: NSObject, NSTextViewDelegate {
         var text: Binding<String>
         var nodeWidth: CGFloat
+        var zoomScale: Double
         let selectAllOnFirstFocus: Bool
         let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
         var pendingTypingEvent: NSEvent?
@@ -74,6 +79,7 @@ extension NodeTextEditor {
         init(
             text: Binding<String>,
             nodeWidth: CGFloat,
+            zoomScale: Double,
             selectAllOnFirstFocus: Bool,
             initialCursorPlacement: NodeTextEditorInitialCursorPlacement,
             initialTypingEvent: NSEvent?,
@@ -81,6 +87,7 @@ extension NodeTextEditor {
         ) {
             self.text = text
             self.nodeWidth = nodeWidth
+            self.zoomScale = zoomScale
             self.selectAllOnFirstFocus = selectAllOnFirstFocus
             self.initialCursorPlacement = initialCursorPlacement
             self.pendingTypingEvent = initialTypingEvent
@@ -104,16 +111,23 @@ extension NodeTextEditor {
         }
     }
 
-    private func configureTextViewAppearance(_ textView: NodeTextEditorTextView) {
+    private func configureTextViewAppearance(_ textView: NodeTextEditorTextView, zoomScale: Double) {
+        let clampedZoomScale = max(CGFloat(zoomScale), 0.0001)
         textView.drawsBackground = false
         textView.backgroundColor = .clear
-        textView.font = .systemFont(ofSize: NodeTextStyle.fontSize, weight: NodeTextStyle.fontWeight)
+        textView.font = .systemFont(
+            ofSize: NodeTextStyle.fontSize * clampedZoomScale,
+            weight: NodeTextStyle.fontWeight
+        )
         textView.textColor = .labelColor
         textView.insertionPointColor = .labelColor
         textView.isRichText = false
         textView.isHorizontallyResizable = false
         textView.isVerticallyResizable = true
-        textView.textContainerInset = NSSize(width: 6, height: 6)
+        textView.textContainerInset = NSSize(
+            width: 6 * clampedZoomScale,
+            height: 6 * clampedZoomScale
+        )
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainer?.widthTracksTextView = true
         textView.textContainer?.containerSize = NSSize(

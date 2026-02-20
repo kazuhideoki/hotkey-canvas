@@ -36,10 +36,6 @@ public struct CanvasView: View {
     public var body: some View {
         let displayNodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
         let nodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
-        let branchXByParentAndDirection = CanvasEdgeRouting.branchXByParentAndDirection(
-            edges: viewModel.edges,
-            nodesByID: nodesByID
-        )
         return GeometryReader { geometryProxy in
             let viewportSize = CGSize(
                 width: max(geometryProxy.size.width, Self.minimumCanvasWidth),
@@ -54,6 +50,14 @@ public struct CanvasView: View {
                 autoCenterOffset: scaledAutoCenterOffset,
                 manualPanOffset: manualPanOffset,
                 activeDragOffset: .zero
+            )
+            let renderedNodes = displayNodes.map {
+                renderedNode($0, viewportSize: viewportSize, effectiveOffset: cameraOffset)
+            }
+            let renderedNodesByID = Dictionary(uniqueKeysWithValues: renderedNodes.map { ($0.id, $0) })
+            let branchXByParentAndDirection = CanvasEdgeRouting.branchXByParentAndDirection(
+                edges: viewModel.edges,
+                nodesByID: nodesByID
             )
             let commandPaletteItems = filteredCommandPaletteItems()
             ZStack(alignment: .topLeading) {
@@ -173,69 +177,88 @@ public struct CanvasView: View {
                             branchXByParentAndDirection: branchXByParentAndDirection
                         ) {
                             path
+                                .applying(
+                                    CanvasViewportTransform.affineTransform(
+                                        viewportSize: viewportSize,
+                                        zoomScale: zoomScale,
+                                        effectiveOffset: cameraOffset
+                                    )
+                                )
                                 .stroke(Color(nsColor: .separatorColor), lineWidth: 2.25)
                         }
                     }
                     ForEach(displayNodes, id: \.id) { node in
-                        let isFocused = viewModel.focusedNodeID == node.id
-                        let isCollapsedRoot = viewModel.collapsedRootNodeIDs.contains(node.id)
-                        let isEditing = editingContext?.nodeID == node.id
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color(nsColor: .windowBackgroundColor))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(
-                                        isEditing
-                                            ? Color(nsColor: .systemPink)
-                                            : (isFocused ? Color.accentColor : Color(nsColor: .separatorColor)),
-                                        lineWidth: (isEditing || isFocused) ? 3 : 2.25
-                                    )
-                            )
-                            .overlay(alignment: .topLeading) {
-                                if editingContext?.nodeID == node.id {
-                                    NodeTextEditor(
-                                        text: editingTextBinding(for: node.id),
-                                        nodeWidth: CGFloat(node.bounds.width),
-                                        selectAllOnFirstFocus: false,
-                                        initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
-                                        initialTypingEvent: editingContext?.initialTypingEvent,
-                                        onLayoutMetricsChange: { metrics in
-                                            updateEditingNodeLayout(for: node.id, metrics: metrics)
-                                        },
-                                        onCommit: {
-                                            commitNodeEditing()
-                                        },
-                                        onCancel: {
-                                            cancelNodeEditing()
-                                        }
-                                    )
-                                    .padding(6)
-                                } else {
-                                    nonEditingNodeText(
-                                        text: node.text ?? "",
-                                        nodeWidth: node.bounds.width
-                                    )
-                                }
-                            }
-                            .overlay(alignment: .trailing) {
-                                if isCollapsedRoot {
-                                    Image(systemName: "chevron.right.circle.fill")
-                                        .foregroundStyle(
-                                            isFocused ? Color.accentColor : Color(nsColor: .secondaryLabelColor)
+                        if let renderedNode = renderedNodesByID[node.id] {
+                            let isFocused = viewModel.focusedNodeID == node.id
+                            let isCollapsedRoot = viewModel.collapsedRootNodeIDs.contains(node.id)
+                            let isEditing = editingContext?.nodeID == node.id
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color(nsColor: .windowBackgroundColor))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(
+                                            isEditing
+                                                ? Color(nsColor: .systemPink)
+                                                : (isFocused
+                                                    ? Color.accentColor : Color(nsColor: .separatorColor)),
+                                            lineWidth: (isEditing || isFocused) ? 3 : 2.25
                                         )
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .offset(x: 11)
+                                )
+                                .overlay(alignment: .topLeading) {
+                                    if editingContext?.nodeID == node.id {
+                                        NodeTextEditor(
+                                            text: editingTextBinding(for: node.id),
+                                            nodeWidth: CGFloat(node.bounds.width),
+                                            zoomScale: zoomScale,
+                                            selectAllOnFirstFocus: false,
+                                            initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
+                                            initialTypingEvent: editingContext?.initialTypingEvent,
+                                            onLayoutMetricsChange: { metrics in
+                                                updateEditingNodeLayout(for: node.id, metrics: metrics)
+                                            },
+                                            onCommit: {
+                                                commitNodeEditing()
+                                            },
+                                            onCancel: {
+                                                cancelNodeEditing()
+                                            }
+                                        )
+                                        .padding(6 * CGFloat(zoomScale))
+                                    } else {
+                                        nonEditingNodeText(
+                                            text: node.text ?? "",
+                                            nodeWidth: node.bounds.width,
+                                            zoomScale: zoomScale
+                                        )
+                                    }
                                 }
-                            }
-                            .frame(
-                                width: CGFloat(node.bounds.width),
-                                height: CGFloat(node.bounds.height),
-                                alignment: .topLeading
-                            )
-                            .position(
-                                x: CGFloat(node.bounds.x + (node.bounds.width / 2)),
-                                y: CGFloat(node.bounds.y + (node.bounds.height / 2))
-                            )
+                                .overlay(alignment: .trailing) {
+                                    if isCollapsedRoot {
+                                        Image(systemName: "chevron.right.circle.fill")
+                                            .foregroundStyle(
+                                                isFocused
+                                                    ? Color.accentColor
+                                                    : Color(nsColor: .secondaryLabelColor)
+                                            )
+                                            .font(
+                                                .system(
+                                                    size: 15 * CGFloat(zoomScale),
+                                                    weight: .semibold
+                                                )
+                                            )
+                                            .offset(x: 11 * CGFloat(zoomScale))
+                                    }
+                                }
+                                .frame(
+                                    width: CGFloat(renderedNode.bounds.width),
+                                    height: CGFloat(renderedNode.bounds.height),
+                                    alignment: .topLeading
+                                )
+                                .position(
+                                    x: CGFloat(renderedNode.bounds.x + (renderedNode.bounds.width / 2)),
+                                    y: CGFloat(renderedNode.bounds.y + (renderedNode.bounds.height / 2))
+                                )
+                        }
                     }
                 }
                 .frame(
@@ -243,8 +266,6 @@ public struct CanvasView: View {
                     height: viewportSize.height,
                     alignment: .topLeading
                 )
-                .scaleEffect(zoomScale, anchor: .center)
-                .offset(x: cameraOffset.width, y: cameraOffset.height)
                 if isCommandPalettePresented {
                     Color.clear
                         .contentShape(Rectangle())
@@ -275,7 +296,8 @@ public struct CanvasView: View {
                     }
                     let commands = hotkeyTranslator.translate(event)
                     guard !commands.isEmpty else {
-                        return handleTypingInputStart(event, nodesByID: nodesByID)
+                        let displayNodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
+                        return handleTypingInputStart(event, nodesByID: displayNodesByID)
                     }
                     // Returning true tells the capture view to stop responder-chain propagation.
                     Task { await viewModel.apply(commands: commands) }
