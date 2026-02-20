@@ -5,6 +5,37 @@ import Domain
 import SwiftUI
 
 extension CanvasView {
+    func renderedNode(
+        _ node: CanvasNode,
+        viewportSize: CGSize,
+        effectiveOffset: CGSize
+    ) -> CanvasNode {
+        let worldRect = CGRect(
+            x: node.bounds.x,
+            y: node.bounds.y,
+            width: node.bounds.width,
+            height: node.bounds.height
+        )
+        let renderedRect = CanvasViewportTransform.rectOnScreen(
+            worldRect: worldRect,
+            viewportSize: viewportSize,
+            zoomScale: zoomScale,
+            effectiveOffset: effectiveOffset
+        )
+        return CanvasNode(
+            id: node.id,
+            kind: node.kind,
+            text: node.text,
+            bounds: CanvasBounds(
+                x: renderedRect.origin.x,
+                y: renderedRect.origin.y,
+                width: renderedRect.width,
+                height: renderedRect.height
+            ),
+            metadata: node.metadata
+        )
+    }
+
     func displayNodeForCurrentEditingState(_ node: CanvasNode) -> CanvasNode {
         guard let editingContext, editingContext.nodeID == node.id else {
             return node
@@ -131,23 +162,11 @@ extension CanvasView {
         viewportSize: CGSize,
         effectiveOffset: CGSize
     ) -> CGRect {
-        let worldRect = focusRect(for: node)
-        let viewportCenter = CGPoint(x: viewportSize.width / 2, y: viewportSize.height / 2)
-
-        let minPoint = CGPoint(
-            x: viewportCenter.x + ((worldRect.minX - viewportCenter.x) * zoomScale) + effectiveOffset.width,
-            y: viewportCenter.y + ((worldRect.minY - viewportCenter.y) * zoomScale) + effectiveOffset.height
-        )
-        let maxPoint = CGPoint(
-            x: viewportCenter.x + ((worldRect.maxX - viewportCenter.x) * zoomScale) + effectiveOffset.width,
-            y: viewportCenter.y + ((worldRect.maxY - viewportCenter.y) * zoomScale) + effectiveOffset.height
-        )
-
-        return CGRect(
-            x: min(minPoint.x, maxPoint.x),
-            y: min(minPoint.y, maxPoint.y),
-            width: abs(maxPoint.x - minPoint.x),
-            height: abs(maxPoint.y - minPoint.y)
+        CanvasViewportTransform.rectOnScreen(
+            worldRect: focusRect(for: node),
+            viewportSize: viewportSize,
+            zoomScale: zoomScale,
+            effectiveOffset: effectiveOffset
         )
     }
 
@@ -262,16 +281,18 @@ extension CanvasView {
     }
 
     @ViewBuilder
-    func nonEditingNodeText(text: String, nodeWidth: Double) -> some View {
-        let textWidth = max(CGFloat(nodeWidth) - 24, 1)
+    func nonEditingNodeText(text: String, nodeWidth: Double, zoomScale: Double) -> some View {
+        let scale = CGFloat(zoomScale)
+        let scaledPadding: CGFloat = 12 * scale
+        let textWidth = max((CGFloat(nodeWidth) * scale) - (scaledPadding * 2), 1)
         Text(text)
-            .font(.system(size: NodeTextStyle.fontSize, weight: .medium))
+            .font(.system(size: NodeTextStyle.fontSize * scale, weight: .medium))
             .lineLimit(nil)
             .multilineTextAlignment(.leading)
             .frame(width: textWidth, alignment: .topLeading)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(12)
+            .padding(scaledPadding)
     }
 }
 
