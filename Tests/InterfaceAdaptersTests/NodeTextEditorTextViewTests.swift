@@ -3,6 +3,20 @@ import Testing
 
 @testable import InterfaceAdapters
 
+private final class MarkedTextNodeTextEditorTextViewSpy: NodeTextEditorTextView {
+    var markedText: Bool = true
+    var unmarkTextCount: Int = 0
+
+    override func hasMarkedText() -> Bool {
+        markedText
+    }
+
+    override func unmarkText() {
+        unmarkTextCount += 1
+        markedText = false
+    }
+}
+
 @Test("NodeTextEditorTextView: Enter commits editing")
 func test_keyDown_enter_commitsEditing() throws {
     var commitCount = 0
@@ -55,6 +69,35 @@ func test_keyDown_commandEnter_commitsEditing() throws {
 
     sut.keyDown(with: event)
 
+    #expect(commitCount == 1)
+    #expect(cancelCount == 0)
+}
+
+@Test("NodeTextEditorTextView: Command+Enter commits editing while IME composition is active")
+func test_keyDown_commandEnter_withMarkedText_confirmsImeAndCommitsEditing() throws {
+    var commitCount = 0
+    var cancelCount = 0
+    let sut = MarkedTextNodeTextEditorTextViewSpy()
+    sut.onCommit = { commitCount += 1 }
+    sut.onCancel = { cancelCount += 1 }
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "\r",
+            charactersIgnoringModifiers: "\r",
+            isARepeat: false,
+            keyCode: 36
+        )
+    )
+
+    sut.keyDown(with: event)
+
+    #expect(sut.unmarkTextCount == 1)
     #expect(commitCount == 1)
     #expect(cancelCount == 0)
 }
