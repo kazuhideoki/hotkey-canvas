@@ -125,8 +125,8 @@ extension NodeTextEditor {
         textView.isHorizontallyResizable = false
         textView.isVerticallyResizable = true
         textView.textContainerInset = NSSize(
-            width: 6 * clampedZoomScale,
-            height: 6 * clampedZoomScale
+            width: NodeTextStyle.textContainerInset * clampedZoomScale,
+            height: NodeTextStyle.textContainerInset * clampedZoomScale
         )
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainer?.widthTracksTextView = true

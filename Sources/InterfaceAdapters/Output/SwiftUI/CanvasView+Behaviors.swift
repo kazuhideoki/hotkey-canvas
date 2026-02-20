@@ -283,10 +283,10 @@ extension CanvasView {
     @ViewBuilder
     func nonEditingNodeText(text: String, nodeWidth: Double, zoomScale: Double) -> some View {
         let scale = CGFloat(zoomScale)
-        let scaledPadding: CGFloat = 12 * scale
+        let scaledPadding = NodeTextStyle.outerPadding * scale
         let textWidth = max((CGFloat(nodeWidth) * scale) - (scaledPadding * 2), 1)
         Text(text)
-            .font(.system(size: NodeTextStyle.fontSize * scale, weight: .medium))
+            .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
             .lineLimit(nil)
             .multilineTextAlignment(.leading)
             .frame(width: textWidth, alignment: .topLeading)
