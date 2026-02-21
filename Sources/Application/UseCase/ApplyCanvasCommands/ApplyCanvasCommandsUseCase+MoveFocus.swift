@@ -27,7 +27,8 @@ extension ApplyCanvasCommandsUseCase {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: nextFocusedNodeID,
-            collapsedRootNodeIDs: graph.collapsedRootNodeIDs
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+            areasByID: graph.areasByID
         )
         return CanvasMutationResult(
             graphBeforeMutation: graph,

@@ -7,14 +7,20 @@ extension ApplyCanvasCommandsUseCase {
     /// - Parameter graph: Current graph snapshot.
     /// - Returns: Mutation result focused on the newly created node.
     /// - Throws: Propagates node creation failure from CRUD service.
-    func addNode(in graph: CanvasGraph) throws -> CanvasMutationResult {
+    func addNode(in graph: CanvasGraph, areaID: CanvasAreaID) throws -> CanvasMutationResult {
         let node = makeTextNode(bounds: makeAvailableNewNodeBounds(in: graph))
-        let graphAfterMutation = try CanvasGraphCRUDService.createNode(node, in: graph).get()
+        var graphAfterMutation = try CanvasGraphCRUDService.createNode(node, in: graph).get()
+        graphAfterMutation = try CanvasAreaMembershipService.assign(
+            nodeIDs: Set([node.id]),
+            to: areaID,
+            in: graphAfterMutation
+        ).get()
         let nextGraph = CanvasGraph(
             nodesByID: graphAfterMutation.nodesByID,
             edgesByID: graphAfterMutation.edgesByID,
             focusedNodeID: node.id,
-            collapsedRootNodeIDs: graphAfterMutation.collapsedRootNodeIDs
+            collapsedRootNodeIDs: graphAfterMutation.collapsedRootNodeIDs,
+            areasByID: graphAfterMutation.areasByID
         )
         return CanvasMutationResult(
             graphBeforeMutation: graph,

@@ -38,11 +38,18 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentID, to: siblingNode.id),
             in: graphWithSibling
         ).get()
+        let parentAreaID = try CanvasAreaMembershipService.areaID(containing: parentID, in: graphWithSibling).get()
+        graphWithSibling = try CanvasAreaMembershipService.assign(
+            nodeIDs: Set([siblingNode.id]),
+            to: parentAreaID,
+            in: graphWithSibling
+        ).get()
         let nextGraph = CanvasGraph(
             nodesByID: graphWithSibling.nodesByID,
             edgesByID: graphWithSibling.edgesByID,
             focusedNodeID: siblingNode.id,
-            collapsedRootNodeIDs: graphWithSibling.collapsedRootNodeIDs
+            collapsedRootNodeIDs: graphWithSibling.collapsedRootNodeIDs,
+            areasByID: graphWithSibling.areasByID
         )
         return CanvasMutationResult(
             graphBeforeMutation: graph,

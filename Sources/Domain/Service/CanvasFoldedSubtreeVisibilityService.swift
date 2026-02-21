@@ -86,7 +86,8 @@ public enum CanvasFoldedSubtreeVisibilityService {
             nodesByID: visibleNodesByID,
             edgesByID: visibleEdgesByID,
             focusedNodeID: visibleFocusedNodeID,
-            collapsedRootNodeIDs: normalizedCollapsedRootNodeIDs
+            collapsedRootNodeIDs: normalizedCollapsedRootNodeIDs,
+            areasByID: graph.areasByID
         )
     }
 }

@@ -317,7 +317,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 )
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .setNodeText:
+                .centerFocusedNode, .setNodeText, .createArea, .assignNodesToArea:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -407,7 +407,7 @@ extension OverlappingFailureCanvasEditingInputPort {
                 )
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .setNodeText:
+                .centerFocusedNode, .setNodeText, .createArea, .assignNodesToArea:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -598,7 +598,7 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .moveNode,
                 .toggleFoldFocusedSubtree, .centerFocusedNode,
-                .deleteFocusedNode:
+                .deleteFocusedNode, .createArea, .assignNodesToArea:
                 continue
             }
         }
@@ -789,7 +789,7 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .setNodeText,
-                .deleteFocusedNode:
+                .deleteFocusedNode, .createArea, .assignNodesToArea:
                 continue
             }
         }
@@ -839,7 +839,7 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .setNodeText,
-                .deleteFocusedNode:
+                .deleteFocusedNode, .createArea, .assignNodesToArea:
                 continue
             }
         }
