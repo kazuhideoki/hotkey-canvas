@@ -217,6 +217,22 @@ func test_addNodeFromModeSelection_tree_setsPendingEditingNodeID() async throws 
 }
 
 @MainActor
+@Test("CanvasViewModel: mode-selected add-node with tree creates tree area when focused area is diagram")
+func test_addNodeFromModeSelection_tree_createsTreeAreaWhenFocusedAreaIsDiagram() async throws {
+    let inputPort = TreeModeSelectionFromDiagramCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.addNodeFromModeSelection(mode: .tree)
+
+    #expect(viewModel.pendingEditingNodeID == CanvasNodeID(rawValue: "node-2"))
+    let graph = await inputPort.getCurrentGraph()
+    let addedNodeID = CanvasNodeID(rawValue: "node-2")
+    let addedAreaID = try CanvasAreaMembershipService.areaID(containing: addedNodeID, in: graph).get()
+    let addedArea = try CanvasAreaMembershipService.area(withID: addedAreaID, in: graph).get()
+    #expect(addedArea.editingMode == .tree)
+}
+
+@MainActor
 @Test("CanvasViewModel: mode-selected add-node with diagram creates new diagram area for added node")
 func test_addNodeFromModeSelection_diagram_createsDiagramAreaForAddedNode() async throws {
     let inputPort = DiagramModeSelectionCanvasEditingInputPort()
@@ -252,6 +268,25 @@ func test_addNodeFromModeSelection_diagram_staleRequestStillCreatesAreaForAddedN
     }
     #expect(areaForSecondNodeExists)
     #expect(await inputPort.createAreaCallCount() == 1)
+}
+
+@MainActor
+@Test("CanvasViewModel: diagram mode selection retries createArea when generated area ID collides")
+func test_addNodeFromModeSelection_diagram_retriesCreateAreaWhenAreaIDCollides() async throws {
+    let inputPort = DiagramAreaCollisionInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.addNodeFromModeSelection(mode: .diagram)
+
+    let graph = await inputPort.getCurrentGraph()
+    let addedNodeID = CanvasNodeID(rawValue: "node-2")
+    let addedAreaID = try CanvasAreaMembershipService.areaID(containing: addedNodeID, in: graph).get()
+    let addedArea = try CanvasAreaMembershipService.area(withID: addedAreaID, in: graph).get()
+    #expect(addedArea.editingMode == .diagram)
+    #expect(
+        await inputPort.createAreaIDs() == [
+            CanvasAreaID(rawValue: "diagram-area-1"), CanvasAreaID(rawValue: "diagram-area-2"),
+        ])
 }
 
 @MainActor
@@ -879,6 +914,189 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
             canUndo: !undoStack.isEmpty,
             canRedo: !redoStack.isEmpty
         )
+    }
+}
+
+actor TreeModeSelectionFromDiagramCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph
+
+    init() {
+        let nodeID = CanvasNodeID(rawValue: "node-1")
+        let areaID = CanvasAreaID(rawValue: "diagram-area-existing")
+        graph = CanvasGraph(
+            nodesByID: [
+                nodeID: CanvasNode(
+                    id: nodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+            ],
+            edgesByID: [:],
+            focusedNodeID: nodeID,
+            areasByID: [
+                areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+            ]
+        )
+    }
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        var nextGraph = graph
+        var didAddNode = false
+
+        for command in commands {
+            switch command {
+            case .addNode:
+                let nodeID = CanvasNodeID(rawValue: "node-\(nextGraph.nodesByID.count + 1)")
+                let node = CanvasNode(
+                    id: nodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+                let createdGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
+                nextGraph = CanvasGraph(
+                    nodesByID: createdGraph.nodesByID,
+                    edgesByID: createdGraph.edgesByID,
+                    focusedNodeID: nodeID,
+                    collapsedRootNodeIDs: createdGraph.collapsedRootNodeIDs,
+                    areasByID: createdGraph.areasByID
+                )
+                didAddNode = true
+            case .createArea(let id, let mode, let nodeIDs):
+                nextGraph = try CanvasAreaMembershipService.createArea(
+                    id: id,
+                    mode: mode,
+                    nodeIDs: nodeIDs,
+                    in: nextGraph
+                ).get()
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
+                .centerFocusedNode, .setNodeText,
+                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea:
+                continue
+            }
+        }
+
+        graph = nextGraph
+        return ApplyResult(newState: graph, didAddNode: didAddNode)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+}
+
+actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph
+    private var injectedCollision = false
+    private var requestedCreateAreaIDs: [CanvasAreaID] = []
+
+    init() {
+        let nodeID = CanvasNodeID(rawValue: "node-1")
+        let areaID = CanvasAreaID(rawValue: "tree-area-root")
+        graph = CanvasGraph(
+            nodesByID: [
+                nodeID: CanvasNode(
+                    id: nodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+            ],
+            edgesByID: [:],
+            focusedNodeID: nodeID,
+            areasByID: [
+                areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .tree)
+            ]
+        )
+    }
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        var nextGraph = graph
+        var didAddNode = false
+
+        for command in commands {
+            switch command {
+            case .addNode:
+                let nodeID = CanvasNodeID(rawValue: "node-\(nextGraph.nodesByID.count + 1)")
+                let node = CanvasNode(
+                    id: nodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+                let createdGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
+                nextGraph = CanvasGraph(
+                    nodesByID: createdGraph.nodesByID,
+                    edgesByID: createdGraph.edgesByID,
+                    focusedNodeID: nodeID,
+                    collapsedRootNodeIDs: createdGraph.collapsedRootNodeIDs,
+                    areasByID: createdGraph.areasByID
+                )
+                didAddNode = true
+            case .createArea(let id, let mode, let nodeIDs):
+                requestedCreateAreaIDs.append(id)
+                if !injectedCollision {
+                    injectedCollision = true
+                    var collisionAreas = nextGraph.areasByID
+                    collisionAreas[id] = CanvasArea(id: id, nodeIDs: [], editingMode: mode)
+                    graph = CanvasGraph(
+                        nodesByID: nextGraph.nodesByID,
+                        edgesByID: nextGraph.edgesByID,
+                        focusedNodeID: nextGraph.focusedNodeID,
+                        collapsedRootNodeIDs: nextGraph.collapsedRootNodeIDs,
+                        areasByID: collisionAreas
+                    )
+                    throw CanvasAreaPolicyError.areaAlreadyExists(id)
+                }
+
+                nextGraph = try CanvasAreaMembershipService.createArea(
+                    id: id,
+                    mode: mode,
+                    nodeIDs: nodeIDs,
+                    in: nextGraph
+                ).get()
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
+                .centerFocusedNode, .setNodeText,
+                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea:
+                continue
+            }
+        }
+
+        graph = nextGraph
+        return ApplyResult(newState: graph, didAddNode: didAddNode)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func createAreaIDs() -> [CanvasAreaID] {
+        requestedCreateAreaIDs
     }
 }
 
