@@ -22,6 +22,7 @@
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
 | D5 | ショートカットカタログ | `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService` |
 | D6 | 折りたたみ可視性 | `CanvasFoldedSubtreeVisibilityService` |
+| D7 | エリアモード所属管理 | `CanvasAreaID`, `CanvasEditingMode`, `CanvasArea`, `CanvasAreaMembershipService`, `CanvasAreaPolicyError` |
 
 ### D5 追加仕様（ズーム/折りたたみショートカット）
 
@@ -378,6 +379,66 @@
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 
+### D7. エリアモード所属管理ドメイン
+
+#### 構造
+
+- モデル
+  - `CanvasAreaID`
+  - `CanvasEditingMode`（`tree` / `diagram`）
+  - `CanvasArea`（`id`, `nodeIDs`, `editingMode`）
+- エラー
+  - `CanvasAreaPolicyError`
+- サービス
+  - `CanvasAreaMembershipService`
+
+#### サービス詳細
+
+`CanvasAreaMembershipService` はノード所属とモード境界の整合性を担保する純粋計算を担当する。
+
+| メソッド | 責務 |
+| --- | --- |
+| `validate(in:)` | 「ノードはちょうど1エリアに所属」「エリアが存在しないノード参照を持たない」を検証する。 |
+| `areaID(containing:in:)` | ノード所属エリアを解決する。 |
+| `focusedAreaID(in:)` | フォーカスノード所属エリアを解決する。 |
+| `area(withID:in:)` | エリアIDからエリア情報を取得する。 |
+| `createArea(id:mode:nodeIDs:in:)` | 新規エリアを作成する。 |
+| `assign(nodeIDs:to:in:)` | ノード集合を指定エリアへ再所属させる。 |
+| `remove(nodeIDs:in:)` | ノード集合を全エリア所属から除外する。 |
+
+#### 利用状況（どこから使われるか）
+
+- Application ユースケース
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CommandDispatch.swift`
+    - コマンド適用前に所属整合性検証と対象エリア解決を行う。
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
+    - 追加/削除時の所属更新を行う。
+- 主要テスト
+  - `Tests/DomainTests/CanvasAreaMembershipServiceTests.swift`
+  - `Tests/ApplicationTests/ApplyCanvasCommandsUseCaseAreaPolicyTests.swift`
+
+#### 不変条件・エラー一覧
+
+- 不変条件
+  - ノードが1件以上ある場合、エリア定義は空を許容しない。
+  - 各ノードはちょうど1つのエリアに所属する。
+  - エリア所属ノードは必ず `CanvasGraph.nodesByID` に存在する。
+  - フォーカス基準ディスパッチ時、フォーカスノード未解決はエラーとする。
+- エラー（`CanvasAreaPolicyError`）
+  - `areaDataMissing`
+  - `focusedNodeNotFound`
+  - `focusedNodeNotAssignedToArea(CanvasNodeID)`
+  - `nodeAssignedToMultipleAreas(CanvasNodeID)`
+  - `nodeWithoutArea(CanvasNodeID)`
+  - `areaContainsMissingNode(CanvasAreaID, CanvasNodeID)`
+  - `areaNotFound(CanvasAreaID)`
+  - `areaAlreadyExists(CanvasAreaID)`
+  - `unsupportedCommandInMode(mode:command:)`
+  - `crossAreaEdgeForbidden(CanvasEdgeID)`
+
 ## 5. ドメイン間の関係（依存・データ受け渡し）
 
 1. `CanvasHotkeyTranslator` がキーイベントを `CanvasShortcutGesture` に正規化する。
@@ -389,6 +450,7 @@
    - ツリー再レイアウト: `CanvasTreeLayoutService`
    - エリア衝突解消: `CanvasAreaLayoutService`
    - 折りたたみ可視性: `CanvasFoldedSubtreeVisibilityService`
+   - エリア所属/モード解決: `CanvasAreaMembershipService`
 5. 生成された `CanvasGraph` を `ApplyResult` 経由で ViewModel に返し、表示状態を更新する。
 
 共通契約:
@@ -410,3 +472,4 @@
 - 2026-02-18: `ctrl+l` の `centerFocusedNode` コマンドを追加し、`apply` フローで `resetManualPanOffset` を返却することで、現在フォーカスノードを画面中央へ再配置する。
 - 2026-02-18: 未使用だった Domain 公開 API（`CanvasGraphCRUDService.readNode/readEdge/updateEdge`、`CanvasShortcutCatalogService.defaultDefinitions/validate`、`CanvasShortcutCatalogError`）を削除。
 - 2026-02-19: `toggleFoldFocusedSubtree` コマンドと `Option + .` ショートカットを追加し、`CanvasFoldedSubtreeVisibilityService` で折りたたみ可視性の計算を Domain に集約。
+- 2026-02-21: Diagram mode Phase1 基盤として `CanvasArea*` モデル、`CanvasAreaMembershipService`、`CanvasAreaPolicyError`、モード別コマンドディスパッチ境界を追加。

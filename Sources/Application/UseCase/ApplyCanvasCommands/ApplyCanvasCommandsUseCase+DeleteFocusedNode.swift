@@ -23,6 +23,10 @@ extension ApplyCanvasCommandsUseCase {
         for nodeID in subtreeNodeIDs {
             graphAfterDelete = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: graphAfterDelete).get()
         }
+        graphAfterDelete = CanvasAreaMembershipService.remove(
+            nodeIDs: Set(subtreeNodeIDs),
+            in: graphAfterDelete
+        )
         let graphAfterTreeLayoutPreview = relayoutParentChildTrees(in: graphAfterDelete)
         let nextFocusNodeID = nextFocusedNodeIDAfterDeletion(
             deleting: focusedNodeID,
@@ -37,7 +41,8 @@ extension ApplyCanvasCommandsUseCase {
             focusedNodeID: nextFocusNodeID,
             collapsedRootNodeIDs: CanvasFoldedSubtreeVisibilityService.normalizedCollapsedRootNodeIDs(
                 in: graphAfterDelete
-            )
+            ),
+            areasByID: graphAfterDelete.areasByID
         )
         return CanvasMutationResult(
             graphBeforeMutation: graph,

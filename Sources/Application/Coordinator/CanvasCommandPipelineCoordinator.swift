@@ -109,7 +109,8 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
-            collapsedRootNodeIDs: graph.collapsedRootNodeIDs
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+            areasByID: graph.areasByID
         )
     }
 
@@ -169,7 +170,8 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
-            collapsedRootNodeIDs: graph.collapsedRootNodeIDs
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+            areasByID: graph.areasByID
         )
     }
 
@@ -184,7 +186,8 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
-            collapsedRootNodeIDs: normalizedCollapsedRootNodeIDs
+            collapsedRootNodeIDs: normalizedCollapsedRootNodeIDs,
+            areasByID: graph.areasByID
         )
     }
 
@@ -198,7 +201,8 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: normalizedFocusedNodeID,
-            collapsedRootNodeIDs: graph.collapsedRootNodeIDs
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+            areasByID: graph.areasByID
         )
     }
 

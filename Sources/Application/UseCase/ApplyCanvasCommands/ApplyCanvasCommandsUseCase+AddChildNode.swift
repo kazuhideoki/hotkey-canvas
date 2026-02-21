@@ -31,13 +31,20 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentID, to: childNode.id),
             in: graphWithChild
         ).get()
+        let parentAreaID = try CanvasAreaMembershipService.areaID(containing: parentID, in: graphWithChild).get()
+        graphWithChild = try CanvasAreaMembershipService.assign(
+            nodeIDs: Set([childNode.id]),
+            to: parentAreaID,
+            in: graphWithChild
+        ).get()
         var nextCollapsedRootNodeIDs = graphWithChild.collapsedRootNodeIDs
         nextCollapsedRootNodeIDs.remove(parentID)
         let nextGraph = CanvasGraph(
             nodesByID: graphWithChild.nodesByID,
             edgesByID: graphWithChild.edgesByID,
             focusedNodeID: childNode.id,
-            collapsedRootNodeIDs: nextCollapsedRootNodeIDs
+            collapsedRootNodeIDs: nextCollapsedRootNodeIDs,
+            areasByID: graphWithChild.areasByID
         )
         return CanvasMutationResult(
             graphBeforeMutation: graph,
