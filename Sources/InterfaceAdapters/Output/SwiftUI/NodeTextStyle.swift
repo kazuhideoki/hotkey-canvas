@@ -4,11 +4,7 @@ import AppKit
 import SwiftUI
 
 /// Shared defaults used for node text rendering and measurement.
-<<<<<<< HEAD
-/// If node chrome customization grows, this should be split into
-=======
 /// Future work: When node chrome style customization expands, split this into
->>>>>>> main
 /// a broader `NodeVisualStyle` (or text/chrome-specific style types).
 enum NodeTextStyle {
     static let fontSize: CGFloat = 20
