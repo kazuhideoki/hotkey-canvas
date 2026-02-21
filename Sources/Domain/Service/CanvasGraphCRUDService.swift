@@ -20,13 +20,26 @@ public enum CanvasGraphCRUDService {
 
         var nodes = graph.nodesByID
         nodes[node.id] = node
+        var areasByID = graph.areasByID
+        if areasByID.isEmpty {
+            areasByID[.defaultTree] = CanvasArea(id: .defaultTree, nodeIDs: [], editingMode: .tree)
+        }
+        if let targetAreaID = areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue }).first,
+            let targetArea = areasByID[targetAreaID]
+        {
+            areasByID[targetAreaID] = CanvasArea(
+                id: targetArea.id,
+                nodeIDs: targetArea.nodeIDs.union([node.id]),
+                editingMode: targetArea.editingMode
+            )
+        }
         return .success(
             CanvasGraph(
                 nodesByID: nodes,
                 edgesByID: graph.edgesByID,
                 focusedNodeID: graph.focusedNodeID,
                 collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
-                areasByID: graph.areasByID
+                areasByID: areasByID
             ))
     }
 
@@ -75,13 +88,24 @@ public enum CanvasGraphCRUDService {
         }
 
         let nextFocusedNodeID = graph.focusedNodeID == id ? nil : graph.focusedNodeID
+        var nextAreasByID = graph.areasByID
+        for areaID in nextAreasByID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let area = nextAreasByID[areaID] else {
+                continue
+            }
+            nextAreasByID[areaID] = CanvasArea(
+                id: area.id,
+                nodeIDs: area.nodeIDs.subtracting([id]),
+                editingMode: area.editingMode
+            )
+        }
         return .success(
             CanvasGraph(
                 nodesByID: nodes,
                 edgesByID: edges,
                 focusedNodeID: nextFocusedNodeID,
                 collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
-                areasByID: graph.areasByID
+                areasByID: nextAreasByID
             ))
     }
 

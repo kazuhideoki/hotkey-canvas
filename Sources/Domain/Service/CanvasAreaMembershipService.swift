@@ -117,6 +117,16 @@ public enum CanvasAreaMembershipService {
         }
 
         var nextAreasByID = graph.areasByID
+        for currentAreaID in nextAreasByID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let currentArea = nextAreasByID[currentAreaID] else {
+                continue
+            }
+            nextAreasByID[currentAreaID] = CanvasArea(
+                id: currentArea.id,
+                nodeIDs: currentArea.nodeIDs.subtracting(nodeIDs),
+                editingMode: currentArea.editingMode
+            )
+        }
         nextAreasByID[id] = CanvasArea(id: id, nodeIDs: nodeIDs, editingMode: mode)
         let nextGraph = CanvasGraph(
             nodesByID: graph.nodesByID,
