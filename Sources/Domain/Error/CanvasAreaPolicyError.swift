@@ -18,6 +18,8 @@ public enum CanvasAreaPolicyError: Error, Equatable, Sendable {
     case areaNotFound(CanvasAreaID)
     /// Attempted to create an area with an existing identifier.
     case areaAlreadyExists(CanvasAreaID)
+    /// `addNode` cannot resolve one target area deterministically.
+    case areaResolutionAmbiguousForAddNode
     /// Command is not supported by the resolved area editing mode.
     case unsupportedCommandInMode(mode: CanvasEditingMode, command: CanvasCommand)
     /// Cross-area edge is prohibited by current policy.

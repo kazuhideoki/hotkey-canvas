@@ -33,8 +33,8 @@ func test_apply_diagramArea_rejectsUnsupportedCommand() async throws {
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area rejects assignNodesToArea command")
-func test_apply_diagramArea_rejectsAssignNodesToAreaCommand() async throws {
+@Test("ApplyCanvasCommandsUseCase: diagram area allows assignNodesToArea command")
+func test_apply_diagramArea_allowsAssignNodesToAreaCommand() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let diagramAreaID = CanvasAreaID(rawValue: "diagram-area")
     let targetAreaID = CanvasAreaID(rawValue: "target-area")
@@ -56,16 +56,64 @@ func test_apply_diagramArea_rejectsAssignNodesToAreaCommand() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
+    let result = try await sut.apply(commands: [.assignNodesToArea(nodeIDs: [nodeID], areaID: targetAreaID)])
+
+    #expect(result.newState.areasByID[targetAreaID]?.nodeIDs == [nodeID])
+    #expect(result.newState.areasByID[diagramAreaID]?.nodeIDs.isEmpty == true)
+}
+
+@Test("ApplyCanvasCommandsUseCase: diagram area allows createArea command")
+func test_apply_diagramArea_allowsCreateAreaCommand() async throws {
+    let nodeID = CanvasNodeID(rawValue: "diagram-node")
+    let diagramAreaID = CanvasAreaID(rawValue: "diagram-area")
+    let newAreaID = CanvasAreaID(rawValue: "new-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            diagramAreaID: CanvasArea(id: diagramAreaID, nodeIDs: [nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(
+        commands: [
+            .createArea(id: newAreaID, mode: .diagram, nodeIDs: [nodeID])
+        ]
+    )
+
+    #expect(result.newState.areasByID[newAreaID]?.nodeIDs == [nodeID])
+    #expect(result.newState.areasByID[diagramAreaID]?.nodeIDs.isEmpty == true)
+}
+
+@Test("ApplyCanvasCommandsUseCase: addNode fails when no focus and multiple areas exist")
+func test_apply_addNode_failsWhenNoFocusAndMultipleAreasExist() async throws {
+    let areaA = CanvasAreaID(rawValue: "area-a")
+    let areaB = CanvasAreaID(rawValue: "area-b")
+    let graph = CanvasGraph(
+        nodesByID: [:],
+        edgesByID: [:],
+        focusedNodeID: nil,
+        areasByID: [
+            areaA: CanvasArea(id: areaA, nodeIDs: [], editingMode: .tree),
+            areaB: CanvasArea(id: areaB, nodeIDs: [], editingMode: .diagram),
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
     do {
-        _ = try await sut.apply(commands: [.assignNodesToArea(nodeIDs: [nodeID], areaID: targetAreaID)])
-        Issue.record("Expected unsupported command error")
+        _ = try await sut.apply(commands: [.addNode])
+        Issue.record("Expected areaResolutionAmbiguousForAddNode")
     } catch let error as CanvasAreaPolicyError {
-        #expect(
-            error
-                == .unsupportedCommandInMode(
-                    mode: .diagram,
-                    command: .assignNodesToArea(nodeIDs: [nodeID], areaID: targetAreaID)
-                ))
+        #expect(error == .areaResolutionAmbiguousForAddNode)
     }
 }
 

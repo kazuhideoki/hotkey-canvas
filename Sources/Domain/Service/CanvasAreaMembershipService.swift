@@ -135,6 +135,12 @@ public enum CanvasAreaMembershipService {
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: nextAreasByID
         )
+        switch validateNoCrossAreaEdges(in: nextGraph) {
+        case .success:
+            break
+        case .failure(let error):
+            return .failure(error)
+        }
         switch validate(in: nextGraph) {
         case .success:
             return .success(nextGraph)
@@ -192,6 +198,12 @@ public enum CanvasAreaMembershipService {
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: nextAreasByID
         )
+        switch validateNoCrossAreaEdges(in: nextGraph) {
+        case .success:
+            break
+        case .failure(let error):
+            return .failure(error)
+        }
         switch validate(in: nextGraph) {
         case .success:
             return .success(nextGraph)
@@ -224,5 +236,30 @@ public enum CanvasAreaMembershipService {
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: nextAreasByID
         )
+    }
+
+    /// Validates that every edge stays within one area.
+    /// - Parameter graph: Graph snapshot.
+    /// - Returns: `.success(())` when all edges are intra-area.
+    private static func validateNoCrossAreaEdges(in graph: CanvasGraph) -> Result<Void, CanvasAreaPolicyError> {
+        for edgeID in graph.edgesByID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let edge = graph.edgesByID[edgeID] else {
+                continue
+            }
+            switch areaID(containing: edge.fromNodeID, in: graph) {
+            case .success(let fromAreaID):
+                switch areaID(containing: edge.toNodeID, in: graph) {
+                case .success(let toAreaID):
+                    if fromAreaID != toAreaID {
+                        return .failure(.crossAreaEdgeForbidden(edge.id))
+                    }
+                case .failure(let error):
+                    return .failure(error)
+                }
+            case .failure(let error):
+                return .failure(error)
+            }
+        }
+        return .success(())
     }
 }

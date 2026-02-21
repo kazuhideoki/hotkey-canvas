@@ -119,3 +119,97 @@ func test_createArea_reassignsInitialMembersFromExistingAreas() throws {
     #expect(created.areasByID[newAreaID]?.nodeIDs == [nodeID])
     try CanvasAreaMembershipService.validate(in: created).get()
 }
+
+@Test("CanvasAreaMembershipService: assign fails when cross-area edge would be introduced")
+func test_assign_failsWhenCrossAreaEdgeWouldBeIntroduced() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let edgeID = CanvasEdgeID(rawValue: "edge-parent-child")
+    let treeAreaID = CanvasAreaID(rawValue: "tree")
+    let diagramAreaID = CanvasAreaID(rawValue: "diagram")
+    let graph = CanvasGraph(
+        nodesByID: [
+            parentID: CanvasNode(
+                id: parentID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            ),
+            childID: CanvasNode(
+                id: childID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 260, y: 0, width: 200, height: 80)
+            ),
+        ],
+        edgesByID: [
+            edgeID: CanvasEdge(
+                id: edgeID,
+                fromNodeID: parentID,
+                toNodeID: childID,
+                relationType: .parentChild
+            )
+        ],
+        focusedNodeID: parentID,
+        areasByID: [
+            treeAreaID: CanvasArea(id: treeAreaID, nodeIDs: [parentID, childID], editingMode: .tree),
+            diagramAreaID: CanvasArea(id: diagramAreaID, nodeIDs: [], editingMode: .diagram),
+        ]
+    )
+
+    do {
+        _ = try CanvasAreaMembershipService.assign(nodeIDs: [childID], to: diagramAreaID, in: graph).get()
+        Issue.record("Expected crossAreaEdgeForbidden")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .crossAreaEdgeForbidden(edgeID))
+    }
+}
+
+@Test("CanvasAreaMembershipService: createArea fails when cross-area edge would be introduced")
+func test_createArea_failsWhenCrossAreaEdgeWouldBeIntroduced() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let edgeID = CanvasEdgeID(rawValue: "edge-parent-child")
+    let sourceAreaID = CanvasAreaID(rawValue: "source")
+    let newAreaID = CanvasAreaID(rawValue: "new")
+    let graph = CanvasGraph(
+        nodesByID: [
+            parentID: CanvasNode(
+                id: parentID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            ),
+            childID: CanvasNode(
+                id: childID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 260, y: 0, width: 200, height: 80)
+            ),
+        ],
+        edgesByID: [
+            edgeID: CanvasEdge(
+                id: edgeID,
+                fromNodeID: parentID,
+                toNodeID: childID,
+                relationType: .parentChild
+            )
+        ],
+        focusedNodeID: parentID,
+        areasByID: [
+            sourceAreaID: CanvasArea(id: sourceAreaID, nodeIDs: [parentID, childID], editingMode: .tree)
+        ]
+    )
+
+    do {
+        _ = try CanvasAreaMembershipService.createArea(
+            id: newAreaID,
+            mode: .diagram,
+            nodeIDs: [childID],
+            in: graph
+        ).get()
+        Issue.record("Expected crossAreaEdgeForbidden")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .crossAreaEdgeForbidden(edgeID))
+    }
+}
