@@ -90,39 +90,13 @@ public final class CanvasViewModel: ObservableObject {
         let requestID = consumeNextRequestID()
 
         do {
-            let addResult = try await inputPort.apply(commands: [.addNode])
-            guard addResult.didAddNode else {
-                guard shouldDisplayResult(for: requestID) else {
-                    return
-                }
-                updateDisplay(with: addResult)
-                pendingEditingNodeID = nil
-                markDisplayed(requestID)
-                return
-            }
-
-            let addedNodeID = addResult.newState.focusedNodeID
-            var finalResult = addResult
-
-            if let addedNodeID,
-                requiresModeSelectionAreaCreation(
-                    selectedMode: mode,
-                    addedNodeID: addedNodeID,
-                    in: addResult.newState
-                )
-            {
-                finalResult = await createAreaForSelectedMode(
-                    selectedMode: mode,
-                    addedNodeID: addedNodeID,
-                    initialGraph: addResult.newState
-                )
-            }
+            let finalResult = try await inputPort.addNodeFromModeSelection(mode: mode)
 
             guard shouldDisplayResult(for: requestID) else {
                 return
             }
             updateDisplay(with: finalResult)
-            pendingEditingNodeID = addedNodeID
+            pendingEditingNodeID = modeSelectionEditingNodeID(from: finalResult)
             markDisplayed(requestID)
         } catch {
             // Keep current display state when command application fails.
@@ -203,62 +177,17 @@ extension CanvasViewModel {
         }
     }
 
-    private func requiresModeSelectionAreaCreation(
-        selectedMode: CanvasEditingMode,
-        addedNodeID: CanvasNodeID,
-        in graph: CanvasGraph
-    ) -> Bool {
-        switch CanvasAreaMembershipService.areaID(containing: addedNodeID, in: graph) {
-        case .success(let areaID):
-            guard let area = graph.areasByID[areaID] else {
-                return false
-            }
-            return area.editingMode != selectedMode
-        case .failure:
-            return false
+    private func modeSelectionEditingNodeID(from result: ApplyResult) -> CanvasNodeID? {
+        guard result.didAddNode else {
+            return nil
         }
-    }
-
-    private func createAreaForSelectedMode(
-        selectedMode: CanvasEditingMode,
-        addedNodeID: CanvasNodeID,
-        initialGraph: CanvasGraph
-    ) async -> ApplyResult {
-        let maximumRetryCount = 3
-        var latestGraph = initialGraph
-        var retryCount = 0
-
-        while retryCount <= maximumRetryCount {
-            let newAreaID = nextAreaID(for: selectedMode, in: latestGraph)
-            do {
-                return try await inputPort.apply(
-                    commands: [.createArea(id: newAreaID, mode: selectedMode, nodeIDs: [addedNodeID])]
-                )
-            } catch let error as CanvasAreaPolicyError {
-                guard case .areaAlreadyExists = error else {
-                    return await inputPort.getCurrentResult()
-                }
-                latestGraph = await inputPort.getCurrentGraph()
-                retryCount += 1
-            } catch {
-                return await inputPort.getCurrentResult()
-            }
+        guard let focusedNodeID = result.newState.focusedNodeID else {
+            return nil
         }
-
-        return await inputPort.getCurrentResult()
-    }
-
-    private func nextAreaID(for mode: CanvasEditingMode, in graph: CanvasGraph) -> CanvasAreaID {
-        let prefix = mode == .diagram ? "diagram-area-" : "tree-area-"
-        let existingAreaIDs = Set(graph.areasByID.keys.map(\.rawValue))
-        var serial = 1
-        while true {
-            let candidate = "\(prefix)\(serial)"
-            if existingAreaIDs.contains(candidate) == false {
-                return CanvasAreaID(rawValue: candidate)
-            }
-            serial += 1
+        guard result.newState.nodesByID[focusedNodeID] != nil else {
+            return nil
         }
+        return focusedNodeID
     }
 
     private func updateDisplay(with result: ApplyResult) {

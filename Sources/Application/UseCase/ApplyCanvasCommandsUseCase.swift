@@ -54,6 +54,34 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
         )
     }
 
+    /// Adds one node and applies mode-specific area assignment within a single undoable mutation.
+    public func addNodeFromModeSelection(mode: CanvasEditingMode) async throws -> ApplyResult {
+        let baseGraph = graph
+        let mutationResult = try addNodeFromModeSelection(in: baseGraph, selectedMode: mode)
+        let pipelineResult = pipelineCoordinator.run(
+            on: baseGraph,
+            mutationResults: [mutationResult]
+        )
+        let nextGraph = pipelineResult.graph
+        let graphDidMutate = nextGraph != baseGraph
+        guard graphDidMutate else {
+            return makeApplyResult(
+                newState: baseGraph,
+                viewportIntent: pipelineResult.viewportIntent,
+                didAddNode: false
+            )
+        }
+
+        appendUndoSnapshot(baseGraph)
+        graph = nextGraph
+        redoStack.removeAll(keepingCapacity: true)
+        return makeApplyResult(
+            newState: nextGraph,
+            viewportIntent: pipelineResult.viewportIntent,
+            didAddNode: hasAddedNode(from: baseGraph, to: nextGraph)
+        )
+    }
+
     /// Restores the previous graph snapshot and records the current state for redo.
     public func undo() async -> ApplyResult {
         guard let previousGraph = undoStack.popLast() else {

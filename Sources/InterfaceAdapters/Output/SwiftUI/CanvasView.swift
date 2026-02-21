@@ -282,6 +282,9 @@ public struct CanvasView: View {
                     if isCommandPalettePresented {
                         return handleCommandPaletteKeyDown(event)
                     }
+                    if isAddNodeModeDialogPresented {
+                        return false
+                    }
                     if hotkeyTranslator.shouldPresentAddNodeModeSelection(event) {
                         isAddNodeModeDialogPresented = true
                         return true

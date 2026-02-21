@@ -290,6 +290,17 @@ func test_addNodeFromModeSelection_diagram_retriesCreateAreaWhenAreaIDCollides()
 }
 
 @MainActor
+@Test("CanvasViewModel: mode-selected add-node does not publish stale pending editing node")
+func test_addNodeFromModeSelection_doesNotSetPendingEditingNodeID_whenFocusedNodeIsMissing() async throws {
+    let inputPort = StaleModeSelectionResultInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.addNodeFromModeSelection(mode: .diagram)
+
+    #expect(viewModel.pendingEditingNodeID == nil)
+}
+
+@MainActor
 @Test("CanvasViewModel: non-add apply does not publish pending editing node")
 func test_apply_nonAddCommand_doesNotSetPendingEditingNodeID() async throws {
     let nodeID = CanvasNodeID(rawValue: "focused")
@@ -1178,6 +1189,40 @@ actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
 
     func createAreaCallCount() -> Int {
         createAreaCount
+    }
+}
+
+actor StaleModeSelectionResultInputPort: CanvasEditingInputPort {
+    func apply(commands _: [CanvasCommand]) async throws -> ApplyResult {
+        ApplyResult(newState: .empty)
+    }
+
+    func addNodeFromModeSelection(mode _: CanvasEditingMode) async throws -> ApplyResult {
+        let missingNodeID = CanvasNodeID(rawValue: "missing-node")
+        return ApplyResult(
+            newState: CanvasGraph(
+                nodesByID: [:],
+                edgesByID: [:],
+                focusedNodeID: missingNodeID
+            ),
+            didAddNode: true
+        )
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: .empty)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: .empty)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        .empty
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: .empty)
     }
 }
 
