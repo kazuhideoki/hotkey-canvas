@@ -233,6 +233,28 @@ func test_addNodeFromModeSelection_diagram_createsDiagramAreaForAddedNode() asyn
 }
 
 @MainActor
+@Test("CanvasViewModel: stale diagram mode request still creates area for newly added node")
+func test_addNodeFromModeSelection_diagram_staleRequestStillCreatesAreaForAddedNode() async throws {
+    let inputPort = StaleDiagramModeSelectionCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    let modeSelectionTask = Task {
+        await viewModel.addNodeFromModeSelection(mode: .diagram)
+    }
+    try await Task.sleep(nanoseconds: 20_000_000)
+    await viewModel.apply(commands: [.addNode])
+    await inputPort.releaseFirstAddNode()
+    await modeSelectionTask.value
+
+    let graph = await inputPort.getCurrentGraph()
+    let areaForSecondNodeExists = graph.areasByID.values.contains { area in
+        area.editingMode == .diagram && area.nodeIDs == [CanvasNodeID(rawValue: "node-2")]
+    }
+    #expect(areaForSecondNodeExists)
+    #expect(await inputPort.createAreaCallCount() == 1)
+}
+
+@MainActor
 @Test("CanvasViewModel: non-add apply does not publish pending editing node")
 func test_apply_nonAddCommand_doesNotSetPendingEditingNodeID() async throws {
     let nodeID = CanvasNodeID(rawValue: "focused")
@@ -857,6 +879,87 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
             canUndo: !undoStack.isEmpty,
             canRedo: !redoStack.isEmpty
         )
+    }
+}
+
+actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+    private var addNodeCallCount: Int = 0
+    private var createAreaCount: Int = 0
+    private var firstAddContinuation: CheckedContinuation<Void, Never>?
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        var nextGraph = graph
+        var didAddNode = false
+
+        for command in commands {
+            switch command {
+            case .addNode:
+                addNodeCallCount += 1
+                if addNodeCallCount == 1 {
+                    await withCheckedContinuation { continuation in
+                        firstAddContinuation = continuation
+                    }
+                    nextGraph = graph
+                }
+                let nodeID = CanvasNodeID(rawValue: "node-\(nextGraph.nodesByID.count + 1)")
+                let node = CanvasNode(
+                    id: nodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+                let createdGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
+                nextGraph = CanvasGraph(
+                    nodesByID: createdGraph.nodesByID,
+                    edgesByID: createdGraph.edgesByID,
+                    focusedNodeID: nodeID,
+                    collapsedRootNodeIDs: createdGraph.collapsedRootNodeIDs,
+                    areasByID: createdGraph.areasByID
+                )
+                didAddNode = true
+            case .createArea(let id, let mode, let nodeIDs):
+                createAreaCount += 1
+                nextGraph = try CanvasAreaMembershipService.createArea(
+                    id: id,
+                    mode: mode,
+                    nodeIDs: nodeIDs,
+                    in: nextGraph
+                ).get()
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
+                .centerFocusedNode, .setNodeText,
+                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea:
+                continue
+            }
+        }
+
+        graph = nextGraph
+        return ApplyResult(newState: graph, didAddNode: didAddNode)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func releaseFirstAddNode() {
+        firstAddContinuation?.resume()
+        firstAddContinuation = nil
+    }
+
+    func createAreaCallCount() -> Int {
+        createAreaCount
     }
 }
 

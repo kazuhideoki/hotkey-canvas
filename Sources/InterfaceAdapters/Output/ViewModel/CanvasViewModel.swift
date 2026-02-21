@@ -88,57 +88,44 @@ public final class CanvasViewModel: ObservableObject {
     /// - Parameter mode: Editing mode selected in Shift+Enter dialog.
     public func addNodeFromModeSelection(mode: CanvasEditingMode) async {
         let requestID = consumeNextRequestID()
-        let graphBeforeAdd = await inputPort.getCurrentGraph()
 
         do {
             let addResult = try await inputPort.apply(commands: [.addNode])
-            guard shouldDisplayResult(for: requestID) else {
-                return
-            }
             guard addResult.didAddNode else {
+                guard shouldDisplayResult(for: requestID) else {
+                    return
+                }
                 updateDisplay(with: addResult)
                 pendingEditingNodeID = nil
                 markDisplayed(requestID)
                 return
             }
 
-            guard mode == .diagram else {
-                updateDisplay(with: addResult)
-                pendingEditingNodeID = addResult.newState.focusedNodeID
-                markDisplayed(requestID)
-                return
+            let addedNodeID = addResult.newState.focusedNodeID
+            var finalResult = addResult
+
+            if mode == .diagram,
+                let addedNodeID
+            {
+                let newAreaID = nextDiagramAreaID(in: addResult.newState)
+                do {
+                    finalResult = try await inputPort.apply(
+                        commands: [
+                            .createArea(id: newAreaID, mode: .diagram, nodeIDs: [addedNodeID])
+                        ]
+                    )
+                } catch {
+                    // Keep UI consistent with latest committed graph when post-add area creation fails.
+                    finalResult = await inputPort.getCurrentResult()
+                }
             }
 
-            guard let addedNodeID = addedNodeID(from: graphBeforeAdd, to: addResult.newState) else {
-                updateDisplay(with: addResult)
-                pendingEditingNodeID = addResult.newState.focusedNodeID
-                markDisplayed(requestID)
+            guard shouldDisplayResult(for: requestID) else {
                 return
             }
-
-            let newAreaID = nextDiagramAreaID(in: addResult.newState)
-            do {
-                let createAreaResult = try await inputPort.apply(
-                    commands: [
-                        .createArea(id: newAreaID, mode: .diagram, nodeIDs: [addedNodeID])
-                    ]
-                )
-                guard shouldDisplayResult(for: requestID) else {
-                    return
-                }
-                updateDisplay(with: createAreaResult)
-                pendingEditingNodeID = addedNodeID
-                markDisplayed(requestID)
-            } catch {
-                // Keep UI consistent with latest committed graph when post-add area creation fails.
-                let latestResult = await inputPort.getCurrentResult()
-                guard shouldDisplayResult(for: requestID) else {
-                    return
-                }
-                updateDisplay(with: latestResult)
-                pendingEditingNodeID = addedNodeID
-                markDisplayed(requestID)
-            }
+            updateDisplay(with: finalResult)
+            pendingEditingNodeID = addedNodeID
+            markDisplayed(requestID)
         } catch {
             // Keep current display state when command application fails.
         }
@@ -216,14 +203,6 @@ extension CanvasViewModel {
             .setNodeText, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return false
         }
-    }
-
-    private func addedNodeID(from oldGraph: CanvasGraph, to newGraph: CanvasGraph) -> CanvasNodeID? {
-        let oldNodeIDs = Set(oldGraph.nodesByID.keys)
-        return newGraph.nodesByID.keys
-            .filter { oldNodeIDs.contains($0) == false }
-            .sorted(by: { $0.rawValue < $1.rawValue })
-            .first
     }
 
     private func nextDiagramAreaID(in graph: CanvasGraph) -> CanvasAreaID {
