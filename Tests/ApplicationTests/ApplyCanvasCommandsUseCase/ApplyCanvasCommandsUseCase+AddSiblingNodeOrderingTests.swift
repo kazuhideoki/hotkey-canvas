@@ -47,7 +47,7 @@ func test_apply_addSiblingNodeBelow_withEqualY_keepsNewNodeBelowFocused() async 
         ],
         focusedNodeID: focusedID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addSiblingNode(position: .below)])
 

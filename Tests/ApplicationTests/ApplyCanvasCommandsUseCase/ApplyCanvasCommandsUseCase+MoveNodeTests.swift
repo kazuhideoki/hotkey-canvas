@@ -11,7 +11,7 @@ func test_apply_moveNodeDown_swapsWithNextSibling() async throws {
     let focusedID = CanvasNodeID(rawValue: "focused")
     let thirdID = CanvasNodeID(rawValue: "third")
     let graph = makeSiblingGraph(rootID: rootID, childIDs: [firstID, focusedID, thirdID], focusedID: focusedID)
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveNode(.down)])
     let sortedChildIDs = childNodeIDs(of: rootID, in: result.newState)
@@ -61,7 +61,7 @@ func test_apply_moveNodeDown_preservesNodeSize() async throws {
         edgesByID: [edgeFocused.id: edgeFocused, edgeNext.id: edgeNext],
         focusedNodeID: focusedID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveNode(.down)])
 
@@ -80,7 +80,7 @@ func test_apply_moveNodeUp_swapsWithPreviousSibling() async throws {
     let focusedID = CanvasNodeID(rawValue: "focused")
     let thirdID = CanvasNodeID(rawValue: "third")
     let graph = makeSiblingGraph(rootID: rootID, childIDs: [firstID, focusedID, thirdID], focusedID: focusedID)
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveNode(.up)])
     let sortedChildIDs = childNodeIDs(of: rootID, in: result.newState)
@@ -130,7 +130,7 @@ func test_apply_moveNodeLeft_promotesToParentSibling() async throws {
         edgesByID: [edgeGrandToParent.id: edgeGrandToParent, edgeParentToFocused.id: edgeParentToFocused],
         focusedNodeID: focusedID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveNode(.left)])
 
@@ -167,7 +167,7 @@ func test_apply_moveNodeLeft_doesNotPromoteTopLevelChild() async throws {
         edgesByID: [edgeRootToChild.id: edgeRootToChild],
         focusedNodeID: childID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveNode(.left)])
 
@@ -182,7 +182,7 @@ func test_apply_moveNodeRight_indentsUnderPreviousSibling() async throws {
     let previousID = CanvasNodeID(rawValue: "previous")
     let focusedID = CanvasNodeID(rawValue: "focused")
     let graph = makeSiblingGraph(rootID: rootID, childIDs: [previousID, focusedID], focusedID: focusedID)
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveNode(.right)])
 
@@ -194,7 +194,7 @@ func test_apply_moveNodeRight_indentsUnderPreviousSibling() async throws {
 @Test("ApplyCanvasCommandsUseCase: moveNode right appends node as last child of previous sibling")
 func test_apply_moveNodeRight_appendsAsLastChildOfPreviousSibling() async throws {
     let fixture = makeMoveNodeRightAppendFixture()
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveNode(.right)])
     let previousChildIDs = childNodeIDs(of: fixture.previousID, in: result.newState)
@@ -205,7 +205,7 @@ func test_apply_moveNodeRight_appendsAsLastChildOfPreviousSibling() async throws
 @Test("ApplyCanvasCommandsUseCase: moveNode right appends below deepest child bottom")
 func test_apply_moveNodeRight_appendsBelowDeepestChildBottom() async throws {
     let fixture = makeMoveNodeRightAppendDeepestBottomFixture()
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveNode(.right)])
     let previousChildIDs = childNodeIDs(of: fixture.previousID, in: result.newState)
@@ -225,7 +225,7 @@ func test_apply_moveNodeRight_focusesCollapsedNewParent() async throws {
         focusedNodeID: focusedID,
         collapsedRootNodeIDs: [previousID]
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveNode(.right)])
 
@@ -273,11 +273,11 @@ func test_apply_moveNodeRight_doesNotIndentTopLevelRootNode() async throws {
         edgesByID: [focusedRootToChild.id: focusedRootToChild],
         focusedNodeID: focusedRootID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveNode(.right)])
 
-    #expect(result.newState == graph)
+    #expect(result.newState == graph.withDefaultTreeAreaIfMissing())
 }
 
 private func makeSiblingGraph(

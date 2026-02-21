@@ -34,7 +34,7 @@ func test_apply_moveFocus_movesToNearestNodeInDirection() async throws {
         edgesByID: [:],
         focusedNodeID: centerID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveFocus(.right)])
 
@@ -56,15 +56,15 @@ func test_apply_moveFocus_keepsCurrentFocus_whenNoCandidateExists() async throws
         edgesByID: [:],
         focusedNodeID: singleNodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveFocus(.left)])
 
     #expect(result.newState.focusedNodeID == singleNodeID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocus assigns fallback focus when focus is nil")
-func test_apply_moveFocus_assignsFallbackFocus_whenFocusedNodeIDIsNil() async throws {
+@Test("ApplyCanvasCommandsUseCase: moveFocus fails when focus is nil")
+func test_apply_moveFocus_fails_whenFocusedNodeIDIsNil() async throws {
     let singleNodeID = CanvasNodeID(rawValue: "single")
     let graph = CanvasGraph(
         nodesByID: [
@@ -78,11 +78,14 @@ func test_apply_moveFocus_assignsFallbackFocus_whenFocusedNodeIDIsNil() async th
         edgesByID: [:],
         focusedNodeID: nil
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.moveFocus(.left)])
-
-    #expect(result.newState.focusedNodeID == singleNodeID)
+    do {
+        _ = try await sut.apply(commands: [.moveFocus(.left)])
+        Issue.record("Expected focusedNodeNotFound")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .focusedNodeNotFound)
+    }
 }
 
 @Test("ApplyCanvasCommandsUseCase: moveFocus prefers aligned node over heavily offset near node")
@@ -114,7 +117,7 @@ func test_apply_moveFocus_prefersAlignedNode_overOffsetNearNode() async throws {
         edgesByID: [:],
         focusedNodeID: centerID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveFocus(.right)])
 

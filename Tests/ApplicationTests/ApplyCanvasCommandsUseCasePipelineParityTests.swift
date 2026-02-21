@@ -15,7 +15,7 @@ func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async thro
         firstChildID: firstChildID,
         secondChildID: secondChildID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: baseGraph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: baseGraph.withDefaultTreeAreaIfMissing())
 
     let commands: [CanvasCommand] = [
         .moveNode(.down),
@@ -24,8 +24,8 @@ func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async thro
         .deleteFocusedNode,
     ]
 
-    let pipelineResult = try await sut.runPipelineCommandSequence(commands: commands, from: baseGraph)
-    let replayResult = try await sut.runPipelineCommandSequence(commands: commands, from: baseGraph)
+    let pipelineResult = try await sut.runPipelineCommandSequence(commands: commands, from: baseGraph.withDefaultTreeAreaIfMissing())
+    let replayResult = try await sut.runPipelineCommandSequence(commands: commands, from: baseGraph.withDefaultTreeAreaIfMissing())
 
     #expect(pipelineResult.graph == replayResult.graph)
     #expect(pipelineResult.graph.focusedNodeID == secondChildID)
@@ -34,20 +34,21 @@ func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async thro
     #expect(!pipelineResult.didAddNode)
 }
 
-@Test("ApplyCanvasCommandsUseCase: pipeline mode keeps no-op sequence unchanged")
-func test_pipelineMode_keepsNoOpSequenceUnchanged() async throws {
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: .empty)
+@Test("ApplyCanvasCommandsUseCase: pipeline mode fails no-op sequence when focus is unresolved")
+func test_pipelineMode_failsNoOpSequence_whenFocusIsUnresolved() async throws {
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: .empty.withDefaultTreeAreaIfMissing())
     let commands: [CanvasCommand] = [
         .moveFocus(.left),
         .deleteFocusedNode,
         .addSiblingNode(position: .above),
     ]
 
-    let pipelineResult = try await sut.runPipelineCommandSequence(commands: commands, from: .empty)
-
-    #expect(pipelineResult.graph == .empty)
-    #expect(pipelineResult.viewportIntent == nil)
-    #expect(!pipelineResult.didAddNode)
+    do {
+        _ = try await sut.runPipelineCommandSequence(commands: commands, from: .empty)
+        Issue.record("Expected focusedNodeNotFound")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .focusedNodeNotFound)
+    }
 }
 
 @Test("ApplyCanvasCommandsUseCase: batched pipeline command sequence matches staged step-by-step execution")
@@ -60,7 +61,7 @@ func test_pipelineMode_batchedSequence_matchesStepByStepExecution() async throws
         firstChildID: firstChildID,
         secondChildID: secondChildID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: baseGraph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: baseGraph.withDefaultTreeAreaIfMissing())
 
     let firstCommand = CanvasCommand.setNodeText(
         nodeID: firstChildID,
@@ -71,11 +72,11 @@ func test_pipelineMode_batchedSequence_matchesStepByStepExecution() async throws
 
     let batchedResult = try await sut.runPipelineCommandSequence(
         commands: [firstCommand, secondCommand],
-        from: baseGraph
+        from: baseGraph.withDefaultTreeAreaIfMissing()
     )
     let firstStep = try await sut.runPipelineCommandSequence(
         commands: [firstCommand],
-        from: baseGraph
+        from: baseGraph.withDefaultTreeAreaIfMissing()
     )
     let secondStep = try await sut.runPipelineCommandSequence(
         commands: [secondCommand],
@@ -88,7 +89,7 @@ func test_pipelineMode_batchedSequence_matchesStepByStepExecution() async throws
 
 @Test("ApplyCanvasCommandsUseCase: didAddNode is false when added node does not remain in final graph")
 func test_pipelineMode_didAddNode_isFalseForTransientAdd() async throws {
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: .empty)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: .empty.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.runPipelineCommandSequence(
         commands: [.addNode, .deleteFocusedNode],
@@ -120,7 +121,7 @@ func test_apply_doesNotReturnViewportIntent_whenFocusChanges() async throws {
         edgesByID: [:],
         focusedNodeID: rootID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let applyResult = try await sut.apply(commands: [.moveFocus(.down)])
 
@@ -143,11 +144,11 @@ func test_apply_centerFocusedNode_emitsViewportIntent() async throws {
         edgesByID: [:],
         focusedNodeID: focusedNodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let applyResult = try await sut.apply(commands: [.centerFocusedNode])
 
-    #expect(applyResult.newState == graph)
+    #expect(applyResult.newState == graph.withDefaultTreeAreaIfMissing())
     #expect(!applyResult.canUndo)
     #expect(applyResult.viewportIntent == .resetManualPanOffset)
 }

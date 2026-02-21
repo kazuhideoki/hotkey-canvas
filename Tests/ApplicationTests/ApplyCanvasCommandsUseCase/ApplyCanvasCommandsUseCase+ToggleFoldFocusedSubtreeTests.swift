@@ -31,7 +31,7 @@ func test_apply_toggleFoldFocusedSubtree_foldsFocusedDescendants() async throws 
         ],
         focusedNodeID: rootID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.toggleFoldFocusedSubtree])
 
@@ -70,7 +70,7 @@ func test_apply_toggleFoldFocusedSubtree_togglesBackToExpanded() async throws {
         focusedNodeID: rootID,
         collapsedRootNodeIDs: [rootID]
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: foldedGraph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: foldedGraph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.toggleFoldFocusedSubtree])
 
@@ -92,11 +92,11 @@ func test_apply_toggleFoldFocusedSubtree_isNoOpForLeafNode() async throws {
         edgesByID: [:],
         focusedNodeID: leafID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.toggleFoldFocusedSubtree])
 
-    #expect(result.newState == graph)
+    #expect(result.newState == graph.withDefaultTreeAreaIfMissing())
     #expect(!result.canUndo)
 }
 
@@ -137,7 +137,7 @@ func test_apply_moveFocus_skipsFoldedDescendants() async throws {
         focusedNodeID: rootID,
         collapsedRootNodeIDs: [rootID]
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.moveFocus(.right)])
 

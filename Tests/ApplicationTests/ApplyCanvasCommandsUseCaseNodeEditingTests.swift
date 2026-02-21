@@ -17,7 +17,7 @@ func test_apply_setNodeText_updatesNodeText() async throws {
         edgesByID: [:],
         focusedNodeID: nodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let updated = try await sut.apply(
         commands: [.setNodeText(nodeID: nodeID, text: "after", nodeHeight: 48)]
@@ -47,7 +47,7 @@ func test_apply_setNodeText_nonFiniteHeight_fallsBackToCurrentHeight() async thr
         edgesByID: [:],
         focusedNodeID: nodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let nanHeightResult = try await sut.apply(
         commands: [.setNodeText(nodeID: nodeID, text: "after-nan", nodeHeight: .nan)]
@@ -77,7 +77,7 @@ func test_apply_setNodeText_expandsNodeHeightAsLinesIncrease() async throws {
         edgesByID: [:],
         focusedNodeID: nodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
     let twentyLines = Array(repeating: "line", count: 20).joined(separator: "\n")
     let fortyLines = Array(repeating: "line", count: 40).joined(separator: "\n")
     let twentyLineHeightInput = 420.0
@@ -112,7 +112,7 @@ func test_apply_setNodeText_shrinksNodeHeightWhenLinesDecrease() async throws {
         edgesByID: [:],
         focusedNodeID: nodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
     let fortyLines = Array(repeating: "line", count: 40).joined(separator: "\n")
     let expandedHeightInput = 760.0
     let shrunkHeightInput = 120.0
