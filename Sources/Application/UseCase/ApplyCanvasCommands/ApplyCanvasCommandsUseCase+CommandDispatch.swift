@@ -5,7 +5,32 @@ import Domain
 extension ApplyCanvasCommandsUseCase {
     /// Dispatches one command to its mutation handler and returns stage effects with the result graph.
     func applyMutation(command: CanvasCommand, to graph: CanvasGraph) throws -> CanvasMutationResult {
+        try CanvasAreaMembershipService.validate(in: graph).get()
+        let resolvedAreaID = try resolveAreaID(for: command, in: graph).get()
+        let resolvedArea = try CanvasAreaMembershipService.area(withID: resolvedAreaID, in: graph).get()
+        guard isCommand(command, supportedIn: resolvedArea.editingMode) else {
+            throw CanvasAreaPolicyError.unsupportedCommandInMode(mode: resolvedArea.editingMode, command: command)
+        }
+
         switch command {
+        case .addNode:
+            return try addNode(in: graph, areaID: resolvedAreaID)
+        case .addChildNode:
+            return try addChildNode(in: graph, requiresTopLevelParent: false)
+        case .addSiblingNode(let position):
+            return try addSiblingNode(in: graph, position: position)
+        case .moveFocus(let direction):
+            return moveFocus(in: graph, direction: direction)
+        case .moveNode(let direction):
+            return try moveNode(in: graph, direction: direction)
+        case .toggleFoldFocusedSubtree:
+            return toggleFoldFocusedSubtree(in: graph)
+        case .centerFocusedNode:
+            return noOpMutationResult(for: graph)
+        case .deleteFocusedNode:
+            return try deleteFocusedNode(in: graph)
+        case .setNodeText(let nodeID, let text, let nodeHeight):
+            return try setNodeText(in: graph, nodeID: nodeID, text: text, nodeHeight: nodeHeight)
         case .createArea(let id, let mode, let nodeIDs):
             let graphAfterMutation = try CanvasAreaMembershipService.createArea(
                 id: id,
@@ -39,38 +64,6 @@ extension ApplyCanvasCommandsUseCase {
                     needsFocusNormalization: false
                 )
             )
-        default:
-            break
-        }
-
-        try CanvasAreaMembershipService.validate(in: graph).get()
-        let resolvedAreaID = try resolveAreaID(for: command, in: graph).get()
-        let resolvedArea = try CanvasAreaMembershipService.area(withID: resolvedAreaID, in: graph).get()
-        guard isCommand(command, supportedIn: resolvedArea.editingMode) else {
-            throw CanvasAreaPolicyError.unsupportedCommandInMode(mode: resolvedArea.editingMode, command: command)
-        }
-
-        switch command {
-        case .addNode:
-            return try addNode(in: graph, areaID: resolvedAreaID)
-        case .addChildNode:
-            return try addChildNode(in: graph, requiresTopLevelParent: false)
-        case .addSiblingNode(let position):
-            return try addSiblingNode(in: graph, position: position)
-        case .moveFocus(let direction):
-            return moveFocus(in: graph, direction: direction)
-        case .moveNode(let direction):
-            return try moveNode(in: graph, direction: direction)
-        case .toggleFoldFocusedSubtree:
-            return toggleFoldFocusedSubtree(in: graph)
-        case .centerFocusedNode:
-            return noOpMutationResult(for: graph)
-        case .deleteFocusedNode:
-            return try deleteFocusedNode(in: graph)
-        case .setNodeText(let nodeID, let text, let nodeHeight):
-            return try setNodeText(in: graph, nodeID: nodeID, text: text, nodeHeight: nodeHeight)
-        case .createArea, .assignNodesToArea:
-            return noOpMutationResult(for: graph)
         }
     }
 
