@@ -426,6 +426,7 @@
   - ノードが1件以上ある場合、エリア定義は空を許容しない。
   - 各ノードはちょうど1つのエリアに所属する。
   - エリア所属ノードは必ず `CanvasGraph.nodesByID` に存在する。
+  - エリア再編（`createArea` / `assign`）後、エッジは必ず同一エリア内に閉じる（跨ぎエッジ禁止）。
   - フォーカス基準ディスパッチ時、フォーカスノード未解決はエラーとする。
 - エラー（`CanvasAreaPolicyError`）
   - `areaDataMissing`
@@ -436,6 +437,7 @@
   - `areaContainsMissingNode(CanvasAreaID, CanvasNodeID)`
   - `areaNotFound(CanvasAreaID)`
   - `areaAlreadyExists(CanvasAreaID)`
+  - `areaResolutionAmbiguousForAddNode`
   - `unsupportedCommandInMode(mode:command:)`
   - `crossAreaEdgeForbidden(CanvasEdgeID)`
 
@@ -473,3 +475,4 @@
 - 2026-02-18: 未使用だった Domain 公開 API（`CanvasGraphCRUDService.readNode/readEdge/updateEdge`、`CanvasShortcutCatalogService.defaultDefinitions/validate`、`CanvasShortcutCatalogError`）を削除。
 - 2026-02-19: `toggleFoldFocusedSubtree` コマンドと `Option + .` ショートカットを追加し、`CanvasFoldedSubtreeVisibilityService` で折りたたみ可視性の計算を Domain に集約。
 - 2026-02-21: Diagram mode Phase1 基盤として `CanvasArea*` モデル、`CanvasAreaMembershipService`、`CanvasAreaPolicyError`、モード別コマンドディスパッチ境界を追加。
+- 2026-02-21: Diagram mode Phase2 として、`createArea` / `assignNodesToArea` の Diagram 実行許可、`addNode` の複数エリア曖昧解決エラー、跨ぎエッジ禁止（`crossAreaEdgeForbidden`）の強制を追加。
