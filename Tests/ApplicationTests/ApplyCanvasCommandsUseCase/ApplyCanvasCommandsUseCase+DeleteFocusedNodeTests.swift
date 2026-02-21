@@ -35,7 +35,7 @@ func test_apply_deleteFocusedNode_removesFocusedNode() async throws {
         ],
         focusedNodeID: targetID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.deleteFocusedNode])
 
@@ -45,8 +45,8 @@ func test_apply_deleteFocusedNode_removesFocusedNode() async throws {
     #expect(result.newState.focusedNodeID == otherID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode is no-op when focus is nil")
-func test_apply_deleteFocusedNode_isNoOp_whenFocusedNodeIDIsNil() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode fails when focus is nil")
+func test_apply_deleteFocusedNode_fails_whenFocusedNodeIDIsNil() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
         nodesByID: [
@@ -60,15 +60,18 @@ func test_apply_deleteFocusedNode_isNoOp_whenFocusedNodeIDIsNil() async throws {
         edgesByID: [:],
         focusedNodeID: nil
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
-
-    #expect(result.newState == graph)
+    do {
+        _ = try await sut.apply(commands: [.deleteFocusedNode])
+        Issue.record("Expected focusedNodeNotFound")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .focusedNodeNotFound)
+    }
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode is no-op when focused node is stale")
-func test_apply_deleteFocusedNode_isNoOp_whenFocusedNodeIDIsStale() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode fails when focused node is stale")
+func test_apply_deleteFocusedNode_fails_whenFocusedNodeIDIsStale() async throws {
     let existingNodeID = CanvasNodeID(rawValue: "node")
     let staleFocusedNodeID = CanvasNodeID(rawValue: "stale")
     let graph = CanvasGraph(
@@ -83,11 +86,14 @@ func test_apply_deleteFocusedNode_isNoOp_whenFocusedNodeIDIsStale() async throws
         edgesByID: [:],
         focusedNodeID: staleFocusedNodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
-
-    #expect(result.newState == graph)
+    do {
+        _ = try await sut.apply(commands: [.deleteFocusedNode])
+        Issue.record("Expected focusedNodeNotFound")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .focusedNodeNotFound)
+    }
 }
 
 @Test("ApplyCanvasCommandsUseCase: deleteFocusedNode removes focused subtree")
@@ -98,7 +104,7 @@ func test_apply_deleteFocusedNode_removesFocusedSubtree() async throws {
         edgesByID: fixture.edgesByID,
         focusedNodeID: fixture.childID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.deleteFocusedNode])
 

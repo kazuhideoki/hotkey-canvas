@@ -18,7 +18,7 @@ func test_apply_addChildNode_createsChildAndEdge() async throws {
         edgesByID: [:],
         focusedNodeID: parentID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addChildNode])
 
@@ -54,7 +54,7 @@ func test_apply_addChildNode_avoidsOverlap() async throws {
         edgesByID: [:],
         focusedNodeID: parentID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addChildNode])
 
@@ -100,7 +100,7 @@ func test_apply_addChildNode_avoidsOccupiedSlotWithinSameArea() async throws {
         edgesByID: [parentToExistingChild.id: parentToExistingChild],
         focusedNodeID: parentID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addChildNode])
 
@@ -130,7 +130,7 @@ func test_apply_addChildNode_expandsCollapsedFocusedParent() async throws {
         focusedNodeID: parentID,
         collapsedRootNodeIDs: [parentID]
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addChildNode])
 

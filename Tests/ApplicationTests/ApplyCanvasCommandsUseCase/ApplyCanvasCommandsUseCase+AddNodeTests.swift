@@ -68,7 +68,7 @@ func test_apply_addNode_usesBottomMostAreaParentAsInsertionAnchor() async throws
         ],
         focusedNodeID: focusedNodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addNode])
 
@@ -123,7 +123,7 @@ func test_apply_addNode_avoidsAreaOverlapAtInsertionTime() async throws {
         ],
         focusedNodeID: focusedNodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addNode])
 
@@ -186,7 +186,7 @@ func test_apply_addNode_keepsTopLevelParentAsAnchorInsideBottomMostArea() async 
         ],
         focusedNodeID: focusedNodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addNode])
 
@@ -252,7 +252,7 @@ func test_apply_addNode_choosesAreaWithLargerMaxYWhenMinYTies() async throws {
         ],
         focusedNodeID: focusedNodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addNode])
 

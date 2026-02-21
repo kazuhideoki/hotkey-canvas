@@ -38,7 +38,7 @@ func test_apply_addSiblingNode_createsSiblingUnderSameParent() async throws {
         edgesByID: [rootToFocusedChild.id: rootToFocusedChild],
         focusedNodeID: focusedChildID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addSiblingNode(position: .below)])
 
@@ -93,7 +93,7 @@ func test_apply_addSiblingNode_resolvesOverlapByMovingAreas() async throws {
         edgesByID: [rootToFocusedChild.id: rootToFocusedChild],
         focusedNodeID: focusedChildID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addSiblingNode(position: .below)])
 
@@ -127,11 +127,11 @@ func test_apply_addSiblingNode_withoutParent_isNoOp() async throws {
         edgesByID: [:],
         focusedNodeID: focusedNodeID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addSiblingNode(position: .below)])
 
-    #expect(result.newState == graph)
+    #expect(result.newState == graph.withDefaultTreeAreaIfMissing())
 }
 
 @Test("ApplyCanvasCommandsUseCase: addSiblingNode above places node directly above focused node")
@@ -161,7 +161,7 @@ func test_apply_addSiblingNodeAbove_placesNodeAboveFocusedNode() async throws {
         edgesByID: [rootToFocusedChild.id: rootToFocusedChild],
         focusedNodeID: focusedChildID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addSiblingNode(position: .above)])
 
@@ -214,7 +214,7 @@ func test_apply_addSiblingNode_avoidsOccupiedSlotWithinSameArea() async throws {
         edgesByID: [rootToFocused.id: rootToFocused, rootToLower.id: rootToLower],
         focusedNodeID: focusedChildID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addSiblingNode(position: .below)])
 
@@ -232,7 +232,7 @@ func test_apply_addSiblingNode_avoidsOccupiedSlotWithinSameArea() async throws {
 @Test("ApplyCanvasCommandsUseCase: addSiblingNode above inserts between previous sibling and focused node")
 func test_apply_addSiblingNodeAbove_insertsBetweenPreviousAndFocusedSibling() async throws {
     let fixture = makeAddSiblingInsertionFixture()
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addSiblingNode(position: .above)])
 
@@ -301,7 +301,7 @@ func test_apply_addSiblingNodeAbove_withEqualY_keepsNewNodeAboveFocused() async 
         ],
         focusedNodeID: focusedID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.addSiblingNode(position: .above)])
 

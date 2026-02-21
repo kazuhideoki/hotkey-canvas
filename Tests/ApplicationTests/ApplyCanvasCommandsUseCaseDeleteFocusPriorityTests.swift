@@ -58,7 +58,7 @@ func test_apply_deleteFocusedNode_focusesSibling_whenSiblingExists() async throw
         ],
         focusedNodeID: focusedID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.deleteFocusedNode])
 
@@ -109,7 +109,7 @@ func test_apply_deleteFocusedNode_focusesLowerSibling_whenUpperSiblingDoesNotExi
         ],
         focusedNodeID: focusedID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.deleteFocusedNode])
 
@@ -154,7 +154,7 @@ func test_apply_deleteFocusedNode_focusesParent_whenSiblingDoesNotExist() async 
         ],
         focusedNodeID: focusedID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.deleteFocusedNode])
 
@@ -192,7 +192,7 @@ func test_apply_deleteFocusedNode_focusesNearestNode_whenParentDoesNotExist() as
         edgesByID: [:],
         focusedNodeID: focusedID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.deleteFocusedNode])
 
@@ -249,7 +249,7 @@ func test_apply_deleteFocusedNode_skipsDeletedUpperSibling() async throws {
         ],
         focusedNodeID: focusedID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.deleteFocusedNode])
 
@@ -301,7 +301,7 @@ func test_apply_deleteFocusedNode_choosesDeterministicParent_whenMultiParent() a
         ],
         focusedNodeID: focusedID
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.apply(commands: [.deleteFocusedNode])
 
