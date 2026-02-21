@@ -123,8 +123,11 @@ extension ApplyCanvasCommandsUseCase {
                 return CanvasAreaMembershipService.areaID(containing: focusedNodeID, in: graph)
             }
             let sortedAreaIDs = graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue })
-            if let areaID = sortedAreaIDs.first {
+            if sortedAreaIDs.count == 1, let areaID = sortedAreaIDs.first {
                 return .success(areaID)
+            }
+            if sortedAreaIDs.count > 1 {
+                return .failure(.areaResolutionAmbiguousForAddNode)
             }
             return .failure(.focusedNodeNotFound)
         case .setNodeText(let nodeID, _, _):

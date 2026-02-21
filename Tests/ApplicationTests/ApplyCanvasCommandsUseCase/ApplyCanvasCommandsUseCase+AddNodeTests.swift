@@ -262,8 +262,8 @@ func test_apply_addNode_choosesAreaWithLargerMaxYWhenMinYTies() async throws {
     #expect(newNode.bounds.y >= 204)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode succeeds without focused node when multiple areas exist")
-func test_apply_addNode_succeedsWithoutFocusInMultiAreaGraph() async throws {
+@Test("ApplyCanvasCommandsUseCase: addNode fails without focused node when multiple areas exist")
+func test_apply_addNode_failsWithoutFocusInMultiAreaGraph() async throws {
     let areaA = CanvasAreaID(rawValue: "area-a")
     let areaB = CanvasAreaID(rawValue: "area-b")
     let graph = CanvasGraph(
@@ -277,12 +277,12 @@ func test_apply_addNode_succeedsWithoutFocusInMultiAreaGraph() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    let result = try await sut.apply(commands: [.addNode])
-
-    #expect(result.newState.nodesByID.count == 1)
-    let newNodeID = try #require(result.newState.focusedNodeID)
-    #expect(result.newState.areasByID[areaA]?.nodeIDs.contains(newNodeID) == true)
-    #expect(result.newState.areasByID[areaB]?.nodeIDs.contains(newNodeID) == false)
+    do {
+        _ = try await sut.apply(commands: [.addNode])
+        Issue.record("Expected areaResolutionAmbiguousForAddNode")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .areaResolutionAmbiguousForAddNode)
+    }
 }
 
 private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds, spacing: Double = 0) -> Bool {
