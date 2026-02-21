@@ -60,10 +60,12 @@ func test_apply_diagramArea_rejectsAssignNodesToAreaCommand() async throws {
         _ = try await sut.apply(commands: [.assignNodesToArea(nodeIDs: [nodeID], areaID: targetAreaID)])
         Issue.record("Expected unsupported command error")
     } catch let error as CanvasAreaPolicyError {
-        #expect(error == .unsupportedCommandInMode(
-            mode: .diagram,
-            command: .assignNodesToArea(nodeIDs: [nodeID], areaID: targetAreaID)
-        ))
+        #expect(
+            error
+                == .unsupportedCommandInMode(
+                    mode: .diagram,
+                    command: .assignNodesToArea(nodeIDs: [nodeID], areaID: targetAreaID)
+                ))
     }
 }
 
