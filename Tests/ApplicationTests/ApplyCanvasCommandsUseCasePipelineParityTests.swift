@@ -24,8 +24,10 @@ func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async thro
         .deleteFocusedNode,
     ]
 
-    let pipelineResult = try await sut.runPipelineCommandSequence(commands: commands, from: baseGraph.withDefaultTreeAreaIfMissing())
-    let replayResult = try await sut.runPipelineCommandSequence(commands: commands, from: baseGraph.withDefaultTreeAreaIfMissing())
+    let pipelineResult = try await sut.runPipelineCommandSequence(
+        commands: commands, from: baseGraph.withDefaultTreeAreaIfMissing())
+    let replayResult = try await sut.runPipelineCommandSequence(
+        commands: commands, from: baseGraph.withDefaultTreeAreaIfMissing())
 
     #expect(pipelineResult.graph == replayResult.graph)
     #expect(pipelineResult.graph.focusedNodeID == secondChildID)
