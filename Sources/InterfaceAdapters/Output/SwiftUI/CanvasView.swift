@@ -280,11 +280,7 @@ public struct CanvasView: View {
                         .contentShape(Rectangle())
                         .allowsHitTesting(false)
                 }
-<<<<<<< HEAD
-                CanvasHotkeyCaptureView(isEnabled: editingContext == nil) { event in
-                    if isCommandPalettePresented {
-                        return handleCommandPaletteKeyDown(event)
-                    }
+                CanvasHotkeyCaptureView(isEnabled: editingContext == nil && !isCommandPalettePresented) { event in
                     if isAddNodeModeDialogPresented {
                         return false
                     }
@@ -292,9 +288,6 @@ public struct CanvasView: View {
                         isAddNodeModeDialogPresented = true
                         return true
                     }
-=======
-                CanvasHotkeyCaptureView(isEnabled: editingContext == nil && !isCommandPalettePresented) { event in
->>>>>>> main
                     if hotkeyTranslator.shouldOpenCommandPalette(event) {
                         openCommandPalette()
                         return true
