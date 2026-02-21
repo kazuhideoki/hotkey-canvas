@@ -104,20 +104,18 @@ public final class CanvasViewModel: ObservableObject {
             let addedNodeID = addResult.newState.focusedNodeID
             var finalResult = addResult
 
-            if mode == .diagram,
-                let addedNodeID
+            if let addedNodeID,
+                requiresModeSelectionAreaCreation(
+                    selectedMode: mode,
+                    addedNodeID: addedNodeID,
+                    in: addResult.newState
+                )
             {
-                let newAreaID = nextDiagramAreaID(in: addResult.newState)
-                do {
-                    finalResult = try await inputPort.apply(
-                        commands: [
-                            .createArea(id: newAreaID, mode: .diagram, nodeIDs: [addedNodeID])
-                        ]
-                    )
-                } catch {
-                    // Keep UI consistent with latest committed graph when post-add area creation fails.
-                    finalResult = await inputPort.getCurrentResult()
-                }
+                finalResult = await createAreaForSelectedMode(
+                    selectedMode: mode,
+                    addedNodeID: addedNodeID,
+                    initialGraph: addResult.newState
+                )
             }
 
             guard shouldDisplayResult(for: requestID) else {
@@ -205,11 +203,57 @@ extension CanvasViewModel {
         }
     }
 
-    private func nextDiagramAreaID(in graph: CanvasGraph) -> CanvasAreaID {
+    private func requiresModeSelectionAreaCreation(
+        selectedMode: CanvasEditingMode,
+        addedNodeID: CanvasNodeID,
+        in graph: CanvasGraph
+    ) -> Bool {
+        switch CanvasAreaMembershipService.areaID(containing: addedNodeID, in: graph) {
+        case .success(let areaID):
+            guard let area = graph.areasByID[areaID] else {
+                return false
+            }
+            return area.editingMode != selectedMode
+        case .failure:
+            return false
+        }
+    }
+
+    private func createAreaForSelectedMode(
+        selectedMode: CanvasEditingMode,
+        addedNodeID: CanvasNodeID,
+        initialGraph: CanvasGraph
+    ) async -> ApplyResult {
+        let maximumRetryCount = 3
+        var latestGraph = initialGraph
+        var retryCount = 0
+
+        while retryCount <= maximumRetryCount {
+            let newAreaID = nextAreaID(for: selectedMode, in: latestGraph)
+            do {
+                return try await inputPort.apply(
+                    commands: [.createArea(id: newAreaID, mode: selectedMode, nodeIDs: [addedNodeID])]
+                )
+            } catch let error as CanvasAreaPolicyError {
+                guard case .areaAlreadyExists = error else {
+                    return await inputPort.getCurrentResult()
+                }
+                latestGraph = await inputPort.getCurrentGraph()
+                retryCount += 1
+            } catch {
+                return await inputPort.getCurrentResult()
+            }
+        }
+
+        return await inputPort.getCurrentResult()
+    }
+
+    private func nextAreaID(for mode: CanvasEditingMode, in graph: CanvasGraph) -> CanvasAreaID {
+        let prefix = mode == .diagram ? "diagram-area-" : "tree-area-"
         let existingAreaIDs = Set(graph.areasByID.keys.map(\.rawValue))
-        var serial = graph.areasByID.count + 1
+        var serial = 1
         while true {
-            let candidate = "diagram-area-\(serial)"
+            let candidate = "\(prefix)\(serial)"
             if existingAreaIDs.contains(candidate) == false {
                 return CanvasAreaID(rawValue: candidate)
             }
