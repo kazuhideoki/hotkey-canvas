@@ -190,3 +190,60 @@ func test_edge_defaultRelationType_isNormal() {
     )
     #expect(edge.relationType == .normal)
 }
+
+@Test("Node CRUD: createNode assigns node into exactly one area")
+func test_createNode_assignsNodeIntoSingleArea() throws {
+    let existingNodeID = CanvasNodeID(rawValue: "existing")
+    let newNodeID = CanvasNodeID(rawValue: "new")
+    let areaID = CanvasAreaID(rawValue: "area-1")
+    let existingNode = CanvasNode(
+        id: existingNodeID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 0, y: 0, width: 120, height: 80)
+    )
+    let newNode = CanvasNode(
+        id: newNodeID,
+        kind: .text,
+        text: nil,
+        bounds: CanvasBounds(x: 200, y: 0, width: 120, height: 80)
+    )
+    let graph = CanvasGraph(
+        nodesByID: [existingNodeID: existingNode],
+        edgesByID: [:],
+        focusedNodeID: existingNodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [existingNodeID], editingMode: .tree)
+        ]
+    )
+
+    let createdGraph = try CanvasGraphCRUDService.createNode(newNode, in: graph).get()
+
+    #expect(createdGraph.areasByID[areaID]?.nodeIDs.contains(newNodeID) == true)
+    try CanvasAreaMembershipService.validate(in: createdGraph).get()
+}
+
+@Test("Node CRUD: deleteNode removes deleted node from all area memberships")
+func test_deleteNode_removesDeletedNodeFromAreaMemberships() throws {
+    let nodeID = CanvasNodeID(rawValue: "delete-me")
+    let areaID = CanvasAreaID(rawValue: "area-1")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 120, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .tree)
+        ]
+    )
+
+    let deletedGraph = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: graph).get()
+
+    #expect(deletedGraph.areasByID[areaID]?.nodeIDs.contains(nodeID) == false)
+}

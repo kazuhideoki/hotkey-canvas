@@ -262,6 +262,29 @@ func test_apply_addNode_choosesAreaWithLargerMaxYWhenMinYTies() async throws {
     #expect(newNode.bounds.y >= 204)
 }
 
+@Test("ApplyCanvasCommandsUseCase: addNode succeeds without focused node when multiple areas exist")
+func test_apply_addNode_succeedsWithoutFocusInMultiAreaGraph() async throws {
+    let areaA = CanvasAreaID(rawValue: "area-a")
+    let areaB = CanvasAreaID(rawValue: "area-b")
+    let graph = CanvasGraph(
+        nodesByID: [:],
+        edgesByID: [:],
+        focusedNodeID: nil,
+        areasByID: [
+            areaA: CanvasArea(id: areaA, nodeIDs: [], editingMode: .tree),
+            areaB: CanvasArea(id: areaB, nodeIDs: [], editingMode: .tree),
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addNode])
+
+    #expect(result.newState.nodesByID.count == 1)
+    let newNodeID = try #require(result.newState.focusedNodeID)
+    #expect(result.newState.areasByID[areaA]?.nodeIDs.contains(newNodeID) == true)
+    #expect(result.newState.areasByID[areaB]?.nodeIDs.contains(newNodeID) == false)
+}
+
 private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds, spacing: Double = 0) -> Bool {
     let halfSpacing = max(0, spacing) / 2
     let lhsLeft = lhs.x - halfSpacing

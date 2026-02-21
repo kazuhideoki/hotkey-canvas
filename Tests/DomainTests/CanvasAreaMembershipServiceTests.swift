@@ -86,3 +86,36 @@ func test_focusedAreaID_failsWhenFocusedNodeIsUnassigned() throws {
         #expect(error == .focusedNodeNotAssignedToArea(focusedNodeID))
     }
 }
+
+@Test("CanvasAreaMembershipService: createArea reassigns initial members from existing areas")
+func test_createArea_reassignsInitialMembersFromExistingAreas() throws {
+    let nodeID = CanvasNodeID(rawValue: "node-1")
+    let sourceAreaID = CanvasAreaID(rawValue: "source")
+    let newAreaID = CanvasAreaID(rawValue: "new")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            sourceAreaID: CanvasArea(id: sourceAreaID, nodeIDs: [nodeID], editingMode: .tree)
+        ]
+    )
+
+    let created = try CanvasAreaMembershipService.createArea(
+        id: newAreaID,
+        mode: .diagram,
+        nodeIDs: [nodeID],
+        in: graph
+    ).get()
+
+    #expect(created.areasByID[sourceAreaID]?.nodeIDs.contains(nodeID) == false)
+    #expect(created.areasByID[newAreaID]?.nodeIDs == [nodeID])
+    try CanvasAreaMembershipService.validate(in: created).get()
+}
