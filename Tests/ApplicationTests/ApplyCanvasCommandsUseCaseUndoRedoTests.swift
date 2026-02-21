@@ -82,3 +82,90 @@ func test_redo_doesNotEmitViewportIntent_whenFocusChanges() async throws {
     #expect(redone.newState.focusedNodeID != nil)
     #expect(redone.viewportIntent == nil)
 }
+
+@Test("ApplyCanvasCommandsUseCase: undo/redo restores area membership after assignNodesToArea")
+func test_undoRedo_restoresAreaMembership_afterAssignNodesToArea() async throws {
+    let nodeID = CanvasNodeID(rawValue: "node-1")
+    let sourceAreaID = CanvasAreaID(rawValue: "source")
+    let targetAreaID = CanvasAreaID(rawValue: "target")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            sourceAreaID: CanvasArea(id: sourceAreaID, nodeIDs: [nodeID], editingMode: .diagram),
+            targetAreaID: CanvasArea(id: targetAreaID, nodeIDs: [], editingMode: .tree),
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let applied = try await sut.apply(commands: [.assignNodesToArea(nodeIDs: [nodeID], areaID: targetAreaID)])
+    #expect(applied.newState.areasByID[targetAreaID]?.nodeIDs.contains(nodeID) == true)
+    #expect(applied.canUndo)
+
+    let undone = await sut.undo()
+    #expect(undone.newState.areasByID[sourceAreaID]?.nodeIDs.contains(nodeID) == true)
+    #expect(undone.newState.areasByID[targetAreaID]?.nodeIDs.contains(nodeID) == false)
+    #expect(undone.canRedo)
+
+    let redone = await sut.redo()
+    #expect(redone.newState.areasByID[targetAreaID]?.nodeIDs.contains(nodeID) == true)
+    #expect(redone.newState.areasByID[sourceAreaID]?.nodeIDs.contains(nodeID) == false)
+}
+
+@Test("ApplyCanvasCommandsUseCase: failed assignNodesToArea does not append undo history")
+func test_failedAssignNodesToArea_doesNotAppendUndoHistory() async throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let edgeID = CanvasEdgeID(rawValue: "edge-parent-child")
+    let sourceAreaID = CanvasAreaID(rawValue: "source")
+    let targetAreaID = CanvasAreaID(rawValue: "target")
+    let graph = CanvasGraph(
+        nodesByID: [
+            parentID: CanvasNode(
+                id: parentID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            ),
+            childID: CanvasNode(
+                id: childID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 260, y: 0, width: 200, height: 80)
+            ),
+        ],
+        edgesByID: [
+            edgeID: CanvasEdge(
+                id: edgeID,
+                fromNodeID: parentID,
+                toNodeID: childID,
+                relationType: .parentChild
+            )
+        ],
+        focusedNodeID: parentID,
+        areasByID: [
+            sourceAreaID: CanvasArea(id: sourceAreaID, nodeIDs: [parentID, childID], editingMode: .diagram),
+            targetAreaID: CanvasArea(id: targetAreaID, nodeIDs: [], editingMode: .tree),
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    do {
+        _ = try await sut.apply(commands: [.assignNodesToArea(nodeIDs: [childID], areaID: targetAreaID)])
+        Issue.record("Expected crossAreaEdgeForbidden")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .crossAreaEdgeForbidden(edgeID))
+    }
+
+    let undoResult = await sut.undo()
+    #expect(undoResult.newState == graph)
+    #expect(!undoResult.canUndo)
+}
