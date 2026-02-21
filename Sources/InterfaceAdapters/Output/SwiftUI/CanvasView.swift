@@ -16,6 +16,7 @@ public struct CanvasView: View {
     @State var commandPaletteCursorIndex: Int = 0
     @State var isCommandPalettePresented = false
     @State var selectedCommandPaletteIndex: Int = 0
+    @State var isAddNodeModeDialogPresented = false
     @State private var previousSelectedCommandPaletteIndex: Int = 0
     @State var hasInitializedCameraAnchor = false
     @State var cameraAnchorPoint: CGPoint = .zero
@@ -281,6 +282,10 @@ public struct CanvasView: View {
                     if isCommandPalettePresented {
                         return handleCommandPaletteKeyDown(event)
                     }
+                    if hotkeyTranslator.shouldPresentAddNodeModeSelection(event) {
+                        isAddNodeModeDialogPresented = true
+                        return true
+                    }
                     if hotkeyTranslator.shouldOpenCommandPalette(event) {
                         openCommandPalette()
                         return true
@@ -423,6 +428,25 @@ public struct CanvasView: View {
                 commandPaletteCursorIndex = 0
                 selectedCommandPaletteIndex = 0
             }
+        }
+        .confirmationDialog(
+            "Select Node Mode",
+            isPresented: $isAddNodeModeDialogPresented,
+            titleVisibility: .visible
+        ) {
+            Button("Tree") {
+                Task {
+                    await viewModel.addNodeFromModeSelection(mode: .tree)
+                }
+            }
+            Button("Diagram") {
+                Task {
+                    await viewModel.addNodeFromModeSelection(mode: .diagram)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Choose mode for the new node.")
         }
         .onReceive(viewModel.$viewportIntent) { viewportIntent in
             guard let viewportIntent else {

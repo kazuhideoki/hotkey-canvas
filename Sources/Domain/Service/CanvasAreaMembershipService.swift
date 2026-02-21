@@ -238,6 +238,48 @@ public enum CanvasAreaMembershipService {
         )
     }
 
+    /// Converts the focused node area editing mode.
+    /// - Parameters:
+    ///   - mode: Target editing mode.
+    ///   - graph: Source graph.
+    /// - Returns: Graph with converted focused area mode.
+    public static func convertFocusedAreaMode(
+        to mode: CanvasEditingMode,
+        in graph: CanvasGraph
+    ) -> Result<CanvasGraph, CanvasAreaPolicyError> {
+        switch focusedAreaID(in: graph) {
+        case .success(let areaID):
+            guard let focusedArea = graph.areasByID[areaID] else {
+                return .failure(.areaNotFound(areaID))
+            }
+            if focusedArea.editingMode == mode {
+                return .success(graph)
+            }
+
+            var nextAreasByID = graph.areasByID
+            nextAreasByID[areaID] = CanvasArea(
+                id: focusedArea.id,
+                nodeIDs: focusedArea.nodeIDs,
+                editingMode: mode
+            )
+            let nextGraph = CanvasGraph(
+                nodesByID: graph.nodesByID,
+                edgesByID: graph.edgesByID,
+                focusedNodeID: graph.focusedNodeID,
+                collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+                areasByID: nextAreasByID
+            )
+            switch validate(in: nextGraph) {
+            case .success:
+                return .success(nextGraph)
+            case .failure(let error):
+                return .failure(error)
+            }
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
     /// Validates that every edge stays within one area.
     /// - Parameter graph: Graph snapshot.
     /// - Returns: `.success(())` when all edges are intra-area.
@@ -250,7 +292,7 @@ public enum CanvasAreaMembershipService {
             case .success(let fromAreaID):
                 switch areaID(containing: edge.toNodeID, in: graph) {
                 case .success(let toAreaID):
-                    if fromAreaID != toAreaID {
+                    if fromAreaID != toAreaID && isCrossAreaEdgeAllowed(from: fromAreaID, to: toAreaID) == false {
                         return .failure(.crossAreaEdgeForbidden(edge.id))
                     }
                 case .failure(let error):
@@ -261,5 +303,10 @@ public enum CanvasAreaMembershipService {
             }
         }
         return .success(())
+    }
+
+    /// Hook for future policy expansion where cross-area edges may become allowed.
+    private static func isCrossAreaEdgeAllowed(from _: CanvasAreaID, to _: CanvasAreaID) -> Bool {
+        false
     }
 }

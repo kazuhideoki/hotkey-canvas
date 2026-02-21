@@ -213,3 +213,59 @@ func test_createArea_failsWhenCrossAreaEdgeWouldBeIntroduced() throws {
         #expect(error == .crossAreaEdgeForbidden(edgeID))
     }
 }
+
+@Test("CanvasAreaMembershipService: convertFocusedAreaMode updates focused area mode")
+func test_convertFocusedAreaMode_updatesFocusedAreaMode() throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let areaID = CanvasAreaID(rawValue: "area-1")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedNodeID], editingMode: .tree)
+        ]
+    )
+
+    let converted = try CanvasAreaMembershipService.convertFocusedAreaMode(
+        to: .diagram,
+        in: graph
+    ).get()
+
+    #expect(converted.areasByID[areaID]?.editingMode == .diagram)
+}
+
+@Test("CanvasAreaMembershipService: convertFocusedAreaMode no-ops when target mode is same")
+func test_convertFocusedAreaMode_noOpsWhenTargetModeIsSame() throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let areaID = CanvasAreaID(rawValue: "area-1")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedNodeID], editingMode: .diagram)
+        ]
+    )
+
+    let converted = try CanvasAreaMembershipService.convertFocusedAreaMode(
+        to: .diagram,
+        in: graph
+    ).get()
+
+    #expect(converted == graph)
+}

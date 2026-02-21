@@ -205,6 +205,34 @@ func test_apply_addNode_setsPendingEditingNodeID() async throws {
 }
 
 @MainActor
+@Test("CanvasViewModel: mode-selected add-node with tree sets pending editing node")
+func test_addNodeFromModeSelection_tree_setsPendingEditingNodeID() async throws {
+    let inputPort = UndoRedoCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.addNodeFromModeSelection(mode: .tree)
+
+    #expect(viewModel.nodes.count == 1)
+    #expect(viewModel.pendingEditingNodeID == CanvasNodeID(rawValue: "node-1"))
+}
+
+@MainActor
+@Test("CanvasViewModel: mode-selected add-node with diagram creates new diagram area for added node")
+func test_addNodeFromModeSelection_diagram_createsDiagramAreaForAddedNode() async throws {
+    let inputPort = DiagramModeSelectionCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.addNodeFromModeSelection(mode: .diagram)
+
+    #expect(viewModel.nodes.count == 1)
+    #expect(viewModel.pendingEditingNodeID == CanvasNodeID(rawValue: "node-1"))
+    let graph = await inputPort.getCurrentGraph()
+    let diagramAreas = graph.areasByID.values.filter { $0.editingMode == .diagram }
+    #expect(diagramAreas.count == 1)
+    #expect(diagramAreas.first?.nodeIDs == [CanvasNodeID(rawValue: "node-1")])
+}
+
+@MainActor
 @Test("CanvasViewModel: non-add apply does not publish pending editing node")
 func test_apply_nonAddCommand_doesNotSetPendingEditingNodeID() async throws {
     let nodeID = CanvasNodeID(rawValue: "focused")
@@ -317,7 +345,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 )
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .setNodeText, .createArea, .assignNodesToArea:
+                .centerFocusedNode, .setNodeText, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -407,7 +435,7 @@ extension OverlappingFailureCanvasEditingInputPort {
                 )
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .setNodeText, .createArea, .assignNodesToArea:
+                .centerFocusedNode, .setNodeText, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -598,7 +626,7 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .moveNode,
                 .toggleFoldFocusedSubtree, .centerFocusedNode,
-                .deleteFocusedNode, .createArea, .assignNodesToArea:
+                .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
                 continue
             }
         }
@@ -749,6 +777,89 @@ actor ViewportIntentCanvasEditingInputPort: CanvasEditingInputPort {
     }
 }
 
+actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+    private var undoStack: [CanvasGraph] = []
+    private var redoStack: [CanvasGraph] = []
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        var nextGraph = graph
+        var didAddNode = false
+
+        for command in commands {
+            switch command {
+            case .addNode:
+                undoStack.append(graph)
+                redoStack.removeAll()
+                let nodeID = CanvasNodeID(rawValue: "node-\(nextGraph.nodesByID.count + 1)")
+                let node = CanvasNode(
+                    id: nodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+                let createdGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
+                nextGraph = CanvasGraph(
+                    nodesByID: createdGraph.nodesByID,
+                    edgesByID: createdGraph.edgesByID,
+                    focusedNodeID: nodeID,
+                    collapsedRootNodeIDs: createdGraph.collapsedRootNodeIDs,
+                    areasByID: createdGraph.areasByID
+                )
+                didAddNode = true
+            case .createArea(let id, let mode, let nodeIDs):
+                nextGraph = try CanvasAreaMembershipService.createArea(
+                    id: id,
+                    mode: mode,
+                    nodeIDs: nodeIDs,
+                    in: nextGraph
+                ).get()
+            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
+                .centerFocusedNode, .setNodeText,
+                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea:
+                continue
+            }
+        }
+        graph = nextGraph
+        return ApplyResult(
+            newState: graph,
+            canUndo: !undoStack.isEmpty,
+            canRedo: !redoStack.isEmpty,
+            didAddNode: didAddNode
+        )
+    }
+
+    func undo() async -> ApplyResult {
+        guard let previous = undoStack.popLast() else {
+            return ApplyResult(newState: graph)
+        }
+        redoStack.append(graph)
+        graph = previous
+        return ApplyResult(newState: graph, canRedo: !redoStack.isEmpty)
+    }
+
+    func redo() async -> ApplyResult {
+        guard let next = redoStack.popLast() else {
+            return ApplyResult(newState: graph)
+        }
+        undoStack.append(graph)
+        graph = next
+        return ApplyResult(newState: graph, canUndo: !undoStack.isEmpty)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(
+            newState: graph,
+            canUndo: !undoStack.isEmpty,
+            canRedo: !redoStack.isEmpty
+        )
+    }
+}
+
 extension ReorderedSuccessCanvasEditingInputPort {
     private func makeGraph(nodeCount: Int) -> CanvasGraph {
         var nodesByID: [CanvasNodeID: CanvasNode] = [:]
@@ -789,7 +900,7 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .setNodeText,
-                .deleteFocusedNode, .createArea, .assignNodesToArea:
+                .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
                 continue
             }
         }
@@ -839,7 +950,7 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .setNodeText,
-                .deleteFocusedNode, .createArea, .assignNodesToArea:
+                .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
                 continue
             }
         }

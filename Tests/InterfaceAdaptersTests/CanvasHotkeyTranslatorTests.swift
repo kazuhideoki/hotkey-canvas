@@ -27,6 +27,27 @@ func test_translate_shiftEnter_returnsAddNode() throws {
     #expect(commands == [.addNode])
 }
 
+@Test("CanvasHotkeyTranslator: Shift+Enter opens add-node mode selection")
+func test_shouldPresentAddNodeModeSelection_shiftEnter_returnsTrue() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "\r",
+            charactersIgnoringModifiers: "\r",
+            isARepeat: false,
+            keyCode: 36
+        )
+    )
+
+    #expect(sut.shouldPresentAddNodeModeSelection(event))
+}
+
 @Test("CanvasHotkeyTranslator: Enter without Shift maps to addSiblingNode command")
 func test_translate_enterWithoutShift_returnsAddSiblingNode() throws {
     let sut = CanvasHotkeyTranslator()
