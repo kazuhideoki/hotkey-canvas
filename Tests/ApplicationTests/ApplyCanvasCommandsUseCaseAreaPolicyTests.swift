@@ -33,6 +33,40 @@ func test_apply_diagramArea_rejectsUnsupportedCommand() async throws {
     }
 }
 
+@Test("ApplyCanvasCommandsUseCase: diagram area rejects assignNodesToArea command")
+func test_apply_diagramArea_rejectsAssignNodesToAreaCommand() async throws {
+    let nodeID = CanvasNodeID(rawValue: "diagram-node")
+    let diagramAreaID = CanvasAreaID(rawValue: "diagram-area")
+    let targetAreaID = CanvasAreaID(rawValue: "target-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            diagramAreaID: CanvasArea(id: diagramAreaID, nodeIDs: [nodeID], editingMode: .diagram),
+            targetAreaID: CanvasArea(id: targetAreaID, nodeIDs: [], editingMode: .tree),
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    do {
+        _ = try await sut.apply(commands: [.assignNodesToArea(nodeIDs: [nodeID], areaID: targetAreaID)])
+        Issue.record("Expected unsupported command error")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .unsupportedCommandInMode(
+            mode: .diagram,
+            command: .assignNodesToArea(nodeIDs: [nodeID], areaID: targetAreaID)
+        ))
+    }
+}
+
 @Test("ApplyCanvasCommandsUseCase: apply fails when graph has nodes but no area data")
 func test_apply_failsWhenAreaDataMissing() async throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
