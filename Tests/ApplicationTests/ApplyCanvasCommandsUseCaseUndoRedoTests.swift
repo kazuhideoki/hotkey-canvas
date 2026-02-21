@@ -169,3 +169,65 @@ func test_failedAssignNodesToArea_doesNotAppendUndoHistory() async throws {
     #expect(undoResult.newState == graph)
     #expect(!undoResult.canUndo)
 }
+
+@Test("ApplyCanvasCommandsUseCase: undo/redo restores area mode after convertFocusedAreaMode")
+func test_undoRedo_restoresAreaMode_afterConvertFocusedAreaMode() async throws {
+    let nodeID = CanvasNodeID(rawValue: "node-1")
+    let areaID = CanvasAreaID(rawValue: "area-1")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .tree)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let converted = try await sut.apply(commands: [.convertFocusedAreaMode(to: .diagram)])
+    #expect(converted.newState.areasByID[areaID]?.editingMode == .diagram)
+    #expect(converted.canUndo)
+
+    let undone = await sut.undo()
+    #expect(undone.newState.areasByID[areaID]?.editingMode == .tree)
+    #expect(undone.canRedo)
+
+    let redone = await sut.redo()
+    #expect(redone.newState.areasByID[areaID]?.editingMode == .diagram)
+}
+
+@Test("ApplyCanvasCommandsUseCase: same-mode convertFocusedAreaMode does not append undo history")
+func test_sameModeConvertFocusedAreaMode_doesNotAppendUndoHistory() async throws {
+    let nodeID = CanvasNodeID(rawValue: "node-1")
+    let areaID = CanvasAreaID(rawValue: "area-1")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.convertFocusedAreaMode(to: .diagram)])
+    #expect(!result.canUndo)
+
+    let undoResult = await sut.undo()
+    #expect(undoResult.newState == graph)
+    #expect(!undoResult.canUndo)
+}

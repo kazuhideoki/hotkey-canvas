@@ -17,6 +17,7 @@ enum TreeAreaPolicyService {
             .centerFocusedNode,
             .deleteFocusedNode,
             .setNodeText,
+            .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
             return true

@@ -84,6 +84,66 @@ public final class CanvasViewModel: ObservableObject {
         }
     }
 
+    /// Adds one node and applies mode-specific follow-up area operations chosen by UI.
+    /// - Parameter mode: Editing mode selected in Shift+Enter dialog.
+    public func addNodeFromModeSelection(mode: CanvasEditingMode) async {
+        let requestID = consumeNextRequestID()
+        let graphBeforeAdd = await inputPort.getCurrentGraph()
+
+        do {
+            let addResult = try await inputPort.apply(commands: [.addNode])
+            guard shouldDisplayResult(for: requestID) else {
+                return
+            }
+            guard addResult.didAddNode else {
+                updateDisplay(with: addResult)
+                pendingEditingNodeID = nil
+                markDisplayed(requestID)
+                return
+            }
+
+            guard mode == .diagram else {
+                updateDisplay(with: addResult)
+                pendingEditingNodeID = addResult.newState.focusedNodeID
+                markDisplayed(requestID)
+                return
+            }
+
+            guard let addedNodeID = addedNodeID(from: graphBeforeAdd, to: addResult.newState) else {
+                updateDisplay(with: addResult)
+                pendingEditingNodeID = addResult.newState.focusedNodeID
+                markDisplayed(requestID)
+                return
+            }
+
+            let newAreaID = nextDiagramAreaID(in: addResult.newState)
+            do {
+                let createAreaResult = try await inputPort.apply(
+                    commands: [
+                        .createArea(id: newAreaID, mode: .diagram, nodeIDs: [addedNodeID])
+                    ]
+                )
+                guard shouldDisplayResult(for: requestID) else {
+                    return
+                }
+                updateDisplay(with: createAreaResult)
+                pendingEditingNodeID = addedNodeID
+                markDisplayed(requestID)
+            } catch {
+                // Keep UI consistent with latest committed graph when post-add area creation fails.
+                let latestResult = await inputPort.getCurrentResult()
+                guard shouldDisplayResult(for: requestID) else {
+                    return
+                }
+                updateDisplay(with: latestResult)
+                pendingEditingNodeID = addedNodeID
+                markDisplayed(requestID)
+            }
+        } catch {
+            // Keep current display state when command application fails.
+        }
+    }
+
     public func undo() async {
         let requestID = consumeNextRequestID()
         let result = await inputPort.undo()
@@ -153,8 +213,28 @@ extension CanvasViewModel {
         case .addNode, .addChildNode, .addSiblingNode:
             return true
         case .moveFocus, .moveNode, .toggleFoldFocusedSubtree, .centerFocusedNode, .deleteFocusedNode,
-            .setNodeText, .createArea, .assignNodesToArea:
+            .setNodeText, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return false
+        }
+    }
+
+    private func addedNodeID(from oldGraph: CanvasGraph, to newGraph: CanvasGraph) -> CanvasNodeID? {
+        let oldNodeIDs = Set(oldGraph.nodesByID.keys)
+        return newGraph.nodesByID.keys
+            .filter { oldNodeIDs.contains($0) == false }
+            .sorted(by: { $0.rawValue < $1.rawValue })
+            .first
+    }
+
+    private func nextDiagramAreaID(in graph: CanvasGraph) -> CanvasAreaID {
+        let existingAreaIDs = Set(graph.areasByID.keys.map(\.rawValue))
+        var serial = graph.areasByID.count + 1
+        while true {
+            let candidate = "diagram-area-\(serial)"
+            if existingAreaIDs.contains(candidate) == false {
+                return CanvasAreaID(rawValue: candidate)
+            }
+            serial += 1
         }
     }
 

@@ -13,7 +13,7 @@ extension ApplyCanvasCommandsUseCase {
         }
 
         switch command {
-        case .createArea, .assignNodesToArea:
+        case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return try applyAreaManagementCommand(command: command, to: graph)
         default:
             return try applyGraphEditingCommand(
@@ -48,7 +48,7 @@ extension ApplyCanvasCommandsUseCase {
             return try deleteFocusedNode(in: graph)
         case .setNodeText(let nodeID, let text, let nodeHeight):
             return try setNodeText(in: graph, nodeID: nodeID, text: text, nodeHeight: nodeHeight)
-        case .createArea, .assignNodesToArea:
+        case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return noOpMutationResult(for: graph)
         }
     }
@@ -58,6 +58,21 @@ extension ApplyCanvasCommandsUseCase {
         to graph: CanvasGraph
     ) throws -> CanvasMutationResult {
         switch command {
+        case .convertFocusedAreaMode(let mode):
+            let graphAfterMutation = try CanvasAreaMembershipService.convertFocusedAreaMode(
+                to: mode,
+                in: graph
+            ).get()
+            return CanvasMutationResult(
+                graphBeforeMutation: graph,
+                graphAfterMutation: graphAfterMutation,
+                effects: CanvasMutationEffects(
+                    didMutateGraph: graphAfterMutation != graph,
+                    needsTreeLayout: false,
+                    needsAreaLayout: false,
+                    needsFocusNormalization: false
+                )
+            )
         case .createArea(let id, let mode, let nodeIDs):
             let graphAfterMutation = try CanvasAreaMembershipService.createArea(
                 id: id,
@@ -139,6 +154,7 @@ extension ApplyCanvasCommandsUseCase {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
+            .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
             return CanvasAreaMembershipService.focusedAreaID(in: graph)

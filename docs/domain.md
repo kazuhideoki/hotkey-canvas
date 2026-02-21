@@ -402,6 +402,7 @@
 | `areaID(containing:in:)` | ノード所属エリアを解決する。 |
 | `focusedAreaID(in:)` | フォーカスノード所属エリアを解決する。 |
 | `area(withID:in:)` | エリアIDからエリア情報を取得する。 |
+| `convertFocusedAreaMode(to:in:)` | フォーカスノード所属エリアの編集モードを変換する（同一モード指定は no-op 成功）。 |
 | `createArea(id:mode:nodeIDs:in:)` | 新規エリアを作成する。 |
 | `assign(nodeIDs:to:in:)` | ノード集合を指定エリアへ再所属させる。 |
 | `remove(nodeIDs:in:)` | ノード集合を全エリア所属から除外する。 |
@@ -411,6 +412,7 @@
 - Application ユースケース
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CommandDispatch.swift`
     - コマンド適用前に所属整合性検証と対象エリア解決を行う。
+    - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
@@ -476,3 +478,4 @@
 - 2026-02-19: `toggleFoldFocusedSubtree` コマンドと `Option + .` ショートカットを追加し、`CanvasFoldedSubtreeVisibilityService` で折りたたみ可視性の計算を Domain に集約。
 - 2026-02-21: Diagram mode Phase1 基盤として `CanvasArea*` モデル、`CanvasAreaMembershipService`、`CanvasAreaPolicyError`、モード別コマンドディスパッチ境界を追加。
 - 2026-02-21: Diagram mode Phase2 として、`createArea` / `assignNodesToArea` の Diagram 実行許可、`addNode` の複数エリア曖昧解決エラー、跨ぎエッジ禁止（`crossAreaEdgeForbidden`）の強制を追加。
+- 2026-02-21: Diagram mode Phase3 として `convertFocusedAreaMode(to:)` を追加し、フォーカス基準のモード変換（同一モード no-op）と `Shift + Enter` モード選択導線を実装。

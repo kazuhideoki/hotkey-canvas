@@ -44,6 +44,11 @@ public struct CanvasHotkeyTranslator {
         action(for: event) == .openCommandPalette
     }
 
+    /// Returns true when Shift+Enter should open mode selection instead of direct add-node apply.
+    public func shouldPresentAddNodeModeSelection(_ event: NSEvent) -> Bool {
+        action(for: event) == .apply(commands: [.addNode])
+    }
+
     public func translate(_ event: NSEvent) -> [CanvasCommand] {
         switch action(for: event) {
         case .apply(let commands):
