@@ -141,6 +141,34 @@ func test_apply_alignParentNodesVertically_resolvesSubtreeOverlapWhileKeepingRoo
     #expect(rootBottom.bounds.y == 192)
 }
 
+@Test(
+    "ApplyCanvasCommandsUseCase: alignParentNodesVertically does not move shared descendant twice in multi-parent graph"
+)
+func test_apply_alignParentNodesVertically_doesNotMoveSharedDescendantTwice() async throws {
+    let rootTopID = CanvasNodeID(rawValue: "root-top")
+    let rootBottomID = CanvasNodeID(rawValue: "root-bottom")
+    let topChildID = CanvasNodeID(rawValue: "top-child")
+    let bottomChildID = CanvasNodeID(rawValue: "bottom-child")
+    let sharedDescendantID = CanvasNodeID(rawValue: "shared-descendant")
+    let graph = makeSharedDescendantFixtureGraph(
+        rootTopID: rootTopID,
+        rootBottomID: rootBottomID,
+        topChildID: topChildID,
+        bottomChildID: bottomChildID,
+        sharedDescendantID: sharedDescendantID
+    )
+
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+    let result = try await sut.apply(commands: [.alignParentNodesVertically])
+
+    let rootBottom = try #require(result.newState.nodesByID[rootBottomID])
+    let bottomChild = try #require(result.newState.nodesByID[bottomChildID])
+    let sharedDescendant = try #require(result.newState.nodesByID[sharedDescendantID])
+    #expect(rootBottom.bounds.y == 232)
+    #expect(bottomChild.bounds.y == 232)
+    #expect(sharedDescendant.bounds.y == 80)
+}
+
 private func makeOverlapFixtureGraph(
     rootTopID: CanvasNodeID,
     rootBottomID: CanvasNodeID,
@@ -198,4 +226,114 @@ private func makeOverlapFixtureGraph(
             )
         ]
     )
+}
+
+private func makeSharedDescendantFixtureGraph(
+    rootTopID: CanvasNodeID,
+    rootBottomID: CanvasNodeID,
+    topChildID: CanvasNodeID,
+    bottomChildID: CanvasNodeID,
+    sharedDescendantID: CanvasNodeID
+) -> CanvasGraph {
+    let areaID = CanvasAreaID.defaultTree
+    return CanvasGraph(
+        nodesByID: makeSharedDescendantFixtureNodes(
+            rootTopID: rootTopID,
+            rootBottomID: rootBottomID,
+            topChildID: topChildID,
+            bottomChildID: bottomChildID,
+            sharedDescendantID: sharedDescendantID
+        ),
+        edgesByID: makeSharedDescendantFixtureEdges(
+            rootTopID: rootTopID,
+            rootBottomID: rootBottomID,
+            topChildID: topChildID,
+            bottomChildID: bottomChildID,
+            sharedDescendantID: sharedDescendantID
+        ),
+        focusedNodeID: rootBottomID,
+        areasByID: [
+            areaID: CanvasArea(
+                id: areaID,
+                nodeIDs: [rootTopID, rootBottomID, topChildID, bottomChildID, sharedDescendantID],
+                editingMode: .tree
+            )
+        ]
+    )
+}
+
+private func makeSharedDescendantFixtureNodes(
+    rootTopID: CanvasNodeID,
+    rootBottomID: CanvasNodeID,
+    topChildID: CanvasNodeID,
+    bottomChildID: CanvasNodeID,
+    sharedDescendantID: CanvasNodeID
+) -> [CanvasNodeID: CanvasNode] {
+    [
+        rootTopID: CanvasNode(
+            id: rootTopID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 80, y: 40, width: 220, height: 120)
+        ),
+        rootBottomID: CanvasNode(
+            id: rootBottomID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 80, y: 80, width: 220, height: 120)
+        ),
+        topChildID: CanvasNode(
+            id: topChildID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 320, y: 40, width: 220, height: 120)
+        ),
+        bottomChildID: CanvasNode(
+            id: bottomChildID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 320, y: 80, width: 220, height: 120)
+        ),
+        sharedDescendantID: CanvasNode(
+            id: sharedDescendantID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 560, y: 80, width: 220, height: 120)
+        ),
+    ]
+}
+
+private func makeSharedDescendantFixtureEdges(
+    rootTopID: CanvasNodeID,
+    rootBottomID: CanvasNodeID,
+    topChildID: CanvasNodeID,
+    bottomChildID: CanvasNodeID,
+    sharedDescendantID: CanvasNodeID
+) -> [CanvasEdgeID: CanvasEdge] {
+    [
+        CanvasEdgeID(rawValue: "edge-root-top"): CanvasEdge(
+            id: CanvasEdgeID(rawValue: "edge-root-top"),
+            fromNodeID: rootTopID,
+            toNodeID: topChildID,
+            relationType: .parentChild
+        ),
+        CanvasEdgeID(rawValue: "edge-root-bottom"): CanvasEdge(
+            id: CanvasEdgeID(rawValue: "edge-root-bottom"),
+            fromNodeID: rootBottomID,
+            toNodeID: bottomChildID,
+            relationType: .parentChild
+        ),
+        CanvasEdgeID(rawValue: "edge-top-shared"): CanvasEdge(
+            id: CanvasEdgeID(rawValue: "edge-top-shared"),
+            fromNodeID: topChildID,
+            toNodeID: sharedDescendantID,
+            relationType: .parentChild
+        ),
+        CanvasEdgeID(rawValue: "edge-bottom-shared"): CanvasEdge(
+            id: CanvasEdgeID(rawValue: "edge-bottom-shared"),
+            fromNodeID: bottomChildID,
+            toNodeID: sharedDescendantID,
+            relationType: .parentChild
+        ),
+    ]
 }

@@ -152,6 +152,7 @@ extension ApplyCanvasCommandsUseCase {
 
         var movedParentNodeIDs: Set<CanvasNodeID> = []
         var placedSubtreeBounds: [CanvasRect] = []
+        var fixedNodeIDs: Set<CanvasNodeID> = []
 
         for parentNodeID in orderedParentNodeIDs {
             let subtreeNodeIDs = subtreeNodeIDs(
@@ -175,33 +176,63 @@ extension ApplyCanvasCommandsUseCase {
             )
             let dy = requiredMinY - currentSubtreeBounds.minY
             if dy > 0 {
-                for subtreeNodeID in subtreeNodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
-                    guard let node = nodesByID[subtreeNodeID] else {
-                        continue
-                    }
-                    nodesByID[subtreeNodeID] = CanvasNode(
-                        id: node.id,
-                        kind: node.kind,
-                        text: node.text,
-                        bounds: CanvasBounds(
-                            x: node.bounds.x,
-                            y: node.bounds.y + dy,
-                            width: node.bounds.width,
-                            height: node.bounds.height
-                        ),
-                        metadata: node.metadata,
-                        markdownStyleEnabled: node.markdownStyleEnabled
-                    )
+                if applyVerticalTranslation(
+                    to: subtreeNodeIDs,
+                    dy: dy,
+                    fixedNodeIDs: fixedNodeIDs,
+                    nodesByID: &nodesByID
+                ) {
+                    movedParentNodeIDs.insert(parentNodeID)
                 }
-                movedParentNodeIDs.insert(parentNodeID)
             }
 
             if let nextBounds = subtreeBounds(for: subtreeNodeIDs, nodesByID: nodesByID) {
                 placedSubtreeBounds.append(nextBounds)
             }
+            fixedNodeIDs.formUnion(subtreeNodeIDs)
         }
 
         return movedParentNodeIDs
+    }
+
+    /// Applies vertical translation to subtree nodes except already fixed nodes.
+    /// - Parameters:
+    ///   - subtreeNodeIDs: Target subtree node identifiers.
+    ///   - dy: Vertical translation.
+    ///   - fixedNodeIDs: Node identifiers already finalized by earlier parents.
+    ///   - nodesByID: Mutable node table.
+    /// - Returns: `true` when at least one node moved.
+    private func applyVerticalTranslation(
+        to subtreeNodeIDs: Set<CanvasNodeID>,
+        dy: Double,
+        fixedNodeIDs: Set<CanvasNodeID>,
+        nodesByID: inout [CanvasNodeID: CanvasNode]
+    ) -> Bool {
+        var didMoveNode = false
+        for subtreeNodeID in subtreeNodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard !fixedNodeIDs.contains(subtreeNodeID) else {
+                continue
+            }
+            guard let node = nodesByID[subtreeNodeID] else {
+                continue
+            }
+            nodesByID[subtreeNodeID] = CanvasNode(
+                id: node.id,
+                kind: node.kind,
+                text: node.text,
+                bounds: CanvasBounds(
+                    x: node.bounds.x,
+                    y: node.bounds.y + dy,
+                    width: node.bounds.width,
+                    height: node.bounds.height
+                ),
+                metadata: node.metadata,
+                markdownStyleEnabled: node.markdownStyleEnabled
+            )
+            didMoveNode = true
+        }
+
+        return didMoveNode
     }
 
     /// Computes subtree bounds from current nodes.
