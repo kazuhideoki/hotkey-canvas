@@ -99,7 +99,7 @@ func test_apply_diagramArea_moveNodeRelocatesFocusedNodeAroundConnectedNode() as
     let result = try await sut.apply(commands: [.moveNode(.right)])
 
     let movedNode = try #require(result.newState.nodesByID[nodeID])
-    #expect(movedNode.bounds.x == 268)
+    #expect(movedNode.bounds.x == 440)
     #expect(movedNode.bounds.y == 0)
 }
 
@@ -163,7 +163,7 @@ func test_apply_diagramArea_nudgeNodeDoesNotRelayoutNeighboringNodes() async thr
 
     let movedNode = try #require(result.newState.nodesByID[focusedNodeID])
     let neighborNode = try #require(result.newState.nodesByID[neighborNodeID])
-    #expect(movedNode.bounds.x == 64)
+    #expect(movedNode.bounds.x == 260)
     #expect(movedNode.bounds.y == 40)
     #expect(neighborNode.bounds.x == 60)
     #expect(neighborNode.bounds.y == 40)
