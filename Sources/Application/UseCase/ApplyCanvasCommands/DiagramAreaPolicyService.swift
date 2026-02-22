@@ -9,12 +9,14 @@ enum DiagramAreaPolicyService {
     static func supports(_ command: CanvasCommand) -> Bool {
         switch command {
         case .addNode,
+            .alignParentNodesVertically,
             .moveFocus,
             .moveNode,
             .nudgeNode,
             .centerFocusedNode,
             .deleteFocusedNode,
             .setNodeText,
+            .setNodeImage,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,
@@ -22,7 +24,10 @@ enum DiagramAreaPolicyService {
             return true
         case .addChildNode,
             .addSiblingNode,
-            .toggleFoldFocusedSubtree:
+            .toggleFoldFocusedSubtree,
+            .copyFocusedSubtree,
+            .cutFocusedSubtree,
+            .pasteSubtreeAsChild:
             return false
         }
     }

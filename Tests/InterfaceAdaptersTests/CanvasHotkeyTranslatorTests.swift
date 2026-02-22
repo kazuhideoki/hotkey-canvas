@@ -688,6 +688,75 @@ func test_zoomAction_commandOptionMinus_returnsNil() throws {
     #expect(action == nil)
 }
 
+@Test("CanvasHotkeyTranslator: Command+C maps to copyFocusedSubtree")
+func test_translate_commandC_returnsCopyFocusedSubtree() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "c",
+            charactersIgnoringModifiers: "c",
+            isARepeat: false,
+            keyCode: 8
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.copyFocusedSubtree])
+}
+
+@Test("CanvasHotkeyTranslator: Command+X maps to cutFocusedSubtree")
+func test_translate_commandX_returnsCutFocusedSubtree() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "x",
+            charactersIgnoringModifiers: "x",
+            isARepeat: false,
+            keyCode: 7
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.cutFocusedSubtree])
+}
+
+@Test("CanvasHotkeyTranslator: Command+V maps to pasteSubtreeAsChild")
+func test_translate_commandV_returnsPasteSubtreeAsChild() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "v",
+            charactersIgnoringModifiers: "v",
+            isARepeat: false,
+            keyCode: 9
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.pasteSubtreeAsChild])
+}
+
 @Test("CanvasHotkeyTranslator: Command+Shift+- does not map to zoom action")
 func test_zoomAction_commandShiftMinus_returnsNil() throws {
     let sut = CanvasHotkeyTranslator()

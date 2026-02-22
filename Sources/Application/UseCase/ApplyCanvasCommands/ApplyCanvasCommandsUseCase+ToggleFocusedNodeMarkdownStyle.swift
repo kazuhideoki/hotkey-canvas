@@ -19,6 +19,7 @@ extension ApplyCanvasCommandsUseCase {
             id: focusedNode.id,
             kind: focusedNode.kind,
             text: focusedNode.text,
+            imagePath: focusedNode.imagePath,
             bounds: focusedNode.bounds,
             metadata: focusedNode.metadata,
             markdownStyleEnabled: !focusedNode.markdownStyleEnabled
@@ -29,10 +30,11 @@ extension ApplyCanvasCommandsUseCase {
             graphAfterMutation: nextGraph,
             effects: CanvasMutationEffects(
                 didMutateGraph: nextGraph != graph,
-                needsTreeLayout: false,
-                needsAreaLayout: false,
+                needsTreeLayout: true,
+                needsAreaLayout: true,
                 needsFocusNormalization: false
-            )
+            ),
+            areaLayoutSeedNodeID: focusedNodeID
         )
     }
 }

@@ -131,6 +131,7 @@ func test_apply_diagramArea_nudgeNodeMovesFocusedNodeByStep() async throws {
     #expect(movedNode.bounds.y == 40)
 }
 
+<<<<<<< HEAD
 @Test("ApplyCanvasCommandsUseCase: diagram area nudgeNode does not relayout neighboring nodes")
 func test_apply_diagramArea_nudgeNodeDoesNotRelayoutNeighboringNodes() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused-diagram-node")
@@ -175,6 +176,14 @@ func test_apply_treeArea_nudgeNodeIsNoOp() async throws {
     let areaID = CanvasAreaID(rawValue: "tree-area")
     let graph = CanvasGraph(
         nodesByID: [
+=======
+@Test("ApplyCanvasCommandsUseCase: diagram area rejects copyFocusedSubtree command")
+func test_apply_diagramArea_rejectsCopyFocusedSubtreeCommand() async throws {
+    let nodeID = CanvasNodeID(rawValue: "diagram-node")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+>>>>>>> main
             nodeID: CanvasNode(
                 id: nodeID,
                 kind: .text,
@@ -185,14 +194,27 @@ func test_apply_treeArea_nudgeNodeIsNoOp() async throws {
         edgesByID: [:],
         focusedNodeID: nodeID,
         areasByID: [
+<<<<<<< HEAD
             areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .tree)
+=======
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+>>>>>>> main
         ]
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
+<<<<<<< HEAD
     let result = try await sut.apply(commands: [.nudgeNode(.right)])
 
     #expect(result.newState == graph)
+=======
+    do {
+        _ = try await sut.apply(commands: [.copyFocusedSubtree])
+        Issue.record("Expected unsupported command error")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .unsupportedCommandInMode(mode: .diagram, command: .copyFocusedSubtree))
+    }
+>>>>>>> main
 }
 
 @Test("ApplyCanvasCommandsUseCase: diagram area allows assignNodesToArea command")
@@ -329,4 +351,7 @@ func test_apply_convertFocusedAreaMode_convertsFocusedAreaMode() async throws {
     let result = try await sut.apply(commands: [.convertFocusedAreaMode(to: .diagram)])
 
     #expect(result.newState.areasByID[areaID]?.editingMode == .diagram)
+    let convertedNode = try #require(result.newState.nodesByID[nodeID])
+    #expect(convertedNode.bounds.width == 220)
+    #expect(convertedNode.bounds.height == 220)
 }

@@ -13,6 +13,8 @@ enum NodeTextStyle {
     static let outerPadding: CGFloat = 12
     static let editorContainerPadding: CGFloat = 6
     static let textContainerInset: CGFloat = 6
+    static let imageTextSpacing: CGFloat = 10
+    static let imageCornerRadius: CGFloat = 6
     static let cornerRadius: CGFloat = 10
     static let borderLineWidth: CGFloat = 2.25
     static let focusedBorderLineWidth: CGFloat = 3

@@ -22,6 +22,8 @@ public struct CanvasView: View {
     @State var cameraAnchorPoint: CGPoint = .zero
     @State var manualPanOffset: CGSize = .zero
     @State var zoomScale: Double = 1.0
+    @State var zoomRatioPopupText: String?
+    @State var zoomRatioPopupRequestID: UInt64 = 0
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     @State var previousCompositeMoveInputDirection: CanvasNodeMoveDirection?
@@ -244,7 +246,7 @@ public struct CanvasView: View {
                                         )
                                         .padding(NodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
                                     } else {
-                                        nonEditingNodeText(
+                                        nonEditingNodeContent(
                                             node: node,
                                             zoomScale: zoomScale
                                         )
@@ -306,6 +308,13 @@ public struct CanvasView: View {
                         }
                     )
                     .zIndex(11)
+                }
+                if let zoomRatioPopupText {
+                    ZoomRatioPopup(text: zoomRatioPopupText)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .allowsHitTesting(false)
+                        .zIndex(12)
+                        .transition(.opacity)
                 }
                 if isCommandPalettePresented {
                     Color.clear
@@ -422,11 +431,16 @@ public struct CanvasView: View {
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width
                         )
+                        let measuredHeight = measuredNodeHeightForEditing(
+                            text: node.text ?? "",
+                            measuredTextHeight: Double(measuredLayout.nodeHeight),
+                            node: node
+                        )
                         editingContext = NodeEditingContext(
                             nodeID: nodeID,
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width,
-                            nodeHeight: Double(measuredLayout.nodeHeight),
+                            nodeHeight: measuredHeight,
                             initialCursorPlacement: .end,
                             initialTypingEvent: nil
                         )

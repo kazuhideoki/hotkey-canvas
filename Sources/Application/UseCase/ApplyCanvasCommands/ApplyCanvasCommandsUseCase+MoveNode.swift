@@ -160,6 +160,7 @@ extension ApplyCanvasCommandsUseCase {
             id: focusedNode.id,
             kind: focusedNode.kind,
             text: focusedNode.text,
+            imagePath: focusedNode.imagePath,
             bounds: CanvasBounds(
                 x: focusedNode.bounds.x + delta.dx,
                 y: focusedNode.bounds.y + delta.dy,
@@ -297,6 +298,7 @@ extension ApplyCanvasCommandsUseCase {
             id: focusedNode.id,
             kind: focusedNode.kind,
             text: focusedNode.text,
+            imagePath: focusedNode.imagePath,
             bounds: CanvasBounds(
                 x: destination.bounds.x,
                 y: destination.bounds.y,
@@ -310,6 +312,7 @@ extension ApplyCanvasCommandsUseCase {
             id: destination.id,
             kind: destination.kind,
             text: destination.text,
+            imagePath: destination.imagePath,
             bounds: CanvasBounds(
                 x: focusedNode.bounds.x,
                 y: focusedNode.bounds.y,
@@ -365,6 +368,7 @@ extension ApplyCanvasCommandsUseCase {
             id: focusedNode.id,
             kind: focusedNode.kind,
             text: focusedNode.text,
+            imagePath: focusedNode.imagePath,
             bounds: CanvasBounds(
                 x: parentNode.bounds.x,
                 y: parentNode.bounds.y + Self.orderingEpsilon,
@@ -425,6 +429,7 @@ extension ApplyCanvasCommandsUseCase {
             id: focusedNode.id,
             kind: focusedNode.kind,
             text: focusedNode.text,
+            imagePath: focusedNode.imagePath,
             bounds: CanvasBounds(
                 x: newParent.bounds.x + newParent.bounds.width + Self.indentHorizontalGap,
                 y: appendedChildY,
