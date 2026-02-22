@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 @main
 /// Main app entry that wires the bootstrap scene.
+@MainActor
 struct HotkeyCanvasApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     private let container = DependencyContainer()
@@ -27,7 +28,7 @@ struct HotkeyCanvasApp: App {
     /// Root scene rendered by the application.
     var body: some Scene {
         WindowGroup {
-            CanvasView(viewModel: container.makeCanvasViewModel())
+            container.makeCanvasView()
         }
     }
 }
