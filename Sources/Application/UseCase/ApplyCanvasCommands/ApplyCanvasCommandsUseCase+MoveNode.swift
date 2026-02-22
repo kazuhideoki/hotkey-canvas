@@ -112,6 +112,7 @@ extension ApplyCanvasCommandsUseCase {
             id: focusedNode.id,
             kind: focusedNode.kind,
             text: focusedNode.text,
+            imagePath: focusedNode.imagePath,
             bounds: targetBounds,
             metadata: focusedNode.metadata,
             markdownStyleEnabled: focusedNode.markdownStyleEnabled
