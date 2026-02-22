@@ -110,6 +110,7 @@ extension ApplyCanvasCommandsUseCase {
                     id: node.id,
                     kind: node.kind,
                     text: node.text,
+                    imagePath: node.imagePath,
                     bounds: CanvasBounds(
                         x: node.bounds.x + dx,
                         y: node.bounds.y,
@@ -220,6 +221,7 @@ extension ApplyCanvasCommandsUseCase {
                 id: node.id,
                 kind: node.kind,
                 text: node.text,
+                imagePath: node.imagePath,
                 bounds: CanvasBounds(
                     x: node.bounds.x,
                     y: node.bounds.y + dy,
