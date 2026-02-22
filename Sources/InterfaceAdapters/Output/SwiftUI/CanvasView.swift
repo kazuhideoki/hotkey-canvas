@@ -174,37 +174,6 @@ public struct CanvasView: View {
                     .animation(.easeInOut(duration: 0.15), value: commandPaletteItems.count)
                     .zIndex(10)
                 }
-                if isAddNodeModePopupPresented {
-                    Color.black.opacity(0.12)
-                        .ignoresSafeArea()
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Select Node Mode")
-                            .font(.headline)
-                        addNodeModeSelectionOptionRow(
-                            title: "Tree",
-                            shortcutLabel: "T",
-                            mode: .tree
-                        )
-                        addNodeModeSelectionOptionRow(
-                            title: "Diagram",
-                            shortcutLabel: "D",
-                            mode: .diagram
-                        )
-                        Text("Press Enter to confirm, Esc to cancel.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(16)
-                    .frame(width: 320)
-                    .background(.regularMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .zIndex(11)
-                }
                 ZStack(alignment: .topLeading) {
                     ForEach(viewModel.edges, id: \.id) { edge in
                         if let path = CanvasEdgeRouting.path(
@@ -308,7 +277,45 @@ public struct CanvasView: View {
                     height: viewportSize.height,
                     alignment: .topLeading
                 )
-                if isCommandPalettePresented || isAddNodeModePopupPresented {
+                .allowsHitTesting(!isAddNodeModePopupPresented)
+                if isAddNodeModePopupPresented {
+                    ZStack {
+                        Color.black.opacity(0.12)
+                            .ignoresSafeArea()
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                // Keep modal semantics while visible.
+                            }
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Select Node Mode")
+                                .font(.headline)
+                            addNodeModeSelectionOptionRow(
+                                title: "Tree",
+                                shortcutLabel: "T",
+                                mode: .tree
+                            )
+                            addNodeModeSelectionOptionRow(
+                                title: "Diagram",
+                                shortcutLabel: "D",
+                                mode: .diagram
+                            )
+                            Text("Press Enter to confirm, Esc to cancel.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(16)
+                        .frame(width: 320)
+                        .background(.regularMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .zIndex(11)
+                }
+                if isCommandPalettePresented {
                     Color.clear
                         .contentShape(Rectangle())
                         .allowsHitTesting(false)
@@ -353,7 +360,7 @@ public struct CanvasView: View {
                 // Keep key capture active without intercepting canvas rendering.
                 .allowsHitTesting(false)
                 CanvasScrollWheelMonitorView(isEnabled: true) { event in
-                    guard !isCommandPalettePresented else {
+                    guard !isCommandPalettePresented, !isAddNodeModePopupPresented else {
                         return false
                     }
                     let translation = CanvasViewportPanPolicy.scrollWheelTranslation(
