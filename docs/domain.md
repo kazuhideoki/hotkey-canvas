@@ -46,7 +46,7 @@
 - 集約
   - `CanvasGraph`: ノード/エッジ/フォーカス/折りたたみルートを保持する不変スナップショット。
 - エンティティ/値オブジェクト
-  - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`
+  - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.markdownStyleEnabled` で確定描画時 Markdown スタイル適用可否を保持）
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`
 - コマンド
   - `CanvasCommand`
@@ -54,6 +54,7 @@
   - `CanvasSiblingNodePosition`
   - `CanvasCommand.centerFocusedNode`
   - `CanvasCommand.toggleFoldFocusedSubtree`
+  - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
 - エラー
   - `CanvasGraphError`
 - サービス
@@ -80,9 +81,11 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ToggleFocusedNodeMarkdownStyle.swift`
 - 入力境界/コマンド流入
   - `Sources/Application/Port/Input/CanvasEditingInputPort.swift`
   - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`
+  - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+CommandPalette.swift`
   - `Sources/InterfaceAdapters/Output/ViewModel/CanvasViewModel.swift`
 - 主要テスト
   - `Tests/DomainTests/CanvasGraphCRUDServiceTests.swift`
@@ -94,6 +97,7 @@
 - 不変条件
   - ノード ID は空文字を許容しない。
   - ノードの `width` / `height` は正値である必要がある。
+  - ノードの Markdown スタイル適用フラグは `Bool` で保持し、新規ノードは既定で `true`。
   - エッジ ID は空文字を許容しない。
   - エッジの `fromNodeID` / `toNodeID` はグラフ内に存在する必要がある。
   - ノード/エッジの ID 重複は許容しない。
@@ -481,5 +485,9 @@
 - 2026-02-21: Diagram mode Phase1 基盤として `CanvasArea*` モデル、`CanvasAreaMembershipService`、`CanvasAreaPolicyError`、モード別コマンドディスパッチ境界を追加。
 - 2026-02-21: Diagram mode Phase2 として、`createArea` / `assignNodesToArea` の Diagram 実行許可、`addNode` の複数エリア曖昧解決エラー、跨ぎエッジ禁止（`crossAreaEdgeForbidden`）の強制を追加。
 - 2026-02-21: Diagram mode Phase3 として `convertFocusedAreaMode(to:)` を追加し、フォーカス基準のモード変換（同一モード no-op）と `Shift + Enter` モード選択導線を実装。
+<<<<<<< HEAD
 - 2026-02-22: Diagram mode の編集導線を更新し、`addChildNode` を Diagram では `addNode` として解釈、`moveNode` は Diagram で座標 nudge（`cmd+矢印`）として適用する仕様を追加。
 - 2026-02-22: Diagram mode の `addNode` を更新し、フォーカスノードが存在する場合は新規ノードを `normal` エッジで接続する仕様を追加。
+=======
+- 2026-02-22: `CanvasNode.markdownStyleEnabled` と `toggleFocusedNodeMarkdownStyle` コマンドを追加し、コマンドパレットからフォーカスノード単位で Markdown スタイル適用を切り替え可能にした。
+>>>>>>> main
