@@ -163,6 +163,34 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.moveNode(.up)]),
                 shortcutLabel: "Command + Up Arrow"
             ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "nudgeNodeDown"),
+                name: "Nudge Node Down",
+                gesture: CanvasShortcutGesture(key: .arrowDown, modifiers: [.command, .shift]),
+                action: .apply(commands: [.nudgeNode(.down)]),
+                shortcutLabel: "Command + Shift + Down Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "nudgeNodeLeft"),
+                name: "Nudge Node Left",
+                gesture: CanvasShortcutGesture(key: .arrowLeft, modifiers: [.command, .shift]),
+                action: .apply(commands: [.nudgeNode(.left)]),
+                shortcutLabel: "Command + Shift + Left Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "nudgeNodeRight"),
+                name: "Nudge Node Right",
+                gesture: CanvasShortcutGesture(key: .arrowRight, modifiers: [.command, .shift]),
+                action: .apply(commands: [.nudgeNode(.right)]),
+                shortcutLabel: "Command + Shift + Right Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "nudgeNodeUp"),
+                name: "Nudge Node Up",
+                gesture: CanvasShortcutGesture(key: .arrowUp, modifiers: [.command, .shift]),
+                action: .apply(commands: [.nudgeNode(.up)]),
+                shortcutLabel: "Command + Shift + Up Arrow"
+            ),
         ]
     }
 

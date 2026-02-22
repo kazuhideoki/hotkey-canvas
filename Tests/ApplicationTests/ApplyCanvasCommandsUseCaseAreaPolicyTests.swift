@@ -58,8 +58,53 @@ func test_apply_diagramArea_mapsAddChildNodeWithoutFocusWhenSingleArea() async t
     #expect(result.newState.areasByID[areaID]?.nodeIDs == [focusedNodeID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area moveNode nudges focused node without tree relayout")
-func test_apply_diagramArea_moveNodeNudgesFocusedNode() async throws {
+@Test(
+    "ApplyCanvasCommandsUseCase: diagram area moveNode relocates focused node to directional slot around connected node"
+)
+func test_apply_diagramArea_moveNodeRelocatesFocusedNodeAroundConnectedNode() async throws {
+    let anchorID = CanvasNodeID(rawValue: "diagram-anchor")
+    let nodeID = CanvasNodeID(rawValue: "diagram-node")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let connectionEdgeID = CanvasEdgeID(rawValue: "edge-anchor-node")
+    let graph = CanvasGraph(
+        nodesByID: [
+            anchorID: CanvasNode(
+                id: anchorID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)
+            ),
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 120)
+            ),
+        ],
+        edgesByID: [
+            connectionEdgeID: CanvasEdge(
+                id: connectionEdgeID,
+                fromNodeID: anchorID,
+                toNodeID: nodeID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [anchorID, nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.right)])
+
+    let movedNode = try #require(result.newState.nodesByID[nodeID])
+    #expect(movedNode.bounds.x == 268)
+    #expect(movedNode.bounds.y == 0)
+}
+
+@Test("ApplyCanvasCommandsUseCase: diagram area nudgeNode nudges focused node")
+func test_apply_diagramArea_nudgeNodeMovesFocusedNodeByStep() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let graph = CanvasGraph(
@@ -79,11 +124,37 @@ func test_apply_diagramArea_moveNodeNudgesFocusedNode() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    let result = try await sut.apply(commands: [.moveNode(.right)])
+    let result = try await sut.apply(commands: [.nudgeNode(.right)])
 
     let movedNode = try #require(result.newState.nodesByID[nodeID])
     #expect(movedNode.bounds.x == 64)
     #expect(movedNode.bounds.y == 40)
+}
+
+@Test("ApplyCanvasCommandsUseCase: tree area nudgeNode is no-op")
+func test_apply_treeArea_nudgeNodeIsNoOp() async throws {
+    let nodeID = CanvasNodeID(rawValue: "tree-node")
+    let areaID = CanvasAreaID(rawValue: "tree-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .tree)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.nudgeNode(.right)])
+
+    #expect(result.newState == graph)
 }
 
 @Test("ApplyCanvasCommandsUseCase: diagram area allows assignNodesToArea command")

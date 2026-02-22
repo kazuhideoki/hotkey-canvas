@@ -13,6 +13,7 @@ enum TreeAreaPolicyService {
             .addSiblingNode,
             .moveFocus,
             .moveNode,
+            .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,

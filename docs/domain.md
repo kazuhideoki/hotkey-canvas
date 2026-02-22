@@ -32,6 +32,7 @@
 - `Command + =`: `zoomIn`
 - `Command + -`: `zoomOut`
 - `Option + .`: `toggleFoldFocusedSubtree`
+- `Command + Shift + ↑/↓/←/→`: `nudgeNode(.up/.down/.left/.right)`
 - 利用先:
 - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)`）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
@@ -51,6 +52,7 @@
 - コマンド
   - `CanvasCommand`
   - `CanvasNodeMoveDirection`
+  - `CanvasCommand.nudgeNode`
   - `CanvasSiblingNodePosition`
   - `CanvasCommand.centerFocusedNode`
   - `CanvasCommand.toggleFoldFocusedSubtree`
@@ -145,7 +147,8 @@
     - `needsFocusNormalization` が `true` のときに Focus Normalization Stage が実行される。
     - `focusedNodeID` が無効な場合は `y -> x -> id` 順で先頭ノードへ正規化する。
 - コマンド発行
-  - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（矢印キー -> `.moveFocus`、`cmd+矢印キー` -> `.moveNode`）
+  - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（矢印キー -> `.moveFocus`、`cmd+矢印キー` -> `.moveNode`、`cmd+shift+矢印キー` -> `.nudgeNode`）
+  - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+CompositeMove.swift`（`cmd+矢印` の連続入力を合成し、`upLeft/upRight/downLeft/downRight` を `.moveNode` として適用）
 - 主要テスト
   - `Tests/DomainTests/CanvasFocusNavigationServiceTests.swift`
   - `Tests/ApplicationTests/ApplyCanvasCommandsUseCase/ApplyCanvasCommandsUseCase+MoveFocusTests.swift`
@@ -417,7 +420,9 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CommandDispatch.swift`
     - コマンド適用前に所属整合性検証と対象エリア解決を行う。
     - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
-    - Diagram エリアでは `addChildNode` を `addNode` へ正規化し、`moveNode` は階層移動ではなく座標 nudge として扱う。
+    - Diagram エリアでは `addChildNode` を `addNode` へ正規化する。
+    - Diagram エリアでは `moveNode` を接続アンカー基準の8方向スロット移動として扱う。
+    - Diagram エリアでは `nudgeNode` を座標微調整（固定ステップ）として扱う。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
     - Diagram エリアでは `addNode` 実行時、フォーカスノードが存在する場合に `relationType = .normal` のエッジで新規ノードと接続する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
@@ -488,3 +493,4 @@
 - 2026-02-22: Diagram mode の編集導線を更新し、`addChildNode` を Diagram では `addNode` として解釈、`moveNode` は Diagram で座標 nudge（`cmd+矢印`）として適用する仕様を追加。
 - 2026-02-22: Diagram mode の `addNode` を更新し、フォーカスノードが存在する場合は新規ノードを `normal` エッジで接続する仕様を追加。
 - 2026-02-22: `CanvasNode.markdownStyleEnabled` と `toggleFocusedNodeMarkdownStyle` コマンドを追加し、コマンドパレットからフォーカスノード単位で Markdown スタイル適用を切り替え可能にした。
+- 2026-02-22: `CanvasNodeMoveDirection` を8方向（斜め4方向を追加）へ拡張し、Diagram mode では `moveNode` を接続アンカー基準の8方向スロット移動に変更した。微調整移動は `nudgeNode`（`cmd+shift+矢印`）として分離した。
