@@ -16,16 +16,14 @@ struct DependencyContainer {
         self.canvasSessionStore = canvasSessionStore
     }
 
-    /// Creates one canvas view backed by a dedicated editing session.
-    func makeCanvasView() -> CanvasView {
-        let sessionHandle = canvasSessionStore.openSession()
-        let sessionID = sessionHandle.session.id
-        let viewModel = CanvasViewModel(inputPort: sessionHandle.inputPort)
-        return CanvasView(
-            viewModel: viewModel,
-            onDisappear: { [canvasSessionStore] in
-                canvasSessionStore.closeSession(id: sessionID)
-            }
-        )
+    /// Opens one dedicated canvas editing session for a window.
+    func openCanvasSession() -> CanvasSessionHandle {
+        canvasSessionStore.openSession()
+    }
+
+    /// Closes a canvas editing session by id.
+    @discardableResult
+    func closeCanvasSession(id: CanvasSessionID) -> Bool {
+        canvasSessionStore.closeSession(id: id)
     }
 }
