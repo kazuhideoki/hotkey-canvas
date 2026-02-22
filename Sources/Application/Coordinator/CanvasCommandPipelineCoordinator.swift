@@ -208,6 +208,7 @@ extension CanvasCommandPipelineCoordinator {
                 id: node.id,
                 kind: node.kind,
                 text: node.text,
+                imagePath: node.imagePath,
                 bounds: CanvasBounds(
                     x: node.bounds.x,
                     y: node.bounds.y,
