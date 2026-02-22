@@ -130,3 +130,39 @@ func test_apply_setNodeText_shrinksNodeHeightWhenLinesDecrease() async throws {
     #expect(shrunkHeight == shrunkHeightInput)
     #expect(shrunkHeight < expandedHeight)
 }
+
+@Test("ApplyCanvasCommandsUseCase: addNode enables markdown styling by default")
+func test_apply_addNode_enablesMarkdownStylingByDefault() async throws {
+    let sut = ApplyCanvasCommandsUseCase()
+
+    let result = try await sut.apply(commands: [.addNode])
+    let focusedNodeID = try #require(result.newState.focusedNodeID)
+    let addedNode = try #require(result.newState.nodesByID[focusedNodeID])
+
+    #expect(addedNode.markdownStyleEnabled)
+}
+
+@Test("ApplyCanvasCommandsUseCase: toggleFocusedNodeMarkdownStyle toggles markdown flag for focused node")
+func test_apply_toggleFocusedNodeMarkdownStyle_togglesFocusedNodeFlag() async throws {
+    let nodeID = CanvasNodeID(rawValue: "node")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: "# heading",
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 70),
+                markdownStyleEnabled: true
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
+
+    let disabledResult = try await sut.apply(commands: [.toggleFocusedNodeMarkdownStyle])
+    #expect(disabledResult.newState.nodesByID[nodeID]?.markdownStyleEnabled == false)
+
+    let enabledResult = try await sut.apply(commands: [.toggleFocusedNodeMarkdownStyle])
+    #expect(enabledResult.newState.nodesByID[nodeID]?.markdownStyleEnabled == true)
+}

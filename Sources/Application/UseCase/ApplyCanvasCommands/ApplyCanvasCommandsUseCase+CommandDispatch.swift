@@ -48,6 +48,8 @@ extension ApplyCanvasCommandsUseCase {
             return try deleteFocusedNode(in: graph)
         case .setNodeText(let nodeID, let text, let nodeHeight):
             return try setNodeText(in: graph, nodeID: nodeID, text: text, nodeHeight: nodeHeight)
+        case .toggleFocusedNodeMarkdownStyle:
+            return try toggleFocusedNodeMarkdownStyle(in: graph)
         case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return noOpMutationResult(for: graph)
         }
@@ -63,16 +65,7 @@ extension ApplyCanvasCommandsUseCase {
                 to: mode,
                 in: graph
             ).get()
-            return CanvasMutationResult(
-                graphBeforeMutation: graph,
-                graphAfterMutation: graphAfterMutation,
-                effects: CanvasMutationEffects(
-                    didMutateGraph: graphAfterMutation != graph,
-                    needsTreeLayout: false,
-                    needsAreaLayout: false,
-                    needsFocusNormalization: false
-                )
-            )
+            return areaManagementMutationResult(graphBeforeMutation: graph, graphAfterMutation: graphAfterMutation)
         case .createArea(let id, let mode, let nodeIDs):
             let graphAfterMutation = try CanvasAreaMembershipService.createArea(
                 id: id,
@@ -80,32 +73,14 @@ extension ApplyCanvasCommandsUseCase {
                 nodeIDs: nodeIDs,
                 in: graph
             ).get()
-            return CanvasMutationResult(
-                graphBeforeMutation: graph,
-                graphAfterMutation: graphAfterMutation,
-                effects: CanvasMutationEffects(
-                    didMutateGraph: graphAfterMutation != graph,
-                    needsTreeLayout: false,
-                    needsAreaLayout: false,
-                    needsFocusNormalization: false
-                )
-            )
+            return areaManagementMutationResult(graphBeforeMutation: graph, graphAfterMutation: graphAfterMutation)
         case .assignNodesToArea(let nodeIDs, let areaID):
             let graphAfterMutation = try CanvasAreaMembershipService.assign(
                 nodeIDs: nodeIDs,
                 to: areaID,
                 in: graph
             ).get()
-            return CanvasMutationResult(
-                graphBeforeMutation: graph,
-                graphAfterMutation: graphAfterMutation,
-                effects: CanvasMutationEffects(
-                    didMutateGraph: graphAfterMutation != graph,
-                    needsTreeLayout: false,
-                    needsAreaLayout: false,
-                    needsFocusNormalization: false
-                )
-            )
+            return areaManagementMutationResult(graphBeforeMutation: graph, graphAfterMutation: graphAfterMutation)
         case .addNode,
             .addChildNode,
             .addSiblingNode,
@@ -114,9 +89,26 @@ extension ApplyCanvasCommandsUseCase {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
-            .setNodeText:
+            .setNodeText,
+            .toggleFocusedNodeMarkdownStyle:
             return noOpMutationResult(for: graph)
         }
+    }
+
+    private func areaManagementMutationResult(
+        graphBeforeMutation: CanvasGraph,
+        graphAfterMutation: CanvasGraph
+    ) -> CanvasMutationResult {
+        CanvasMutationResult(
+            graphBeforeMutation: graphBeforeMutation,
+            graphAfterMutation: graphAfterMutation,
+            effects: CanvasMutationEffects(
+                didMutateGraph: graphAfterMutation != graphBeforeMutation,
+                needsTreeLayout: false,
+                needsAreaLayout: false,
+                needsFocusNormalization: false
+            )
+        )
     }
 
     private func isCommand(_ command: CanvasCommand, supportedIn mode: CanvasEditingMode) -> Bool {
@@ -154,6 +146,7 @@ extension ApplyCanvasCommandsUseCase {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
+            .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:

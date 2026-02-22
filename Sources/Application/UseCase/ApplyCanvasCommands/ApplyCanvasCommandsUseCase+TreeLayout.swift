@@ -34,7 +34,8 @@ extension ApplyCanvasCommandsUseCase {
                 kind: node.kind,
                 text: node.text,
                 bounds: bounds,
-                metadata: node.metadata
+                metadata: node.metadata,
+                markdownStyleEnabled: node.markdownStyleEnabled
             )
         }
 

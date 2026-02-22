@@ -74,7 +74,8 @@ extension ApplyCanvasCommandsUseCase {
                 width: focusedNode.bounds.width,
                 height: focusedNode.bounds.height
             ),
-            metadata: focusedNode.metadata
+            metadata: focusedNode.metadata,
+            markdownStyleEnabled: focusedNode.markdownStyleEnabled
         )
         let destinationWithMovedBounds = CanvasNode(
             id: destination.id,
@@ -86,7 +87,8 @@ extension ApplyCanvasCommandsUseCase {
                 width: destination.bounds.width,
                 height: destination.bounds.height
             ),
-            metadata: destination.metadata
+            metadata: destination.metadata,
+            markdownStyleEnabled: destination.markdownStyleEnabled
         )
         let graphAfterSwap = CanvasGraph(
             nodesByID: graph.nodesByID.merging(
@@ -140,7 +142,8 @@ extension ApplyCanvasCommandsUseCase {
                 width: focusedNode.bounds.width,
                 height: focusedNode.bounds.height
             ),
-            metadata: focusedNode.metadata
+            metadata: focusedNode.metadata,
+            markdownStyleEnabled: focusedNode.markdownStyleEnabled
         )
         nextGraph = CanvasGraph(
             nodesByID: nextGraph.nodesByID.merging(
@@ -199,7 +202,8 @@ extension ApplyCanvasCommandsUseCase {
                 width: focusedNode.bounds.width,
                 height: focusedNode.bounds.height
             ),
-            metadata: focusedNode.metadata
+            metadata: focusedNode.metadata,
+            markdownStyleEnabled: focusedNode.markdownStyleEnabled
         )
         nextGraph = CanvasGraph(
             nodesByID: nextGraph.nodesByID.merging(
