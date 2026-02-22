@@ -83,3 +83,30 @@ func test_resolveAction_commandShiftSemicolon_returnsZoomIn() {
 
     #expect(action == .zoomIn)
 }
+
+@Test("Shortcut catalog: command+c resolves copyFocusedSubtree")
+func test_resolveAction_commandC_returnsCopyFocusedSubtree() {
+    let gesture = CanvasShortcutGesture(key: .character("c"), modifiers: [.command])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .apply(commands: [.copyFocusedSubtree]))
+}
+
+@Test("Shortcut catalog: command+x resolves cutFocusedSubtree")
+func test_resolveAction_commandX_returnsCutFocusedSubtree() {
+    let gesture = CanvasShortcutGesture(key: .character("x"), modifiers: [.command])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .apply(commands: [.cutFocusedSubtree]))
+}
+
+@Test("Shortcut catalog: command+v resolves pasteSubtreeAsChild")
+func test_resolveAction_commandV_returnsPasteSubtreeAsChild() {
+    let gesture = CanvasShortcutGesture(key: .character("v"), modifiers: [.command])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .apply(commands: [.pasteSubtreeAsChild]))
+}
