@@ -8,6 +8,8 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var edges: [CanvasEdge] = []
     @Published public private(set) var focusedNodeID: CanvasNodeID?
     @Published public private(set) var collapsedRootNodeIDs: Set<CanvasNodeID> = []
+    @Published public private(set) var diagramNodeIDs: Set<CanvasNodeID> = []
+    @Published public private(set) var treeRootNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var pendingEditingNodeID: CanvasNodeID?
     @Published public private(set) var viewportIntent: CanvasViewportIntent?
     @Published public private(set) var canUndo: Bool = false
@@ -192,12 +194,15 @@ extension CanvasViewModel {
 
     private func updateDisplay(with result: ApplyResult) {
         let visibleGraph = CanvasFoldedSubtreeVisibilityService.visibleGraph(from: result.newState)
+        let nodePresentation = NodePresentationIndex.make(from: result.newState)
         nodes = sortedNodes(in: visibleGraph)
         edges = sortedEdges(in: visibleGraph)
         focusedNodeID = visibleGraph.focusedNodeID
         collapsedRootNodeIDs = CanvasFoldedSubtreeVisibilityService.normalizedCollapsedRootNodeIDs(
             in: result.newState
         )
+        diagramNodeIDs = nodePresentation.diagramNodeIDs
+        treeRootNodeIDs = nodePresentation.treeRootNodeIDs
         viewportIntent = result.viewportIntent
         canUndo = result.canUndo
         canRedo = result.canRedo
@@ -227,5 +232,40 @@ extension CanvasViewModel {
             }
             return lhs.id.rawValue < rhs.id.rawValue
         }
+    }
+}
+
+private struct NodePresentationIndex {
+    let diagramNodeIDs: Set<CanvasNodeID>
+    let treeRootNodeIDs: Set<CanvasNodeID>
+
+    static func make(from graph: CanvasGraph) -> Self {
+        let diagramNodeIDs = Set(
+            graph.areasByID.values
+                .filter { $0.editingMode == .diagram }
+                .flatMap { $0.nodeIDs }
+        )
+
+        let treeRootNodeIDs = Set(
+            graph.areasByID.values
+                .filter { $0.editingMode == .tree }
+                .flatMap { computeTreeRootNodeIDs(in: $0, graph: graph) }
+        )
+
+        return Self(diagramNodeIDs: diagramNodeIDs, treeRootNodeIDs: treeRootNodeIDs)
+    }
+
+    private static func computeTreeRootNodeIDs(in area: CanvasArea, graph: CanvasGraph) -> Set<CanvasNodeID> {
+        let memberNodeIDs = area.nodeIDs
+        let childNodeIDs = Set(
+            graph.edgesByID.values
+                .filter {
+                    $0.relationType == .parentChild
+                        && memberNodeIDs.contains($0.fromNodeID)
+                        && memberNodeIDs.contains($0.toNodeID)
+                }
+                .map(\.toNodeID)
+        )
+        return memberNodeIDs.subtracting(childNodeIDs)
     }
 }
