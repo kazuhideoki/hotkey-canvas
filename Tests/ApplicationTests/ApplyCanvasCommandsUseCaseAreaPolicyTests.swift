@@ -37,6 +37,27 @@ func test_apply_diagramArea_mapsAddChildNodeToAddNodeBehavior() async throws {
     #expect(edge.relationType == .normal)
 }
 
+@Test("ApplyCanvasCommandsUseCase: diagram area maps addChildNode to addNode when focus is nil and area is unique")
+func test_apply_diagramArea_mapsAddChildNodeWithoutFocusWhenSingleArea() async throws {
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [:],
+        edgesByID: [:],
+        focusedNodeID: nil,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addChildNode])
+
+    #expect(result.newState.nodesByID.count == 1)
+    #expect(result.newState.edgesByID.isEmpty)
+    let focusedNodeID = try #require(result.newState.focusedNodeID)
+    #expect(result.newState.areasByID[areaID]?.nodeIDs == [focusedNodeID])
+}
+
 @Test("ApplyCanvasCommandsUseCase: diagram area moveNode nudges focused node without tree relayout")
 func test_apply_diagramArea_moveNodeNudgesFocusedNode() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")

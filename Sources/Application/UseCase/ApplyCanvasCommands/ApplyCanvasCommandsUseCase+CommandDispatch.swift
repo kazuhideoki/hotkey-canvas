@@ -6,12 +6,12 @@ extension ApplyCanvasCommandsUseCase {
     /// Dispatches one command to its mutation handler and returns stage effects with the result graph.
     func applyMutation(command: CanvasCommand, to graph: CanvasGraph) throws -> CanvasMutationResult {
         try CanvasAreaMembershipService.validate(in: graph).get()
-        let resolvedAreaID = try resolveAreaID(for: command, in: graph).get()
-        let resolvedArea = try CanvasAreaMembershipService.area(withID: resolvedAreaID, in: graph).get()
         let normalizedCommand = normalize(
             command: command,
-            for: resolvedArea.editingMode
+            in: graph
         )
+        let resolvedAreaID = try resolveAreaID(for: normalizedCommand, in: graph).get()
+        let resolvedArea = try CanvasAreaMembershipService.area(withID: resolvedAreaID, in: graph).get()
         guard isCommand(normalizedCommand, supportedIn: resolvedArea.editingMode) else {
             throw CanvasAreaPolicyError.unsupportedCommandInMode(
                 mode: resolvedArea.editingMode,
@@ -176,12 +176,36 @@ extension ApplyCanvasCommandsUseCase {
 
     private func normalize(
         command: CanvasCommand,
-        for mode: CanvasEditingMode
+        in graph: CanvasGraph
     ) -> CanvasCommand {
-        switch (mode, command) {
-        case (.diagram, .addChildNode):
-            return .addNode
-        default:
+        guard case .addChildNode = command else {
+            return command
+        }
+        guard
+            let focusedNodeID = graph.focusedNodeID,
+            graph.nodesByID[focusedNodeID] != nil
+        else {
+            let sortedAreaIDs = graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue })
+            guard sortedAreaIDs.count == 1, let areaID = sortedAreaIDs.first else {
+                return command
+            }
+            switch CanvasAreaMembershipService.area(withID: areaID, in: graph) {
+            case .success(let area):
+                return area.editingMode == .diagram ? .addNode : command
+            case .failure:
+                return command
+            }
+        }
+
+        switch CanvasAreaMembershipService.areaID(containing: focusedNodeID, in: graph) {
+        case .success(let areaID):
+            switch CanvasAreaMembershipService.area(withID: areaID, in: graph) {
+            case .success(let area):
+                return area.editingMode == .diagram ? .addNode : command
+            case .failure:
+                return command
+            }
+        case .failure:
             return command
         }
     }
