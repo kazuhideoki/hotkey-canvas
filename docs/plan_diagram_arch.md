@@ -106,8 +106,9 @@
 
 Phase2 実装メモ（確定事項）:
 
-- Diagram mode で `addNode` / `deleteFocusedNode` / `createArea` / `assignNodesToArea` を許可する。
-- Diagram mode では `addChildNode` / `addSiblingNode` / `moveNode` / `toggleFoldFocusedSubtree` は非対応のままとする。
+- Diagram mode で `addNode` / `deleteFocusedNode` / `createArea` / `assignNodesToArea` / `moveNode` を許可する。
+- Diagram mode では `addSiblingNode` / `toggleFoldFocusedSubtree` は非対応のままとする。
+- Diagram mode での `addChildNode` は互換ショートカット入口として `addNode` に正規化して扱う。
 - `addNode` はフォーカス未解決かつ複数エリア存在時に暗黙選択せず失敗させる。
 - `createArea` / `assignNodesToArea` 実行後に跨ぎエッジが生じる場合は操作全体を失敗とする。
 

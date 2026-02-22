@@ -35,7 +35,8 @@ extension ApplyCanvasCommandsUseCase {
                 text: node.text,
                 imagePath: node.imagePath,
                 bounds: bounds,
-                metadata: node.metadata
+                metadata: node.metadata,
+                markdownStyleEnabled: node.markdownStyleEnabled
             )
         }
 

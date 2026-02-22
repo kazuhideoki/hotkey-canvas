@@ -25,15 +25,18 @@ public struct CanvasView: View {
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
+    private let onDisappearHandler: () -> Void
     let addNodeModeSelectionHotkeyResolver = AddNodeModeSelectionHotkeyResolver()
     let editingStartResolver = NodeEditingStartResolver()
     let nodeTextHeightMeasurer = NodeTextHeightMeasurer()
     public init(
         viewModel: CanvasViewModel,
-        hotkeyTranslator: CanvasHotkeyTranslator = CanvasHotkeyTranslator()
+        hotkeyTranslator: CanvasHotkeyTranslator = CanvasHotkeyTranslator(),
+        onDisappear: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.hotkeyTranslator = hotkeyTranslator
+        onDisappearHandler = onDisappear
     }
     public var body: some View {
         let displayNodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
@@ -239,7 +242,11 @@ public struct CanvasView: View {
                                         )
                                         .padding(NodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
                                     } else {
+<<<<<<< HEAD
                                         nonEditingNodeContent(
+=======
+                                        nonEditingNodeText(
+>>>>>>> main
                                             node: node,
                                             zoomScale: zoomScale
                                         )
@@ -470,6 +477,7 @@ public struct CanvasView: View {
             }
             viewModel.consumeViewportIntent()
         }
+        .onDisappear(perform: onDisappearHandler)
     }
 }
 // swiftlint:enable type_body_length

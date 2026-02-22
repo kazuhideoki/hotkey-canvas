@@ -102,7 +102,8 @@ extension CanvasCommandPipelineCoordinator {
                 text: node.text,
                 imagePath: node.imagePath,
                 bounds: bounds,
-                metadata: node.metadata
+                metadata: node.metadata,
+                markdownStyleEnabled: node.markdownStyleEnabled
             )
         }
 
@@ -163,7 +164,8 @@ extension CanvasCommandPipelineCoordinator {
                         width: node.bounds.width,
                         height: node.bounds.height
                     ),
-                    metadata: node.metadata
+                    metadata: node.metadata,
+                    markdownStyleEnabled: node.markdownStyleEnabled
                 )
             }
         }
