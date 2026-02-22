@@ -5,6 +5,93 @@ import Domain
 import SwiftUI
 
 extension CanvasView {
+    static let addNodeModeTreeOptionID = "tree"
+    static let addNodeModeDiagramOptionID = "diagram"
+
+    func addNodeModeSelectionOptions() -> [SelectionPopupOption] {
+        [
+            SelectionPopupOption(
+                id: Self.addNodeModeTreeOptionID,
+                title: "Tree",
+                shortcutLabel: "T"
+            ),
+            SelectionPopupOption(
+                id: Self.addNodeModeDiagramOptionID,
+                title: "Diagram",
+                shortcutLabel: "D"
+            ),
+        ]
+    }
+
+    func addNodeModeOptionID(for mode: CanvasEditingMode) -> String {
+        switch mode {
+        case .tree:
+            Self.addNodeModeTreeOptionID
+        case .diagram:
+            Self.addNodeModeDiagramOptionID
+        }
+    }
+
+    func addNodeMode(from optionID: String) -> CanvasEditingMode {
+        switch optionID {
+        case Self.addNodeModeTreeOptionID:
+            .tree
+        case Self.addNodeModeDiagramOptionID:
+            .diagram
+        default:
+            preconditionFailure("Unexpected add-node mode option ID: \(optionID)")
+        }
+    }
+
+    func presentAddNodeModeSelectionPopup() {
+        selectedAddNodeMode = .tree
+        isAddNodeModePopupPresented = true
+    }
+
+    func dismissAddNodeModeSelectionPopup() {
+        isAddNodeModePopupPresented = false
+    }
+
+    func commitAddNodeModeSelection(_ mode: CanvasEditingMode) {
+        isAddNodeModePopupPresented = false
+        Task {
+            await viewModel.addNodeFromModeSelection(mode: mode)
+        }
+    }
+
+    func moveAddNodeModeSelection(delta: Int) {
+        guard delta != 0 else {
+            return
+        }
+        switch selectedAddNodeMode {
+        case .tree:
+            selectedAddNodeMode = .diagram
+        case .diagram:
+            selectedAddNodeMode = .tree
+        }
+    }
+
+    func handleAddNodeModePopupHotkey(_ event: NSEvent) -> Bool {
+        guard let action = addNodeModeSelectionHotkeyResolver.action(for: event) else {
+            // Keep the popup modal: ignore unrelated keys while presented.
+            return true
+        }
+
+        switch action {
+        case .selectTree:
+            commitAddNodeModeSelection(.tree)
+        case .selectDiagram:
+            commitAddNodeModeSelection(.diagram)
+        case .moveSelection(let delta):
+            moveAddNodeModeSelection(delta: delta)
+        case .confirmSelection:
+            commitAddNodeModeSelection(selectedAddNodeMode)
+        case .dismiss:
+            dismissAddNodeModeSelectionPopup()
+        }
+        return true
+    }
+
     func renderedNode(
         _ node: CanvasNode,
         viewportSize: CGSize,

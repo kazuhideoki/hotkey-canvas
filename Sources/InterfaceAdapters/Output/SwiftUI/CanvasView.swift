@@ -15,7 +15,8 @@ public struct CanvasView: View {
     @State var commandPaletteQuery: String = ""
     @State var isCommandPalettePresented = false
     @State var selectedCommandPaletteIndex: Int = 0
-    @State var isAddNodeModeDialogPresented = false
+    @State var isAddNodeModePopupPresented = false
+    @State var selectedAddNodeMode: CanvasEditingMode = .tree
     @State private var previousSelectedCommandPaletteIndex: Int = 0
     @State var hasInitializedCameraAnchor = false
     @State var cameraAnchorPoint: CGPoint = .zero
@@ -24,6 +25,7 @@ public struct CanvasView: View {
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
+    let addNodeModeSelectionHotkeyResolver = AddNodeModeSelectionHotkeyResolver()
     let editingStartResolver = NodeEditingStartResolver()
     let nodeTextHeightMeasurer = NodeTextHeightMeasurer()
     public init(
@@ -282,17 +284,36 @@ public struct CanvasView: View {
                     height: viewportSize.height,
                     alignment: .topLeading
                 )
+                .allowsHitTesting(!isAddNodeModePopupPresented)
+                if isAddNodeModePopupPresented {
+                    SelectionPopup(
+                        title: "Select Node Mode",
+                        footerText: "Press Enter to confirm, Esc to cancel.",
+                        options: addNodeModeSelectionOptions(),
+                        selectedOptionID: addNodeModeOptionID(for: selectedAddNodeMode),
+                        onSelectOption: { optionID in
+                            selectedAddNodeMode = addNodeMode(from: optionID)
+                        },
+                        onConfirmOption: { optionID in
+                            commitAddNodeModeSelection(addNodeMode(from: optionID))
+                        },
+                        onDismiss: {
+                            dismissAddNodeModeSelectionPopup()
+                        }
+                    )
+                    .zIndex(11)
+                }
                 if isCommandPalettePresented {
                     Color.clear
                         .contentShape(Rectangle())
                         .allowsHitTesting(false)
                 }
                 CanvasHotkeyCaptureView(isEnabled: editingContext == nil && !isCommandPalettePresented) { event in
-                    if isAddNodeModeDialogPresented {
-                        return false
+                    if isAddNodeModePopupPresented {
+                        return handleAddNodeModePopupHotkey(event)
                     }
                     if hotkeyTranslator.shouldPresentAddNodeModeSelection(event) {
-                        isAddNodeModeDialogPresented = true
+                        presentAddNodeModeSelectionPopup()
                         return true
                     }
                     if hotkeyTranslator.shouldOpenCommandPalette(event) {
@@ -327,7 +348,7 @@ public struct CanvasView: View {
                 // Keep key capture active without intercepting canvas rendering.
                 .allowsHitTesting(false)
                 CanvasScrollWheelMonitorView(isEnabled: true) { event in
-                    guard !isCommandPalettePresented else {
+                    guard !isCommandPalettePresented, !isAddNodeModePopupPresented else {
                         return false
                     }
                     let translation = CanvasViewportPanPolicy.scrollWheelTranslation(
@@ -432,25 +453,6 @@ public struct CanvasView: View {
                 commandPaletteQuery = ""
                 selectedCommandPaletteIndex = 0
             }
-        }
-        .confirmationDialog(
-            "Select Node Mode",
-            isPresented: $isAddNodeModeDialogPresented,
-            titleVisibility: .visible
-        ) {
-            Button("Tree") {
-                Task {
-                    await viewModel.addNodeFromModeSelection(mode: .tree)
-                }
-            }
-            Button("Diagram") {
-                Task {
-                    await viewModel.addNodeFromModeSelection(mode: .diagram)
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Choose mode for the new node.")
         }
         .onReceive(viewModel.$viewportIntent) { viewportIntent in
             guard let viewportIntent else {

@@ -59,6 +59,12 @@ HotkeyCanvas は、キーボードファーストでキャンバスを編集で�
 |   |   |   |-- SwiftUI/                  # SwiftUI View コンポーネント（SwiftUI依存を閉じ込める）
 |   |   |   |                             # View は描画専念。文言・状態は直書きせず UseCase 経由で受け取る
 |   |   |   |                             # 命名: *View
+<<<<<<< HEAD
+=======
+|   |   |   |-- SwiftUIComponet/          # 再利用可能な小規模 SwiftUI コンポーネント
+|   |   |   |                             # 複数文脈で使う汎用 UI 部品を配置（命名: 役割名 + Component/Popup など）
+|   |   |   `-- Metal/                    # Metal 描画実装（命名: *Renderer）
+>>>>>>> main
 |   |   |-- Persistence/
 |   |   |   `-- JsonCanvas/               # Domain <-> Json Canvas 変換、ファイル保存（命名: *Mapper, *Repository）
 |   |
