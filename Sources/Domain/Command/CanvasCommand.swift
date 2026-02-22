@@ -2,13 +2,18 @@ public enum CanvasCommand: Equatable, Sendable {
     case addNode
     case addChildNode
     case addSiblingNode(position: CanvasSiblingNodePosition)
+    case alignParentNodesVertically
     case moveFocus(CanvasFocusDirection)
     case moveNode(CanvasNodeMoveDirection)
     case nudgeNode(CanvasNodeMoveDirection)
     case toggleFoldFocusedSubtree
     case centerFocusedNode
     case deleteFocusedNode
+    case copyFocusedSubtree
+    case cutFocusedSubtree
+    case pasteSubtreeAsChild
     case setNodeText(nodeID: CanvasNodeID, text: String, nodeHeight: Double)
+    case setNodeImage(nodeID: CanvasNodeID, imagePath: String, nodeHeight: Double)
     case toggleFocusedNodeMarkdownStyle
     case convertFocusedAreaMode(to: CanvasEditingMode)
     case createArea(id: CanvasAreaID, mode: CanvasEditingMode, nodeIDs: Set<CanvasNodeID>)

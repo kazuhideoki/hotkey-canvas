@@ -8,6 +8,19 @@ struct NodeMarkdownDisplay: View {
     let text: String
     let nodeWidth: Double
     let zoomScale: Double
+    let appliesOuterPadding: Bool
+
+    init(
+        text: String,
+        nodeWidth: Double,
+        zoomScale: Double,
+        appliesOuterPadding: Bool = true
+    ) {
+        self.text = text
+        self.nodeWidth = nodeWidth
+        self.zoomScale = zoomScale
+        self.appliesOuterPadding = appliesOuterPadding
+    }
 
     private var blocks: [NodeMarkdownBlock] {
         NodeMarkdownBlockParser.parse(text)
@@ -15,8 +28,8 @@ struct NodeMarkdownDisplay: View {
 
     var body: some View {
         let scale = CGFloat(zoomScale)
-        let scaledPadding = NodeTextStyle.outerPadding * scale
-        let contentWidth = max((CGFloat(nodeWidth) * scale) - (scaledPadding * 2), 1)
+        let contentInset = NodeTextStyle.outerPadding * scale
+        let contentWidth = max((CGFloat(nodeWidth) * scale) - (contentInset * 2), 1)
 
         VStack(alignment: .leading, spacing: NodeTextStyle.markdownBlockSpacing * scale) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
@@ -25,7 +38,7 @@ struct NodeMarkdownDisplay: View {
         }
         .frame(width: contentWidth, alignment: .topLeading)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(scaledPadding)
+        .padding(appliesOuterPadding ? contentInset : 0)
     }
 
     @ViewBuilder

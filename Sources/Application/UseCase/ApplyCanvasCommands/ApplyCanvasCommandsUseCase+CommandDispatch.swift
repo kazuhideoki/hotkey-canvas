@@ -45,6 +45,8 @@ extension ApplyCanvasCommandsUseCase {
             return try addChildNode(in: graph, requiresTopLevelParent: false)
         case .addSiblingNode(let position):
             return try addSiblingNode(in: graph, position: position)
+        case .alignParentNodesVertically:
+            return alignParentNodesVertically(in: graph, areaID: resolvedAreaID)
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
         case .moveNode(let direction):
@@ -65,11 +67,50 @@ extension ApplyCanvasCommandsUseCase {
             return noOpMutationResult(for: graph)
         case .deleteFocusedNode:
             return try deleteFocusedNode(in: graph)
+        case .copyFocusedSubtree:
+            return copyFocusedSubtree(in: graph)
+        case .cutFocusedSubtree:
+            return try cutFocusedSubtree(in: graph)
+        case .pasteSubtreeAsChild:
+            return try pasteSubtreeAsChild(in: graph)
+        case .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle:
+            return try applyNodeContentCommand(command: command, to: graph)
+        case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
+            return noOpMutationResult(for: graph)
+        }
+    }
+
+    private func applyNodeContentCommand(
+        command: CanvasCommand,
+        to graph: CanvasGraph
+    ) throws -> CanvasMutationResult {
+        switch command {
         case .setNodeText(let nodeID, let text, let nodeHeight):
             return try setNodeText(in: graph, nodeID: nodeID, text: text, nodeHeight: nodeHeight)
+        case .setNodeImage(let nodeID, let imagePath, let nodeHeight):
+            return try setNodeImage(
+                in: graph,
+                nodeID: nodeID,
+                imagePath: imagePath,
+                nodeHeight: nodeHeight
+            )
         case .toggleFocusedNodeMarkdownStyle:
             return try toggleFocusedNodeMarkdownStyle(in: graph)
-        case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
+        case .addNode,
+            .addChildNode,
+            .addSiblingNode,
+            .alignParentNodesVertically,
+            .moveFocus,
+            .moveNode,
+            .toggleFoldFocusedSubtree,
+            .centerFocusedNode,
+            .deleteFocusedNode,
+            .copyFocusedSubtree,
+            .cutFocusedSubtree,
+            .pasteSubtreeAsChild,
+            .convertFocusedAreaMode,
+            .createArea,
+            .assignNodesToArea:
             return noOpMutationResult(for: graph)
         }
     }
@@ -87,10 +128,7 @@ extension ApplyCanvasCommandsUseCase {
             return areaManagementMutationResult(graphBeforeMutation: graph, graphAfterMutation: graphAfterMutation)
         case .createArea(let id, let mode, let nodeIDs):
             let graphAfterMutation = try CanvasAreaMembershipService.createArea(
-                id: id,
-                mode: mode,
-                nodeIDs: nodeIDs,
-                in: graph
+                id: id, mode: mode, nodeIDs: nodeIDs, in: graph
             ).get()
             return areaManagementMutationResult(graphBeforeMutation: graph, graphAfterMutation: graphAfterMutation)
         case .assignNodesToArea(let nodeIDs, let areaID):
@@ -103,13 +141,18 @@ extension ApplyCanvasCommandsUseCase {
         case .addNode,
             .addChildNode,
             .addSiblingNode,
+            .alignParentNodesVertically,
             .moveFocus,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
+            .copyFocusedSubtree,
+            .cutFocusedSubtree,
+            .pasteSubtreeAsChild,
             .setNodeText,
+            .setNodeImage,
             .toggleFocusedNodeMarkdownStyle:
             return noOpMutationResult(for: graph)
         }
@@ -159,14 +202,20 @@ extension ApplyCanvasCommandsUseCase {
             return .failure(.focusedNodeNotFound)
         case .setNodeText(let nodeID, _, _):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
+        case .setNodeImage(let nodeID, _, _):
+            return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
         case .addChildNode,
             .addSiblingNode,
+            .alignParentNodesVertically,
             .moveFocus,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
+            .copyFocusedSubtree,
+            .cutFocusedSubtree,
+            .pasteSubtreeAsChild,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,

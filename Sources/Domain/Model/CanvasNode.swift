@@ -8,6 +8,8 @@ public struct CanvasNode: Equatable, Sendable {
     public let kind: CanvasNodeKind
     /// Optional text payload associated with the node.
     public let text: String?
+    /// Optional image file path rendered above text inside the node.
+    public let imagePath: String?
     /// Node bounds in canvas coordinates.
     public let bounds: CanvasBounds
     /// Additional key-value metadata.
@@ -20,6 +22,7 @@ public struct CanvasNode: Equatable, Sendable {
     ///   - id: Unique node identifier.
     ///   - kind: Semantic node kind.
     ///   - text: Optional node text.
+    ///   - imagePath: Optional image file path displayed in the node.
     ///   - bounds: Immutable node bounds.
     ///   - metadata: Additional metadata attributes.
     ///   - markdownStyleEnabled: Whether markdown styling is applied in non-editing rendering.
@@ -27,6 +30,7 @@ public struct CanvasNode: Equatable, Sendable {
         id: CanvasNodeID,
         kind: CanvasNodeKind,
         text: String?,
+        imagePath: String?,
         bounds: CanvasBounds,
         metadata: [String: String] = [:],
         markdownStyleEnabled: Bool = true
@@ -34,6 +38,7 @@ public struct CanvasNode: Equatable, Sendable {
         self.id = id
         self.kind = kind
         self.text = text
+        self.imagePath = imagePath
         self.bounds = bounds
         self.metadata = metadata
         self.markdownStyleEnabled = markdownStyleEnabled

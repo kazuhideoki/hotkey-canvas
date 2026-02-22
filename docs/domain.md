@@ -32,7 +32,13 @@
 - `Command + =`: `zoomIn`
 - `Command + -`: `zoomOut`
 - `Option + .`: `toggleFoldFocusedSubtree`
+<<<<<<< HEAD
 - `Command + Shift + ↑/↓/←/→`: `nudgeNode(.up/.down/.left/.right)`
+=======
+- `Command + C`: `copyFocusedSubtree`
+- `Command + X`: `cutFocusedSubtree`
+- `Command + V`: `pasteSubtreeAsChild`
+>>>>>>> main
 - 利用先:
 - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)`）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
@@ -47,7 +53,7 @@
 - 集約
   - `CanvasGraph`: ノード/エッジ/フォーカス/折りたたみルートを保持する不変スナップショット。
 - エンティティ/値オブジェクト
-  - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.markdownStyleEnabled` で確定描画時 Markdown スタイル適用可否を保持）
+  - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.imagePath` はノード内画像ファイルパス、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`
 - コマンド
   - `CanvasCommand`
@@ -56,7 +62,12 @@
   - `CanvasSiblingNodePosition`
   - `CanvasCommand.centerFocusedNode`
   - `CanvasCommand.toggleFoldFocusedSubtree`
+  - `CanvasCommand.setNodeImage(nodeID:imagePath:nodeHeight:)`
+  - `CanvasCommand.copyFocusedSubtree`
+  - `CanvasCommand.cutFocusedSubtree`
+  - `CanvasCommand.pasteSubtreeAsChild`
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
+  - `CanvasCommand.alignParentNodesVertically`
 - エラー
   - `CanvasGraphError`
 - サービス
@@ -81,9 +92,12 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeImage.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ToggleFocusedNodeMarkdownStyle.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AlignParentNodesVertically.swift`
 - 入力境界/コマンド流入
   - `Sources/Application/Port/Input/CanvasEditingInputPort.swift`
   - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`
@@ -99,6 +113,7 @@
 - 不変条件
   - ノード ID は空文字を許容しない。
   - ノードの `width` / `height` は正値である必要がある。
+  - ノード画像は `imagePath == nil` で未設定を表し、同一ノードへの再挿入は `imagePath` の上書き（置換）として扱う。
   - ノードの Markdown スタイル適用フラグは `Bool` で保持し、新規ノードは既定で `true`。
   - エッジ ID は空文字を許容しない。
   - エッジの `fromNodeID` / `toNodeID` はグラフ内に存在する必要がある。
@@ -420,14 +435,25 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CommandDispatch.swift`
     - コマンド適用前に所属整合性検証と対象エリア解決を行う。
     - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
+<<<<<<< HEAD
     - Diagram エリアでは `addChildNode` を `addNode` へ正規化する。
     - Diagram エリアでは `moveNode` を接続アンカー基準の8方向スロット移動として扱う。
     - Diagram エリアでは `nudgeNode` を座標微調整（固定ステップ）として扱う。
+=======
+    - Diagram エリアでは `addChildNode` を `addNode` へ正規化し、`moveNode` は階層移動ではなく座標 nudge として扱う。
+    - `alignParentNodesVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス中エリア内の親ノード（エリア内で親子入辺を持たないノード）の `x` を最左ノード基準に揃える。整列時は親ノード配下サブツリーを一括で同じ `dx` 平行移動し、エリア内の相対位置を維持する。さらに整列後は親サブツリー同士の重なりを `y` 方向の平行移動で解消し、縦一列の `x` 基準を維持する。
+>>>>>>> main
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
     - Diagram エリアでは `addNode` 実行時、フォーカスノードが存在する場合に `relationType = .normal` のエッジで新規ノードと接続する。
+    - Diagram エリアで新規作成されるノードは、Tree ノード横幅（`220`）を一辺とする正方形で生成する。
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
+    - Diagram エリアでは `setNodeText` 実行時に入力高さを採用せず、ノード寸法を Tree ノード横幅（`220`）の正方形へ正規化する。
+  - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
+    - グラフ変更後に Diagram エリア所属ノードの寸法を Tree ノード横幅（`220`）正方形へ正規化し、`convertFocusedAreaMode` / `createArea` / `assignNodesToArea` 経由でも形状不変条件を維持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
     - 追加/削除時の所属更新を行う。
 - 主要テスト
   - `Tests/DomainTests/CanvasAreaMembershipServiceTests.swift`
@@ -490,7 +516,15 @@
 - 2026-02-21: Diagram mode Phase1 基盤として `CanvasArea*` モデル、`CanvasAreaMembershipService`、`CanvasAreaPolicyError`、モード別コマンドディスパッチ境界を追加。
 - 2026-02-21: Diagram mode Phase2 として、`createArea` / `assignNodesToArea` の Diagram 実行許可、`addNode` の複数エリア曖昧解決エラー、跨ぎエッジ禁止（`crossAreaEdgeForbidden`）の強制を追加。
 - 2026-02-21: Diagram mode Phase3 として `convertFocusedAreaMode(to:)` を追加し、フォーカス基準のモード変換（同一モード no-op）と `Shift + Enter` モード選択導線を実装。
+- 2026-02-22: `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を追加し、ノード上部画像の挿入/置換をドメイン編集コマンドとして扱う仕様を追記。
+- 2026-02-22: `CanvasNode` 初期化時の `imagePath` を必須化し、ノード再構築時に画像パスを明示伝播することで、画像データ欠落をコンパイル時に検出できるようにした。
+- 2026-02-22: Tree PhaseA として `copyFocusedSubtree` / `cutFocusedSubtree` / `pasteSubtreeAsChild` と `Command + C/X/V` を追加し、アプリ内コピー&ペーストを導入。
 - 2026-02-22: Diagram mode の編集導線を更新し、`addChildNode` を Diagram では `addNode` として解釈、`moveNode` は Diagram で座標 nudge（`cmd+矢印`）として適用する仕様を追加。
 - 2026-02-22: Diagram mode の `addNode` を更新し、フォーカスノードが存在する場合は新規ノードを `normal` エッジで接続する仕様を追加。
+- 2026-02-22: Diagram mode のノード寸法ルールを更新し、Tree ノード横幅（`220`）を一辺とする正方形へ統一（`addNode` / `setNodeText` / エリアモード変換・再所属後の正規化を含む）。
 - 2026-02-22: `CanvasNode.markdownStyleEnabled` と `toggleFocusedNodeMarkdownStyle` コマンドを追加し、コマンドパレットからフォーカスノード単位で Markdown スタイル適用を切り替え可能にした。
+<<<<<<< HEAD
 - 2026-02-22: `CanvasNodeMoveDirection` を8方向（斜め4方向を追加）へ拡張し、Diagram mode では `moveNode` を接続アンカー基準の8方向スロット移動に変更した。微調整移動は `nudgeNode`（`cmd+shift+矢印`）として分離した。
+=======
+- 2026-02-22: `alignParentNodesVertically` コマンドを追加し、Command Palette からフォーカスエリア内の親ノードを最左基準で縦一列に整列できるようにした（Tree/Diagram 両対応）。
+>>>>>>> main

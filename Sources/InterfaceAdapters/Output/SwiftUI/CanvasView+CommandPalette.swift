@@ -4,12 +4,17 @@ import Domain
 import Foundation
 
 extension CanvasView {
+    enum CommandPaletteAction: Equatable {
+        case shortcut(CanvasShortcutAction)
+        case insertImageFromFinder
+    }
+
     struct CommandPaletteItem: Identifiable, Equatable {
         let id: String
         let title: String
         let shortcutLabel: String
         let searchText: String
-        let action: CanvasShortcutAction
+        let action: CommandPaletteAction
     }
 
     func openCommandPalette() {
@@ -61,12 +66,24 @@ extension CanvasView {
                     title: definition.name,
                     shortcutLabel: definition.shortcutLabel,
                     searchText: searchText,
-                    action: definition.action
+                    action: .shortcut(definition.action)
                 )
             )
         }
         if let markdownToggleItem = focusedNodeMarkdownToggleCommandPaletteItem() {
             items.append(markdownToggleItem)
+        }
+        items.append(
+            CommandPaletteItem(
+                id: "insertImageFromFinder",
+                title: "Insert Image from Finder",
+                shortcutLabel: "Finder",
+                searchText: "insert image finder photo picture",
+                action: .insertImageFromFinder
+            )
+        )
+        if let alignParentNodesItem = alignParentNodesVerticallyCommandPaletteItem() {
+            items.append(alignParentNodesItem)
         }
         return items
     }
@@ -89,7 +106,20 @@ extension CanvasView {
             title: title,
             shortcutLabel: "Focused Node",
             searchText: searchText,
-            action: .apply(commands: [.toggleFocusedNodeMarkdownStyle])
+            action: .shortcut(.apply(commands: [.toggleFocusedNodeMarkdownStyle]))
+        )
+    }
+
+    private func alignParentNodesVerticallyCommandPaletteItem() -> CommandPaletteItem? {
+        guard viewModel.focusedNodeID != nil else {
+            return nil
+        }
+        return CommandPaletteItem(
+            id: "alignParentNodesVertically",
+            title: "Align Parent Nodes Vertically",
+            shortcutLabel: "Focused Area",
+            searchText: "align parent nodes vertical left line tree diagram",
+            action: .shortcut(.apply(commands: [.alignParentNodesVertically]))
         )
     }
 
@@ -104,24 +134,29 @@ extension CanvasView {
 
     func executeSelectedCommand(_ item: CommandPaletteItem) {
         switch item.action {
-        case .apply(let commands):
-            Task {
-                await viewModel.apply(commands: commands)
+        case .shortcut(let shortcutAction):
+            switch shortcutAction {
+            case .apply(let commands):
+                Task {
+                    await viewModel.apply(commands: commands)
+                }
+            case .undo:
+                Task {
+                    await viewModel.undo()
+                }
+            case .redo:
+                Task {
+                    await viewModel.redo()
+                }
+            case .zoomIn:
+                applyZoom(action: .zoomIn)
+            case .zoomOut:
+                applyZoom(action: .zoomOut)
+            case .openCommandPalette:
+                return
             }
-        case .undo:
-            Task {
-                await viewModel.undo()
-            }
-        case .redo:
-            Task {
-                await viewModel.redo()
-            }
-        case .zoomIn:
-            applyZoom(action: .zoomIn)
-        case .zoomOut:
-            applyZoom(action: .zoomOut)
-        case .openCommandPalette:
-            return
+        case .insertImageFromFinder:
+            insertImageFromFinder()
         }
         closeCommandPalette()
     }

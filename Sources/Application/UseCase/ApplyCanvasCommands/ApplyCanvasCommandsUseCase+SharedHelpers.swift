@@ -20,6 +20,7 @@ extension ApplyCanvasCommandsUseCase {
             id: CanvasNodeID(rawValue: "node-\(UUID().uuidString.lowercased())"),
             kind: .text,
             text: nil,
+            imagePath: nil,
             bounds: bounds
         )
     }
@@ -42,6 +43,24 @@ extension ApplyCanvasCommandsUseCase {
     /// - Parameter graph: Current canvas graph.
     /// - Returns: First available node bounds from the insertion anchor.
     func makeAvailableNewNodeBounds(in graph: CanvasGraph) -> CanvasBounds {
+        makeAvailableNewNodeBounds(
+            in: graph,
+            width: Self.newNodeWidth,
+            height: Self.newNodeHeight
+        )
+    }
+
+    /// Computes bounds for a newly inserted node using custom size and default collision targets.
+    /// - Parameters:
+    ///   - graph: Current canvas graph.
+    ///   - width: New node width.
+    ///   - height: New node height.
+    /// - Returns: First available node bounds from the insertion anchor.
+    func makeAvailableNewNodeBounds(
+        in graph: CanvasGraph,
+        width: Double,
+        height: Double
+    ) -> CanvasBounds {
         let anchor = addNodePlacementAnchor(in: graph)
         let startX = anchor?.parentNode.bounds.x ?? Self.defaultNewNodeX
         let startY: Double
@@ -53,8 +72,8 @@ extension ApplyCanvasCommandsUseCase {
         var candidate = CanvasBounds(
             x: startX,
             y: startY,
-            width: Self.newNodeWidth,
-            height: Self.newNodeHeight
+            width: width,
+            height: height
         )
         let areas = CanvasAreaLayoutService.makeParentChildAreas(in: graph)
         while let overlappedArea = firstOverlappedArea(for: candidate, in: areas) {
@@ -77,6 +96,27 @@ extension ApplyCanvasCommandsUseCase {
         in graph: CanvasGraph,
         avoiding nodeIDs: Set<CanvasNodeID>
     ) -> CanvasBounds {
+        makeAvailableNewNodeBounds(
+            in: graph,
+            avoiding: nodeIDs,
+            width: Self.newNodeWidth,
+            height: Self.newNodeHeight
+        )
+    }
+
+    /// Computes bounds for a newly inserted node while avoiding overlap against the given node set.
+    /// - Parameters:
+    ///   - graph: Current canvas graph.
+    ///   - nodeIDs: Nodes to consider as placement blockers.
+    ///   - width: New node width.
+    ///   - height: New node height.
+    /// - Returns: First available non-overlapping bounds.
+    func makeAvailableNewNodeBounds(
+        in graph: CanvasGraph,
+        avoiding nodeIDs: Set<CanvasNodeID>,
+        width: Double,
+        height: Double
+    ) -> CanvasBounds {
         let focusedNode = graph.focusedNodeID.flatMap { graph.nodesByID[$0] }
         let startX = focusedNode?.bounds.x ?? Self.defaultNewNodeX
         let startY =
@@ -89,8 +129,8 @@ extension ApplyCanvasCommandsUseCase {
         var candidate = CanvasBounds(
             x: startX,
             y: startY,
-            width: Self.newNodeWidth,
-            height: Self.newNodeHeight
+            width: width,
+            height: height
         )
         let collisionNodes = nodesForPlacementCollision(in: graph, avoiding: nodeIDs)
         while let overlappedNode = firstOverlappedNode(for: candidate, in: collisionNodes) {

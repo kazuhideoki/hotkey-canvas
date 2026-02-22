@@ -113,6 +113,7 @@ extension CanvasView {
             id: node.id,
             kind: node.kind,
             text: node.text,
+            imagePath: node.imagePath,
             bounds: CanvasBounds(
                 x: renderedRect.origin.x,
                 y: renderedRect.origin.y,
@@ -129,7 +130,9 @@ extension CanvasView {
             return node
         }
         let requiredHeight =
-            if editingContext.nodeHeight.isFinite {
+            if isDiagramNode(node.id) {
+                node.bounds.height
+            } else if editingContext.nodeHeight.isFinite {
                 max(editingContext.nodeHeight, 1)
             } else {
                 node.bounds.height
@@ -147,6 +150,7 @@ extension CanvasView {
             id: node.id,
             kind: node.kind,
             text: node.text,
+            imagePath: node.imagePath,
             bounds: resizedBounds,
             metadata: node.metadata,
             markdownStyleEnabled: node.markdownStyleEnabled
@@ -295,11 +299,21 @@ extension CanvasView {
         }
 
         let measuredLayout = measuredNodeLayout(text: context.text, nodeWidth: node.bounds.width)
+        let editingHeight =
+            if isDiagramNode(context.nodeID) {
+                node.bounds.height
+            } else {
+                measuredNodeHeightForEditing(
+                    text: context.text,
+                    measuredTextHeight: Double(measuredLayout.nodeHeight),
+                    node: node
+                )
+            }
         editingContext = NodeEditingContext(
             nodeID: context.nodeID,
             text: context.text,
             nodeWidth: node.bounds.width,
-            nodeHeight: Double(measuredLayout.nodeHeight),
+            nodeHeight: editingHeight,
             initialCursorPlacement: context.initialCursorPlacement,
             initialTypingEvent: context.initialTypingEvent
         )
@@ -336,7 +350,21 @@ extension CanvasView {
         guard var context = editingContext, context.nodeID == nodeID else {
             return
         }
-        let roundedHeight = Double(ceil(metrics.nodeHeight))
+        guard !isDiagramNode(nodeID) else {
+            return
+        }
+        let roundedTextHeight = Double(ceil(metrics.nodeHeight))
+        guard roundedTextHeight.isFinite, roundedTextHeight > 0 else {
+            return
+        }
+        guard let node = viewModel.nodes.first(where: { $0.id == nodeID }) else {
+            return
+        }
+        let roundedHeight = measuredNodeHeightForEditing(
+            text: context.text,
+            measuredTextHeight: roundedTextHeight,
+            node: node
+        )
         guard roundedHeight.isFinite, roundedHeight > 0 else {
             return
         }
@@ -359,14 +387,28 @@ extension CanvasView {
             return
         }
         let measuredLayout = measuredNodeLayout(text: node.text ?? "", nodeWidth: node.bounds.width)
+        let editingHeight =
+            if isDiagramNode(nodeID) {
+                node.bounds.height
+            } else {
+                measuredNodeHeightForEditing(
+                    text: node.text ?? "",
+                    measuredTextHeight: Double(measuredLayout.nodeHeight),
+                    node: node
+                )
+            }
         editingContext = NodeEditingContext(
             nodeID: nodeID,
             text: node.text ?? "",
             nodeWidth: node.bounds.width,
-            nodeHeight: Double(measuredLayout.nodeHeight),
+            nodeHeight: editingHeight,
             initialCursorPlacement: .end,
             initialTypingEvent: nil
         )
+    }
+
+    func isDiagramNode(_ nodeID: CanvasNodeID) -> Bool {
+        viewModel.diagramNodeIDs.contains(nodeID)
     }
 
     @ViewBuilder
