@@ -129,7 +129,9 @@ extension CanvasView {
             return node
         }
         let requiredHeight =
-            if editingContext.nodeHeight.isFinite {
+            if isDiagramNode(node.id) {
+                node.bounds.height
+            } else if editingContext.nodeHeight.isFinite {
                 max(editingContext.nodeHeight, 1)
             } else {
                 node.bounds.height
@@ -295,11 +297,17 @@ extension CanvasView {
         }
 
         let measuredLayout = measuredNodeLayout(text: context.text, nodeWidth: node.bounds.width)
+        let editingHeight =
+            if isDiagramNode(context.nodeID) {
+                node.bounds.height
+            } else {
+                Double(measuredLayout.nodeHeight)
+            }
         editingContext = NodeEditingContext(
             nodeID: context.nodeID,
             text: context.text,
             nodeWidth: node.bounds.width,
-            nodeHeight: Double(measuredLayout.nodeHeight),
+            nodeHeight: editingHeight,
             initialCursorPlacement: context.initialCursorPlacement,
             initialTypingEvent: context.initialTypingEvent
         )
@@ -336,6 +344,9 @@ extension CanvasView {
         guard var context = editingContext, context.nodeID == nodeID else {
             return
         }
+        guard !isDiagramNode(nodeID) else {
+            return
+        }
         let roundedHeight = Double(ceil(metrics.nodeHeight))
         guard roundedHeight.isFinite, roundedHeight > 0 else {
             return
@@ -359,14 +370,24 @@ extension CanvasView {
             return
         }
         let measuredLayout = measuredNodeLayout(text: node.text ?? "", nodeWidth: node.bounds.width)
+        let editingHeight =
+            if isDiagramNode(nodeID) {
+                node.bounds.height
+            } else {
+                Double(measuredLayout.nodeHeight)
+            }
         editingContext = NodeEditingContext(
             nodeID: nodeID,
             text: node.text ?? "",
             nodeWidth: node.bounds.width,
-            nodeHeight: Double(measuredLayout.nodeHeight),
+            nodeHeight: editingHeight,
             initialCursorPlacement: .end,
             initialTypingEvent: nil
         )
+    }
+
+    func isDiagramNode(_ nodeID: CanvasNodeID) -> Bool {
+        viewModel.diagramNodeIDs.contains(nodeID)
     }
 
     @ViewBuilder

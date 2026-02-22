@@ -131,6 +131,36 @@ func test_apply_setNodeText_shrinksNodeHeightWhenLinesDecrease() async throws {
     #expect(shrunkHeight < expandedHeight)
 }
 
+@Test("ApplyCanvasCommandsUseCase: setNodeText keeps diagram node as square with tree-width side length")
+func test_apply_setNodeText_inDiagramArea_keepsSquareNode() async throws {
+    let nodeID = CanvasNodeID(rawValue: "diagram-node")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: "before",
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let updated = try await sut.apply(
+        commands: [.setNodeText(nodeID: nodeID, text: "after", nodeHeight: 512)]
+    )
+    let updatedNode = try #require(updated.newState.nodesByID[nodeID])
+    #expect(updatedNode.text == "after")
+    #expect(updatedNode.bounds.width == 220)
+    #expect(updatedNode.bounds.height == 220)
+}
+
 @Test("ApplyCanvasCommandsUseCase: addNode enables markdown styling by default")
 func test_apply_addNode_enablesMarkdownStylingByDefault() async throws {
     let sut = ApplyCanvasCommandsUseCase()

@@ -67,6 +67,9 @@ extension CanvasCommandPipelineCoordinator {
             )
         }
         if effects.didMutateGraph {
+            graph = runDiagramSquareNormalizationStage(on: graph)
+        }
+        if effects.didMutateGraph {
             graph = runCollapsedRootNormalizationStage(on: graph)
         }
         if effects.didMutateGraph && effects.needsFocusNormalization {
@@ -168,6 +171,54 @@ extension CanvasCommandPipelineCoordinator {
             }
         }
 
+        return CanvasGraph(
+            nodesByID: nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: graph.focusedNodeID,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+            areasByID: graph.areasByID
+        )
+    }
+
+    /// Enforces diagram-node shape invariant as a square using the canonical tree-node width.
+    private func runDiagramSquareNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {
+        let diagramNodeIDs = Set(
+            graph.areasByID.values
+                .filter { $0.editingMode == .diagram }
+                .flatMap(\.nodeIDs)
+        )
+        guard !diagramNodeIDs.isEmpty else {
+            return graph
+        }
+
+        let squareSideLength = ApplyCanvasCommandsUseCase.newNodeWidth
+        var nodesByID = graph.nodesByID
+        var hasAnyUpdate = false
+        for nodeID in diagramNodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let node = nodesByID[nodeID] else {
+                continue
+            }
+            if node.bounds.width == squareSideLength, node.bounds.height == squareSideLength {
+                continue
+            }
+            hasAnyUpdate = true
+            nodesByID[nodeID] = CanvasNode(
+                id: node.id,
+                kind: node.kind,
+                text: node.text,
+                bounds: CanvasBounds(
+                    x: node.bounds.x,
+                    y: node.bounds.y,
+                    width: squareSideLength,
+                    height: squareSideLength
+                ),
+                metadata: node.metadata,
+                markdownStyleEnabled: node.markdownStyleEnabled
+            )
+        }
+        guard hasAnyUpdate else {
+            return graph
+        }
         return CanvasGraph(
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
