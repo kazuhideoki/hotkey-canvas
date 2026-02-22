@@ -130,3 +130,83 @@ func test_apply_setNodeText_shrinksNodeHeightWhenLinesDecrease() async throws {
     #expect(shrunkHeight == shrunkHeightInput)
     #expect(shrunkHeight < expandedHeight)
 }
+
+@Test("ApplyCanvasCommandsUseCase: setNodeImage updates target node image path and height")
+func test_apply_setNodeImage_updatesNodeImage() async throws {
+    let nodeID = CanvasNodeID(rawValue: "node")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: "before",
+                bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 100)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
+
+    let updated = try await sut.apply(
+        commands: [.setNodeImage(nodeID: nodeID, imagePath: "/tmp/image-1.png", nodeHeight: 84)]
+    )
+    #expect(updated.newState.nodesByID[nodeID]?.imagePath == "/tmp/image-1.png")
+    #expect(updated.newState.nodesByID[nodeID]?.bounds.height == 84)
+    #expect(updated.newState.nodesByID[nodeID]?.text == "before")
+}
+
+@Test("ApplyCanvasCommandsUseCase: setNodeImage replaces existing image when inserting again")
+func test_apply_setNodeImage_replacesExistingImage() async throws {
+    let nodeID = CanvasNodeID(rawValue: "node")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                imagePath: "/tmp/old.png",
+                bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 100)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
+
+    let replaced = try await sut.apply(
+        commands: [.setNodeImage(nodeID: nodeID, imagePath: "/tmp/new.jpeg", nodeHeight: 90)]
+    )
+    #expect(replaced.newState.nodesByID[nodeID]?.imagePath == "/tmp/new.jpeg")
+    #expect(replaced.newState.nodesByID[nodeID]?.bounds.height == 90)
+}
+
+@Test("ApplyCanvasCommandsUseCase: setNodeImage rejects non-finite height values")
+func test_apply_setNodeImage_nonFiniteHeight_fallsBackToCurrentHeight() async throws {
+    let nodeID = CanvasNodeID(rawValue: "node")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 70)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
+
+    let nanHeightResult = try await sut.apply(
+        commands: [.setNodeImage(nodeID: nodeID, imagePath: "/tmp/image-2.webp", nodeHeight: .nan)]
+    )
+    #expect(nanHeightResult.newState.nodesByID[nodeID]?.imagePath == "/tmp/image-2.webp")
+    #expect(nanHeightResult.newState.nodesByID[nodeID]?.bounds.height == 70)
+
+    let infinityHeightResult = try await sut.apply(
+        commands: [.setNodeImage(nodeID: nodeID, imagePath: "/tmp/image-3.heic", nodeHeight: .infinity)]
+    )
+    #expect(infinityHeightResult.newState.nodesByID[nodeID]?.imagePath == "/tmp/image-3.heic")
+    #expect(infinityHeightResult.newState.nodesByID[nodeID]?.bounds.height == 70)
+}

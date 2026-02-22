@@ -100,6 +100,7 @@ extension CanvasCommandPipelineCoordinator {
                 id: node.id,
                 kind: node.kind,
                 text: node.text,
+                imagePath: node.imagePath,
                 bounds: bounds,
                 metadata: node.metadata
             )
@@ -155,6 +156,7 @@ extension CanvasCommandPipelineCoordinator {
                     id: node.id,
                     kind: node.kind,
                     text: node.text,
+                    imagePath: node.imagePath,
                     bounds: CanvasBounds(
                         x: node.bounds.x + translation.dx,
                         y: node.bounds.y + translation.dy,

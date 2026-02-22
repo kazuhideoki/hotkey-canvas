@@ -13,6 +13,7 @@ enum DiagramAreaPolicyService {
             .centerFocusedNode,
             .deleteFocusedNode,
             .setNodeText,
+            .setNodeImage,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
