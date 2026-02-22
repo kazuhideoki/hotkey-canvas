@@ -47,21 +47,50 @@ extension CanvasView {
     }
 
     private func defaultCommandPaletteItems() -> [CommandPaletteItem] {
-        CanvasShortcutCatalogService.commandPaletteDefinitions().compactMap { definition in
+        var items: [CommandPaletteItem] = []
+        for definition in CanvasShortcutCatalogService.commandPaletteDefinitions() {
             guard definition.isVisibleInCommandPalette else {
-                return nil
+                continue
             }
             let searchText = ([definition.name, definition.shortcutLabel] + definition.searchTokens).joined(
                 separator: " "
             )
-            return CommandPaletteItem(
-                id: definition.id.rawValue,
-                title: definition.name,
-                shortcutLabel: definition.shortcutLabel,
-                searchText: searchText,
-                action: definition.action
+            items.append(
+                CommandPaletteItem(
+                    id: definition.id.rawValue,
+                    title: definition.name,
+                    shortcutLabel: definition.shortcutLabel,
+                    searchText: searchText,
+                    action: definition.action
+                )
             )
         }
+        if let markdownToggleItem = focusedNodeMarkdownToggleCommandPaletteItem() {
+            items.append(markdownToggleItem)
+        }
+        return items
+    }
+
+    private func focusedNodeMarkdownToggleCommandPaletteItem() -> CommandPaletteItem? {
+        guard
+            let focusedNodeID = viewModel.focusedNodeID,
+            let focusedNode = viewModel.nodes.first(where: { $0.id == focusedNodeID })
+        else {
+            return nil
+        }
+
+        let title =
+            focusedNode.markdownStyleEnabled
+            ? "Disable Markdown Style"
+            : "Enable Markdown Style"
+        let searchText = "markdown style toggle format heading list code block"
+        return CommandPaletteItem(
+            id: "toggleFocusedNodeMarkdownStyle",
+            title: title,
+            shortcutLabel: "Focused Node",
+            searchText: searchText,
+            action: .apply(commands: [.toggleFocusedNodeMarkdownStyle])
+        )
     }
 
     func executeSelectedCommandIfNeeded() {
