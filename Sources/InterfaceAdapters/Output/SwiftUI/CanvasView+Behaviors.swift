@@ -5,6 +5,82 @@ import Domain
 import SwiftUI
 
 extension CanvasView {
+    @ViewBuilder
+    func addNodeModeSelectionOptionRow(
+        title: String,
+        shortcutLabel: String,
+        mode: CanvasEditingMode
+    ) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+            Spacer()
+            Text(shortcutLabel)
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(
+                    selectedAddNodeMode == mode
+                        ? Color.accentColor.opacity(0.2)
+                        : Color(nsColor: .textBackgroundColor).opacity(0.35)
+                )
+        )
+    }
+
+    func presentAddNodeModeSelectionPopup() {
+        selectedAddNodeMode = .tree
+        isAddNodeModePopupPresented = true
+    }
+
+    func dismissAddNodeModeSelectionPopup() {
+        isAddNodeModePopupPresented = false
+    }
+
+    func commitAddNodeModeSelection(_ mode: CanvasEditingMode) {
+        isAddNodeModePopupPresented = false
+        Task {
+            await viewModel.addNodeFromModeSelection(mode: mode)
+        }
+    }
+
+    func moveAddNodeModeSelection(delta: Int) {
+        guard delta != 0 else {
+            return
+        }
+        switch selectedAddNodeMode {
+        case .tree:
+            selectedAddNodeMode = .diagram
+        case .diagram:
+            selectedAddNodeMode = .tree
+        }
+    }
+
+    func handleAddNodeModePopupHotkey(_ event: NSEvent) -> Bool {
+        guard let action = addNodeModeSelectionHotkeyResolver.action(for: event) else {
+            // Keep the popup modal: ignore unrelated keys while presented.
+            return true
+        }
+
+        switch action {
+        case .selectTree:
+            commitAddNodeModeSelection(.tree)
+        case .selectDiagram:
+            commitAddNodeModeSelection(.diagram)
+        case .moveSelection(let delta):
+            moveAddNodeModeSelection(delta: delta)
+        case .confirmSelection:
+            commitAddNodeModeSelection(selectedAddNodeMode)
+        case .dismiss:
+            dismissAddNodeModeSelectionPopup()
+        }
+        return true
+    }
+
     func renderedNode(
         _ node: CanvasNode,
         viewportSize: CGSize,
