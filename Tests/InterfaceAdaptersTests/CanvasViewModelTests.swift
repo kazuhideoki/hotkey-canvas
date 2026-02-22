@@ -194,6 +194,58 @@ func test_onAppear_hidesFoldedDescendants_fromPublishedGraph() async throws {
 }
 
 @MainActor
+@Test("CanvasViewModel: onAppear publishes diagram node ids and tree root node ids for node styling")
+func test_onAppear_publishesNodeStylingIDs() async throws {
+    let treeRootID = CanvasNodeID(rawValue: "tree-root")
+    let treeChildID = CanvasNodeID(rawValue: "tree-child")
+    let diagramNodeID = CanvasNodeID(rawValue: "diagram-node")
+    let treeAreaID = CanvasAreaID(rawValue: "tree-area")
+    let diagramAreaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            treeRootID: CanvasNode(
+                id: treeRootID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+            ),
+            treeChildID: CanvasNode(
+                id: treeChildID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 260, y: 0, width: 200, height: 100)
+            ),
+            diagramNodeID: CanvasNode(
+                id: diagramNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 520, y: 0, width: 200, height: 100)
+            ),
+        ],
+        edgesByID: [
+            CanvasEdgeID(rawValue: "edge-tree-root-child"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-tree-root-child"),
+                fromNodeID: treeRootID,
+                toNodeID: treeChildID,
+                relationType: .parentChild
+            )
+        ],
+        focusedNodeID: treeRootID,
+        areasByID: [
+            treeAreaID: CanvasArea(id: treeAreaID, nodeIDs: [treeRootID, treeChildID], editingMode: .tree),
+            diagramAreaID: CanvasArea(id: diagramAreaID, nodeIDs: [diagramNodeID], editingMode: .diagram),
+        ]
+    )
+    let inputPort = StaticCanvasEditingInputPort(graph: graph)
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.onAppear()
+
+    #expect(viewModel.diagramNodeIDs == [diagramNodeID])
+    #expect(viewModel.treeRootNodeIDs == [treeRootID])
+}
+
+@MainActor
 @Test("CanvasViewModel: add-node apply publishes pending editing node")
 func test_apply_addNode_setsPendingEditingNodeID() async throws {
     let inputPort = UndoRedoCanvasEditingInputPort()
