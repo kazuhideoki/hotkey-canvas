@@ -37,6 +37,49 @@ func test_apply_diagramArea_mapsAddChildNodeToAddNodeBehavior() async throws {
     #expect(edge.relationType == .normal)
 }
 
+@Test("ApplyCanvasCommandsUseCase: diagram area addChildNode continues placement direction from incoming anchor")
+func test_apply_diagramArea_addChildNodeContinuesPlacementDirectionFromIncomingAnchor() async throws {
+    let anchorID = CanvasNodeID(rawValue: "anchor")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            anchorID: CanvasNode(
+                id: anchorID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            ),
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 440, y: 0, width: 220, height: 220)
+            ),
+        ],
+        edgesByID: [
+            CanvasEdgeID(rawValue: "edge-anchor-focused"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-anchor-focused"),
+                fromNodeID: anchorID,
+                toNodeID: focusedID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: focusedID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [anchorID, focusedID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addChildNode])
+
+    let newNodeID = try #require(result.newState.focusedNodeID)
+    let newNode = try #require(result.newState.nodesByID[newNodeID])
+    #expect(newNode.bounds.x == 880)
+    #expect(newNode.bounds.y == 0)
+}
+
 @Test("ApplyCanvasCommandsUseCase: diagram area maps addChildNode to addNode when focus is nil and area is unique")
 func test_apply_diagramArea_mapsAddChildNodeWithoutFocusWhenSingleArea() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
