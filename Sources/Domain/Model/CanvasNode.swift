@@ -30,7 +30,7 @@ public struct CanvasNode: Equatable, Sendable {
         id: CanvasNodeID,
         kind: CanvasNodeKind,
         text: String?,
-        imagePath: String? = nil,
+        imagePath: String?,
         bounds: CanvasBounds,
         metadata: [String: String] = [:],
         markdownStyleEnabled: Bool = true

@@ -14,11 +14,8 @@ enum DiagramAreaPolicyService {
             .centerFocusedNode,
             .deleteFocusedNode,
             .setNodeText,
-<<<<<<< HEAD
             .setNodeImage,
-=======
             .toggleFocusedNodeMarkdownStyle,
->>>>>>> main
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:

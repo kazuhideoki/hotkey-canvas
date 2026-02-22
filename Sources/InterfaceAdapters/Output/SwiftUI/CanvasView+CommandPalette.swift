@@ -52,30 +52,6 @@ extension CanvasView {
     }
 
     private func defaultCommandPaletteItems() -> [CommandPaletteItem] {
-<<<<<<< HEAD
-        let shortcutItems: [CommandPaletteItem] =
-            CanvasShortcutCatalogService.commandPaletteDefinitions().map { definition in
-                let searchText = ([definition.name, definition.shortcutLabel] + definition.searchTokens).joined(
-                    separator: " "
-                )
-                return CommandPaletteItem(
-                    id: definition.id.rawValue,
-                    title: definition.name,
-                    shortcutLabel: definition.shortcutLabel,
-                    searchText: searchText,
-                    action: .shortcut(definition.action)
-                )
-            }
-
-        let imageInsertItem = CommandPaletteItem(
-            id: "insertImageFromFinder",
-            title: "Insert Image from Finder",
-            shortcutLabel: "Finder",
-            searchText: "insert image finder photo picture",
-            action: .insertImageFromFinder
-        )
-        return shortcutItems + [imageInsertItem]
-=======
         var items: [CommandPaletteItem] = []
         for definition in CanvasShortcutCatalogService.commandPaletteDefinitions() {
             guard definition.isVisibleInCommandPalette else {
@@ -90,13 +66,22 @@ extension CanvasView {
                     title: definition.name,
                     shortcutLabel: definition.shortcutLabel,
                     searchText: searchText,
-                    action: definition.action
+                    action: .shortcut(definition.action)
                 )
             )
         }
         if let markdownToggleItem = focusedNodeMarkdownToggleCommandPaletteItem() {
             items.append(markdownToggleItem)
         }
+        items.append(
+            CommandPaletteItem(
+                id: "insertImageFromFinder",
+                title: "Insert Image from Finder",
+                shortcutLabel: "Finder",
+                searchText: "insert image finder photo picture",
+                action: .insertImageFromFinder
+            )
+        )
         return items
     }
 
@@ -118,9 +103,8 @@ extension CanvasView {
             title: title,
             shortcutLabel: "Focused Node",
             searchText: searchText,
-            action: .apply(commands: [.toggleFocusedNodeMarkdownStyle])
+            action: .shortcut(.apply(commands: [.toggleFocusedNodeMarkdownStyle]))
         )
->>>>>>> main
     }
 
     func executeSelectedCommandIfNeeded() {
