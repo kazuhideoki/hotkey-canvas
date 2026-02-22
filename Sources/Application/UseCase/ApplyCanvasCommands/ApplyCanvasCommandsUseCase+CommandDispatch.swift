@@ -61,7 +61,12 @@ extension ApplyCanvasCommandsUseCase {
             return noOpMutationResult(for: graph)
         case .deleteFocusedNode:
             return try deleteFocusedNode(in: graph)
-<<<<<<< HEAD
+        case .copyFocusedSubtree:
+            return copyFocusedSubtree(in: graph)
+        case .cutFocusedSubtree:
+            return try cutFocusedSubtree(in: graph)
+        case .pasteSubtreeAsChild:
+            return try pasteSubtreeAsChild(in: graph)
         case .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle:
             return try applyNodeContentCommand(command: command, to: graph)
         case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
@@ -74,14 +79,6 @@ extension ApplyCanvasCommandsUseCase {
         to graph: CanvasGraph
     ) throws -> CanvasMutationResult {
         switch command {
-=======
-        case .copyFocusedSubtree:
-            return copyFocusedSubtree(in: graph)
-        case .cutFocusedSubtree:
-            return try cutFocusedSubtree(in: graph)
-        case .pasteSubtreeAsChild:
-            return try pasteSubtreeAsChild(in: graph)
->>>>>>> main
         case .setNodeText(let nodeID, let text, let nodeHeight):
             return try setNodeText(in: graph, nodeID: nodeID, text: text, nodeHeight: nodeHeight)
         case .setNodeImage(let nodeID, let imagePath, let nodeHeight):
@@ -96,11 +93,15 @@ extension ApplyCanvasCommandsUseCase {
         case .addNode,
             .addChildNode,
             .addSiblingNode,
+            .alignParentNodesVertically,
             .moveFocus,
             .moveNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
+            .copyFocusedSubtree,
+            .cutFocusedSubtree,
+            .pasteSubtreeAsChild,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
