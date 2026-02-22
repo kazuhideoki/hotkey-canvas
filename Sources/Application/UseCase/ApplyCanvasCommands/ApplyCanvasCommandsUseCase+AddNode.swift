@@ -15,12 +15,13 @@ extension ApplyCanvasCommandsUseCase {
         case .tree:
             bounds = makeAvailableNewNodeBounds(in: graph)
         case .diagram:
-            let diagramNodeSideLength = Self.newNodeWidth
+            let diagramNodeSideLength = CanvasDefaultNodeDistance.diagramNodeSide
             bounds = makeAvailableNewNodeBounds(
                 in: graph,
                 avoiding: area.nodeIDs,
                 width: diagramNodeSideLength,
-                height: diagramNodeSideLength
+                height: diagramNodeSideLength,
+                verticalSpacing: CanvasDefaultNodeDistance.vertical(for: .diagram)
             )
         }
         let node = makeTextNode(bounds: bounds)

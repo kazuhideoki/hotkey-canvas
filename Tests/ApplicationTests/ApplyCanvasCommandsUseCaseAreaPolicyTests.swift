@@ -82,7 +82,7 @@ func test_apply_diagramArea_moveNodeNudgesFocusedNode() async throws {
     let result = try await sut.apply(commands: [.moveNode(.right)])
 
     let movedNode = try #require(result.newState.nodesByID[nodeID])
-    #expect(movedNode.bounds.x == 64)
+    #expect(movedNode.bounds.x == 260)
     #expect(movedNode.bounds.y == 40)
 }
 

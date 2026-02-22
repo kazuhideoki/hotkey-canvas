@@ -50,8 +50,7 @@ extension ApplyCanvasCommandsUseCase {
 
 extension ApplyCanvasCommandsUseCase {
     private static let orderingEpsilon: Double = 0.001
-    private static let indentHorizontalGap: Double = 32
-    private static let diagramNudgeStep: Double = 24
+    private static let indentHorizontalGap: Double = CanvasDefaultNodeDistance.treeHorizontal
 
     private func moveNodeByNudge(
         in graph: CanvasGraph,
@@ -108,15 +107,17 @@ extension ApplyCanvasCommandsUseCase {
     }
 
     private func diagramNudgeDelta(for direction: CanvasNodeMoveDirection) -> (dx: Double, dy: Double) {
+        let horizontalStep = CanvasDefaultNodeDistance.diagramHorizontal
+        let verticalStep = CanvasDefaultNodeDistance.vertical(for: .diagram)
         switch direction {
         case .up:
-            return (0, -Self.diagramNudgeStep)
+            return (0, -verticalStep)
         case .down:
-            return (0, Self.diagramNudgeStep)
+            return (0, verticalStep)
         case .left:
-            return (-Self.diagramNudgeStep, 0)
+            return (-horizontalStep, 0)
         case .right:
-            return (Self.diagramNudgeStep, 0)
+            return (horizontalStep, 0)
         }
     }
 

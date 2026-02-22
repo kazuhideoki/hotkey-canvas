@@ -16,7 +16,7 @@
 
 | ID | ドメイン名 | 主な型/サービス |
 | --- | --- | --- |
-| D1 | キャンバスグラフ編集 | `CanvasGraph`, `CanvasNode`, `CanvasEdge`, `CanvasCommand`, `CanvasGraphCRUDService`, `CanvasGraphError` |
+| D1 | キャンバスグラフ編集 | `CanvasGraph`, `CanvasNode`, `CanvasEdge`, `CanvasCommand`, `CanvasDefaultNodeDistance`, `CanvasGraphCRUDService`, `CanvasGraphError` |
 | D2 | フォーカス移動 | `CanvasFocusDirection`, `CanvasFocusNavigationService` |
 | D3 | エリアレイアウト | `CanvasNodeArea`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService` |
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
@@ -51,6 +51,7 @@
 - エンティティ/値オブジェクト
   - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.imagePath` はノード内画像ファイルパス、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`
+  - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`）
 - コマンド
   - `CanvasCommand`
   - `CanvasNodeMoveDirection`
@@ -266,6 +267,7 @@
 - 子ノードの X は `parent.width + horizontalSpacing` で親から右へ進める。
 - ルートノードは元の座標をアンカーとして、再配置による急激なジャンプを抑える。
 - 循環参照などで根が取れない成分は 1 本の親リンクを外して決定的に解決する。
+- 既定引数は `CanvasDefaultNodeDistance` を参照し、`verticalSpacing = treeVertical`、`horizontalSpacing = treeHorizontal`、`rootSpacing = treeRootVertical` を採用する。
 
 #### 利用状況（どこから使われるか）
 
@@ -429,7 +431,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CommandDispatch.swift`
     - コマンド適用前に所属整合性検証と対象エリア解決を行う。
     - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
-    - Diagram エリアでは `addChildNode` を `addNode` へ正規化し、`moveNode` は階層移動ではなく座標 nudge として扱う。
+    - Diagram エリアでは `addChildNode` を `addNode` へ正規化し、`moveNode` は階層移動ではなく座標 nudge として扱う（既定距離は `CanvasDefaultNodeDistance` を参照し、横 `220`・縦 `220`）。
     - `alignParentNodesVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス中エリア内の親ノード（エリア内で親子入辺を持たないノード）の `x` を最左ノード基準に揃える。整列時は親ノード配下サブツリーを一括で同じ `dx` 平行移動し、エリア内の相対位置を維持する。さらに整列後は親サブツリー同士の重なりを `y` 方向の平行移動で解消し、縦一列の `x` 基準を維持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
     - Diagram エリアでは `addNode` 実行時、フォーカスノードが存在する場合に `relationType = .normal` のエッジで新規ノードと接続する。
@@ -512,3 +514,4 @@
 - 2026-02-22: Diagram mode のノード寸法ルールを更新し、Tree ノード横幅（`220`）を一辺とする正方形へ統一（`addNode` / `setNodeText` / エリアモード変換・再所属後の正規化を含む）。
 - 2026-02-22: `CanvasNode.markdownStyleEnabled` と `toggleFocusedNodeMarkdownStyle` コマンドを追加し、コマンドパレットからフォーカスノード単位で Markdown スタイル適用を切り替え可能にした。
 - 2026-02-22: `alignParentNodesVertically` コマンドを追加し、Command Palette からフォーカスエリア内の親ノードを最左基準で縦一列に整列できるようにした（Tree/Diagram 両対応）。
+- 2026-02-22: `CanvasDefaultNodeDistance` を更新し、Tree/Diagram の既定ノード間距離（Tree: 横 `32` / 縦 `24`、Diagram: 横 `220` / 縦 `220`）を Domain で一元管理する仕様へ更新。
