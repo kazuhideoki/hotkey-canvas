@@ -35,22 +35,39 @@ extension ApplyCanvasCommandsUseCase {
             }
         let proposedHeight = nodeHeight.isFinite ? nodeHeight : fallbackHeight
         let normalizedHeight = max(proposedHeight, Self.minimumNodeHeight)
-        if node.text == normalizedText, node.bounds.height == normalizedHeight {
+        let areaID = try CanvasAreaMembershipService.areaID(containing: nodeID, in: graph).get()
+        let area = try CanvasAreaMembershipService.area(withID: areaID, in: graph).get()
+        let normalizedBounds: CanvasBounds
+        if area.editingMode == .diagram {
+            let squareSideLength = Self.newNodeWidth
+            normalizedBounds = CanvasBounds(
+                x: node.bounds.x,
+                y: node.bounds.y,
+                width: squareSideLength,
+                height: squareSideLength
+            )
+        } else {
+            normalizedBounds = CanvasBounds(
+                x: node.bounds.x,
+                y: node.bounds.y,
+                width: node.bounds.width,
+                height: normalizedHeight
+            )
+        }
+        if node.text == normalizedText, node.bounds == normalizedBounds {
             return noOpMutationResult(for: graph)
         }
 
-        let updatedBounds = CanvasBounds(
-            x: node.bounds.x,
-            y: node.bounds.y,
-            width: node.bounds.width,
-            height: normalizedHeight
-        )
         let updatedNode = CanvasNode(
             id: node.id,
             kind: node.kind,
             text: normalizedText,
+<<<<<<< HEAD
             imagePath: node.imagePath,
             bounds: updatedBounds,
+=======
+            bounds: normalizedBounds,
+>>>>>>> main
             metadata: node.metadata,
             markdownStyleEnabled: node.markdownStyleEnabled
         )

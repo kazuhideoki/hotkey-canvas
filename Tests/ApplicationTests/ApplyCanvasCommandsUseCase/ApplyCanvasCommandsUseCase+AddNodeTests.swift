@@ -285,6 +285,27 @@ func test_apply_addNode_failsWithoutFocusInMultiAreaGraph() async throws {
     }
 }
 
+@Test("ApplyCanvasCommandsUseCase: addNode in diagram area creates square node with tree-width side length")
+func test_apply_addNodeInDiagramArea_createsSquareNode() async throws {
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [:],
+        edgesByID: [:],
+        focusedNodeID: nil,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addNode])
+
+    let focusedNodeID = try #require(result.newState.focusedNodeID)
+    let addedNode = try #require(result.newState.nodesByID[focusedNodeID])
+    #expect(addedNode.bounds.width == 220)
+    #expect(addedNode.bounds.height == 220)
+}
+
 private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds, spacing: Double = 0) -> Bool {
     let halfSpacing = max(0, spacing) / 2
     let lhsLeft = lhs.x - halfSpacing

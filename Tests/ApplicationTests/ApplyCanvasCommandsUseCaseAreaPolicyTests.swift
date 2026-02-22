@@ -249,4 +249,7 @@ func test_apply_convertFocusedAreaMode_convertsFocusedAreaMode() async throws {
     let result = try await sut.apply(commands: [.convertFocusedAreaMode(to: .diagram)])
 
     #expect(result.newState.areasByID[areaID]?.editingMode == .diagram)
+    let convertedNode = try #require(result.newState.nodesByID[nodeID])
+    #expect(convertedNode.bounds.width == 220)
+    #expect(convertedNode.bounds.height == 220)
 }
