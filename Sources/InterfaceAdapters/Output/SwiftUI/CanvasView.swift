@@ -22,6 +22,8 @@ public struct CanvasView: View {
     @State var cameraAnchorPoint: CGPoint = .zero
     @State var manualPanOffset: CGSize = .zero
     @State var zoomScale: Double = 1.0
+    @State var zoomRatioPopupText: String?
+    @State var zoomRatioPopupRequestID: UInt64 = 0
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     private let hotkeyTranslator: CanvasHotkeyTranslator
@@ -304,6 +306,13 @@ public struct CanvasView: View {
                         }
                     )
                     .zIndex(11)
+                }
+                if let zoomRatioPopupText {
+                    ZoomRatioPopup(text: zoomRatioPopupText)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .allowsHitTesting(false)
+                        .zIndex(12)
+                        .transition(.opacity)
                 }
                 if isCommandPalettePresented {
                     Color.clear

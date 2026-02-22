@@ -177,8 +177,15 @@ extension CanvasViewModel {
         switch command {
         case .addNode, .addChildNode, .addSiblingNode:
             return true
+<<<<<<< HEAD
         case .moveFocus, .moveNode, .toggleFoldFocusedSubtree, .centerFocusedNode, .deleteFocusedNode,
             .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
+=======
+        case .alignParentNodesVertically,
+            .moveFocus, .moveNode, .toggleFoldFocusedSubtree, .centerFocusedNode, .deleteFocusedNode,
+            .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
+            .setNodeText, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
+>>>>>>> main
             .assignNodesToArea:
             return false
         }
