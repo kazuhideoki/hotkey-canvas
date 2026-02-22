@@ -64,7 +64,7 @@ public struct CanvasView: View {
                 renderedNode($0, viewportSize: viewportSize, effectiveOffset: cameraOffset)
             }
             let renderedNodesByID = Dictionary(uniqueKeysWithValues: renderedNodes.map { ($0.id, $0) })
-            let branchXByParentAndDirection = CanvasEdgeRouting.branchXByParentAndDirection(
+            let branchCoordinateByParentAndDirection = CanvasEdgeRouting.branchCoordinateByParentAndDirection(
                 edges: viewModel.edges,
                 nodesByID: nodesByID
             )
@@ -186,7 +186,7 @@ public struct CanvasView: View {
                         if let path = CanvasEdgeRouting.path(
                             for: edge,
                             nodesByID: nodesByID,
-                            branchXByParentAndDirection: branchXByParentAndDirection
+                            branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
                         ) {
                             path
                                 .applying(

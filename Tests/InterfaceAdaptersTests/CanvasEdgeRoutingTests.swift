@@ -6,7 +6,7 @@ import Testing
 @testable import InterfaceAdapters
 
 @Test("CanvasEdgeRouting: sibling edges share a branch column between parent and children on right side")
-func test_branchXByParent_rightSideChildren_placesBranchBetweenNodes() {
+func test_branchCoordinateByParentAndDirection_rightSideChildren_placesBranchBetweenNodes() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childTopID = CanvasNodeID(rawValue: "child-top")
     let childBottomID = CanvasNodeID(rawValue: "child-bottom")
@@ -20,22 +20,22 @@ func test_branchXByParent_rightSideChildren_placesBranchBetweenNodes() {
         CanvasEdge(id: CanvasEdgeID(rawValue: "edge-2"), fromNodeID: parentID, toNodeID: childBottomID),
     ]
 
-    let branchXByParentAndDirection = CanvasEdgeRouting.branchXByParentAndDirection(
+    let branchCoordinateByParentAndDirection = CanvasEdgeRouting.branchCoordinateByParentAndDirection(
         edges: edges,
         nodesByID: nodesByID
     )
-    let key = CanvasEdgeRouting.BranchKey(parentNodeID: parentID, direction: 1)
-    let branchX = branchXByParentAndDirection[key]
+    let key = CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .horizontal, direction: 1)
+    let branchCoordinate = branchCoordinateByParentAndDirection[key]
 
-    #expect(branchX != nil)
-    if let branchX {
-        #expect(branchX > 260)  // parent right edge
-        #expect(branchX < 420)  // child left edge
+    #expect(branchCoordinate != nil)
+    if let branchCoordinate {
+        #expect(branchCoordinate > 260)  // parent right edge
+        #expect(branchCoordinate < 420)  // child left edge
     }
 }
 
 @Test("CanvasEdgeRouting: mixed left and right children keep separate branch columns")
-func test_branchXByParentAndDirection_mixedSideChildren_buildsBothBranchColumns() {
+func test_branchCoordinateByParentAndDirection_mixedSideChildren_buildsBothBranchColumns() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let rightChildID = CanvasNodeID(rawValue: "right-child")
     let leftChildID = CanvasNodeID(rawValue: "left-child")
@@ -49,24 +49,24 @@ func test_branchXByParentAndDirection_mixedSideChildren_buildsBothBranchColumns(
         CanvasEdge(id: CanvasEdgeID(rawValue: "edge-left"), fromNodeID: parentID, toNodeID: leftChildID),
     ]
 
-    let branchXByParentAndDirection = CanvasEdgeRouting.branchXByParentAndDirection(
+    let branchCoordinateByParentAndDirection = CanvasEdgeRouting.branchCoordinateByParentAndDirection(
         edges: edges,
         nodesByID: nodesByID
     )
-    let rightKey = CanvasEdgeRouting.BranchKey(parentNodeID: parentID, direction: 1)
-    let leftKey = CanvasEdgeRouting.BranchKey(parentNodeID: parentID, direction: -1)
-    let rightBranchX = branchXByParentAndDirection[rightKey]
-    let leftBranchX = branchXByParentAndDirection[leftKey]
+    let rightKey = CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .horizontal, direction: 1)
+    let leftKey = CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .horizontal, direction: -1)
+    let rightBranchCoordinate = branchCoordinateByParentAndDirection[rightKey]
+    let leftBranchCoordinate = branchCoordinateByParentAndDirection[leftKey]
 
-    #expect(rightBranchX != nil)
-    #expect(leftBranchX != nil)
-    if let rightBranchX {
-        #expect(rightBranchX > 520)  // parent right edge
-        #expect(rightBranchX < 700)  // right child left edge
+    #expect(rightBranchCoordinate != nil)
+    #expect(leftBranchCoordinate != nil)
+    if let rightBranchCoordinate {
+        #expect(rightBranchCoordinate > 520)  // parent right edge
+        #expect(rightBranchCoordinate < 700)  // right child left edge
     }
-    if let leftBranchX {
-        #expect(leftBranchX < 300)  // parent left edge
-        #expect(leftBranchX > 240)  // left child right edge
+    if let leftBranchCoordinate {
+        #expect(leftBranchCoordinate < 300)  // parent left edge
+        #expect(leftBranchCoordinate > 240)  // left child right edge
     }
 }
 
@@ -79,20 +79,21 @@ func test_routeGeometry_usesNodeSidesAndParentBranchX() {
         parentID: makeNode(id: parentID, x: 80, y: 200, width: 220, height: 56),
         childID: makeNode(id: childID, x: 460, y: 360, width: 220, height: 56),
     ]
-    let branchXByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double] = [
-        CanvasEdgeRouting.BranchKey(parentNodeID: parentID, direction: 1): 350
+    let branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double] = [
+        CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .horizontal, direction: 1): 350
     ]
 
     let geometry = CanvasEdgeRouting.routeGeometry(
         for: edge,
         nodesByID: nodesByID,
-        branchXByParentAndDirection: branchXByParentAndDirection
+        branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
     )
 
     #expect(geometry != nil)
+    #expect(geometry?.axis == .horizontal)
     #expect(geometry?.startX == 300)  // parent right edge
     #expect(geometry?.endX == 460)  // child left edge
-    #expect(geometry?.branchX == 350)
+    #expect(geometry?.branchCoordinate == 350)
     #expect(geometry?.startY == 228)
     #expect(geometry?.endY == 388)
 }
@@ -106,20 +107,21 @@ func test_routeGeometry_leftDirection_usesOppositeSides() {
         parentID: makeNode(id: parentID, x: 440, y: 200, width: 220, height: 56),
         childID: makeNode(id: childID, x: 120, y: 320, width: 220, height: 56),
     ]
-    let branchXByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double] = [
-        CanvasEdgeRouting.BranchKey(parentNodeID: parentID, direction: -1): 380
+    let branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double] = [
+        CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .horizontal, direction: -1): 380
     ]
 
     let geometry = CanvasEdgeRouting.routeGeometry(
         for: edge,
         nodesByID: nodesByID,
-        branchXByParentAndDirection: branchXByParentAndDirection
+        branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
     )
 
     #expect(geometry != nil)
+    #expect(geometry?.axis == .horizontal)
     #expect(geometry?.startX == 440)  // parent left edge
     #expect(geometry?.endX == 340)  // child right edge
-    #expect(geometry?.branchX == 380)
+    #expect(geometry?.branchCoordinate == 380)
 }
 
 @Test("CanvasEdgeRouting: overlapping nodes determine direction from centers")
@@ -129,21 +131,70 @@ func test_routeGeometry_overlappingNodes_usesCenterBasedDirection() {
     let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
     let nodesByID: [CanvasNodeID: CanvasNode] = [
         parentID: makeNode(id: parentID, x: 200, y: 200, width: 200, height: 56),
-        childID: makeNode(id: childID, x: 250, y: 320, width: 20, height: 56),
+        childID: makeNode(id: childID, x: 250, y: 220, width: 20, height: 56),
     ]
-    let branchXByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double] = [
-        CanvasEdgeRouting.BranchKey(parentNodeID: parentID, direction: -1): 230
+    let branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double] = [
+        CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .horizontal, direction: -1): 230
     ]
 
     let geometry = CanvasEdgeRouting.routeGeometry(
         for: edge,
         nodesByID: nodesByID,
-        branchXByParentAndDirection: branchXByParentAndDirection
+        branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
     )
 
     #expect(geometry != nil)
     #expect(geometry?.startX == 200)  // parent left edge
     #expect(geometry?.endX == 270)  // child right edge
+}
+
+@Test("CanvasEdgeRouting: vertically aligned nodes connect from bottom to top centers")
+func test_routeGeometry_verticalAlignment_usesTopBottomAnchors() {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 240, y: 120, width: 220, height: 56),
+        childID: makeNode(id: childID, x: 280, y: 420, width: 220, height: 56),
+    ]
+    let branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double] = [
+        CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .vertical, direction: 1): 320
+    ]
+
+    let geometry = CanvasEdgeRouting.routeGeometry(
+        for: edge,
+        nodesByID: nodesByID,
+        branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
+    )
+
+    #expect(geometry != nil)
+    #expect(geometry?.axis == .vertical)
+    #expect(geometry?.startX == 350)  // parent centerX
+    #expect(geometry?.startY == 176)  // parent bottom edge
+    #expect(geometry?.endX == 390)  // child centerX
+    #expect(geometry?.endY == 420)  // child top edge
+    #expect(geometry?.branchCoordinate == 320)
+}
+
+@Test("CanvasEdgeRouting: relatively vertical relation prefers vertical routing")
+func test_routeGeometry_relativelyVertical_prefersVerticalRouting() {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 100, y: 100, width: 220, height: 56),
+        childID: makeNode(id: childID, x: 280, y: 310, width: 220, height: 56),
+    ]
+
+    let geometry = CanvasEdgeRouting.routeGeometry(
+        for: edge,
+        nodesByID: nodesByID,
+        branchCoordinateByParentAndDirection: [:]
+    )
+
+    #expect(geometry?.axis == .vertical)
+    #expect(geometry?.startY == 156)  // parent bottom edge
+    #expect(geometry?.endY == 310)  // child top edge
 }
 
 private func makeNode(
