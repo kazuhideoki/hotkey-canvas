@@ -66,7 +66,8 @@ extension ApplyCanvasCommandsUseCase {
                     kind: node.kind,
                     text: node.text,
                     bounds: translate(node.bounds, dx: translation.dx, dy: translation.dy),
-                    metadata: node.metadata
+                    metadata: node.metadata,
+                    markdownStyleEnabled: node.markdownStyleEnabled
                 )
             }
         }
