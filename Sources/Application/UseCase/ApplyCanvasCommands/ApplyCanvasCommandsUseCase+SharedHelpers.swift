@@ -145,6 +145,62 @@ extension ApplyCanvasCommandsUseCase {
         return candidate
     }
 
+    /// Computes diagram-node bounds by following the focused node's incoming direction when available.
+    /// - Parameters:
+    ///   - graph: Current canvas graph.
+    ///   - nodeIDs: Nodes to consider as placement blockers.
+    ///   - width: New node width.
+    ///   - height: New node height.
+    ///   - verticalSpacing: Fallback spacing used when directional context is unavailable.
+    /// - Returns: First available non-overlapping bounds in the inferred direction.
+    func makeAvailableDiagramNewNodeBounds(
+        in graph: CanvasGraph,
+        avoiding nodeIDs: Set<CanvasNodeID>,
+        width: Double,
+        height: Double,
+        verticalSpacing: Double = ApplyCanvasCommandsUseCase.newNodeVerticalSpacing
+    ) -> CanvasBounds {
+        guard
+            let focusedNodeID = graph.focusedNodeID,
+            let focusedNode = graph.nodesByID[focusedNodeID],
+            let anchorNode = diagramIncomingAnchorNode(of: focusedNodeID, in: graph),
+            let unit = diagramDirectionalUnit(from: anchorNode, to: focusedNode)
+        else {
+            return makeAvailableNewNodeBounds(
+                in: graph,
+                avoiding: nodeIDs,
+                width: width,
+                height: height,
+                verticalSpacing: verticalSpacing
+            )
+        }
+
+        let focusedCenterX = focusedNode.bounds.x + (focusedNode.bounds.width / 2)
+        let focusedCenterY = focusedNode.bounds.y + (focusedNode.bounds.height / 2)
+        let horizontalDistance =
+            ((focusedNode.bounds.width + width) / 2) + CanvasDefaultNodeDistance.diagramHorizontal
+        let verticalDistance =
+            ((focusedNode.bounds.height + height) / 2) + CanvasDefaultNodeDistance.vertical(for: .diagram)
+        var candidate = CanvasBounds(
+            x: focusedCenterX + (Double(unit.dx) * horizontalDistance) - (width / 2),
+            y: focusedCenterY + (Double(unit.dy) * verticalDistance) - (height / 2),
+            width: width,
+            height: height
+        )
+        let collisionNodes = nodesForPlacementCollision(in: graph, avoiding: nodeIDs)
+        let horizontalStep = width + CanvasDefaultNodeDistance.diagramHorizontal
+        let verticalStep = height + CanvasDefaultNodeDistance.vertical(for: .diagram)
+        while hasOverlappingNode(candidate, in: collisionNodes) {
+            candidate = CanvasBounds(
+                x: candidate.x + (Double(unit.dx) * horizontalStep),
+                y: candidate.y + (Double(unit.dy) * verticalStep),
+                width: candidate.width,
+                height: candidate.height
+            )
+        }
+        return candidate
+    }
+
     /// Computes sibling-node bounds for insertion around the focused node.
     /// - Parameters:
     ///   - graph: Current canvas graph.
@@ -359,5 +415,56 @@ extension ApplyCanvasCommandsUseCase {
             return isAreaAbove(lhs, rhs)
         }
         return lhs.bounds.maxY < rhs.bounds.maxY
+    }
+
+    /// Returns the preferred incoming anchor node for a focused diagram node.
+    private func diagramIncomingAnchorNode(
+        of focusedNodeID: CanvasNodeID,
+        in graph: CanvasGraph
+    ) -> CanvasNode? {
+        let incomingEdges = graph.edgesByID.values
+            .filter { $0.toNodeID == focusedNodeID && graph.nodesByID[$0.fromNodeID] != nil }
+            .sorted(by: isPreferredPlacementAnchorEdge)
+        guard let edge = incomingEdges.first else {
+            return nil
+        }
+        return graph.nodesByID[edge.fromNodeID]
+    }
+
+    /// Maps anchor->focused geometric relation to a unit direction used for chained diagram placement.
+    private func diagramDirectionalUnit(
+        from anchorNode: CanvasNode,
+        to focusedNode: CanvasNode
+    ) -> (dx: Int, dy: Int)? {
+        let deltaX = focusedNode.bounds.x - anchorNode.bounds.x
+        let deltaY = focusedNode.bounds.y - anchorNode.bounds.y
+        let epsilon = 0.001
+        let dx = abs(deltaX) <= epsilon ? 0 : (deltaX > 0 ? 1 : -1)
+        let dy = abs(deltaY) <= epsilon ? 0 : (deltaY > 0 ? 1 : -1)
+        guard dx != 0 || dy != 0 else {
+            return nil
+        }
+        return (dx, dy)
+    }
+
+    /// Returns deterministic edge priority for placement anchor selection.
+    private func isPreferredPlacementAnchorEdge(_ lhs: CanvasEdge, _ rhs: CanvasEdge) -> Bool {
+        let lhsPriority = edgePriorityForPlacementAnchor(lhs)
+        let rhsPriority = edgePriorityForPlacementAnchor(rhs)
+        if lhsPriority != rhsPriority {
+            return lhsPriority < rhsPriority
+        }
+        return lhs.id.rawValue < rhs.id.rawValue
+    }
+
+    /// Defines edge priority so normal links are used before structural links.
+    private func edgePriorityForPlacementAnchor(_ edge: CanvasEdge) -> Int {
+        if edge.relationType == .normal {
+            return 0
+        }
+        if edge.relationType == .parentChild {
+            return 1
+        }
+        return 2
     }
 }
