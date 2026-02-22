@@ -242,11 +242,7 @@ public struct CanvasView: View {
                                         )
                                         .padding(NodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
                                     } else {
-<<<<<<< HEAD
                                         nonEditingNodeContent(
-=======
-                                        nonEditingNodeText(
->>>>>>> main
                                             node: node,
                                             zoomScale: zoomScale
                                         )

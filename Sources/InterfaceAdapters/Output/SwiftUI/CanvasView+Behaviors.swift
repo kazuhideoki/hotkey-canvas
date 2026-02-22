@@ -391,9 +391,6 @@ extension CanvasView {
             initialTypingEvent: nil
         )
     }
-<<<<<<< HEAD
-=======
-
     @ViewBuilder
     func nonEditingNodeText(node: CanvasNode, zoomScale: Double) -> some View {
         let text = node.text ?? ""
@@ -417,7 +414,6 @@ extension CanvasView {
                 .padding(scaledPadding)
         }
     }
->>>>>>> main
 }
 
 /// Inline-editing state for a single node.

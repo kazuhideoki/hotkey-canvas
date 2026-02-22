@@ -73,13 +73,15 @@ extension ApplyCanvasCommandsUseCase {
             id: focusedNode.id,
             kind: focusedNode.kind,
             text: focusedNode.text,
+            imagePath: focusedNode.imagePath,
             bounds: CanvasBounds(
                 x: focusedNode.bounds.x + delta.dx,
                 y: focusedNode.bounds.y + delta.dy,
                 width: focusedNode.bounds.width,
                 height: focusedNode.bounds.height
             ),
-            metadata: focusedNode.metadata
+            metadata: focusedNode.metadata,
+            markdownStyleEnabled: focusedNode.markdownStyleEnabled
         )
         let nextGraph = CanvasGraph(
             nodesByID: graph.nodesByID.merging(

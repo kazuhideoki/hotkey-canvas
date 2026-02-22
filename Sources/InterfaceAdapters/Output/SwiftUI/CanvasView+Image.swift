@@ -177,8 +177,7 @@ extension CanvasView {
                     )
                 if hasText {
                     nonEditingNodeTextBody(
-                        text: node.text ?? "",
-                        nodeWidth: node.bounds.width,
+                        node: node,
                         zoomScale: zoomScale
                     )
                 }
@@ -186,8 +185,23 @@ extension CanvasView {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding(scaledPadding)
         } else {
-            nonEditingNodeText(
-                text: node.text ?? "",
+            nonEditingNodeText(node: node, zoomScale: zoomScale)
+        }
+    }
+
+    @ViewBuilder
+    func nonEditingNodeTextBody(node: CanvasNode, zoomScale: Double) -> some View {
+        let text = node.text ?? ""
+        if node.markdownStyleEnabled {
+            NodeMarkdownDisplay(
+                text: text,
+                nodeWidth: node.bounds.width,
+                zoomScale: zoomScale,
+                appliesOuterPadding: false
+            )
+        } else {
+            nonEditingPlainNodeTextBody(
+                text: text,
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale
             )
@@ -195,20 +209,7 @@ extension CanvasView {
     }
 
     @ViewBuilder
-    func nonEditingNodeText(text: String, nodeWidth: Double, zoomScale: Double) -> some View {
-        let scale = CGFloat(zoomScale)
-        let scaledPadding = NodeTextStyle.outerPadding * scale
-        nonEditingNodeTextBody(
-            text: text,
-            nodeWidth: nodeWidth,
-            zoomScale: zoomScale
-        )
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .padding(scaledPadding)
-    }
-
-    @ViewBuilder
-    func nonEditingNodeTextBody(text: String, nodeWidth: Double, zoomScale: Double) -> some View {
+    private func nonEditingPlainNodeTextBody(text: String, nodeWidth: Double, zoomScale: Double) -> some View {
         let scale = CGFloat(zoomScale)
         let contentWidth = max(
             (CGFloat(nodeWidth) * scale) - (NodeTextStyle.outerPadding * scale * 2),
