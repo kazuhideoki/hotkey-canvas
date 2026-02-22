@@ -436,6 +436,7 @@
     - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
     - Diagram エリアでは `addChildNode` を `addNode` へ正規化する。
     - Diagram エリアでは `moveNode` を接続アンカー基準の8方向スロット移動として扱い、スロット間隔の既定値は `CanvasDefaultNodeDistance`（横 `220`・縦 `220`）を使う。
+    - Diagram エリアで `moveNode` を適用した後は、同一エリア内ノード衝突も即時解消するために area layout を実行する。
     - Diagram エリアでは `nudgeNode` を座標微調整として扱い、既定ステップは `CanvasDefaultNodeDistance`（横 `220`・縦 `220`）を使う。
     - `alignParentNodesVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス中エリア内の親ノード（エリア内で親子入辺を持たないノード）の `x` を最左ノード基準に揃える。整列時は親ノード配下サブツリーを一括で同じ `dx` 平行移動し、エリア内の相対位置を維持する。さらに整列後は親サブツリー同士の重なりを `y` 方向の平行移動で解消し、縦一列の `x` 基準を維持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
