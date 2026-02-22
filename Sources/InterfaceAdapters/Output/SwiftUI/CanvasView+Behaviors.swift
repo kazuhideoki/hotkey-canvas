@@ -299,29 +299,21 @@ extension CanvasView {
         }
 
         let measuredLayout = measuredNodeLayout(text: context.text, nodeWidth: node.bounds.width)
-<<<<<<< HEAD
-        let measuredHeight = measuredNodeHeightForEditing(
-            text: context.text,
-            measuredTextHeight: Double(measuredLayout.nodeHeight),
-            node: node
-        )
-=======
         let editingHeight =
             if isDiagramNode(context.nodeID) {
                 node.bounds.height
             } else {
-                Double(measuredLayout.nodeHeight)
+                measuredNodeHeightForEditing(
+                    text: context.text,
+                    measuredTextHeight: Double(measuredLayout.nodeHeight),
+                    node: node
+                )
             }
->>>>>>> main
         editingContext = NodeEditingContext(
             nodeID: context.nodeID,
             text: context.text,
             nodeWidth: node.bounds.width,
-<<<<<<< HEAD
-            nodeHeight: measuredHeight,
-=======
             nodeHeight: editingHeight,
->>>>>>> main
             initialCursorPlacement: context.initialCursorPlacement,
             initialTypingEvent: context.initialTypingEvent
         )
@@ -358,7 +350,9 @@ extension CanvasView {
         guard var context = editingContext, context.nodeID == nodeID else {
             return
         }
-<<<<<<< HEAD
+        guard !isDiagramNode(nodeID) else {
+            return
+        }
         let roundedTextHeight = Double(ceil(metrics.nodeHeight))
         guard roundedTextHeight.isFinite, roundedTextHeight > 0 else {
             return
@@ -371,12 +365,6 @@ extension CanvasView {
             measuredTextHeight: roundedTextHeight,
             node: node
         )
-=======
-        guard !isDiagramNode(nodeID) else {
-            return
-        }
-        let roundedHeight = Double(ceil(metrics.nodeHeight))
->>>>>>> main
         guard roundedHeight.isFinite, roundedHeight > 0 else {
             return
         }
@@ -399,41 +387,30 @@ extension CanvasView {
             return
         }
         let measuredLayout = measuredNodeLayout(text: node.text ?? "", nodeWidth: node.bounds.width)
-<<<<<<< HEAD
-        let measuredHeight = measuredNodeHeightForEditing(
-            text: node.text ?? "",
-            measuredTextHeight: Double(measuredLayout.nodeHeight),
-            node: node
-        )
-=======
         let editingHeight =
             if isDiagramNode(nodeID) {
                 node.bounds.height
             } else {
-                Double(measuredLayout.nodeHeight)
+                measuredNodeHeightForEditing(
+                    text: node.text ?? "",
+                    measuredTextHeight: Double(measuredLayout.nodeHeight),
+                    node: node
+                )
             }
->>>>>>> main
         editingContext = NodeEditingContext(
             nodeID: nodeID,
             text: node.text ?? "",
             nodeWidth: node.bounds.width,
-<<<<<<< HEAD
-            nodeHeight: measuredHeight,
-=======
             nodeHeight: editingHeight,
->>>>>>> main
             initialCursorPlacement: .end,
             initialTypingEvent: nil
         )
     }
-<<<<<<< HEAD
-=======
 
     func isDiagramNode(_ nodeID: CanvasNodeID) -> Bool {
         viewModel.diagramNodeIDs.contains(nodeID)
     }
 
->>>>>>> main
     @ViewBuilder
     func nonEditingNodeText(node: CanvasNode, zoomScale: Double) -> some View {
         let text = node.text ?? ""

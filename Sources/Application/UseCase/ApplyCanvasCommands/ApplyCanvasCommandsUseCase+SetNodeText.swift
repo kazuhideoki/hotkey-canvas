@@ -62,12 +62,8 @@ extension ApplyCanvasCommandsUseCase {
             id: node.id,
             kind: node.kind,
             text: normalizedText,
-<<<<<<< HEAD
             imagePath: node.imagePath,
-            bounds: updatedBounds,
-=======
             bounds: normalizedBounds,
->>>>>>> main
             metadata: node.metadata,
             markdownStyleEnabled: node.markdownStyleEnabled
         )
