@@ -195,10 +195,17 @@ public struct CanvasView: View {
                             let isFocused = viewModel.focusedNodeID == node.id
                             let isCollapsedRoot = viewModel.collapsedRootNodeIDs.contains(node.id)
                             let isEditing = editingContext?.nodeID == node.id
-                            RoundedRectangle(cornerRadius: NodeTextStyle.cornerRadius)
-                                .fill(Color(nsColor: .windowBackgroundColor))
+                            let isDiagramNode = viewModel.diagramNodeIDs.contains(node.id)
+                            let isTreeRootNode = viewModel.treeRootNodeIDs.contains(node.id)
+                            let nodeCornerRadius: CGFloat = isDiagramNode ? 0 : NodeTextStyle.cornerRadius
+                            let nodeFillColor =
+                                isTreeRootNode
+                                ? Color(nsColor: .systemGray)
+                                : Color(nsColor: .windowBackgroundColor)
+                            RoundedRectangle(cornerRadius: nodeCornerRadius)
+                                .fill(nodeFillColor)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: NodeTextStyle.cornerRadius)
+                                    RoundedRectangle(cornerRadius: nodeCornerRadius)
                                         .stroke(
                                             isEditing
                                                 ? Color(nsColor: .systemPink)
