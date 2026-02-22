@@ -32,6 +32,9 @@
 - `Command + =`: `zoomIn`
 - `Command + -`: `zoomOut`
 - `Option + .`: `toggleFoldFocusedSubtree`
+- `Command + C`: `copyFocusedSubtree`
+- `Command + X`: `cutFocusedSubtree`
+- `Command + V`: `pasteSubtreeAsChild`
 - 利用先:
 - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)`）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
@@ -54,6 +57,9 @@
   - `CanvasSiblingNodePosition`
   - `CanvasCommand.centerFocusedNode`
   - `CanvasCommand.toggleFoldFocusedSubtree`
+  - `CanvasCommand.copyFocusedSubtree`
+  - `CanvasCommand.cutFocusedSubtree`
+  - `CanvasCommand.pasteSubtreeAsChild`
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
   - `CanvasCommand.alignParentNodesVertically`
 - エラー
@@ -80,6 +86,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ToggleFocusedNodeMarkdownStyle.swift`
@@ -426,6 +433,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
     - 追加/削除時の所属更新を行う。
 - 主要テスト
   - `Tests/DomainTests/CanvasAreaMembershipServiceTests.swift`
@@ -488,6 +496,7 @@
 - 2026-02-21: Diagram mode Phase1 基盤として `CanvasArea*` モデル、`CanvasAreaMembershipService`、`CanvasAreaPolicyError`、モード別コマンドディスパッチ境界を追加。
 - 2026-02-21: Diagram mode Phase2 として、`createArea` / `assignNodesToArea` の Diagram 実行許可、`addNode` の複数エリア曖昧解決エラー、跨ぎエッジ禁止（`crossAreaEdgeForbidden`）の強制を追加。
 - 2026-02-21: Diagram mode Phase3 として `convertFocusedAreaMode(to:)` を追加し、フォーカス基準のモード変換（同一モード no-op）と `Shift + Enter` モード選択導線を実装。
+- 2026-02-22: Tree PhaseA として `copyFocusedSubtree` / `cutFocusedSubtree` / `pasteSubtreeAsChild` と `Command + C/X/V` を追加し、アプリ内コピー&ペーストを導入。
 - 2026-02-22: Diagram mode の編集導線を更新し、`addChildNode` を Diagram では `addNode` として解釈、`moveNode` は Diagram で座標 nudge（`cmd+矢印`）として適用する仕様を追加。
 - 2026-02-22: Diagram mode の `addNode` を更新し、フォーカスノードが存在する場合は新規ノードを `normal` エッジで接続する仕様を追加。
 - 2026-02-22: `CanvasNode.markdownStyleEnabled` と `toggleFocusedNodeMarkdownStyle` コマンドを追加し、コマンドパレットからフォーカスノード単位で Markdown スタイル適用を切り替え可能にした。

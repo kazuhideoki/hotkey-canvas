@@ -61,6 +61,12 @@ extension ApplyCanvasCommandsUseCase {
             return noOpMutationResult(for: graph)
         case .deleteFocusedNode:
             return try deleteFocusedNode(in: graph)
+        case .copyFocusedSubtree:
+            return copyFocusedSubtree(in: graph)
+        case .cutFocusedSubtree:
+            return try cutFocusedSubtree(in: graph)
+        case .pasteSubtreeAsChild:
+            return try pasteSubtreeAsChild(in: graph)
         case .setNodeText(let nodeID, let text, let nodeHeight):
             return try setNodeText(in: graph, nodeID: nodeID, text: text, nodeHeight: nodeHeight)
         case .toggleFocusedNodeMarkdownStyle:
@@ -83,10 +89,7 @@ extension ApplyCanvasCommandsUseCase {
             return areaManagementMutationResult(graphBeforeMutation: graph, graphAfterMutation: graphAfterMutation)
         case .createArea(let id, let mode, let nodeIDs):
             let graphAfterMutation = try CanvasAreaMembershipService.createArea(
-                id: id,
-                mode: mode,
-                nodeIDs: nodeIDs,
-                in: graph
+                id: id, mode: mode, nodeIDs: nodeIDs, in: graph
             ).get()
             return areaManagementMutationResult(graphBeforeMutation: graph, graphAfterMutation: graphAfterMutation)
         case .assignNodesToArea(let nodeIDs, let areaID):
@@ -105,6 +108,9 @@ extension ApplyCanvasCommandsUseCase {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
+            .copyFocusedSubtree,
+            .cutFocusedSubtree,
+            .pasteSubtreeAsChild,
             .setNodeText,
             .toggleFocusedNodeMarkdownStyle:
             return noOpMutationResult(for: graph)
@@ -163,6 +169,9 @@ extension ApplyCanvasCommandsUseCase {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
+            .copyFocusedSubtree,
+            .cutFocusedSubtree,
+            .pasteSubtreeAsChild,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,

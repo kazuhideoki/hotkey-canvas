@@ -8,6 +8,9 @@ public enum CanvasCommand: Equatable, Sendable {
     case toggleFoldFocusedSubtree
     case centerFocusedNode
     case deleteFocusedNode
+    case copyFocusedSubtree
+    case cutFocusedSubtree
+    case pasteSubtreeAsChild
     case setNodeText(nodeID: CanvasNodeID, text: String, nodeHeight: Double)
     case toggleFocusedNodeMarkdownStyle
     case convertFocusedAreaMode(to: CanvasEditingMode)
