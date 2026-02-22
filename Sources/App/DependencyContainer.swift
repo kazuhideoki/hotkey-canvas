@@ -4,16 +4,26 @@ import Application
 import InterfaceAdapters
 
 /// Assembles dependencies required by top-level app scenes.
+@MainActor
 struct DependencyContainer {
-    let canvasEditingInputPort: any CanvasEditingInputPort
+    private let canvasSessionStore: CanvasSessionStore
 
     init() {
-        canvasEditingInputPort = ApplyCanvasCommandsUseCase()
+        canvasSessionStore = CanvasSessionStore()
     }
 
-    /// Creates the view model instance used by the canvas screen.
-    @MainActor
-    func makeCanvasViewModel() -> CanvasViewModel {
-        CanvasViewModel(inputPort: canvasEditingInputPort)
+    init(canvasSessionStore: CanvasSessionStore) {
+        self.canvasSessionStore = canvasSessionStore
+    }
+
+    /// Opens one dedicated canvas editing session for a window.
+    func openCanvasSession() -> CanvasSessionHandle {
+        canvasSessionStore.openSession()
+    }
+
+    /// Closes a canvas editing session by id.
+    @discardableResult
+    func closeCanvasSession(id: CanvasSessionID) -> Bool {
+        canvasSessionStore.closeSession(id: id)
     }
 }
