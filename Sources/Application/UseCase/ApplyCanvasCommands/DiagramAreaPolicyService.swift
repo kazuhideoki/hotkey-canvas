@@ -11,6 +11,7 @@ enum DiagramAreaPolicyService {
         case .addNode,
             .moveFocus,
             .moveNode,
+            .nudgeNode,
             .centerFocusedNode,
             .deleteFocusedNode,
             .setNodeText,

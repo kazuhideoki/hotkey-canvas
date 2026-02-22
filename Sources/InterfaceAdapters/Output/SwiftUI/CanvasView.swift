@@ -24,6 +24,7 @@ public struct CanvasView: View {
     @State var zoomScale: Double = 1.0
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
+    @State var previousCompositeMoveInputDirection: CanvasNodeMoveDirection?
     private let hotkeyTranslator: CanvasHotkeyTranslator
     private let onDisappearHandler: () -> Void
     let addNodeModeSelectionHotkeyResolver = AddNodeModeSelectionHotkeyResolver()
@@ -316,6 +317,9 @@ public struct CanvasView: View {
                     }
                     if hotkeyTranslator.shouldPresentAddNodeModeSelection(event) {
                         presentAddNodeModeSelectionPopup()
+                        return true
+                    }
+                    if handleCompositeMoveHotkey(event) {
                         return true
                     }
                     if hotkeyTranslator.shouldOpenCommandPalette(event) {

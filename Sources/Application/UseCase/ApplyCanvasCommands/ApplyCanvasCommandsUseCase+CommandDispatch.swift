@@ -53,6 +53,12 @@ extension ApplyCanvasCommandsUseCase {
                 direction: direction,
                 areaMode: resolvedAreaMode
             )
+        case .nudgeNode(let direction):
+            return nudgeNode(
+                in: graph,
+                direction: direction,
+                areaMode: resolvedAreaMode
+            )
         case .toggleFoldFocusedSubtree:
             return toggleFoldFocusedSubtree(in: graph)
         case .centerFocusedNode:
@@ -99,6 +105,7 @@ extension ApplyCanvasCommandsUseCase {
             .addSiblingNode,
             .moveFocus,
             .moveNode,
+            .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
@@ -156,6 +163,7 @@ extension ApplyCanvasCommandsUseCase {
             .addSiblingNode,
             .moveFocus,
             .moveNode,
+            .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
