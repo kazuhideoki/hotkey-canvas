@@ -465,14 +465,9 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 )
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
-<<<<<<< HEAD
-                .centerFocusedNode, .setNodeText, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
-                .assignNodesToArea, .alignParentNodesVertically:
-=======
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
                 .setNodeText, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
-                .assignNodesToArea:
->>>>>>> main
+                .assignNodesToArea, .alignParentNodesVertically:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -562,14 +557,9 @@ extension OverlappingFailureCanvasEditingInputPort {
                 )
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .toggleFoldFocusedSubtree,
-<<<<<<< HEAD
-                .centerFocusedNode, .setNodeText, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
-                .assignNodesToArea, .alignParentNodesVertically:
-=======
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
                 .setNodeText, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
-                .assignNodesToArea:
->>>>>>> main
+                .assignNodesToArea, .alignParentNodesVertically:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -761,14 +751,9 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .moveNode,
                 .toggleFoldFocusedSubtree, .centerFocusedNode,
-<<<<<<< HEAD
-                .deleteFocusedNode, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
-                .assignNodesToArea, .alignParentNodesVertically:
-=======
                 .deleteFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
                 .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
-                .assignNodesToArea:
->>>>>>> main
+                .assignNodesToArea, .alignParentNodesVertically:
                 continue
             }
         }
