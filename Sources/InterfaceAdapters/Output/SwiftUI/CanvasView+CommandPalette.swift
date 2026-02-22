@@ -68,6 +68,9 @@ extension CanvasView {
         if let markdownToggleItem = focusedNodeMarkdownToggleCommandPaletteItem() {
             items.append(markdownToggleItem)
         }
+        if let alignParentNodesItem = alignParentNodesVerticallyCommandPaletteItem() {
+            items.append(alignParentNodesItem)
+        }
         return items
     }
 
@@ -90,6 +93,19 @@ extension CanvasView {
             shortcutLabel: "Focused Node",
             searchText: searchText,
             action: .apply(commands: [.toggleFocusedNodeMarkdownStyle])
+        )
+    }
+
+    private func alignParentNodesVerticallyCommandPaletteItem() -> CommandPaletteItem? {
+        guard viewModel.focusedNodeID != nil else {
+            return nil
+        }
+        return CommandPaletteItem(
+            id: "alignParentNodesVertically",
+            title: "Align Parent Nodes Vertically",
+            shortcutLabel: "Focused Area",
+            searchText: "align parent nodes vertical left line tree diagram",
+            action: .apply(commands: [.alignParentNodesVertically])
         )
     }
 

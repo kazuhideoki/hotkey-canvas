@@ -55,6 +55,7 @@
   - `CanvasCommand.centerFocusedNode`
   - `CanvasCommand.toggleFoldFocusedSubtree`
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
+  - `CanvasCommand.alignParentNodesVertically`
 - エラー
   - `CanvasGraphError`
 - サービス
@@ -82,6 +83,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ToggleFocusedNodeMarkdownStyle.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AlignParentNodesVertically.swift`
 - 入力境界/コマンド流入
   - `Sources/Application/Port/Input/CanvasEditingInputPort.swift`
   - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`
@@ -418,6 +420,7 @@
     - コマンド適用前に所属整合性検証と対象エリア解決を行う。
     - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
     - Diagram エリアでは `addChildNode` を `addNode` へ正規化し、`moveNode` は階層移動ではなく座標 nudge として扱う。
+    - `alignParentNodesVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス中エリア内の親ノード（エリア内で親子入辺を持たないノード）の `x` を最左ノード基準に揃える。整列時は親ノード配下サブツリーを一括で同じ `dx` 平行移動し、エリア内の相対位置を維持する。さらに整列後は親サブツリー同士の重なりを `y` 方向の平行移動で解消し、縦一列の `x` 基準を維持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
     - Diagram エリアでは `addNode` 実行時、フォーカスノードが存在する場合に `relationType = .normal` のエッジで新規ノードと接続する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
@@ -488,3 +491,4 @@
 - 2026-02-22: Diagram mode の編集導線を更新し、`addChildNode` を Diagram では `addNode` として解釈、`moveNode` は Diagram で座標 nudge（`cmd+矢印`）として適用する仕様を追加。
 - 2026-02-22: Diagram mode の `addNode` を更新し、フォーカスノードが存在する場合は新規ノードを `normal` エッジで接続する仕様を追加。
 - 2026-02-22: `CanvasNode.markdownStyleEnabled` と `toggleFocusedNodeMarkdownStyle` コマンドを追加し、コマンドパレットからフォーカスノード単位で Markdown スタイル適用を切り替え可能にした。
+- 2026-02-22: `alignParentNodesVertically` コマンドを追加し、Command Palette からフォーカスエリア内の親ノードを最左基準で縦一列に整列できるようにした（Tree/Diagram 両対応）。
