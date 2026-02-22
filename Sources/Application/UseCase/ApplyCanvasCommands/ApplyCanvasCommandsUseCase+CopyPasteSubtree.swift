@@ -131,6 +131,7 @@ extension ApplyCanvasCommandsUseCase {
         return CanvasTreeClipboardNodePayload(
             kind: node.kind,
             text: node.text,
+            markdownStyleEnabled: node.markdownStyleEnabled,
             metadata: node.metadata,
             children: childrenPayload
         )
@@ -153,7 +154,8 @@ extension ApplyCanvasCommandsUseCase {
             kind: payload.kind,
             text: payload.text,
             bounds: rootBounds,
-            metadata: payload.metadata
+            metadata: payload.metadata,
+            markdownStyleEnabled: payload.markdownStyleEnabled
         )
 
         var nextGraph = try CanvasGraphCRUDService.createNode(rootNode, in: graph).get()

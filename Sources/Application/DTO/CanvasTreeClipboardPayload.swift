@@ -20,6 +20,8 @@ public struct CanvasTreeClipboardNodePayload: Equatable, Sendable {
     public let kind: CanvasNodeKind
     /// Optional text payload to preserve editor content.
     public let text: String?
+    /// Whether markdown styling is enabled for the node.
+    public let markdownStyleEnabled: Bool
     /// Metadata payload copied from source node.
     public let metadata: [String: String]
     /// Child node payloads in visual order.
@@ -29,16 +31,19 @@ public struct CanvasTreeClipboardNodePayload: Equatable, Sendable {
     /// - Parameters:
     ///   - kind: Semantic node kind.
     ///   - text: Optional node text.
+    ///   - markdownStyleEnabled: Markdown style flag for rendering.
     ///   - metadata: Node metadata dictionary.
     ///   - children: Child payload list in deterministic order.
     public init(
         kind: CanvasNodeKind,
         text: String?,
+        markdownStyleEnabled: Bool,
         metadata: [String: String],
         children: [CanvasTreeClipboardNodePayload]
     ) {
         self.kind = kind
         self.text = text
+        self.markdownStyleEnabled = markdownStyleEnabled
         self.metadata = metadata
         self.children = children
     }

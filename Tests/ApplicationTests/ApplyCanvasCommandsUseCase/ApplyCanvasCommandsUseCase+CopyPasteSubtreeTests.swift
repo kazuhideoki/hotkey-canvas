@@ -28,6 +28,7 @@ func test_apply_copyThenDelete_thenPasteAsChild_underNextFocusedSibling() async 
     let pastedRootNode = try #require(pasteResult.newState.nodesByID[pastedRootEdge.toNodeID])
     #expect(pastedRootNode.id != fixture.sourceRootID)
     #expect(pastedRootNode.text == "source-root-text")
+    #expect(pastedRootNode.markdownStyleEnabled == false)
     #expect(pastedRootNode.metadata["marker"] == "source-root")
 
     let pastedChildEdge = try #require(
@@ -38,6 +39,7 @@ func test_apply_copyThenDelete_thenPasteAsChild_underNextFocusedSibling() async 
     let pastedChildNode = try #require(pasteResult.newState.nodesByID[pastedChildEdge.toNodeID])
     #expect(pastedChildNode.id != fixture.sourceChildID)
     #expect(pastedChildNode.text == "source-child-text")
+    #expect(pastedChildNode.markdownStyleEnabled == false)
     #expect(pastedChildNode.metadata["marker"] == "source-child")
 }
 
@@ -141,14 +143,16 @@ private struct CopyThenPasteFixture {
                 kind: .text,
                 text: "source-root-text",
                 bounds: CanvasBounds(x: 320, y: 40, width: 220, height: 80),
-                metadata: ["marker": "source-root"]
+                metadata: ["marker": "source-root"],
+                markdownStyleEnabled: false
             ),
             sourceChildID: CanvasNode(
                 id: sourceChildID,
                 kind: .text,
                 text: "source-child-text",
                 bounds: CanvasBounds(x: 600, y: 40, width: 220, height: 80),
-                metadata: ["marker": "source-child"]
+                metadata: ["marker": "source-child"],
+                markdownStyleEnabled: false
             ),
             targetID: CanvasNode(
                 id: targetID,
