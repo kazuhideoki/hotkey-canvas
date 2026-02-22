@@ -83,9 +83,9 @@ extension CanvasCommandPipelineCoordinator {
     private func runTreeLayoutStage(on graph: CanvasGraph) -> CanvasGraph {
         let updatedBoundsByNodeID = CanvasTreeLayoutService.relayoutParentChildTrees(
             in: graph,
-            verticalSpacing: 24,
-            horizontalSpacing: 32,
-            rootSpacing: 48
+            verticalSpacing: CanvasDefaultNodeDistance.vertical(for: .tree),
+            horizontalSpacing: CanvasDefaultNodeDistance.treeHorizontal,
+            rootSpacing: CanvasDefaultNodeDistance.treeRootVertical
         )
         guard !updatedBoundsByNodeID.isEmpty else {
             return graph
@@ -135,7 +135,7 @@ extension CanvasCommandPipelineCoordinator {
         let translationsByAreaID = CanvasAreaLayoutService.resolveOverlaps(
             areas: areas,
             seedAreaID: seedArea.id,
-            minimumSpacing: 32
+            minimumSpacing: CanvasDefaultNodeDistance.treeHorizontal
         )
         guard !translationsByAreaID.isEmpty else {
             return graph

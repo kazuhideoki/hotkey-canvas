@@ -20,9 +20,9 @@ extension CanvasTreeLayoutService {
     /// - Returns: Updated bounds keyed by node identifier.
     public static func relayoutParentChildTrees(
         in graph: CanvasGraph,
-        verticalSpacing: Double = 24,
-        horizontalSpacing: Double = 32,
-        rootSpacing: Double = 48
+        verticalSpacing: Double = CanvasDefaultNodeDistance.treeVertical,
+        horizontalSpacing: Double = CanvasDefaultNodeDistance.treeHorizontal,
+        rootSpacing: Double = CanvasDefaultNodeDistance.treeRootVertical
     ) -> [CanvasNodeID: CanvasBounds] {
         let config = LayoutConfig(
             verticalSpacing: max(0, verticalSpacing),

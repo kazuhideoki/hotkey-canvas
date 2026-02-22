@@ -8,9 +8,9 @@ extension ApplyCanvasCommandsUseCase {
     static let newNodeHeight: Double = 41
     static let defaultNewNodeX: Double = 48
     static let defaultNewNodeY: Double = 48
-    static let newNodeVerticalSpacing: Double = 24
-    static let childHorizontalGap: Double = 32
-    static let areaCollisionSpacing: Double = 32
+    static let newNodeVerticalSpacing: Double = CanvasDefaultNodeDistance.treeVertical
+    static let childHorizontalGap: Double = CanvasDefaultNodeDistance.treeHorizontal
+    static let areaCollisionSpacing: Double = CanvasDefaultNodeDistance.treeHorizontal
 
     /// Creates a default text node using the provided bounds.
     /// - Parameter bounds: Bounds to assign to the new node.
@@ -115,13 +115,14 @@ extension ApplyCanvasCommandsUseCase {
         in graph: CanvasGraph,
         avoiding nodeIDs: Set<CanvasNodeID>,
         width: Double,
-        height: Double
+        height: Double,
+        verticalSpacing: Double = ApplyCanvasCommandsUseCase.newNodeVerticalSpacing
     ) -> CanvasBounds {
         let focusedNode = graph.focusedNodeID.flatMap { graph.nodesByID[$0] }
         let startX = focusedNode?.bounds.x ?? Self.defaultNewNodeX
         let startY =
             if let focusedNode {
-                focusedNode.bounds.y + focusedNode.bounds.height + Self.newNodeVerticalSpacing
+                focusedNode.bounds.y + focusedNode.bounds.height + verticalSpacing
             } else {
                 Self.defaultNewNodeY
             }
@@ -136,7 +137,7 @@ extension ApplyCanvasCommandsUseCase {
         while let overlappedNode = firstOverlappedNode(for: candidate, in: collisionNodes) {
             candidate = CanvasBounds(
                 x: candidate.x,
-                y: overlappedNode.bounds.y + overlappedNode.bounds.height + Self.newNodeVerticalSpacing,
+                y: overlappedNode.bounds.y + overlappedNode.bounds.height + verticalSpacing,
                 width: candidate.width,
                 height: candidate.height
             )

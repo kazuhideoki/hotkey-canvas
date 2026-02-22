@@ -3,19 +3,15 @@ import Domain
 // Background: Multiple command handlers need one shared path to apply tree relayout after mutations.
 // Responsibility: Apply tree-layout bounds updates to the current graph snapshot.
 extension ApplyCanvasCommandsUseCase {
-    private static let treeLayoutVerticalSpacing: Double = 24
-    private static let treeLayoutHorizontalSpacing: Double = 32
-    private static let treeLayoutRootSpacing: Double = 48
-
     /// Recomputes all parent-child tree node positions with symmetric vertical distribution.
     /// - Parameter graph: Graph to relayout.
     /// - Returns: Graph with updated tree node bounds.
     func relayoutParentChildTrees(in graph: CanvasGraph) -> CanvasGraph {
         let updatedBoundsByNodeID = CanvasTreeLayoutService.relayoutParentChildTrees(
             in: graph,
-            verticalSpacing: Self.treeLayoutVerticalSpacing,
-            horizontalSpacing: Self.treeLayoutHorizontalSpacing,
-            rootSpacing: Self.treeLayoutRootSpacing
+            verticalSpacing: CanvasDefaultNodeDistance.vertical(for: .tree),
+            horizontalSpacing: CanvasDefaultNodeDistance.treeHorizontal,
+            rootSpacing: CanvasDefaultNodeDistance.treeRootVertical
         )
         guard !updatedBoundsByNodeID.isEmpty else {
             return graph
