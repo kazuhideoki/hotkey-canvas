@@ -133,7 +133,7 @@ extension ApplyCanvasCommandsUseCase {
             effects: CanvasMutationEffects(
                 didMutateGraph: true,
                 needsTreeLayout: false,
-                needsAreaLayout: false,
+                needsAreaLayout: true,
                 needsFocusNormalization: false
             ),
             areaLayoutSeedNodeID: focusedNodeID
