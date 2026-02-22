@@ -132,15 +132,23 @@ func test_apply_setNodeText_shrinksNodeHeightWhenLinesDecrease() async throws {
     #expect(shrunkHeight < expandedHeight)
 }
 
+<<<<<<< HEAD
 @Test("ApplyCanvasCommandsUseCase: setNodeImage updates target node image path and height")
 func test_apply_setNodeImage_updatesNodeImage() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
+=======
+@Test("ApplyCanvasCommandsUseCase: setNodeText keeps diagram node as square with tree-width side length")
+func test_apply_setNodeText_inDiagramArea_keepsSquareNode() async throws {
+    let nodeID = CanvasNodeID(rawValue: "diagram-node")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+>>>>>>> main
     let graph = CanvasGraph(
         nodesByID: [
             nodeID: CanvasNode(
                 id: nodeID,
                 kind: .text,
                 text: "before",
+<<<<<<< HEAD
                 bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 100)
             )
         ],
@@ -210,6 +218,26 @@ func test_apply_setNodeImage_nonFiniteHeight_fallsBackToCurrentHeight() async th
     )
     #expect(infinityHeightResult.newState.nodesByID[nodeID]?.imagePath == "/tmp/image-3.heic")
     #expect(infinityHeightResult.newState.nodesByID[nodeID]?.bounds.height == 70)
+=======
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let updated = try await sut.apply(
+        commands: [.setNodeText(nodeID: nodeID, text: "after", nodeHeight: 512)]
+    )
+    let updatedNode = try #require(updated.newState.nodesByID[nodeID])
+    #expect(updatedNode.text == "after")
+    #expect(updatedNode.bounds.width == 220)
+    #expect(updatedNode.bounds.height == 220)
+>>>>>>> main
 }
 
 @Test("ApplyCanvasCommandsUseCase: addNode enables markdown styling by default")
