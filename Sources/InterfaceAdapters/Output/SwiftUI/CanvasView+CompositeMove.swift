@@ -10,6 +10,10 @@ extension CanvasView {
     static let upArrowKeyCode: UInt16 = 126
 
     func handleCompositeMoveHotkey(_ event: NSEvent) -> Bool {
+        guard isCompositeMoveEnabled() else {
+            previousCompositeMoveInputDirection = nil
+            return false
+        }
         guard let direction = commandOnlyArrowDirection(from: event) else {
             previousCompositeMoveInputDirection = nil
             return false
@@ -25,6 +29,23 @@ extension CanvasView {
             await viewModel.apply(commands: [.moveNode(outputDirection)])
         }
         return true
+    }
+
+    func isCompositeMoveEnabled() -> Bool {
+        Self.shouldEnableCompositeMove(
+            focusedNodeID: viewModel.focusedNodeID,
+            diagramNodeIDs: viewModel.diagramNodeIDs
+        )
+    }
+
+    static func shouldEnableCompositeMove(
+        focusedNodeID: CanvasNodeID?,
+        diagramNodeIDs: Set<CanvasNodeID>
+    ) -> Bool {
+        guard let focusedNodeID else {
+            return false
+        }
+        return diagramNodeIDs.contains(focusedNodeID)
     }
 
     func commandOnlyArrowDirection(from event: NSEvent) -> CanvasNodeMoveDirection? {
