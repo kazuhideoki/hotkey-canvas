@@ -33,6 +33,35 @@ func test_apply_diagramArea_rejectsUnsupportedCommand() async throws {
     }
 }
 
+@Test("ApplyCanvasCommandsUseCase: diagram area rejects copyFocusedSubtree command")
+func test_apply_diagramArea_rejectsCopyFocusedSubtreeCommand() async throws {
+    let nodeID = CanvasNodeID(rawValue: "diagram-node")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    do {
+        _ = try await sut.apply(commands: [.copyFocusedSubtree])
+        Issue.record("Expected unsupported command error")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .unsupportedCommandInMode(mode: .diagram, command: .copyFocusedSubtree))
+    }
+}
+
 @Test("ApplyCanvasCommandsUseCase: diagram area allows assignNodesToArea command")
 func test_apply_diagramArea_allowsAssignNodesToAreaCommand() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
