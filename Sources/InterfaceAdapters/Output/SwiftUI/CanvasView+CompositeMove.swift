@@ -12,7 +12,15 @@ extension CanvasView {
     func handleCompositeMoveHotkey(_ event: NSEvent) -> Bool {
         guard isCompositeMoveEnabled() else {
             previousCompositeMoveInputDirection = nil
+            previousCompositeMoveFocusedNodeID = nil
             return false
+        }
+        let focusedNodeID = viewModel.focusedNodeID
+        if Self.shouldResetCompositeMoveState(
+            previousFocusedNodeID: previousCompositeMoveFocusedNodeID,
+            currentFocusedNodeID: focusedNodeID
+        ) {
+            previousCompositeMoveInputDirection = nil
         }
         guard let direction = commandOnlyArrowDirection(from: event) else {
             previousCompositeMoveInputDirection = nil
@@ -23,6 +31,7 @@ extension CanvasView {
             previousInput: previousCompositeMoveInputDirection,
             currentInput: direction
         )
+        previousCompositeMoveFocusedNodeID = focusedNodeID
         previousCompositeMoveInputDirection = direction
 
         Task {
@@ -46,6 +55,13 @@ extension CanvasView {
             return false
         }
         return diagramNodeIDs.contains(focusedNodeID)
+    }
+
+    static func shouldResetCompositeMoveState(
+        previousFocusedNodeID: CanvasNodeID?,
+        currentFocusedNodeID: CanvasNodeID?
+    ) -> Bool {
+        previousFocusedNodeID != currentFocusedNodeID
     }
 
     func commandOnlyArrowDirection(from event: NSEvent) -> CanvasNodeMoveDirection? {

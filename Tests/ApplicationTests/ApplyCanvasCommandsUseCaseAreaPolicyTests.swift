@@ -131,6 +131,44 @@ func test_apply_diagramArea_nudgeNodeMovesFocusedNodeByStep() async throws {
     #expect(movedNode.bounds.y == 40)
 }
 
+@Test("ApplyCanvasCommandsUseCase: diagram area nudgeNode does not relayout neighboring nodes")
+func test_apply_diagramArea_nudgeNodeDoesNotRelayoutNeighboringNodes() async throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused-diagram-node")
+    let neighborNodeID = CanvasNodeID(rawValue: "neighbor-diagram-node")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 120)
+            ),
+            neighborNodeID: CanvasNode(
+                id: neighborNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 60, y: 40, width: 220, height: 120)
+            ),
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedNodeID, neighborNodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.nudgeNode(.right)])
+
+    let movedNode = try #require(result.newState.nodesByID[focusedNodeID])
+    let neighborNode = try #require(result.newState.nodesByID[neighborNodeID])
+    #expect(movedNode.bounds.x == 64)
+    #expect(movedNode.bounds.y == 40)
+    #expect(neighborNode.bounds.x == 60)
+    #expect(neighborNode.bounds.y == 40)
+}
+
 @Test("ApplyCanvasCommandsUseCase: tree area nudgeNode is no-op")
 func test_apply_treeArea_nudgeNodeIsNoOp() async throws {
     let nodeID = CanvasNodeID(rawValue: "tree-node")
