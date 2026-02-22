@@ -46,7 +46,6 @@ HotkeyCanvas は、キーボードファーストでキャンバスを編集で�
 |   |   |-- Port/                         # 外部依存への抽象境界（protocol）
 |   |   |   |-- Input/                    # UI/外部 -> Application の入力境界
 |   |   |   |                             # 命名: *InputPort（例: GreetingInputPort）
-|   |   |   |-- Output/                   # 状態通知や画面更新の出力境界（命名: *OutputPort）
 |   |   |   `-- Gateway/                  # 保存・AI・外部I/O境界（命名: *Gateway）
 |   |   `-- Coordinator/                  # 複数ユースケース横断制御（命名: *Coordinator）
 |   |
@@ -60,20 +59,17 @@ HotkeyCanvas は、キーボードファーストでキャンバスを編集で�
 |   |   |   |-- SwiftUI/                  # SwiftUI View コンポーネント（SwiftUI依存を閉じ込める）
 |   |   |   |                             # View は描画専念。文言・状態は直書きせず UseCase 経由で受け取る
 |   |   |   |                             # 命名: *View
-|   |   |   `-- Metal/                    # Metal 描画実装（命名: *Renderer）
 |   |   |-- Persistence/
 |   |   |   `-- JsonCanvas/               # Domain <-> Json Canvas 変換、ファイル保存（命名: *Mapper, *Repository）
-|   |   `-- Agent/                        # Agent API 連携、Command 変換、状態スナップショット取得（命名: *Client）
 |   |
 |   `-- Infrastructure/                   # 横断的技術基盤
 |       |-- Logging/                      # ログ出力実装（命名: *Logger）
-|       `-- Diagnostics/                  # メトリクス・診断情報収集（命名: *Diagnostics, *Monitor）
+|       `-- ...                           # 必要時に技術基盤を追加
 |
 |-- Tests/                                # テスト群（本体と同じ責務分割を反映）
 |   |-- DomainTests/                      # Domain の純粋関数・不変条件テスト
 |   |-- ApplicationTests/                 # UseCase/Port 契約テスト
-|   |-- InterfaceAdaptersTests/           # 入出力変換、Mapper テスト
-|   `-- IntegrationTests/                 # Hotkey -> Apply -> Render 統合シナリオ
+|   `-- InterfaceAdaptersTests/           # 入出力変換、Mapper テスト
 |                                         # ファイル命名: <TypeName>Tests.swift / 関数命名: test_<condition>_<expected>()
 |
 `-- docs/                                 # 設計・運用ドキュメント
@@ -93,7 +89,7 @@ Infrastructure -> (Application/InterfaceAdapters から利用)
 禁止:
 
 - `Domain` から `Application`/`InterfaceAdapters`/`Infrastructure` への依存
-- `Application` から SwiftUI/Metal/JSON 実装詳細への依存
+- `Application` から SwiftUI/JSON 実装詳細への依存
 
 ## 5. データ境界
 
@@ -120,13 +116,7 @@ struct ApplyResult {
 - `apply` はコマンド列の適用を一括で扱う。
 - Undo/Redo に必要な情報は `ApplyResult` に副産物として含める。
 
-## 7. Agent 連携境界
-
-- Agent は UI を直接変更しない。
-- Agent 連携は `Sources/Application/Port/Gateway/*Gateway` 経由で Command 列を生成し、`apply` で適用する。
-- 編集状態の画像取得は Adapter 側の責務 (`Sources/InterfaceAdapters/Agent`) とする。
-
-## 8. 最小シーケンス（サンプル）
+## 7. 最小シーケンス（サンプル）
 
 ```text
 Hotkey Input
@@ -136,15 +126,15 @@ Hotkey Input
   -> Sources/Domain/Service reducer
   -> ApplyResult
   -> Sources/InterfaceAdapters/Output/*ViewModel update
-  -> Sources/InterfaceAdapters/Output/SwiftUI|Metal render
+  -> Sources/InterfaceAdapters/Output/SwiftUI render
 ```
 
-## 9. 将来拡張方針
+## 8. 将来拡張方針
 
 - 初期フェーズはキーボード操作の完成を優先し、入力経路は Hotkey Adapter に集中させる。
 - 重い処理の Rust オフロードは将来検討とし、初期は Swift 実装を優先する。
 
-## 10. 型安全ルール
+## 9. 型安全ルール
 
 - `Any` の利用は禁止する（Lint で `error` 扱い）。
 - 抽象化が必要な場合は `any Protocol` を使う。
