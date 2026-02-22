@@ -20,6 +20,7 @@ enum TreeAreaPolicyService {
             .cutFocusedSubtree,
             .pasteSubtreeAsChild,
             .setNodeText,
+            .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:

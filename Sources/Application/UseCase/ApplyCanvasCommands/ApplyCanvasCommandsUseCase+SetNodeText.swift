@@ -50,7 +50,8 @@ extension ApplyCanvasCommandsUseCase {
             kind: node.kind,
             text: normalizedText,
             bounds: updatedBounds,
-            metadata: node.metadata
+            metadata: node.metadata,
+            markdownStyleEnabled: node.markdownStyleEnabled
         )
         let nextGraph = try CanvasGraphCRUDService.updateNode(updatedNode, in: graph).get()
         return CanvasMutationResult(
