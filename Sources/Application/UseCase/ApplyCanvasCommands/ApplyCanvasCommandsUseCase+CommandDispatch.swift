@@ -102,6 +102,7 @@ extension ApplyCanvasCommandsUseCase {
             .alignParentNodesVertically,
             .moveFocus,
             .moveNode,
+            .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
