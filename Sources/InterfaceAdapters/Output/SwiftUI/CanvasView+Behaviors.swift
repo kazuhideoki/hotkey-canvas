@@ -5,31 +5,42 @@ import Domain
 import SwiftUI
 
 extension CanvasView {
-    @ViewBuilder
-    func addNodeModeSelectionOptionRow(
-        title: String,
-        shortcutLabel: String,
-        mode: CanvasEditingMode
-    ) -> some View {
-        HStack {
-            Text(title)
-                .font(.system(size: 14, weight: .medium))
-            Spacer()
-            Text(shortcutLabel)
-                .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                .foregroundStyle(.secondary)
+    static let addNodeModeTreeOptionID = "tree"
+    static let addNodeModeDiagramOptionID = "diagram"
+
+    func addNodeModeSelectionOptions() -> [SelectionPopupOption] {
+        [
+            SelectionPopupOption(
+                id: Self.addNodeModeTreeOptionID,
+                title: "Tree",
+                shortcutLabel: "T"
+            ),
+            SelectionPopupOption(
+                id: Self.addNodeModeDiagramOptionID,
+                title: "Diagram",
+                shortcutLabel: "D"
+            ),
+        ]
+    }
+
+    func addNodeModeOptionID(for mode: CanvasEditingMode) -> String {
+        switch mode {
+        case .tree:
+            Self.addNodeModeTreeOptionID
+        case .diagram:
+            Self.addNodeModeDiagramOptionID
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(
-                    selectedAddNodeMode == mode
-                        ? Color.accentColor.opacity(0.2)
-                        : Color(nsColor: .textBackgroundColor).opacity(0.35)
-                )
-        )
+    }
+
+    func addNodeMode(from optionID: String) -> CanvasEditingMode {
+        switch optionID {
+        case Self.addNodeModeTreeOptionID:
+            .tree
+        case Self.addNodeModeDiagramOptionID:
+            .diagram
+        default:
+            preconditionFailure("Unexpected add-node mode option ID: \(optionID)")
+        }
     }
 
     func presentAddNodeModeSelectionPopup() {

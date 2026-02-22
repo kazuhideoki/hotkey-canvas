@@ -279,40 +279,21 @@ public struct CanvasView: View {
                 )
                 .allowsHitTesting(!isAddNodeModePopupPresented)
                 if isAddNodeModePopupPresented {
-                    ZStack {
-                        Color.black.opacity(0.12)
-                            .ignoresSafeArea()
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                // Keep modal semantics while visible.
-                            }
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Select Node Mode")
-                                .font(.headline)
-                            addNodeModeSelectionOptionRow(
-                                title: "Tree",
-                                shortcutLabel: "T",
-                                mode: .tree
-                            )
-                            addNodeModeSelectionOptionRow(
-                                title: "Diagram",
-                                shortcutLabel: "D",
-                                mode: .diagram
-                            )
-                            Text("Press Enter to confirm, Esc to cancel.")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
+                    SelectionPopup(
+                        title: "Select Node Mode",
+                        footerText: "Press Enter to confirm, Esc to cancel.",
+                        options: addNodeModeSelectionOptions(),
+                        selectedOptionID: addNodeModeOptionID(for: selectedAddNodeMode),
+                        onSelectOption: { optionID in
+                            selectedAddNodeMode = addNodeMode(from: optionID)
+                        },
+                        onConfirmOption: { optionID in
+                            commitAddNodeModeSelection(addNodeMode(from: optionID))
+                        },
+                        onDismiss: {
+                            dismissAddNodeModeSelectionPopup()
                         }
-                        .padding(16)
-                        .frame(width: 320)
-                        .background(.regularMaterial)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    )
                     .zIndex(11)
                 }
                 if isCommandPalettePresented {
