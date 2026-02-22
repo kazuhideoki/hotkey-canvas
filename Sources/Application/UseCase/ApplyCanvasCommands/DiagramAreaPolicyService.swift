@@ -10,6 +10,7 @@ enum DiagramAreaPolicyService {
         switch command {
         case .addNode,
             .moveFocus,
+            .moveNode,
             .centerFocusedNode,
             .deleteFocusedNode,
             .setNodeText,
@@ -19,7 +20,6 @@ enum DiagramAreaPolicyService {
             return true
         case .addChildNode,
             .addSiblingNode,
-            .moveNode,
             .toggleFoldFocusedSubtree:
             return false
         }

@@ -4,8 +4,8 @@ import Testing
 
 // Background: Phase-1 area mode requires command dispatch by focused area policy.
 // Responsibility: Verify mode-specific command gating and area-data validation in apply entry.
-@Test("ApplyCanvasCommandsUseCase: diagram area rejects unsupported command")
-func test_apply_diagramArea_rejectsUnsupportedCommand() async throws {
+@Test("ApplyCanvasCommandsUseCase: diagram area maps addChildNode command to addNode behavior")
+func test_apply_diagramArea_mapsAddChildNodeToAddNodeBehavior() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let graph = CanvasGraph(
@@ -25,12 +25,44 @@ func test_apply_diagramArea_rejectsUnsupportedCommand() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    do {
-        _ = try await sut.apply(commands: [.addChildNode])
-        Issue.record("Expected unsupported command error")
-    } catch let error as CanvasAreaPolicyError {
-        #expect(error == .unsupportedCommandInMode(mode: .diagram, command: .addChildNode))
-    }
+    let result = try await sut.apply(commands: [.addChildNode])
+
+    #expect(result.newState.nodesByID.count == 2)
+    let focusedNodeID = try #require(result.newState.focusedNodeID)
+    #expect(result.newState.nodesByID[focusedNodeID] != nil)
+    #expect(result.newState.edgesByID.count == 1)
+    let edge = try #require(result.newState.edgesByID.values.first)
+    #expect(edge.fromNodeID == nodeID)
+    #expect(edge.toNodeID == focusedNodeID)
+    #expect(edge.relationType == .normal)
+}
+
+@Test("ApplyCanvasCommandsUseCase: diagram area moveNode nudges focused node without tree relayout")
+func test_apply_diagramArea_moveNodeNudgesFocusedNode() async throws {
+    let nodeID = CanvasNodeID(rawValue: "diagram-node")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.right)])
+
+    let movedNode = try #require(result.newState.nodesByID[nodeID])
+    #expect(movedNode.bounds.x == 64)
+    #expect(movedNode.bounds.y == 40)
 }
 
 @Test("ApplyCanvasCommandsUseCase: diagram area allows assignNodesToArea command")
