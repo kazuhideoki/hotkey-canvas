@@ -119,7 +119,8 @@ extension CanvasView {
                 width: renderedRect.width,
                 height: renderedRect.height
             ),
-            metadata: node.metadata
+            metadata: node.metadata,
+            markdownStyleEnabled: node.markdownStyleEnabled
         )
     }
 
@@ -147,7 +148,8 @@ extension CanvasView {
             kind: node.kind,
             text: node.text,
             bounds: resizedBounds,
-            metadata: node.metadata
+            metadata: node.metadata,
+            markdownStyleEnabled: node.markdownStyleEnabled
         )
     }
 
@@ -368,18 +370,27 @@ extension CanvasView {
     }
 
     @ViewBuilder
-    func nonEditingNodeText(text: String, nodeWidth: Double, zoomScale: Double) -> some View {
+    func nonEditingNodeText(node: CanvasNode, zoomScale: Double) -> some View {
+        let text = node.text ?? ""
         let scale = CGFloat(zoomScale)
-        let scaledPadding = NodeTextStyle.outerPadding * scale
-        let textWidth = max((CGFloat(nodeWidth) * scale) - (scaledPadding * 2), 1)
-        Text(text)
-            .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
-            .lineLimit(nil)
-            .multilineTextAlignment(.leading)
-            .frame(width: textWidth, alignment: .topLeading)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(scaledPadding)
+        if node.markdownStyleEnabled {
+            NodeMarkdownDisplay(
+                text: text,
+                nodeWidth: node.bounds.width,
+                zoomScale: zoomScale
+            )
+        } else {
+            let scaledPadding = NodeTextStyle.outerPadding * scale
+            let textWidth = max((CGFloat(node.bounds.width) * scale) - (scaledPadding * 2), 1)
+            Text(text)
+                .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
+                .lineLimit(nil)
+                .multilineTextAlignment(.leading)
+                .frame(width: textWidth, alignment: .topLeading)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(scaledPadding)
+        }
     }
 }
 
