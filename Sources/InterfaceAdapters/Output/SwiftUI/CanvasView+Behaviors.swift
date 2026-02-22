@@ -120,7 +120,8 @@ extension CanvasView {
                 width: renderedRect.width,
                 height: renderedRect.height
             ),
-            metadata: node.metadata
+            metadata: node.metadata,
+            markdownStyleEnabled: node.markdownStyleEnabled
         )
     }
 
@@ -149,7 +150,8 @@ extension CanvasView {
             text: node.text,
             imagePath: node.imagePath,
             bounds: resizedBounds,
-            metadata: node.metadata
+            metadata: node.metadata,
+            markdownStyleEnabled: node.markdownStyleEnabled
         )
     }
 
@@ -389,6 +391,33 @@ extension CanvasView {
             initialTypingEvent: nil
         )
     }
+<<<<<<< HEAD
+=======
+
+    @ViewBuilder
+    func nonEditingNodeText(node: CanvasNode, zoomScale: Double) -> some View {
+        let text = node.text ?? ""
+        let scale = CGFloat(zoomScale)
+        if node.markdownStyleEnabled {
+            NodeMarkdownDisplay(
+                text: text,
+                nodeWidth: node.bounds.width,
+                zoomScale: zoomScale
+            )
+        } else {
+            let scaledPadding = NodeTextStyle.outerPadding * scale
+            let textWidth = max((CGFloat(node.bounds.width) * scale) - (scaledPadding * 2), 1)
+            Text(text)
+                .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
+                .lineLimit(nil)
+                .multilineTextAlignment(.leading)
+                .frame(width: textWidth, alignment: .topLeading)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(scaledPadding)
+        }
+    }
+>>>>>>> main
 }
 
 /// Inline-editing state for a single node.

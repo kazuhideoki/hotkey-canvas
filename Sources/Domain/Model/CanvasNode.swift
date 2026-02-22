@@ -14,6 +14,8 @@ public struct CanvasNode: Equatable, Sendable {
     public let bounds: CanvasBounds
     /// Additional key-value metadata.
     public let metadata: [String: String]
+    /// Whether committed rendering applies markdown styling rules.
+    public let markdownStyleEnabled: Bool
 
     /// Creates a node value.
     /// - Parameters:
@@ -23,13 +25,15 @@ public struct CanvasNode: Equatable, Sendable {
     ///   - imagePath: Optional image file path displayed in the node.
     ///   - bounds: Immutable node bounds.
     ///   - metadata: Additional metadata attributes.
+    ///   - markdownStyleEnabled: Whether markdown styling is applied in non-editing rendering.
     public init(
         id: CanvasNodeID,
         kind: CanvasNodeKind,
         text: String?,
         imagePath: String? = nil,
         bounds: CanvasBounds,
-        metadata: [String: String] = [:]
+        metadata: [String: String] = [:],
+        markdownStyleEnabled: Bool = true
     ) {
         self.id = id
         self.kind = kind
@@ -37,5 +41,6 @@ public struct CanvasNode: Equatable, Sendable {
         self.imagePath = imagePath
         self.bounds = bounds
         self.metadata = metadata
+        self.markdownStyleEnabled = markdownStyleEnabled
     }
 }

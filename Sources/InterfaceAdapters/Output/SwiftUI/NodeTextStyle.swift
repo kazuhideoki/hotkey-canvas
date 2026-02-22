@@ -20,6 +20,18 @@ enum NodeTextStyle {
     static let focusedBorderLineWidth: CGFloat = 3
     static let collapsedBadgeFontSize: CGFloat = 15
     static let collapsedBadgeTrailingOffset: CGFloat = 11
+    static let markdownLineSpacing: CGFloat = 4
+    static let markdownBlockSpacing: CGFloat = 8
+    static let markdownListMarkerSpacing: CGFloat = 6
+    static let markdownCodeFontSize: CGFloat = 17
+    static let markdownCodeBlockPadding: CGFloat = 8
+    static let markdownCodeBlockCornerRadius: CGFloat = 8
+    static let markdownCodeBlockOpacity: CGFloat = 0.18
+    static let markdownCodeBorderLineWidth: CGFloat = 1
+    static let markdownCodeBorderOpacity: CGFloat = 0.45
+    static let markdownCodeLeadingBarWidth: CGFloat = 4
+    static let markdownCodeLeadingBarOpacity: CGFloat = 0.8
+    static let markdownCodeTextOpacity: CGFloat = 0.95
 
     static var font: NSFont {
         .systemFont(ofSize: fontSize, weight: fontWeight)

@@ -131,6 +131,7 @@ func test_apply_setNodeText_shrinksNodeHeightWhenLinesDecrease() async throws {
     #expect(shrunkHeight < expandedHeight)
 }
 
+<<<<<<< HEAD
 @Test("ApplyCanvasCommandsUseCase: setNodeImage updates target node image path and height")
 func test_apply_setNodeImage_updatesNodeImage() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
@@ -183,14 +184,35 @@ func test_apply_setNodeImage_replacesExistingImage() async throws {
 
 @Test("ApplyCanvasCommandsUseCase: setNodeImage rejects non-finite height values")
 func test_apply_setNodeImage_nonFiniteHeight_fallsBackToCurrentHeight() async throws {
+=======
+@Test("ApplyCanvasCommandsUseCase: addNode enables markdown styling by default")
+func test_apply_addNode_enablesMarkdownStylingByDefault() async throws {
+    let sut = ApplyCanvasCommandsUseCase()
+
+    let result = try await sut.apply(commands: [.addNode])
+    let focusedNodeID = try #require(result.newState.focusedNodeID)
+    let addedNode = try #require(result.newState.nodesByID[focusedNodeID])
+
+    #expect(addedNode.markdownStyleEnabled)
+}
+
+@Test("ApplyCanvasCommandsUseCase: toggleFocusedNodeMarkdownStyle toggles markdown flag for focused node")
+func test_apply_toggleFocusedNodeMarkdownStyle_togglesFocusedNodeFlag() async throws {
+>>>>>>> main
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
         nodesByID: [
             nodeID: CanvasNode(
                 id: nodeID,
                 kind: .text,
+<<<<<<< HEAD
                 text: nil,
                 bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 70)
+=======
+                text: "# heading",
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 70),
+                markdownStyleEnabled: true
+>>>>>>> main
             )
         ],
         edgesByID: [:],
@@ -198,6 +220,7 @@ func test_apply_setNodeImage_nonFiniteHeight_fallsBackToCurrentHeight() async th
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
+<<<<<<< HEAD
     let nanHeightResult = try await sut.apply(
         commands: [.setNodeImage(nodeID: nodeID, imagePath: "/tmp/image-2.webp", nodeHeight: .nan)]
     )
@@ -209,4 +232,11 @@ func test_apply_setNodeImage_nonFiniteHeight_fallsBackToCurrentHeight() async th
     )
     #expect(infinityHeightResult.newState.nodesByID[nodeID]?.imagePath == "/tmp/image-3.heic")
     #expect(infinityHeightResult.newState.nodesByID[nodeID]?.bounds.height == 70)
+=======
+    let disabledResult = try await sut.apply(commands: [.toggleFocusedNodeMarkdownStyle])
+    #expect(disabledResult.newState.nodesByID[nodeID]?.markdownStyleEnabled == false)
+
+    let enabledResult = try await sut.apply(commands: [.toggleFocusedNodeMarkdownStyle])
+    #expect(enabledResult.newState.nodesByID[nodeID]?.markdownStyleEnabled == true)
+>>>>>>> main
 }
