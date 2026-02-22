@@ -434,13 +434,9 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CommandDispatch.swift`
     - コマンド適用前に所属整合性検証と対象エリア解決を行う。
     - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
-<<<<<<< HEAD
-    - Diagram エリアでは `addChildNode` を `addNode` へ正規化し、`moveNode` は階層移動ではなく座標 nudge として扱う（既定距離は `CanvasDefaultNodeDistance` を参照し、横 `220`・縦 `220`）。
-=======
     - Diagram エリアでは `addChildNode` を `addNode` へ正規化する。
-    - Diagram エリアでは `moveNode` を接続アンカー基準の8方向スロット移動として扱う。
-    - Diagram エリアでは `nudgeNode` を座標微調整（固定ステップ）として扱う。
->>>>>>> main
+    - Diagram エリアでは `moveNode` を接続アンカー基準の8方向スロット移動として扱い、スロット間隔の既定値は `CanvasDefaultNodeDistance`（横 `220`・縦 `220`）を使う。
+    - Diagram エリアでは `nudgeNode` を座標微調整として扱い、既定ステップは `CanvasDefaultNodeDistance`（横 `220`・縦 `220`）を使う。
     - `alignParentNodesVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス中エリア内の親ノード（エリア内で親子入辺を持たないノード）の `x` を最左ノード基準に揃える。整列時は親ノード配下サブツリーを一括で同じ `dx` 平行移動し、エリア内の相対位置を維持する。さらに整列後は親サブツリー同士の重なりを `y` 方向の平行移動で解消し、縦一列の `x` 基準を維持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
     - Diagram エリアでは `addNode` 実行時、フォーカスノードが存在する場合に `relationType = .normal` のエッジで新規ノードと接続する。

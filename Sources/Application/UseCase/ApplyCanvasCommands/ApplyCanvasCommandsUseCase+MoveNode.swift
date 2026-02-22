@@ -69,13 +69,9 @@ extension ApplyCanvasCommandsUseCase {
 
 extension ApplyCanvasCommandsUseCase {
     private static let orderingEpsilon: Double = 0.001
-<<<<<<< HEAD
     private static let indentHorizontalGap: Double = CanvasDefaultNodeDistance.treeHorizontal
-=======
-    private static let indentHorizontalGap: Double = 32
-    private static let diagramNudgeStep: Double = 24
-    private static let diagramSemanticHorizontalGap: Double = 48
-    private static let diagramSemanticVerticalGap: Double = 32
+    private static let diagramSemanticHorizontalGap: Double = CanvasDefaultNodeDistance.diagramHorizontal
+    private static let diagramSemanticVerticalGap: Double = CanvasDefaultNodeDistance.vertical(for: .diagram)
 
     private func moveNodeByDirectionSlot(
         in graph: CanvasGraph,
@@ -143,7 +139,6 @@ extension ApplyCanvasCommandsUseCase {
             areaLayoutSeedNodeID: focusedNodeID
         )
     }
->>>>>>> main
 
     private func moveNodeByNudge(
         in graph: CanvasGraph,
@@ -210,10 +205,7 @@ extension ApplyCanvasCommandsUseCase {
         case .left:
             return (-horizontalStep, 0)
         case .right:
-<<<<<<< HEAD
             return (horizontalStep, 0)
-=======
-            return (Self.diagramNudgeStep, 0)
         case .upLeft, .upRight, .downLeft, .downRight:
             return (0, 0)
         }
@@ -279,7 +271,6 @@ extension ApplyCanvasCommandsUseCase {
         }
         if edge.relationType == .parentChild {
             return 1
->>>>>>> main
         }
         return 2
     }
