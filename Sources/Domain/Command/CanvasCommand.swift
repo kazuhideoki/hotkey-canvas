@@ -8,6 +8,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case centerFocusedNode
     case deleteFocusedNode
     case setNodeText(nodeID: CanvasNodeID, text: String, nodeHeight: Double)
+    case setNodeImage(nodeID: CanvasNodeID, imagePath: String, nodeHeight: Double)
     case convertFocusedAreaMode(to: CanvasEditingMode)
     case createArea(id: CanvasAreaID, mode: CanvasEditingMode, nodeIDs: Set<CanvasNodeID>)
     case assignNodesToArea(nodeIDs: Set<CanvasNodeID>, areaID: CanvasAreaID)

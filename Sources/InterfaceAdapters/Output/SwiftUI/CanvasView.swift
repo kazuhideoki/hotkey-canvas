@@ -239,9 +239,8 @@ public struct CanvasView: View {
                                         )
                                         .padding(NodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
                                     } else {
-                                        nonEditingNodeText(
-                                            text: node.text ?? "",
-                                            nodeWidth: node.bounds.width,
+                                        nonEditingNodeContent(
+                                            node: node,
                                             zoomScale: zoomScale
                                         )
                                     }
@@ -413,11 +412,16 @@ public struct CanvasView: View {
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width
                         )
+                        let measuredHeight = measuredNodeHeightForEditing(
+                            text: node.text ?? "",
+                            measuredTextHeight: Double(measuredLayout.nodeHeight),
+                            node: node
+                        )
                         editingContext = NodeEditingContext(
                             nodeID: nodeID,
                             text: node.text ?? "",
                             nodeWidth: node.bounds.width,
-                            nodeHeight: Double(measuredLayout.nodeHeight),
+                            nodeHeight: measuredHeight,
                             initialCursorPlacement: .end,
                             initialTypingEvent: nil
                         )

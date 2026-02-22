@@ -65,6 +65,7 @@ extension ApplyCanvasCommandsUseCase {
                     id: node.id,
                     kind: node.kind,
                     text: node.text,
+                    imagePath: node.imagePath,
                     bounds: translate(node.bounds, dx: translation.dx, dy: translation.dy),
                     metadata: node.metadata
                 )

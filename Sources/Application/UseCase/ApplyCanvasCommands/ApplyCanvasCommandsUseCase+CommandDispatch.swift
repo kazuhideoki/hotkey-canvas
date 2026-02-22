@@ -46,9 +46,38 @@ extension ApplyCanvasCommandsUseCase {
             return noOpMutationResult(for: graph)
         case .deleteFocusedNode:
             return try deleteFocusedNode(in: graph)
+        case .setNodeText, .setNodeImage:
+            return try applyNodeContentCommand(command: command, to: graph)
+        case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
+            return noOpMutationResult(for: graph)
+        }
+    }
+
+    private func applyNodeContentCommand(
+        command: CanvasCommand,
+        to graph: CanvasGraph
+    ) throws -> CanvasMutationResult {
+        switch command {
         case .setNodeText(let nodeID, let text, let nodeHeight):
             return try setNodeText(in: graph, nodeID: nodeID, text: text, nodeHeight: nodeHeight)
-        case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
+        case .setNodeImage(let nodeID, let imagePath, let nodeHeight):
+            return try setNodeImage(
+                in: graph,
+                nodeID: nodeID,
+                imagePath: imagePath,
+                nodeHeight: nodeHeight
+            )
+        case .addNode,
+            .addChildNode,
+            .addSiblingNode,
+            .moveFocus,
+            .moveNode,
+            .toggleFoldFocusedSubtree,
+            .centerFocusedNode,
+            .deleteFocusedNode,
+            .convertFocusedAreaMode,
+            .createArea,
+            .assignNodesToArea:
             return noOpMutationResult(for: graph)
         }
     }
@@ -63,16 +92,7 @@ extension ApplyCanvasCommandsUseCase {
                 to: mode,
                 in: graph
             ).get()
-            return CanvasMutationResult(
-                graphBeforeMutation: graph,
-                graphAfterMutation: graphAfterMutation,
-                effects: CanvasMutationEffects(
-                    didMutateGraph: graphAfterMutation != graph,
-                    needsTreeLayout: false,
-                    needsAreaLayout: false,
-                    needsFocusNormalization: false
-                )
-            )
+            return areaManagementMutationResult(before: graph, after: graphAfterMutation)
         case .createArea(let id, let mode, let nodeIDs):
             let graphAfterMutation = try CanvasAreaMembershipService.createArea(
                 id: id,
@@ -80,32 +100,14 @@ extension ApplyCanvasCommandsUseCase {
                 nodeIDs: nodeIDs,
                 in: graph
             ).get()
-            return CanvasMutationResult(
-                graphBeforeMutation: graph,
-                graphAfterMutation: graphAfterMutation,
-                effects: CanvasMutationEffects(
-                    didMutateGraph: graphAfterMutation != graph,
-                    needsTreeLayout: false,
-                    needsAreaLayout: false,
-                    needsFocusNormalization: false
-                )
-            )
+            return areaManagementMutationResult(before: graph, after: graphAfterMutation)
         case .assignNodesToArea(let nodeIDs, let areaID):
             let graphAfterMutation = try CanvasAreaMembershipService.assign(
                 nodeIDs: nodeIDs,
                 to: areaID,
                 in: graph
             ).get()
-            return CanvasMutationResult(
-                graphBeforeMutation: graph,
-                graphAfterMutation: graphAfterMutation,
-                effects: CanvasMutationEffects(
-                    didMutateGraph: graphAfterMutation != graph,
-                    needsTreeLayout: false,
-                    needsAreaLayout: false,
-                    needsFocusNormalization: false
-                )
-            )
+            return areaManagementMutationResult(before: graph, after: graphAfterMutation)
         case .addNode,
             .addChildNode,
             .addSiblingNode,
@@ -114,9 +116,26 @@ extension ApplyCanvasCommandsUseCase {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteFocusedNode,
-            .setNodeText:
+            .setNodeText,
+            .setNodeImage:
             return noOpMutationResult(for: graph)
         }
+    }
+
+    private func areaManagementMutationResult(
+        before graphBeforeMutation: CanvasGraph,
+        after graphAfterMutation: CanvasGraph
+    ) -> CanvasMutationResult {
+        CanvasMutationResult(
+            graphBeforeMutation: graphBeforeMutation,
+            graphAfterMutation: graphAfterMutation,
+            effects: CanvasMutationEffects(
+                didMutateGraph: graphAfterMutation != graphBeforeMutation,
+                needsTreeLayout: false,
+                needsAreaLayout: false,
+                needsFocusNormalization: false
+            )
+        )
     }
 
     private func isCommand(_ command: CanvasCommand, supportedIn mode: CanvasEditingMode) -> Bool {
@@ -146,6 +165,8 @@ extension ApplyCanvasCommandsUseCase {
             }
             return .failure(.focusedNodeNotFound)
         case .setNodeText(let nodeID, _, _):
+            return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
+        case .setNodeImage(let nodeID, _, _):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
         case .addChildNode,
             .addSiblingNode,

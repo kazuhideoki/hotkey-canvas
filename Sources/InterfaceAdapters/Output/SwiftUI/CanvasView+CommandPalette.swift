@@ -4,12 +4,17 @@ import Domain
 import Foundation
 
 extension CanvasView {
+    enum CommandPaletteAction: Equatable {
+        case shortcut(CanvasShortcutAction)
+        case insertImageFromFinder
+    }
+
     struct CommandPaletteItem: Identifiable, Equatable {
         let id: String
         let title: String
         let shortcutLabel: String
         let searchText: String
-        let action: CanvasShortcutAction
+        let action: CommandPaletteAction
     }
 
     func openCommandPalette() {
@@ -47,21 +52,28 @@ extension CanvasView {
     }
 
     private func defaultCommandPaletteItems() -> [CommandPaletteItem] {
-        CanvasShortcutCatalogService.commandPaletteDefinitions().compactMap { definition in
-            guard definition.isVisibleInCommandPalette else {
-                return nil
+        let shortcutItems: [CommandPaletteItem] =
+            CanvasShortcutCatalogService.commandPaletteDefinitions().map { definition in
+                let searchText = ([definition.name, definition.shortcutLabel] + definition.searchTokens).joined(
+                    separator: " "
+                )
+                return CommandPaletteItem(
+                    id: definition.id.rawValue,
+                    title: definition.name,
+                    shortcutLabel: definition.shortcutLabel,
+                    searchText: searchText,
+                    action: .shortcut(definition.action)
+                )
             }
-            let searchText = ([definition.name, definition.shortcutLabel] + definition.searchTokens).joined(
-                separator: " "
-            )
-            return CommandPaletteItem(
-                id: definition.id.rawValue,
-                title: definition.name,
-                shortcutLabel: definition.shortcutLabel,
-                searchText: searchText,
-                action: definition.action
-            )
-        }
+
+        let imageInsertItem = CommandPaletteItem(
+            id: "insertImageFromFinder",
+            title: "Insert Image from Finder",
+            shortcutLabel: "Finder",
+            searchText: "insert image finder photo picture",
+            action: .insertImageFromFinder
+        )
+        return shortcutItems + [imageInsertItem]
     }
 
     func executeSelectedCommandIfNeeded() {
@@ -75,24 +87,29 @@ extension CanvasView {
 
     func executeSelectedCommand(_ item: CommandPaletteItem) {
         switch item.action {
-        case .apply(let commands):
-            Task {
-                await viewModel.apply(commands: commands)
+        case .shortcut(let shortcutAction):
+            switch shortcutAction {
+            case .apply(let commands):
+                Task {
+                    await viewModel.apply(commands: commands)
+                }
+            case .undo:
+                Task {
+                    await viewModel.undo()
+                }
+            case .redo:
+                Task {
+                    await viewModel.redo()
+                }
+            case .zoomIn:
+                applyZoom(action: .zoomIn)
+            case .zoomOut:
+                applyZoom(action: .zoomOut)
+            case .openCommandPalette:
+                return
             }
-        case .undo:
-            Task {
-                await viewModel.undo()
-            }
-        case .redo:
-            Task {
-                await viewModel.redo()
-            }
-        case .zoomIn:
-            applyZoom(action: .zoomIn)
-        case .zoomOut:
-            applyZoom(action: .zoomOut)
-        case .openCommandPalette:
-            return
+        case .insertImageFromFinder:
+            insertImageFromFinder()
         }
         closeCommandPalette()
     }

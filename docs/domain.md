@@ -46,7 +46,7 @@
 - 集約
   - `CanvasGraph`: ノード/エッジ/フォーカス/折りたたみルートを保持する不変スナップショット。
 - エンティティ/値オブジェクト
-  - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`
+  - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.imagePath` はノード内画像のファイルパス）
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`
 - コマンド
   - `CanvasCommand`
@@ -54,6 +54,7 @@
   - `CanvasSiblingNodePosition`
   - `CanvasCommand.centerFocusedNode`
   - `CanvasCommand.toggleFoldFocusedSubtree`
+  - `CanvasCommand.setNodeImage(nodeID:imagePath:nodeHeight:)`
 - エラー
   - `CanvasGraphError`
 - サービス
@@ -80,6 +81,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeImage.swift`
 - 入力境界/コマンド流入
   - `Sources/Application/Port/Input/CanvasEditingInputPort.swift`
   - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`
@@ -94,6 +96,7 @@
 - 不変条件
   - ノード ID は空文字を許容しない。
   - ノードの `width` / `height` は正値である必要がある。
+  - ノード画像は `imagePath == nil` で未設定を表し、同一ノードへの再挿入は `imagePath` の上書き（置換）として扱う。
   - エッジ ID は空文字を許容しない。
   - エッジの `fromNodeID` / `toNodeID` はグラフ内に存在する必要がある。
   - ノード/エッジの ID 重複は許容しない。
@@ -479,3 +482,4 @@
 - 2026-02-21: Diagram mode Phase1 基盤として `CanvasArea*` モデル、`CanvasAreaMembershipService`、`CanvasAreaPolicyError`、モード別コマンドディスパッチ境界を追加。
 - 2026-02-21: Diagram mode Phase2 として、`createArea` / `assignNodesToArea` の Diagram 実行許可、`addNode` の複数エリア曖昧解決エラー、跨ぎエッジ禁止（`crossAreaEdgeForbidden`）の強制を追加。
 - 2026-02-21: Diagram mode Phase3 として `convertFocusedAreaMode(to:)` を追加し、フォーカス基準のモード変換（同一モード no-op）と `Shift + Enter` モード選択導線を実装。
+- 2026-02-22: `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を追加し、ノード上部画像の挿入/置換をドメイン編集コマンドとして扱う仕様を追記。

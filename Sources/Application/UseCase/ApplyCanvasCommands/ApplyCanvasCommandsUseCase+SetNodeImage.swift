@@ -1,41 +1,38 @@
-// Background: Keyboard-first node editing needs text update commands.
-// Responsibility: Handle focused-node text updates for inline editing.
 import Domain
 
-// Background: Inline editing needs a command path to mutate node text content.
-// Responsibility: Update text of an existing node, normalize empty strings to nil,
-// and persist measured node height safely.
+// Background: Nodes can render an image above text and require a dedicated mutation path.
+// Responsibility: Update focused-node image reference and persist measured node height.
 extension ApplyCanvasCommandsUseCase {
-    private static let minimumNodeHeight: Double = 1
+    private static let minimumNodeHeightForImage: Double = 1
 
-    /// Updates node text and height, then requests tree/area layout to keep structure and collision consistent.
+    /// Updates node image path and height, then requests relayout to keep structure and collision consistent.
     /// - Parameters:
     ///   - graph: Current graph snapshot.
     ///   - nodeID: Target node identifier.
-    ///   - text: Edited text (empty string becomes `nil`).
-    ///   - nodeHeight: Measured node height from UI.
+    ///   - imagePath: Absolute image file path selected from Finder.
+    ///   - nodeHeight: Measured node height from UI after image insertion.
     /// - Returns: Mutation result with relayout effects, or no-op when values are unchanged.
     /// - Throws: Propagates node update failure from CRUD service.
-    func setNodeText(
+    func setNodeImage(
         in graph: CanvasGraph,
         nodeID: CanvasNodeID,
-        text: String,
+        imagePath: String,
         nodeHeight: Double
     ) throws -> CanvasMutationResult {
         guard let node = graph.nodesByID[nodeID] else {
             return noOpMutationResult(for: graph)
         }
 
-        let normalizedText = text.isEmpty ? nil : text
         let fallbackHeight =
-            if node.bounds.height.isFinite, node.bounds.height > Self.minimumNodeHeight {
+            if node.bounds.height.isFinite, node.bounds.height > Self.minimumNodeHeightForImage {
                 node.bounds.height
             } else {
-                Self.minimumNodeHeight
+                Self.minimumNodeHeightForImage
             }
         let proposedHeight = nodeHeight.isFinite ? nodeHeight : fallbackHeight
-        let normalizedHeight = max(proposedHeight, Self.minimumNodeHeight)
-        if node.text == normalizedText, node.bounds.height == normalizedHeight {
+        let normalizedHeight = max(proposedHeight, Self.minimumNodeHeightForImage)
+
+        if node.imagePath == imagePath, node.bounds.height == normalizedHeight {
             return noOpMutationResult(for: graph)
         }
 
@@ -48,8 +45,8 @@ extension ApplyCanvasCommandsUseCase {
         let updatedNode = CanvasNode(
             id: node.id,
             kind: node.kind,
-            text: normalizedText,
-            imagePath: node.imagePath,
+            text: node.text,
+            imagePath: imagePath,
             bounds: updatedBounds,
             metadata: node.metadata
         )

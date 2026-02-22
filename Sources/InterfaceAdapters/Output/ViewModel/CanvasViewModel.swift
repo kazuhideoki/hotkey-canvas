@@ -131,6 +131,10 @@ public final class CanvasViewModel: ObservableObject {
         await apply(commands: [.setNodeText(nodeID: nodeID, text: text, nodeHeight: nodeHeight)])
     }
 
+    public func insertNodeImage(nodeID: CanvasNodeID, imagePath: String, nodeHeight: Double) async {
+        await apply(commands: [.setNodeImage(nodeID: nodeID, imagePath: imagePath, nodeHeight: nodeHeight)])
+    }
+
     public func consumePendingEditingNodeID() {
         pendingEditingNodeID = nil
     }
@@ -174,7 +178,7 @@ extension CanvasViewModel {
         case .addNode, .addChildNode, .addSiblingNode:
             return true
         case .moveFocus, .moveNode, .toggleFoldFocusedSubtree, .centerFocusedNode, .deleteFocusedNode,
-            .setNodeText, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
+            .setNodeText, .setNodeImage, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return false
         }
     }
