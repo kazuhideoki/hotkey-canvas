@@ -55,6 +55,10 @@ extension CanvasShortcutCatalogService {
     }
 
     private static func nodeEditingDefinitions() -> [CanvasShortcutDefinition] {
+        baseNodeEditingDefinitions() + clipboardNodeEditingDefinitions()
+    }
+
+    private static func baseNodeEditingDefinitions() -> [CanvasShortcutDefinition] {
         [
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addChildNode"),
@@ -90,6 +94,35 @@ extension CanvasShortcutCatalogService {
                 gesture: CanvasShortcutGesture(key: .deleteBackward, modifiers: []),
                 action: .apply(commands: [.deleteFocusedNode]),
                 shortcutLabel: "Delete"
+            ),
+        ]
+    }
+
+    private static func clipboardNodeEditingDefinitions() -> [CanvasShortcutDefinition] {
+        [
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "copyFocusedSubtree"),
+                name: "Copy Focused Subtree",
+                gesture: CanvasShortcutGesture(key: .character("c"), modifiers: [.command]),
+                action: .apply(commands: [.copyFocusedSubtree]),
+                shortcutLabel: "Command + C",
+                searchTokens: ["copy", "subtree"]
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "cutFocusedSubtree"),
+                name: "Cut Focused Subtree",
+                gesture: CanvasShortcutGesture(key: .character("x"), modifiers: [.command]),
+                action: .apply(commands: [.cutFocusedSubtree]),
+                shortcutLabel: "Command + X",
+                searchTokens: ["cut", "subtree"]
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "pasteSubtreeAsChild"),
+                name: "Paste Subtree as Child",
+                gesture: CanvasShortcutGesture(key: .character("v"), modifiers: [.command]),
+                action: .apply(commands: [.pasteSubtreeAsChild]),
+                shortcutLabel: "Command + V",
+                searchTokens: ["paste", "subtree", "child"]
             ),
         ]
     }

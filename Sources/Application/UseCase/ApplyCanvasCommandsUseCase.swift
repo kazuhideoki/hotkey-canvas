@@ -6,6 +6,7 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
     private var graph: CanvasGraph
     private var undoStack: [CanvasGraph]
     private var redoStack: [CanvasGraph]
+    var treeClipboardState: CanvasTreeClipboardState
     private let maxHistoryCount: Int
     private let pipelineCoordinator: CanvasCommandPipelineCoordinator
 
@@ -13,6 +14,7 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
         graph = initialGraph
         undoStack = []
         redoStack = []
+        treeClipboardState = .empty
         self.maxHistoryCount = max(0, maxHistoryCount)
         pipelineCoordinator = CanvasCommandPipelineCoordinator()
     }
@@ -125,6 +127,12 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
     public func getCurrentGraph() async -> CanvasGraph {
         graph
     }
+}
+
+/// In-memory clipboard state for internal tree copy/cut/paste phase.
+enum CanvasTreeClipboardState: Equatable, Sendable {
+    case empty
+    case subtree(CanvasTreeClipboardPayload)
 }
 
 extension ApplyCanvasCommandsUseCase {
