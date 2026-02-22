@@ -8,18 +8,26 @@ extension ApplyCanvasCommandsUseCase {
         try CanvasAreaMembershipService.validate(in: graph).get()
         let resolvedAreaID = try resolveAreaID(for: command, in: graph).get()
         let resolvedArea = try CanvasAreaMembershipService.area(withID: resolvedAreaID, in: graph).get()
-        guard isCommand(command, supportedIn: resolvedArea.editingMode) else {
-            throw CanvasAreaPolicyError.unsupportedCommandInMode(mode: resolvedArea.editingMode, command: command)
+        let normalizedCommand = normalize(
+            command: command,
+            for: resolvedArea.editingMode
+        )
+        guard isCommand(normalizedCommand, supportedIn: resolvedArea.editingMode) else {
+            throw CanvasAreaPolicyError.unsupportedCommandInMode(
+                mode: resolvedArea.editingMode,
+                command: normalizedCommand
+            )
         }
 
-        switch command {
+        switch normalizedCommand {
         case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
-            return try applyAreaManagementCommand(command: command, to: graph)
+            return try applyAreaManagementCommand(command: normalizedCommand, to: graph)
         default:
             return try applyGraphEditingCommand(
-                command: command,
+                command: normalizedCommand,
                 to: graph,
-                resolvedAreaID: resolvedAreaID
+                resolvedAreaID: resolvedAreaID,
+                resolvedAreaMode: resolvedArea.editingMode
             )
         }
     }
@@ -27,7 +35,8 @@ extension ApplyCanvasCommandsUseCase {
     private func applyGraphEditingCommand(
         command: CanvasCommand,
         to graph: CanvasGraph,
-        resolvedAreaID: CanvasAreaID
+        resolvedAreaID: CanvasAreaID,
+        resolvedAreaMode: CanvasEditingMode
     ) throws -> CanvasMutationResult {
         switch command {
         case .addNode:
@@ -39,7 +48,11 @@ extension ApplyCanvasCommandsUseCase {
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
         case .moveNode(let direction):
-            return try moveNode(in: graph, direction: direction)
+            return try moveNode(
+                in: graph,
+                direction: direction,
+                areaMode: resolvedAreaMode
+            )
         case .toggleFoldFocusedSubtree:
             return toggleFoldFocusedSubtree(in: graph)
         case .centerFocusedNode:
@@ -158,6 +171,18 @@ extension ApplyCanvasCommandsUseCase {
             .createArea,
             .assignNodesToArea:
             return CanvasAreaMembershipService.focusedAreaID(in: graph)
+        }
+    }
+
+    private func normalize(
+        command: CanvasCommand,
+        for mode: CanvasEditingMode
+    ) -> CanvasCommand {
+        switch (mode, command) {
+        case (.diagram, .addChildNode):
+            return .addNode
+        default:
+            return command
         }
     }
 }
