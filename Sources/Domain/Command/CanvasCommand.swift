@@ -5,6 +5,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case alignParentNodesVertically
     case moveFocus(CanvasFocusDirection)
     case moveNode(CanvasNodeMoveDirection)
+    case nudgeNode(CanvasNodeMoveDirection)
     case toggleFoldFocusedSubtree
     case centerFocusedNode
     case deleteFocusedNode
@@ -39,4 +40,8 @@ public enum CanvasNodeMoveDirection: Equatable, Sendable {
     case down
     case left
     case right
+    case upLeft
+    case upRight
+    case downLeft
+    case downRight
 }

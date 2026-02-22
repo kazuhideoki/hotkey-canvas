@@ -124,6 +124,34 @@ extension CanvasCommandPipelineCoordinator {
         guard let seedNodeID else {
             return graph
         }
+        guard let seedArea = focusedArea(containing: seedNodeID, in: graph) else {
+            return graph
+        }
+
+        switch seedArea.editingMode {
+        case .tree:
+            return runTreeAreaLayoutStage(on: graph, seedNodeID: seedNodeID)
+        case .diagram:
+            let graphAfterNodeLayout = runDiagramNodeLayoutStage(
+                on: graph,
+                seedNodeID: seedNodeID,
+                in: seedArea
+            )
+            return runDiagramAreaLayoutStage(
+                on: graphAfterNodeLayout,
+                seedAreaID: seedArea.id
+            )
+        }
+    }
+
+    private func focusedArea(containing seedNodeID: CanvasNodeID, in graph: CanvasGraph) -> CanvasArea? {
+        graph.areasByID.values
+            .filter { $0.nodeIDs.contains(seedNodeID) }
+            .sorted { $0.id.rawValue < $1.id.rawValue }
+            .first
+    }
+
+    private func runTreeAreaLayoutStage(on graph: CanvasGraph, seedNodeID: CanvasNodeID) -> CanvasGraph {
         let areas = CanvasAreaLayoutService.makeParentChildAreas(
             in: graph,
             shapeKind: .convexHull
@@ -137,6 +165,115 @@ extension CanvasCommandPipelineCoordinator {
             seedAreaID: seedArea.id,
             minimumSpacing: CanvasDefaultNodeDistance.treeHorizontal
         )
+        return applyingAreaTranslations(
+            to: graph,
+            areas: areas,
+            translationsByAreaID: translationsByAreaID
+        )
+    }
+
+    private func runDiagramNodeLayoutStage(
+        on graph: CanvasGraph,
+        seedNodeID: CanvasNodeID,
+        in seedArea: CanvasArea
+    ) -> CanvasGraph {
+        let nodeIDs = seedArea.nodeIDs
+            .filter { graph.nodesByID[$0] != nil }
+            .sorted { $0.rawValue < $1.rawValue }
+        guard nodeIDs.count > 1 else {
+            return graph
+        }
+
+        let areas: [CanvasNodeArea] = nodeIDs.map { nodeID in
+            guard let node = graph.nodesByID[nodeID] else {
+                preconditionFailure("Node ID listed in area must exist in graph: \(nodeID.rawValue)")
+            }
+            let bounds = CanvasRect(
+                minX: node.bounds.x,
+                minY: node.bounds.y,
+                width: node.bounds.width,
+                height: node.bounds.height
+            )
+            return CanvasNodeArea(
+                id: nodeID,
+                nodeIDs: [nodeID],
+                bounds: bounds,
+                shape: .rectangle
+            )
+        }
+
+        let translationsByAreaID = CanvasAreaLayoutService.resolveOverlaps(
+            areas: areas,
+            seedAreaID: seedNodeID,
+            minimumSpacing: 16
+        )
+        return applyingAreaTranslations(
+            to: graph,
+            areas: areas,
+            translationsByAreaID: translationsByAreaID
+        )
+    }
+
+    private func runDiagramAreaLayoutStage(on graph: CanvasGraph, seedAreaID: CanvasAreaID) -> CanvasGraph {
+        let sortedAreas = graph.areasByID.values.sorted { $0.id.rawValue < $1.id.rawValue }
+        let layoutAreas = sortedAreas.compactMap { area in
+            areaNodeLayoutArea(area: area, in: graph)
+        }
+        guard layoutAreas.count > 1 else {
+            return graph
+        }
+
+        let seedLayoutAreaID = CanvasNodeID(rawValue: "area-\(seedAreaID.rawValue)")
+        let translationsByAreaID = CanvasAreaLayoutService.resolveOverlaps(
+            areas: layoutAreas,
+            seedAreaID: seedLayoutAreaID,
+            minimumSpacing: 32
+        )
+        return applyingAreaTranslations(
+            to: graph,
+            areas: layoutAreas,
+            translationsByAreaID: translationsByAreaID
+        )
+    }
+
+    private func areaNodeLayoutArea(area: CanvasArea, in graph: CanvasGraph) -> CanvasNodeArea? {
+        let nodes = area.nodeIDs.compactMap { graph.nodesByID[$0] }
+        guard let firstNode = nodes.first else {
+            return nil
+        }
+
+        var minX = firstNode.bounds.x
+        var minY = firstNode.bounds.y
+        var maxX = firstNode.bounds.x + firstNode.bounds.width
+        var maxY = firstNode.bounds.y + firstNode.bounds.height
+
+        for node in nodes {
+            minX = min(minX, node.bounds.x)
+            minY = min(minY, node.bounds.y)
+            maxX = max(maxX, node.bounds.x + node.bounds.width)
+            maxY = max(maxY, node.bounds.y + node.bounds.height)
+        }
+
+        let bounds = CanvasRect(
+            minX: minX,
+            minY: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        )
+
+        return CanvasNodeArea(
+            id: CanvasNodeID(rawValue: "area-\(area.id.rawValue)"),
+            nodeIDs: area.nodeIDs,
+            bounds: bounds,
+            shape: .rectangle
+        )
+    }
+
+    private func applyingAreaTranslations(
+        to graph: CanvasGraph,
+        areas: [CanvasNodeArea],
+        translationsByAreaID: [CanvasNodeID: CanvasTranslation]
+    ) -> CanvasGraph {
         guard !translationsByAreaID.isEmpty else {
             return graph
         }
