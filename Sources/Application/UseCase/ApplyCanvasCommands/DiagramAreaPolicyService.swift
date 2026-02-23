@@ -29,15 +29,8 @@ enum DiagramAreaPolicyService {
             return true
         case .addChildNode,
             .addSiblingNode,
-<<<<<<< HEAD
             .duplicateSelectionAsSibling,
-            .toggleFoldFocusedSubtree,
-            .copyFocusedSubtree,
-            .cutFocusedSubtree,
-            .pasteSubtreeAsChild:
-=======
             .toggleFoldFocusedSubtree:
->>>>>>> main
             return false
         }
     }
