@@ -10,6 +10,7 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var collapsedRootNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var diagramNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var treeRootNodeIDs: Set<CanvasNodeID> = []
+    @Published public private(set) var areaIDByNodeID: [CanvasNodeID: CanvasAreaID] = [:]
     @Published public private(set) var pendingEditingNodeID: CanvasNodeID?
     @Published public private(set) var viewportIntent: CanvasViewportIntent?
     @Published public private(set) var canUndo: Bool = false
@@ -178,6 +179,7 @@ extension CanvasViewModel {
         case .addNode, .addChildNode, .addSiblingNode:
             return true
         case .alignParentNodesVertically,
+            .connectNodes,
             .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree, .centerFocusedNode, .deleteFocusedNode,
             .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
             .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
@@ -210,6 +212,7 @@ extension CanvasViewModel {
         )
         diagramNodeIDs = nodePresentation.diagramNodeIDs
         treeRootNodeIDs = nodePresentation.treeRootNodeIDs
+        areaIDByNodeID = areaIDMapping(in: result.newState)
         viewportIntent = result.viewportIntent
         canUndo = result.canUndo
         canRedo = result.canRedo
@@ -239,6 +242,19 @@ extension CanvasViewModel {
             }
             return lhs.id.rawValue < rhs.id.rawValue
         }
+    }
+
+    private func areaIDMapping(in graph: CanvasGraph) -> [CanvasNodeID: CanvasAreaID] {
+        var mapping: [CanvasNodeID: CanvasAreaID] = [:]
+        for areaID in graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let area = graph.areasByID[areaID] else {
+                continue
+            }
+            for nodeID in area.nodeIDs {
+                mapping[nodeID] = area.id
+            }
+        }
+        return mapping
     }
 }
 

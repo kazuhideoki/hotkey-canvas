@@ -28,9 +28,12 @@ public struct CanvasView: View {
     @State private var pendingEditingRequestID: UInt64 = 0
     @State var previousCompositeMoveInputDirection: CanvasNodeMoveDirection?
     @State var previousCompositeMoveFocusedNodeID: CanvasNodeID?
-    private let hotkeyTranslator: CanvasHotkeyTranslator
+    @State var connectNodeSelectionSourceNodeID: CanvasNodeID?
+    @State var connectNodeSelectionTargetNodeID: CanvasNodeID?
+    let hotkeyTranslator: CanvasHotkeyTranslator
     private let onDisappearHandler: () -> Void
     let addNodeModeSelectionHotkeyResolver = AddNodeModeSelectionHotkeyResolver()
+    let connectNodeSelectionHotkeyResolver = ConnectNodeSelectionHotkeyResolver()
     let editingStartResolver = NodeEditingStartResolver()
     let nodeTextHeightMeasurer = NodeTextHeightMeasurer()
     public init(
@@ -216,13 +219,16 @@ public struct CanvasView: View {
                                 .overlay(
                                     RoundedRectangle(cornerRadius: nodeCornerRadius)
                                         .stroke(
-                                            isEditing
-                                                ? Color(nsColor: .systemPink)
-                                                : (isFocused
-                                                    ? Color.accentColor : Color(nsColor: .separatorColor)),
-                                            lineWidth: (isEditing || isFocused)
-                                                ? NodeTextStyle.focusedBorderLineWidth
-                                                : NodeTextStyle.borderLineWidth
+                                            connectNodeSelectionBorderColor(
+                                                for: node.id,
+                                                isEditing: isEditing,
+                                                isFocused: isFocused
+                                            ),
+                                            lineWidth: connectNodeSelectionBorderLineWidth(
+                                                for: node.id,
+                                                isEditing: isEditing,
+                                                isFocused: isFocused
+                                            )
                                         )
                                 )
                                 .overlay(alignment: .topLeading) {
@@ -309,6 +315,7 @@ public struct CanvasView: View {
                     )
                     .zIndex(11)
                 }
+                connectNodeSelectionBanner()
                 if let zoomRatioPopupText {
                     ZoomRatioPopup(text: zoomRatioPopupText)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -322,43 +329,7 @@ public struct CanvasView: View {
                         .allowsHitTesting(false)
                 }
                 CanvasHotkeyCaptureView(isEnabled: editingContext == nil && !isCommandPalettePresented) { event in
-                    if isAddNodeModePopupPresented {
-                        return handleAddNodeModePopupHotkey(event)
-                    }
-                    if hotkeyTranslator.shouldPresentAddNodeModeSelection(event) {
-                        presentAddNodeModeSelectionPopup()
-                        return true
-                    }
-                    if handleCompositeMoveHotkey(event) {
-                        return true
-                    }
-                    if hotkeyTranslator.shouldOpenCommandPalette(event) {
-                        openCommandPalette()
-                        return true
-                    }
-                    if let zoomAction = hotkeyTranslator.zoomAction(event) {
-                        applyZoom(action: zoomAction)
-                        return true
-                    }
-                    if let historyAction = hotkeyTranslator.historyAction(event) {
-                        Task {
-                            switch historyAction {
-                            case .undo:
-                                await viewModel.undo()
-                            case .redo:
-                                await viewModel.redo()
-                            }
-                        }
-                        return true
-                    }
-                    let commands = hotkeyTranslator.translate(event)
-                    guard !commands.isEmpty else {
-                        let displayNodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
-                        return handleTypingInputStart(event, nodesByID: displayNodesByID)
-                    }
-                    // Returning true tells the capture view to stop responder-chain propagation.
-                    Task { await viewModel.apply(commands: commands) }
-                    return true
+                    handleCanvasHotkeyEvent(event, displayNodes: displayNodes)
                 }
                 .frame(width: 1, height: 1)
                 // Keep key capture active without intercepting canvas rendering.
@@ -397,9 +368,14 @@ public struct CanvasView: View {
                 previousCompositeMoveInputDirection = nil
                 previousCompositeMoveFocusedNodeID = viewModel.focusedNodeID
                 applyFocusVisibilityRule(viewportSize: viewportSize)
+                synchronizeConnectNodeSelectionState()
             }
             .onChange(of: viewModel.nodes) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
+                synchronizeConnectNodeSelectionState()
+            }
+            .onChange(of: viewModel.areaIDByNodeID) { _ in
+                synchronizeConnectNodeSelectionState()
             }
             .onChange(of: editingContext) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
