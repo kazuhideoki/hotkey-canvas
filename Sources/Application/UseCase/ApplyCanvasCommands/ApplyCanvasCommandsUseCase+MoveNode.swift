@@ -197,16 +197,16 @@ extension ApplyCanvasCommandsUseCase {
             return graph
         }
         let nodeOverrides = movedTreeNodesAsSiblings(
-            from: graph.nodesByID,
+            from: focusedMovedGraph.nodesByID,
             targetNodeIDs: targetNodeIDs,
             focusedIndex: focusedIndex,
             focusedBounds: movedFocusedNode.bounds
         )
 
         return CanvasGraph(
-            nodesByID: graph.nodesByID.merging(nodeOverrides, uniquingKeysWith: { _, new in new }),
+            nodesByID: focusedMovedGraph.nodesByID.merging(nodeOverrides, uniquingKeysWith: { _, new in new }),
             edgesByID: nextEdgesByID,
-            focusedNodeID: focusedNodeID,
+            focusedNodeID: focusedMovedGraph.focusedNodeID,
             selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
