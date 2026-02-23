@@ -154,12 +154,8 @@ extension CanvasView {
 
     @ViewBuilder
     func nonEditingNodeContent(node: CanvasNode, zoomScale: Double) -> some View {
-<<<<<<< HEAD
         let contentAlignment = nodeTextContentAlignment(for: node.id)
-        if let imagePath = node.imagePath, let image = Self.nodeImageCache.image(atFilePath: imagePath) {
-=======
         if let imagePath = primaryImagePath(in: node), let image = Self.nodeImageCache.image(atFilePath: imagePath) {
->>>>>>> main
             let scale = CGFloat(zoomScale)
             let scaledPadding = NodeTextStyle.outerPadding * scale
             let contentWidth = max((CGFloat(node.bounds.width) * scale) - (scaledPadding * 2), 1)
