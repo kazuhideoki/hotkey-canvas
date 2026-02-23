@@ -3,11 +3,18 @@ import Domain
 // Background: Focus behavior after node deletion needs deterministic hierarchy-aware priority.
 // Responsibility: Delete the focused subtree and choose next focus by sibling, parent, then nearest node.
 extension ApplyCanvasCommandsUseCase {
-    /// Deletes the focused subtree and chooses deterministic next focus before pipeline recomputation.
-    /// - Parameter graph: Current graph snapshot.
+    /// Deletes focused subtree (tree) or selected nodes (diagram-aware) and picks deterministic next focus.
+    /// - Parameters:
+    ///   - graph: Current graph snapshot.
+    ///   - areaID: Focused area identifier used to scope multi-selection deletion.
+    ///   - areaMode: Editing mode for focused area.
     /// - Returns: Mutation result with deletion effects and optional area-layout seed.
     /// - Throws: Propagates node deletion failures from CRUD service.
-    func deleteFocusedNode(in graph: CanvasGraph) throws -> CanvasMutationResult {
+    func deleteFocusedNode(
+        in graph: CanvasGraph,
+        areaID: CanvasAreaID,
+        areaMode: CanvasEditingMode
+    ) throws -> CanvasMutationResult {
         guard let focusedNodeID = graph.focusedNodeID else {
             return noOpMutationResult(for: graph)
         }
@@ -15,16 +22,19 @@ extension ApplyCanvasCommandsUseCase {
             return noOpMutationResult(for: graph)
         }
 
+        let nodeIDsToDelete = nodeIDsForDeletion(
+            in: graph,
+            focusedNodeID: focusedNodeID,
+            areaID: areaID,
+            areaMode: areaMode
+        )
         var graphAfterDelete = graph
-        let subtreeNodeIDs = descendantNodeIDs(of: focusedNodeID, in: graph)
-            .union([focusedNodeID])
-            .sorted { $0.rawValue < $1.rawValue }
 
-        for nodeID in subtreeNodeIDs {
+        for nodeID in nodeIDsToDelete {
             graphAfterDelete = try CanvasGraphCRUDService.deleteNode(id: nodeID, in: graphAfterDelete).get()
         }
         graphAfterDelete = CanvasAreaMembershipService.remove(
-            nodeIDs: Set(subtreeNodeIDs),
+            nodeIDs: Set(nodeIDsToDelete),
             in: graphAfterDelete
         )
         let graphAfterTreeLayoutPreview = relayoutParentChildTrees(in: graphAfterDelete)
@@ -140,4 +150,40 @@ extension ApplyCanvasCommandsUseCase {
         }?.id
     }
 
+    /// Resolves concrete deletion targets from focus/selection and current area mode.
+    private func nodeIDsForDeletion(
+        in graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID,
+        areaID: CanvasAreaID,
+        areaMode: CanvasEditingMode
+    ) -> [CanvasNodeID] {
+        let selectedNodeIDsInArea = graph.selectedNodeIDs.filter { selectedNodeID in
+            guard graph.nodesByID[selectedNodeID] != nil else {
+                return false
+            }
+            switch CanvasAreaMembershipService.areaID(containing: selectedNodeID, in: graph) {
+            case .success(let selectedAreaID):
+                return selectedAreaID == areaID
+            case .failure:
+                return false
+            }
+        }
+        let shouldDeleteSelection =
+            selectedNodeIDsInArea.contains(focusedNodeID)
+            && selectedNodeIDsInArea.count > 1
+        let baseNodeIDs: Set<CanvasNodeID> = shouldDeleteSelection ? selectedNodeIDsInArea : [focusedNodeID]
+
+        let expandedNodeIDs: Set<CanvasNodeID>
+        switch areaMode {
+        case .tree:
+            expandedNodeIDs = baseNodeIDs.reduce(into: Set<CanvasNodeID>()) { partialResult, nodeID in
+                partialResult.formUnion(descendantNodeIDs(of: nodeID, in: graph))
+                partialResult.insert(nodeID)
+            }
+        case .diagram:
+            expandedNodeIDs = baseNodeIDs
+        }
+
+        return expandedNodeIDs.sorted { $0.rawValue < $1.rawValue }
+    }
 }
