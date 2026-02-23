@@ -26,15 +26,9 @@ public struct CanvasView: View {
     @State var zoomRatioPopupRequestID: UInt64 = 0
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
-<<<<<<< HEAD
-    private let hotkeyTranslator: CanvasHotkeyTranslator
-=======
-    @State var previousCompositeMoveInputDirection: CanvasNodeMoveDirection?
-    @State var previousCompositeMoveFocusedNodeID: CanvasNodeID?
     @State var connectNodeSelectionSourceNodeID: CanvasNodeID?
     @State var connectNodeSelectionTargetNodeID: CanvasNodeID?
     let hotkeyTranslator: CanvasHotkeyTranslator
->>>>>>> main
     private let onDisappearHandler: () -> Void
     let addNodeModeSelectionHotkeyResolver = AddNodeModeSelectionHotkeyResolver()
     let connectNodeSelectionHotkeyResolver = ConnectNodeSelectionHotkeyResolver()

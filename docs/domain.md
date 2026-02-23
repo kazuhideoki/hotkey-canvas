@@ -438,12 +438,8 @@
     - コマンド適用前に所属整合性検証と対象エリア解決を行う。
     - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
     - Diagram エリアでは `addChildNode` を `addNode` へ正規化する。
-<<<<<<< HEAD
-    - Diagram エリアでは `moveNode` を接続アンカー基準グリッド上の8方向移動として扱い、現在ノード位置を最寄りスロットへ量子化したうえで入力方向へ1ステップ進める。候補位置がアンカー矩形と重なる場合は同方向に追加ステップして飛び越える。スロット間隔の既定値は `CanvasDefaultNodeDistance`（横 `220`・縦 `220`）を使う。
-=======
     - Diagram エリアでは `connectNodes` を許可し、同一エリア内の既存ノード同士を `normal` エッジで接続する（自己接続・重複接続・跨ぎ接続は no-op）。
-    - Diagram エリアでは `moveNode` を接続アンカー基準の8方向スロット移動として扱い、スロット間隔の既定値は `CanvasDefaultNodeDistance`（横 `220`・縦 `220`）を使う。
->>>>>>> main
+    - Diagram エリアでは `moveNode` を接続アンカー基準の8方向移動として扱い、ステップ距離は `CanvasDefaultNodeDistance`（横 `220`・縦 `220`）を用いて決定する。実際の移動は現在ノード位置から入力方向へ1ステップ平行移動し、候補位置がアンカー矩形と重なる場合は同方向に追加ステップして飛び越える。
     - Diagram エリアで `moveNode` を適用した後は、同一エリア内ノード衝突も即時解消するために area layout を実行する。
     - Diagram エリアでは `nudgeNode` を座標微調整として扱い、既定ステップは `CanvasDefaultNodeDistance`（横 `220`・縦 `220`）を使う。
     - `alignParentNodesVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス中エリア内の親ノード（エリア内で親子入辺を持たないノード）の `x` を最左ノード基準に揃える。整列時は親ノード配下サブツリーを一括で同じ `dx` 平行移動し、エリア内の相対位置を維持する。さらに整列後は親サブツリー同士の重なりを `y` 方向の平行移動で解消し、縦一列の `x` 基準を維持する。
