@@ -35,14 +35,10 @@ extension CanvasView {
         if isFocused {
             return styleColor(styleSheet.nodeChrome.focusedBorderColor)
         }
-<<<<<<< HEAD
-        return styleColor(styleSheet.nodeChrome.defaultBorderColor)
-=======
         if isSelected {
-            return Color.accentColor.opacity(0.55)
+            return styleColor(styleSheet.nodeChrome.focusedBorderColor).opacity(0.55)
         }
-        return Color(nsColor: .separatorColor)
->>>>>>> main
+        return styleColor(styleSheet.nodeChrome.defaultBorderColor)
     }
 
     func connectNodeSelectionBorderLineWidth(

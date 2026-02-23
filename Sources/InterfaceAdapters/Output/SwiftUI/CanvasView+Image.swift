@@ -186,13 +186,8 @@ extension CanvasView {
             )
             let imageDisplayWidth = max(CGFloat(unscaledImageDisplayWidth) * scale, 1)
             VStack(
-<<<<<<< HEAD
-                alignment: .leading,
-                spacing: hasText ? nodeTextStyle.imageTextSpacing * scale : 0
-=======
                 alignment: contentAlignment.horizontalAlignment,
-                spacing: hasText ? NodeTextStyle.imageTextSpacing * scale : 0
->>>>>>> main
+                spacing: hasText ? nodeTextStyle.imageTextSpacing * scale : 0
             ) {
                 Image(nsImage: image)
                     .resizable()
@@ -232,11 +227,8 @@ extension CanvasView {
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale,
                 appliesOuterPadding: false,
-<<<<<<< HEAD
-                style: nodeTextStyle
-=======
+                style: nodeTextStyle,
                 contentAlignment: contentAlignment
->>>>>>> main
             )
         } else {
             nonEditingPlainNodeTextBody(

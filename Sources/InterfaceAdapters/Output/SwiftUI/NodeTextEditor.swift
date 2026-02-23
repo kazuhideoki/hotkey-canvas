@@ -14,11 +14,8 @@ struct NodeTextEditor: NSViewRepresentable {
     @Binding var text: String
     let nodeWidth: CGFloat
     let zoomScale: Double
-<<<<<<< HEAD
     let style: NodeTextStyle
-=======
     let contentAlignment: NodeTextContentAlignment
->>>>>>> main
     let selectAllOnFirstFocus: Bool
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
     let initialTypingEvent: NSEvent?
@@ -34,7 +31,8 @@ struct NodeTextEditor: NSViewRepresentable {
         configureTextViewAppearance(
             textView,
             zoomScale: zoomScale,
-            contentAlignment: contentAlignment
+            contentAlignment: contentAlignment,
+            style: style
         )
         return textView
     }
@@ -47,17 +45,12 @@ struct NodeTextEditor: NSViewRepresentable {
         context.coordinator.zoomScale = zoomScale
         nsView.onCommit = onCommit
         nsView.onCancel = onCancel
-<<<<<<< HEAD
-        configureTextViewAppearance(nsView, zoomScale: zoomScale)
-        nsView.typingAttributes[.foregroundColor] = NSColor.labelColor
-        nsView.typingAttributes[.font] = nsView.font ?? style.font
-=======
         configureTextViewAppearance(
             nsView,
             zoomScale: zoomScale,
-            contentAlignment: contentAlignment
+            contentAlignment: contentAlignment,
+            style: style
         )
->>>>>>> main
         nsView.textColor = .labelColor
         nsView.insertionPointColor = .labelColor
         nsView.applyContentLayout()
@@ -136,7 +129,8 @@ extension NodeTextEditor {
     private func configureTextViewAppearance(
         _ textView: NodeTextEditorTextView,
         zoomScale: Double,
-        contentAlignment: NodeTextContentAlignment
+        contentAlignment: NodeTextContentAlignment,
+        style: NodeTextStyle
     ) {
         let clampedZoomScale = max(CGFloat(zoomScale), 0.0001)
         textView.drawsBackground = false
@@ -149,17 +143,9 @@ extension NodeTextEditor {
         textView.insertionPointColor = .labelColor
         textView.isRichText = false
         textView.isHorizontallyResizable = false
-<<<<<<< HEAD
-        textView.isVerticallyResizable = true
-        textView.textContainerInset = NSSize(
-            width: style.textContainerInset * clampedZoomScale,
-            height: style.textContainerInset * clampedZoomScale
-        )
-=======
         textView.isVerticallyResizable = contentAlignment == .topLeading
-        textView.baseTextContainerInset = NodeTextStyle.textContainerInset * clampedZoomScale
+        textView.baseTextContainerInset = style.textContainerInset * clampedZoomScale
         textView.nodeTextContentAlignment = contentAlignment
->>>>>>> main
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainer?.widthTracksTextView = false
         textView.textContainer?.containerSize = NSSize(
