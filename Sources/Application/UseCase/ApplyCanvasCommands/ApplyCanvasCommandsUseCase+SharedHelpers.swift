@@ -20,7 +20,7 @@ extension ApplyCanvasCommandsUseCase {
             id: CanvasNodeID(rawValue: "node-\(UUID().uuidString.lowercased())"),
             kind: .text,
             text: nil,
-            imagePath: nil,
+            attachments: [],
             bounds: bounds
         )
     }

@@ -8,8 +8,8 @@ public struct CanvasNode: Equatable, Sendable {
     public let kind: CanvasNodeKind
     /// Optional text payload associated with the node.
     public let text: String?
-    /// Optional image file path rendered above text inside the node.
-    public let imagePath: String?
+    /// Attachment payloads rendered as non-text content of the node.
+    public let attachments: [CanvasAttachment]
     /// Node bounds in canvas coordinates.
     public let bounds: CanvasBounds
     /// Additional key-value metadata.
@@ -22,7 +22,7 @@ public struct CanvasNode: Equatable, Sendable {
     ///   - id: Unique node identifier.
     ///   - kind: Semantic node kind.
     ///   - text: Optional node text.
-    ///   - imagePath: Optional image file path displayed in the node.
+    ///   - attachments: Non-text attachment payloads.
     ///   - bounds: Immutable node bounds.
     ///   - metadata: Additional metadata attributes.
     ///   - markdownStyleEnabled: Whether markdown styling is applied in non-editing rendering.
@@ -30,7 +30,7 @@ public struct CanvasNode: Equatable, Sendable {
         id: CanvasNodeID,
         kind: CanvasNodeKind,
         text: String?,
-        imagePath: String?,
+        attachments: [CanvasAttachment] = [],
         bounds: CanvasBounds,
         metadata: [String: String] = [:],
         markdownStyleEnabled: Bool = true
@@ -38,9 +38,16 @@ public struct CanvasNode: Equatable, Sendable {
         self.id = id
         self.kind = kind
         self.text = text
-        self.imagePath = imagePath
+        self.attachments = attachments
         self.bounds = bounds
         self.metadata = metadata
         self.markdownStyleEnabled = markdownStyleEnabled
+    }
+}
+
+extension CanvasNode {
+    /// Returns first image file path rendered above text when present.
+    public var primaryImageAttachmentFilePath: String? {
+        attachments.first(where: { $0.placement == .aboveText && $0.imageFilePath != nil })?.imageFilePath
     }
 }

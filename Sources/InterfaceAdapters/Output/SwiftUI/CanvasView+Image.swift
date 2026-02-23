@@ -61,7 +61,7 @@ extension CanvasView {
     func measuredNodeHeightAfterReplacingImage(in node: CanvasNode, imageSize newImageSize: CGSize) -> Double {
         let hasText = (node.text ?? "").isEmpty == false
         let currentImageHeight: Double =
-            if let currentImagePath = node.imagePath,
+            if let currentImagePath = primaryImagePath(in: node),
                 let currentImageSize = imageSize(atFilePath: currentImagePath)
             {
                 measuredImageDisplayHeight(imageSize: currentImageSize, nodeWidth: node.bounds.width)
@@ -80,7 +80,7 @@ extension CanvasView {
             currentImageHeight: currentImageHeight,
             currentImageSpacing: currentSpacing,
             textOnlyHeight: textOnlyHeight,
-            hadExistingImagePath: node.imagePath != nil
+            hadExistingImagePath: primaryImagePath(in: node) != nil
         )
 
         let insertedImageHeight = measuredImageDisplayHeight(
@@ -120,7 +120,7 @@ extension CanvasView {
         measuredTextHeight: Double,
         node: CanvasNode
     ) -> Double {
-        guard node.imagePath != nil else {
+        guard primaryImagePath(in: node) != nil else {
             return measuredTextHeight
         }
         let hasText = text.isEmpty == false
@@ -134,7 +134,7 @@ extension CanvasView {
 
     func measuredImageLayoutForNode(_ node: CanvasNode, hasText: Bool) -> (height: Double, spacing: Double) {
         guard
-            let imagePath = node.imagePath,
+            let imagePath = primaryImagePath(in: node),
             let imageSize = imageSize(atFilePath: imagePath)
         else {
             return (height: 0, spacing: 0)
@@ -154,7 +154,7 @@ extension CanvasView {
 
     @ViewBuilder
     func nonEditingNodeContent(node: CanvasNode, zoomScale: Double) -> some View {
-        if let imagePath = node.imagePath, let image = Self.nodeImageCache.image(atFilePath: imagePath) {
+        if let imagePath = primaryImagePath(in: node), let image = Self.nodeImageCache.image(atFilePath: imagePath) {
             let scale = CGFloat(zoomScale)
             let scaledPadding = NodeTextStyle.outerPadding * scale
             let contentWidth = max((CGFloat(node.bounds.width) * scale) - (scaledPadding * 2), 1)
@@ -285,4 +285,7 @@ private final class NodeImageCacheEntry {
         self.image = image
         self.fileSignature = fileSignature
     }
+}
+func primaryImagePath(in node: CanvasNode) -> String? {
+    node.primaryImageAttachmentFilePath
 }

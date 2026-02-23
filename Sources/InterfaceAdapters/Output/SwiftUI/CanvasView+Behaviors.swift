@@ -113,7 +113,7 @@ extension CanvasView {
             id: node.id,
             kind: node.kind,
             text: node.text,
-            imagePath: node.imagePath,
+            attachments: node.attachments,
             bounds: CanvasBounds(
                 x: renderedRect.origin.x,
                 y: renderedRect.origin.y,
@@ -150,7 +150,7 @@ extension CanvasView {
             id: node.id,
             kind: node.kind,
             text: node.text,
-            imagePath: node.imagePath,
+            attachments: node.attachments,
             bounds: resizedBounds,
             metadata: node.metadata,
             markdownStyleEnabled: node.markdownStyleEnabled

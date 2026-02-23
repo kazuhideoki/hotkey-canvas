@@ -3,6 +3,14 @@ import Testing
 
 @testable import Application
 
+private func makeImageAttachment(path: String) -> CanvasAttachment {
+    CanvasAttachment(
+        id: CanvasAttachmentID(rawValue: "attachment-image-above-text"),
+        kind: .image(filePath: path),
+        placement: .aboveText
+    )
+}
+
 @Test("ApplyCanvasCommandsUseCase: setNodeText updates target node, normalizes empty to nil, and persists height")
 func test_apply_setNodeText_updatesNodeText() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
@@ -162,8 +170,8 @@ func test_apply_setNodeText_inDiagramArea_keepsSquareNode() async throws {
     #expect(updatedNode.bounds.height == 220)
 }
 
-@Test("ApplyCanvasCommandsUseCase: setNodeImage updates target node image path and height")
-func test_apply_setNodeImage_updatesNodeImage() async throws {
+@Test("ApplyCanvasCommandsUseCase: upsertNodeAttachment updates target node image attachment and height")
+func test_apply_upsertNodeAttachment_updatesNodeImage() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
         nodesByID: [
@@ -180,15 +188,21 @@ func test_apply_setNodeImage_updatesNodeImage() async throws {
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let updated = try await sut.apply(
-        commands: [.setNodeImage(nodeID: nodeID, imagePath: "/tmp/image-1.png", nodeHeight: 84)]
+        commands: [
+            .upsertNodeAttachment(
+                nodeID: nodeID,
+                attachment: makeImageAttachment(path: "/tmp/image-1.png"),
+                nodeHeight: 84
+            )
+        ]
     )
-    #expect(updated.newState.nodesByID[nodeID]?.imagePath == "/tmp/image-1.png")
+    #expect(updated.newState.nodesByID[nodeID]?.primaryImageAttachmentFilePath == "/tmp/image-1.png")
     #expect(updated.newState.nodesByID[nodeID]?.bounds.height == 84)
     #expect(updated.newState.nodesByID[nodeID]?.text == "before")
 }
 
-@Test("ApplyCanvasCommandsUseCase: setNodeImage replaces existing image when inserting again")
-func test_apply_setNodeImage_replacesExistingImage() async throws {
+@Test("ApplyCanvasCommandsUseCase: upsertNodeAttachment replaces existing image when inserting again")
+func test_apply_upsertNodeAttachment_replacesExistingImage() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
         nodesByID: [
@@ -196,7 +210,7 @@ func test_apply_setNodeImage_replacesExistingImage() async throws {
                 id: nodeID,
                 kind: .text,
                 text: nil,
-                imagePath: "/tmp/old.png",
+                attachments: [makeImageAttachment(path: "/tmp/old.png")],
                 bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 100)
             )
         ],
@@ -206,14 +220,20 @@ func test_apply_setNodeImage_replacesExistingImage() async throws {
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let replaced = try await sut.apply(
-        commands: [.setNodeImage(nodeID: nodeID, imagePath: "/tmp/new.jpeg", nodeHeight: 90)]
+        commands: [
+            .upsertNodeAttachment(
+                nodeID: nodeID,
+                attachment: makeImageAttachment(path: "/tmp/new.jpeg"),
+                nodeHeight: 90
+            )
+        ]
     )
-    #expect(replaced.newState.nodesByID[nodeID]?.imagePath == "/tmp/new.jpeg")
+    #expect(replaced.newState.nodesByID[nodeID]?.primaryImageAttachmentFilePath == "/tmp/new.jpeg")
     #expect(replaced.newState.nodesByID[nodeID]?.bounds.height == 90)
 }
 
-@Test("ApplyCanvasCommandsUseCase: setNodeImage rejects non-finite height values")
-func test_apply_setNodeImage_nonFiniteHeight_fallsBackToCurrentHeight() async throws {
+@Test("ApplyCanvasCommandsUseCase: upsertNodeAttachment rejects non-finite height values")
+func test_apply_upsertNodeAttachment_nonFiniteHeight_fallsBackToCurrentHeight() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
         nodesByID: [
@@ -230,15 +250,27 @@ func test_apply_setNodeImage_nonFiniteHeight_fallsBackToCurrentHeight() async th
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     let nanHeightResult = try await sut.apply(
-        commands: [.setNodeImage(nodeID: nodeID, imagePath: "/tmp/image-2.webp", nodeHeight: .nan)]
+        commands: [
+            .upsertNodeAttachment(
+                nodeID: nodeID,
+                attachment: makeImageAttachment(path: "/tmp/image-2.webp"),
+                nodeHeight: .nan
+            )
+        ]
     )
-    #expect(nanHeightResult.newState.nodesByID[nodeID]?.imagePath == "/tmp/image-2.webp")
+    #expect(nanHeightResult.newState.nodesByID[nodeID]?.primaryImageAttachmentFilePath == "/tmp/image-2.webp")
     #expect(nanHeightResult.newState.nodesByID[nodeID]?.bounds.height == 70)
 
     let infinityHeightResult = try await sut.apply(
-        commands: [.setNodeImage(nodeID: nodeID, imagePath: "/tmp/image-3.heic", nodeHeight: .infinity)]
+        commands: [
+            .upsertNodeAttachment(
+                nodeID: nodeID,
+                attachment: makeImageAttachment(path: "/tmp/image-3.heic"),
+                nodeHeight: .infinity
+            )
+        ]
     )
-    #expect(infinityHeightResult.newState.nodesByID[nodeID]?.imagePath == "/tmp/image-3.heic")
+    #expect(infinityHeightResult.newState.nodesByID[nodeID]?.primaryImageAttachmentFilePath == "/tmp/image-3.heic")
     #expect(infinityHeightResult.newState.nodesByID[nodeID]?.bounds.height == 70)
 }
 
@@ -278,8 +310,8 @@ func test_apply_toggleFocusedNodeMarkdownStyle_togglesFocusedNodeFlag() async th
     #expect(enabledResult.newState.nodesByID[nodeID]?.markdownStyleEnabled == true)
 }
 
-@Test("ApplyCanvasCommandsUseCase: toggleFocusedNodeMarkdownStyle preserves image path and requests relayout")
-func test_applyMutation_toggleFocusedNodeMarkdownStyle_preservesImagePath_andRequestsRelayout() async throws {
+@Test("ApplyCanvasCommandsUseCase: toggleFocusedNodeMarkdownStyle preserves image attachment and requests relayout")
+func test_applyMutation_toggleFocusedNodeMarkdownStyle_preservesImageAttachment_andRequestsRelayout() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
         nodesByID: [
@@ -287,7 +319,7 @@ func test_applyMutation_toggleFocusedNodeMarkdownStyle_preservesImagePath_andReq
                 id: nodeID,
                 kind: .text,
                 text: "# heading",
-                imagePath: "/tmp/current-image.png",
+                attachments: [makeImageAttachment(path: "/tmp/current-image.png")],
                 bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 70),
                 markdownStyleEnabled: true
             )
@@ -302,7 +334,8 @@ func test_applyMutation_toggleFocusedNodeMarkdownStyle_preservesImagePath_andReq
         to: graph
     )
 
-    #expect(mutationResult.graphAfterMutation.nodesByID[nodeID]?.imagePath == "/tmp/current-image.png")
+    #expect(
+        mutationResult.graphAfterMutation.nodesByID[nodeID]?.primaryImageAttachmentFilePath == "/tmp/current-image.png")
     #expect(mutationResult.graphAfterMutation.nodesByID[nodeID]?.markdownStyleEnabled == false)
     #expect(mutationResult.effects.didMutateGraph)
     #expect(mutationResult.effects.needsTreeLayout)
