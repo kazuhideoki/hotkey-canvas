@@ -170,12 +170,12 @@ func test_apply_diagramArea_nudgeNodeMovesFocusedNodeByStep() async throws {
     let result = try await sut.apply(commands: [.nudgeNode(.right)])
 
     let movedNode = try #require(result.newState.nodesByID[nodeID])
-    #expect(movedNode.bounds.x == 260)
+    #expect(movedNode.bounds.x == 150)
     #expect(movedNode.bounds.y == 40)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area nudgeNode does not relayout neighboring nodes")
-func test_apply_diagramArea_nudgeNodeDoesNotRelayoutNeighboringNodes() async throws {
+@Test("ApplyCanvasCommandsUseCase: diagram area nudgeNode resolves overlap with neighboring nodes")
+func test_apply_diagramArea_nudgeNodeResolvesOverlapWithNeighboringNodes() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused-diagram-node")
     let neighborNodeID = CanvasNodeID(rawValue: "neighbor-diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -206,10 +206,7 @@ func test_apply_diagramArea_nudgeNodeDoesNotRelayoutNeighboringNodes() async thr
 
     let movedNode = try #require(result.newState.nodesByID[focusedNodeID])
     let neighborNode = try #require(result.newState.nodesByID[neighborNodeID])
-    #expect(movedNode.bounds.x == 260)
-    #expect(movedNode.bounds.y == 40)
-    #expect(neighborNode.bounds.x == 60)
-    #expect(neighborNode.bounds.y == 40)
+    #expect(boundsOverlap(movedNode.bounds, neighborNode.bounds) == false)
 }
 
 @Test("ApplyCanvasCommandsUseCase: tree area nudgeNode is no-op")
@@ -236,6 +233,13 @@ func test_apply_treeArea_nudgeNodeIsNoOp() async throws {
     let result = try await sut.apply(commands: [.nudgeNode(.right)])
 
     #expect(result.newState == graph)
+}
+
+private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds) -> Bool {
+    lhs.x < rhs.x + rhs.width
+        && lhs.x + lhs.width > rhs.x
+        && lhs.y < rhs.y + rhs.height
+        && lhs.y + lhs.height > rhs.y
 }
 
 @Test("ApplyCanvasCommandsUseCase: diagram area rejects copyFocusedSubtree command")

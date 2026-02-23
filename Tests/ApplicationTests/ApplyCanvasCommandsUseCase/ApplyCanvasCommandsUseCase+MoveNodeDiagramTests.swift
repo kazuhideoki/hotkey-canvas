@@ -299,6 +299,37 @@ func test_apply_moveNodeInDiagramArea_noDiagonalDriftAfterNudge() async throws {
     #expect(abs(movedNode.bounds.y - nudgedNode.bounds.y) <= 20)
 }
 
+@Test("ApplyCanvasCommandsUseCase: diagram nudge step keeps 4:1 ratio against move step")
+func test_apply_moveNodeInDiagramArea_nudgeStepIsQuarterOfMoveStep() async throws {
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            )
+        ],
+        focusedNodeID: focusedID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedID], editingMode: .diagram)
+        ]
+    )
+
+    let moved = try await ApplyCanvasCommandsUseCase(initialGraph: graph).apply(commands: [.moveNode(.right)])
+    let nudged = try await ApplyCanvasCommandsUseCase(initialGraph: graph).apply(commands: [.nudgeNode(.right)])
+
+    let movedNode = try #require(moved.newState.nodesByID[focusedID])
+    let nudgedNode = try #require(nudged.newState.nodesByID[focusedID])
+    let moveDelta = movedNode.bounds.x - 0
+    let nudgeDelta = nudgedNode.bounds.x - 0
+    #expect(moveDelta == 440)
+    #expect(nudgeDelta == 110)
+    #expect(moveDelta == nudgeDelta * 4)
+}
+
 private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds, spacing: Double = 0) -> Bool {
     let halfSpacing = max(0, spacing) / 2
     let lhsLeft = lhs.x - halfSpacing
