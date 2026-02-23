@@ -7,6 +7,7 @@ extension ApplyCanvasCommandsUseCase {
 
     func rewiredTreeEdgesForSiblingMove(
         from originalEdgesByID: [CanvasEdgeID: CanvasEdge],
+        focusedNodeID: CanvasNodeID,
         nodesByID: [CanvasNodeID: CanvasNode],
         targetNodeIDs: [CanvasNodeID],
         destinationParentNodeID: CanvasNodeID?
@@ -25,26 +26,28 @@ extension ApplyCanvasCommandsUseCase {
             return true
         }
         if let destinationParentNodeID {
-            let graphForOrdering = CanvasGraph(
+            let graphBeforeInsertion = CanvasGraph(
                 nodesByID: nodesByID,
                 edgesByID: nextEdgesByID,
                 focusedNodeID: nil,
                 selectedNodeIDs: []
             )
-            let appendedOrderStart = nextParentChildOrder(
-                for: destinationParentNodeID,
-                in: graphForOrdering
+            let orderedDestinationChildNodeIDs = parentChildEdges(
+                of: destinationParentNodeID,
+                in: graphBeforeInsertion
             )
-            var offset = 0
-            for nodeID in targetNodeIDs where nodeID != destinationParentNodeID {
-                let edge = makeParentChildEdge(
-                    from: destinationParentNodeID,
-                    to: nodeID,
-                    order: appendedOrderStart + offset
-                )
-                nextEdgesByID[edge.id] = edge
-                offset += 1
-            }
+            .map(\.toNodeID)
+            let insertionTargetNodeIDs = targetNodeIDs.filter { $0 != destinationParentNodeID }
+            let reorderedDestinationChildNodeIDs = reorderedDestinationChildNodeIDs(
+                from: orderedDestinationChildNodeIDs,
+                insertionTargetNodeIDs: insertionTargetNodeIDs,
+                focusedNodeID: focusedNodeID
+            )
+            rewireDestinationParentChildEdges(
+                in: &nextEdgesByID,
+                destinationParentNodeID: destinationParentNodeID,
+                reorderedDestinationChildNodeIDs: reorderedDestinationChildNodeIDs
+            )
         }
         return nextEdgesByID
     }
@@ -91,5 +94,73 @@ extension ApplyCanvasCommandsUseCase {
             candidateParentNodeID = parentNodeID(of: unwrappedParentNodeID, in: graph)
         }
         return candidateParentNodeID
+    }
+
+    private func resolvedInsertionIndex(
+        focusedNodeIndexInDestination: Int?,
+        orderedDestinationChildNodeIDs: [CanvasNodeID],
+        insertionTargetNodeIDSet: Set<CanvasNodeID>
+    ) -> Int {
+        guard let focusedNodeIndexInDestination else {
+            return orderedDestinationChildNodeIDs.count
+        }
+        let removedCountBeforeFocus = orderedDestinationChildNodeIDs[..<focusedNodeIndexInDestination]
+            .filter { insertionTargetNodeIDSet.contains($0) }
+            .count
+        return focusedNodeIndexInDestination - removedCountBeforeFocus
+    }
+
+    private func reorderedDestinationChildNodeIDs(
+        from orderedDestinationChildNodeIDs: [CanvasNodeID],
+        insertionTargetNodeIDs: [CanvasNodeID],
+        focusedNodeID: CanvasNodeID
+    ) -> [CanvasNodeID] {
+        let insertionTargetNodeIDSet = Set(insertionTargetNodeIDs)
+        let focusedNodeIndexInDestination = orderedDestinationChildNodeIDs.firstIndex(of: focusedNodeID)
+        let insertionIndex = resolvedInsertionIndex(
+            focusedNodeIndexInDestination: focusedNodeIndexInDestination,
+            orderedDestinationChildNodeIDs: orderedDestinationChildNodeIDs,
+            insertionTargetNodeIDSet: insertionTargetNodeIDSet
+        )
+        let remainingChildNodeIDs = orderedDestinationChildNodeIDs.filter {
+            !insertionTargetNodeIDSet.contains($0)
+        }
+        let clampedInsertionIndex = max(0, min(insertionIndex, remainingChildNodeIDs.count))
+        return Array(remainingChildNodeIDs[..<clampedInsertionIndex])
+            + insertionTargetNodeIDs
+            + Array(remainingChildNodeIDs[clampedInsertionIndex...])
+    }
+
+    private func rewireDestinationParentChildEdges(
+        in nextEdgesByID: inout [CanvasEdgeID: CanvasEdge],
+        destinationParentNodeID: CanvasNodeID,
+        reorderedDestinationChildNodeIDs: [CanvasNodeID]
+    ) {
+        let existingDestinationEdgesByChildNodeID: [CanvasNodeID: CanvasEdge] = Dictionary(
+            uniqueKeysWithValues: nextEdgesByID.values.compactMap { edge in
+                guard
+                    edge.relationType == .parentChild,
+                    edge.fromNodeID == destinationParentNodeID
+                else {
+                    return nil
+                }
+                return (edge.toNodeID, edge)
+            }
+        )
+        for (order, childNodeID) in reorderedDestinationChildNodeIDs.enumerated() {
+            if let existingEdge = existingDestinationEdgesByChildNodeID[childNodeID] {
+                nextEdgesByID[existingEdge.id] = edgeByReplacingParentChildOrder(
+                    edge: existingEdge,
+                    parentChildOrder: order
+                )
+            } else {
+                let insertedEdge = makeParentChildEdge(
+                    from: destinationParentNodeID,
+                    to: childNodeID,
+                    order: order
+                )
+                nextEdgesByID[insertedEdge.id] = insertedEdge
+            }
+        }
     }
 }
