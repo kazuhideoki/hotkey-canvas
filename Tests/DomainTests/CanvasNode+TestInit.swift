@@ -1,5 +1,5 @@
 // Background: Domain tests construct many sample nodes where image content is not relevant.
-// Responsibility: Provide a test-only convenience initializer that defaults imagePath to nil.
+// Responsibility: Provide a test-only convenience initializer that defaults attachments to empty.
 import Domain
 
 extension CanvasNode {
@@ -15,7 +15,7 @@ extension CanvasNode {
             id: id,
             kind: kind,
             text: text,
-            imagePath: nil,
+            attachments: [],
             bounds: bounds,
             metadata: metadata,
             markdownStyleEnabled: markdownStyleEnabled

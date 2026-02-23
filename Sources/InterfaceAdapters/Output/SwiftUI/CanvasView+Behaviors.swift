@@ -113,7 +113,7 @@ extension CanvasView {
             id: node.id,
             kind: node.kind,
             text: node.text,
-            imagePath: node.imagePath,
+            attachments: node.attachments,
             bounds: CanvasBounds(
                 x: renderedRect.origin.x,
                 y: renderedRect.origin.y,
@@ -150,7 +150,7 @@ extension CanvasView {
             id: node.id,
             kind: node.kind,
             text: node.text,
-            imagePath: node.imagePath,
+            attachments: node.attachments,
             bounds: resizedBounds,
             metadata: node.metadata,
             markdownStyleEnabled: node.markdownStyleEnabled
@@ -377,34 +377,6 @@ extension CanvasView {
 
     func measuredNodeLayout(text: String, nodeWidth: Double) -> NodeTextLayoutMetrics {
         nodeTextHeightMeasurer.measureLayout(text: text, nodeWidth: CGFloat(nodeWidth))
-    }
-
-    func startInitialNodeEditingIfNeeded(nodeID: CanvasNodeID?) {
-        guard editingContext == nil, let nodeID else {
-            return
-        }
-        guard let node = viewModel.nodes.first(where: { $0.id == nodeID }) else {
-            return
-        }
-        let measuredLayout = measuredNodeLayout(text: node.text ?? "", nodeWidth: node.bounds.width)
-        let editingHeight =
-            if isDiagramNode(nodeID) {
-                node.bounds.height
-            } else {
-                measuredNodeHeightForEditing(
-                    text: node.text ?? "",
-                    measuredTextHeight: Double(measuredLayout.nodeHeight),
-                    node: node
-                )
-            }
-        editingContext = NodeEditingContext(
-            nodeID: nodeID,
-            text: node.text ?? "",
-            nodeWidth: node.bounds.width,
-            nodeHeight: editingHeight,
-            initialCursorPlacement: .end,
-            initialTypingEvent: nil
-        )
     }
 
     func isDiagramNode(_ nodeID: CanvasNodeID) -> Bool {

@@ -10,6 +10,7 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var collapsedRootNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var diagramNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var treeRootNodeIDs: Set<CanvasNodeID> = []
+    @Published public private(set) var areaIDByNodeID: [CanvasNodeID: CanvasAreaID] = [:]
     @Published public private(set) var pendingEditingNodeID: CanvasNodeID?
     @Published public private(set) var viewportIntent: CanvasViewportIntent?
     @Published public private(set) var canUndo: Bool = false
@@ -23,46 +24,23 @@ public final class CanvasViewModel: ObservableObject {
         self.inputPort = inputPort
     }
 
+    /// Loads current snapshot for initial rendering.
+    /// - Returns: `true` when the canvas is empty and UI should present add-node mode selection.
     @discardableResult
-    public func onAppear() async -> CanvasNodeID? {
-        let requestIDAtStart = latestDisplayedRequestID
+    public func onAppear() async -> Bool {
+        let displayedRequestIDAtStart = latestDisplayedRequestID
+        let issuedRequestIDAtStart = nextRequestID
         let result = await inputPort.getCurrentResult()
-        // Ignore stale snapshot when a newer apply() result has already been displayed.
-        guard requestIDAtStart == latestDisplayedRequestID else {
-            return nil
+        // Ignore stale snapshot when a newer request has started or been displayed.
+        guard
+            displayedRequestIDAtStart == latestDisplayedRequestID,
+            issuedRequestIDAtStart == nextRequestID
+        else {
+            return false
         }
 
-        guard result.newState.nodesByID.isEmpty else {
-            updateDisplay(with: result)
-            return nil
-        }
-
-        let requestID = consumeNextRequestID()
-        // Re-check current graph right before bootstrapping to avoid double add
-        // when another apply() was already started while the first snapshot was loading.
-        let latestResult = await inputPort.getCurrentResult()
-        guard shouldDisplayResult(for: requestID) else {
-            return nil
-        }
-        guard latestResult.newState.nodesByID.isEmpty else {
-            updateDisplay(with: latestResult)
-            markDisplayed(requestID)
-            return nil
-        }
-
-        do {
-            let initialNodeResult = try await inputPort.apply(commands: [.addNode])
-            guard shouldDisplayResult(for: requestID) else {
-                await refreshDisplayFromCurrentResult()
-                return nil
-            }
-            updateDisplay(with: initialNodeResult)
-            markDisplayed(requestID)
-            return initialNodeResult.newState.focusedNodeID
-        } catch {
-            // Keep current display state when initial node creation fails.
-            return nil
-        }
+        updateDisplay(with: result)
+        return result.newState.nodesByID.isEmpty
     }
 
     public func apply(commands: [CanvasCommand]) async {
@@ -132,7 +110,12 @@ public final class CanvasViewModel: ObservableObject {
     }
 
     public func insertNodeImage(nodeID: CanvasNodeID, imagePath: String, nodeHeight: Double) async {
-        await apply(commands: [.setNodeImage(nodeID: nodeID, imagePath: imagePath, nodeHeight: nodeHeight)])
+        let attachment = CanvasAttachment(
+            id: CanvasAttachmentID(rawValue: "attachment-image-above-text"),
+            kind: .image(filePath: imagePath),
+            placement: .aboveText
+        )
+        await apply(commands: [.upsertNodeAttachment(nodeID: nodeID, attachment: attachment, nodeHeight: nodeHeight)])
     }
 
     public func consumePendingEditingNodeID() {
@@ -178,9 +161,10 @@ extension CanvasViewModel {
         case .addNode, .addChildNode, .addSiblingNode:
             return true
         case .alignParentNodesVertically,
+            .connectNodes,
             .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree, .centerFocusedNode, .deleteFocusedNode,
             .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
-            .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
+            .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
             .assignNodesToArea:
             return false
         }
@@ -210,14 +194,10 @@ extension CanvasViewModel {
         )
         diagramNodeIDs = nodePresentation.diagramNodeIDs
         treeRootNodeIDs = nodePresentation.treeRootNodeIDs
+        areaIDByNodeID = areaIDMapping(in: result.newState)
         viewportIntent = result.viewportIntent
         canUndo = result.canUndo
         canRedo = result.canRedo
-    }
-
-    private func refreshDisplayFromCurrentResult() async {
-        let latestResult = await inputPort.getCurrentResult()
-        updateDisplay(with: latestResult)
     }
 
     private func sortedNodes(in graph: CanvasGraph) -> [CanvasNode] {
@@ -239,6 +219,19 @@ extension CanvasViewModel {
             }
             return lhs.id.rawValue < rhs.id.rawValue
         }
+    }
+
+    private func areaIDMapping(in graph: CanvasGraph) -> [CanvasNodeID: CanvasAreaID] {
+        var mapping: [CanvasNodeID: CanvasAreaID] = [:]
+        for areaID in graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let area = graph.areasByID[areaID] else {
+                continue
+            }
+            for nodeID in area.nodeIDs {
+                mapping[nodeID] = area.id
+            }
+        }
+        return mapping
     }
 }
 

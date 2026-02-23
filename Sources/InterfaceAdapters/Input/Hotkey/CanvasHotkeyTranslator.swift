@@ -22,7 +22,7 @@ public struct CanvasHotkeyTranslator {
             return .undo
         case .redo:
             return .redo
-        case .apply, .zoomIn, .zoomOut, .openCommandPalette, .none:
+        case .apply, .zoomIn, .zoomOut, .beginConnectNodeSelection, .openCommandPalette, .none:
             return nil
         }
     }
@@ -33,7 +33,7 @@ public struct CanvasHotkeyTranslator {
             return .zoomIn
         case .zoomOut:
             return .zoomOut
-        case .apply, .undo, .redo, .openCommandPalette, .none:
+        case .apply, .undo, .redo, .beginConnectNodeSelection, .openCommandPalette, .none:
             return nil
         }
     }
@@ -49,11 +49,16 @@ public struct CanvasHotkeyTranslator {
         action(for: event) == .apply(commands: [.addNode])
     }
 
+    /// Returns true when command+l should open connect-node selection mode.
+    public func shouldBeginConnectNodeSelection(_ event: NSEvent) -> Bool {
+        action(for: event) == .beginConnectNodeSelection
+    }
+
     public func translate(_ event: NSEvent) -> [CanvasCommand] {
         switch action(for: event) {
         case .apply(let commands):
             return commands
-        case .undo, .redo, .zoomIn, .zoomOut, .openCommandPalette, .none:
+        case .undo, .redo, .zoomIn, .zoomOut, .beginConnectNodeSelection, .openCommandPalette, .none:
             return []
         }
     }

@@ -8,6 +8,12 @@ public enum CanvasGraphError: Error, Equatable, Sendable {
     case invalidEdgeID
     /// Node bounds are invalid (for example non-positive size).
     case invalidNodeBounds
+    /// Attachment identifier is empty or malformed.
+    case invalidAttachmentID
+    /// Attachment payload is invalid (for example empty file path).
+    case invalidAttachmentPayload
+    /// Node contains duplicate attachment identifiers.
+    case duplicateAttachmentID(CanvasAttachmentID)
     /// Attempted to create a node with an existing identifier.
     case nodeAlreadyExists(CanvasNodeID)
     /// Requested node does not exist in the graph.

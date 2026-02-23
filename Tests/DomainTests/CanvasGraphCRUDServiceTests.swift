@@ -247,3 +247,49 @@ func test_deleteNode_removesDeletedNodeFromAreaMemberships() throws {
 
     #expect(deletedGraph.areasByID[areaID]?.nodeIDs.contains(nodeID) == false)
 }
+
+@Test("Validation: duplicate attachment IDs are rejected")
+func test_validation_duplicateAttachmentID_rejected() {
+    let attachmentID = CanvasAttachmentID(rawValue: "att-1")
+    let node = CanvasNode(
+        id: CanvasNodeID(rawValue: "node-1"),
+        kind: .text,
+        text: nil,
+        attachments: [
+            CanvasAttachment(
+                id: attachmentID,
+                kind: .image(filePath: "/tmp/a.png"),
+                placement: .aboveText
+            ),
+            CanvasAttachment(
+                id: attachmentID,
+                kind: .image(filePath: "/tmp/b.png"),
+                placement: .aboveText
+            ),
+        ],
+        bounds: CanvasBounds(x: 0, y: 0, width: 120, height: 80)
+    )
+
+    let result = CanvasGraphCRUDService.createNode(node, in: .empty)
+    #expect(result == .failure(.duplicateAttachmentID(attachmentID)))
+}
+
+@Test("Validation: image attachment requires non-empty file path")
+func test_validation_emptyImageAttachmentPath_rejected() {
+    let node = CanvasNode(
+        id: CanvasNodeID(rawValue: "node-1"),
+        kind: .text,
+        text: nil,
+        attachments: [
+            CanvasAttachment(
+                id: CanvasAttachmentID(rawValue: "att-1"),
+                kind: .image(filePath: ""),
+                placement: .aboveText
+            )
+        ],
+        bounds: CanvasBounds(x: 0, y: 0, width: 120, height: 80)
+    )
+
+    let result = CanvasGraphCRUDService.createNode(node, in: .empty)
+    #expect(result == .failure(.invalidAttachmentPayload))
+}
