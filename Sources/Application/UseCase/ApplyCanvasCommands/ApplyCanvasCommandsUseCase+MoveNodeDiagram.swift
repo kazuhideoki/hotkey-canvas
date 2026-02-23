@@ -9,10 +9,14 @@ extension ApplyCanvasCommandsUseCase {
 
     func moveNodeByDirectionSlot(
         in graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID,
+        targetNodeIDs: [CanvasNodeID],
         direction: CanvasNodeMoveDirection
     ) -> CanvasMutationResult {
         moveDiagramNode(
             in: graph,
+            focusedNodeID: focusedNodeID,
+            targetNodeIDs: targetNodeIDs,
             direction: direction,
             stepMultiplier: CanvasDefaultNodeDistance.diagramMoveStepMultiplier
         )
@@ -20,10 +24,14 @@ extension ApplyCanvasCommandsUseCase {
 
     func nudgeNodeByDirectionSlot(
         in graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID,
+        targetNodeIDs: [CanvasNodeID],
         direction: CanvasNodeMoveDirection
     ) -> CanvasMutationResult {
         moveDiagramNode(
             in: graph,
+            focusedNodeID: focusedNodeID,
+            targetNodeIDs: targetNodeIDs,
             direction: direction,
             stepMultiplier: CanvasDefaultNodeDistance.diagramNudgeStepMultiplier
         )
@@ -31,12 +39,11 @@ extension ApplyCanvasCommandsUseCase {
 
     private func moveDiagramNode(
         in graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID,
+        targetNodeIDs: [CanvasNodeID],
         direction: CanvasNodeMoveDirection,
         stepMultiplier: Double
     ) -> CanvasMutationResult {
-        guard let focusedNodeID = graph.focusedNodeID else {
-            return noOpMutationResult(for: graph)
-        }
         guard let focusedNode = graph.nodesByID[focusedNodeID] else {
             return noOpMutationResult(for: graph)
         }
@@ -58,18 +65,21 @@ extension ApplyCanvasCommandsUseCase {
         guard targetBounds != focusedNode.bounds else {
             return noOpMutationResult(for: graph)
         }
-
-        let movedNode = CanvasNode(
-            id: focusedNode.id,
-            kind: focusedNode.kind,
-            text: focusedNode.text,
-            attachments: focusedNode.attachments,
-            bounds: targetBounds,
-            metadata: focusedNode.metadata,
-            markdownStyleEnabled: focusedNode.markdownStyleEnabled
+        let deltaX = targetBounds.x - focusedNode.bounds.x
+        let deltaY = targetBounds.y - focusedNode.bounds.y
+        let nodeOverrides = movedDiagramNodes(
+            in: graph,
+            focusedNodeID: focusedNodeID,
+            targetNodeIDs: targetNodeIDs,
+            focusedTargetBounds: targetBounds,
+            translation: (dx: deltaX, dy: deltaY)
         )
+        guard !nodeOverrides.isEmpty else {
+            return noOpMutationResult(for: graph)
+        }
+
         let nextGraph = CanvasGraph(
-            nodesByID: graph.nodesByID.merging([focusedNodeID: movedNode], uniquingKeysWith: { _, new in new }),
+            nodesByID: graph.nodesByID.merging(nodeOverrides, uniquingKeysWith: { _, new in new }),
             edgesByID: graph.edgesByID,
             focusedNodeID: focusedNodeID,
             selectedNodeIDs: graph.selectedNodeIDs,
@@ -88,6 +98,38 @@ extension ApplyCanvasCommandsUseCase {
             ),
             areaLayoutSeedNodeID: focusedNodeID
         )
+    }
+
+    private func movedDiagramNodes(
+        in graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID,
+        targetNodeIDs: [CanvasNodeID],
+        focusedTargetBounds: CanvasBounds,
+        translation: (dx: Double, dy: Double)
+    ) -> [CanvasNodeID: CanvasNode] {
+        let uniqueTargetNodeIDs = Array(Set(targetNodeIDs))
+        var nodeOverrides: [CanvasNodeID: CanvasNode] = [:]
+        for nodeID in uniqueTargetNodeIDs {
+            guard let node = graph.nodesByID[nodeID] else {
+                continue
+            }
+            let bounds =
+                if nodeID == focusedNodeID {
+                    focusedTargetBounds
+                } else {
+                    translateBounds(node.bounds, dx: translation.dx, dy: translation.dy)
+                }
+            nodeOverrides[nodeID] = CanvasNode(
+                id: node.id,
+                kind: node.kind,
+                text: node.text,
+                attachments: node.attachments,
+                bounds: bounds,
+                metadata: node.metadata,
+                markdownStyleEnabled: node.markdownStyleEnabled
+            )
+        }
+        return nodeOverrides
     }
 
     private func moveNodeTargetBoundsByDiagramGrid(
