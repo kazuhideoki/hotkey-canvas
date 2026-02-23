@@ -132,8 +132,10 @@ extension ApplyCanvasCommandsUseCase {
         )
         let duplicateRootNode = makeDuplicatedNode(from: sourceRootNode, bounds: duplicateBounds)
         var graphAfterMutation = try CanvasGraphCRUDService.createNode(duplicateRootNode, in: graph).get()
+        graphAfterMutation = normalizeParentChildOrder(for: parentID, in: graphAfterMutation)
+        let rootOrder = nextParentChildOrder(for: parentID, in: graphAfterMutation)
         graphAfterMutation = try CanvasGraphCRUDService.createEdge(
-            makeParentChildEdge(from: parentID, to: duplicateRootNode.id),
+            makeParentChildEdge(from: parentID, to: duplicateRootNode.id, order: rootOrder),
             in: graphAfterMutation
         ).get()
         var traversalState = DuplicateTraversalState(
@@ -307,9 +309,11 @@ extension ApplyCanvasCommandsUseCase {
         guard !alreadyExists else {
             return graph
         }
+        let normalizedGraph = normalizeParentChildOrder(for: parentNodeID, in: graph)
+        let nextOrder = nextParentChildOrder(for: parentNodeID, in: normalizedGraph)
         return try CanvasGraphCRUDService.createEdge(
-            makeParentChildEdge(from: parentNodeID, to: childNodeID),
-            in: graph
+            makeParentChildEdge(from: parentNodeID, to: childNodeID, order: nextOrder),
+            in: normalizedGraph
         ).get()
     }
 }

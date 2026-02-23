@@ -7,6 +7,7 @@ extension ApplyCanvasCommandsUseCase {
 
     func rewiredTreeEdgesForSiblingMove(
         from originalEdgesByID: [CanvasEdgeID: CanvasEdge],
+        nodesByID: [CanvasNodeID: CanvasNode],
         targetNodeIDs: [CanvasNodeID],
         destinationParentNodeID: CanvasNodeID?
     ) -> [CanvasEdgeID: CanvasEdge] {
@@ -24,9 +25,25 @@ extension ApplyCanvasCommandsUseCase {
             return true
         }
         if let destinationParentNodeID {
+            let graphForOrdering = CanvasGraph(
+                nodesByID: nodesByID,
+                edgesByID: nextEdgesByID,
+                focusedNodeID: nil,
+                selectedNodeIDs: []
+            )
+            let appendedOrderStart = nextParentChildOrder(
+                for: destinationParentNodeID,
+                in: graphForOrdering
+            )
+            var offset = 0
             for nodeID in targetNodeIDs where nodeID != destinationParentNodeID {
-                let edge = makeParentChildEdge(from: destinationParentNodeID, to: nodeID)
+                let edge = makeParentChildEdge(
+                    from: destinationParentNodeID,
+                    to: nodeID,
+                    order: appendedOrderStart + offset
+                )
                 nextEdgesByID[edge.id] = edge
+                offset += 1
             }
         }
         return nextEdgesByID
