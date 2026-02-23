@@ -33,6 +33,23 @@ func test_onAppear_requestsModeSelectionPopup_whenGraphIsEmpty() async throws {
 }
 
 @MainActor
+@Test("CanvasViewModel: onAppear does not request mode-selection popup while add-node apply is in flight")
+func test_onAppear_doesNotRequestModeSelectionPopup_whenAddNodeApplyIsInFlight() async throws {
+    let inputPort = InFlightAddNodeCanvasEditingInputPort(getDelayNanoseconds: 200_000_000)
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    let onAppearTask = Task { await viewModel.onAppear() }
+    try await Task.sleep(nanoseconds: 20_000_000)
+    let applyTask = Task { await viewModel.apply(commands: [.addNode]) }
+    let shouldPresentAddNodeModeSelection = await onAppearTask.value
+    await inputPort.releaseApply()
+    await applyTask.value
+
+    #expect(!shouldPresentAddNodeModeSelection)
+    #expect(viewModel.nodes.count == 1)
+}
+
+@MainActor
 @Test("CanvasViewModel: earlier successful apply is preserved when later overlapping apply fails")
 func test_apply_preservesEarlierSuccess_whenLaterOverlappingApplyFails() async throws {
     let inputPort = OverlappingFailureCanvasEditingInputPort()
@@ -460,6 +477,65 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
 
     func redo() async -> ApplyResult {
         ApplyResult(newState: graph)
+    }
+}
+
+actor InFlightAddNodeCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+    private var applyContinuation: CheckedContinuation<Void, Never>?
+    private let getDelayNanoseconds: UInt64
+
+    init(getDelayNanoseconds: UInt64) {
+        self.getDelayNanoseconds = getDelayNanoseconds
+    }
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        await withCheckedContinuation { continuation in
+            applyContinuation = continuation
+        }
+        guard commands.contains(.addNode) else {
+            return ApplyResult(newState: graph)
+        }
+        let nodeID = CanvasNodeID(rawValue: "node-1")
+        let node = CanvasNode(
+            id: nodeID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+        )
+        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph).get()
+        graph = CanvasGraph(
+            nodesByID: nextGraph.nodesByID,
+            edgesByID: nextGraph.edgesByID,
+            focusedNodeID: nodeID,
+            collapsedRootNodeIDs: nextGraph.collapsedRootNodeIDs,
+            areasByID: nextGraph.areasByID
+        )
+        return ApplyResult(newState: graph, didAddNode: true)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        let snapshot = graph
+        try? await Task.sleep(nanoseconds: getDelayNanoseconds)
+        return snapshot
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        let snapshot = await getCurrentGraph()
+        return ApplyResult(newState: snapshot)
+    }
+
+    func releaseApply() {
+        applyContinuation?.resume()
+        applyContinuation = nil
     }
 }
 

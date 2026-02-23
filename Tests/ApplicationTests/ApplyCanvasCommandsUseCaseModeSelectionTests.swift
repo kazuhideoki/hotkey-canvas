@@ -15,7 +15,7 @@ func test_addNodeFromModeSelection_isUndoableInOneStep() async throws {
     #expect(addedNode.bounds.height == 220)
 
     let undone = await sut.undo()
-    #expect(undone.newState.nodesByID.isEmpty)
+    #expect(undone.newState == .empty)
     #expect(!undone.canUndo)
     #expect(undone.canRedo)
 }
