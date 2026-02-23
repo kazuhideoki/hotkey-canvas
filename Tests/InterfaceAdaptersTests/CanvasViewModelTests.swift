@@ -13,57 +13,23 @@ func test_onAppear_doesNotOverwriteApplyResult() async throws {
     let onAppearTask = Task { await viewModel.onAppear() }
     try await Task.sleep(nanoseconds: 20_000_000)
     await viewModel.apply(commands: [.addNode])
-    _ = await onAppearTask.value
+    let shouldPresentAddNodeModeSelection = await onAppearTask.value
 
+    #expect(!shouldPresentAddNodeModeSelection)
     #expect(viewModel.nodes.count == 1)
 }
 
 @MainActor
-@Test("CanvasViewModel: onAppear creates initial node and returns editing target when graph is empty")
-func test_onAppear_createsInitialNode_andReturnsEditingTarget() async throws {
+@Test("CanvasViewModel: onAppear requests mode-selection popup when graph is empty")
+func test_onAppear_requestsModeSelectionPopup_whenGraphIsEmpty() async throws {
     let inputPort = EmptyBootstrapCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
 
-    let initialEditingNodeID = await viewModel.onAppear()
+    let shouldPresentAddNodeModeSelection = await viewModel.onAppear()
 
-    #expect(viewModel.nodes.count == 1)
-    #expect(viewModel.focusedNodeID == CanvasNodeID(rawValue: "node-1"))
-    #expect(initialEditingNodeID == CanvasNodeID(rawValue: "node-1"))
-}
-
-@MainActor
-@Test("CanvasViewModel: onAppear does not add duplicate initial node during overlapping add")
-func test_onAppear_avoidsDuplicateInitialNode_duringOverlappingAdd() async throws {
-    let inputPort = OverlappingInitialNodeCanvasEditingInputPort()
-    let viewModel = CanvasViewModel(inputPort: inputPort)
-
-    let onAppearTask = Task { await viewModel.onAppear() }
-    try await Task.sleep(nanoseconds: 20_000_000)
-    let addTask = Task { await viewModel.apply(commands: [.addNode]) }
-
-    await addTask.value
-    _ = await onAppearTask.value
-
-    #expect(viewModel.nodes.count == 1)
-    #expect(await inputPort.nodeCount() == 1)
-}
-
-@MainActor
-@Test("CanvasViewModel: onAppear refreshes from current result when bootstrap apply becomes stale")
-func test_onAppear_refreshesCurrentResult_whenBootstrapApplyBecomesStale() async throws {
-    let inputPort = StaleBootstrapApplyCanvasEditingInputPort()
-    let viewModel = CanvasViewModel(inputPort: inputPort)
-
-    let onAppearTask = Task { await viewModel.onAppear() }
-    try await Task.sleep(nanoseconds: 20_000_000)
-    let newerApplyTask = Task { await viewModel.apply(commands: [.moveFocus(.down)]) }
-    await newerApplyTask.value
-    await inputPort.releaseFirstApply()
-    let initialEditingNodeID = await onAppearTask.value
-
-    #expect(initialEditingNodeID == nil)
-    #expect(viewModel.nodes.count == 1)
-    #expect(viewModel.focusedNodeID == CanvasNodeID(rawValue: "node-1"))
+    #expect(shouldPresentAddNodeModeSelection)
+    #expect(viewModel.nodes.isEmpty)
+    #expect(viewModel.focusedNodeID == nil)
 }
 
 @MainActor
@@ -1355,125 +1321,5 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
 
     func redo() async -> ApplyResult {
         ApplyResult(newState: graph)
-    }
-}
-
-actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
-    private var graph: CanvasGraph = .empty
-    private var getCurrentResultCallCount: Int = 0
-
-    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
-        var nextGraph = graph
-        for command in commands {
-            switch command {
-            case .addNode:
-                try? await Task.sleep(nanoseconds: 300_000_000)
-                let nodeID = CanvasNodeID(rawValue: "node-\(nextGraph.nodesByID.count + 1)")
-                let node = CanvasNode(
-                    id: nodeID,
-                    kind: .text,
-                    text: nil,
-                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
-                )
-                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
-                nextGraph = CanvasGraph(
-                    nodesByID: nextGraph.nodesByID,
-                    edgesByID: nextGraph.edgesByID,
-                    focusedNodeID: nodeID
-                )
-            case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea,
-                .alignParentNodesVertically:
-                continue
-            }
-        }
-        graph = nextGraph
-        return ApplyResult(newState: nextGraph)
-    }
-
-    func getCurrentGraph() async -> CanvasGraph {
-        graph
-    }
-
-    func getCurrentResult() async -> ApplyResult {
-        getCurrentResultCallCount += 1
-        if getCurrentResultCallCount == 1 {
-            let snapshot = graph
-            try? await Task.sleep(nanoseconds: 200_000_000)
-            return ApplyResult(newState: snapshot)
-        }
-        return ApplyResult(newState: graph)
-    }
-
-    func undo() async -> ApplyResult {
-        ApplyResult(newState: graph)
-    }
-
-    func redo() async -> ApplyResult {
-        ApplyResult(newState: graph)
-    }
-
-    func nodeCount() -> Int {
-        graph.nodesByID.count
-    }
-}
-
-actor StaleBootstrapApplyCanvasEditingInputPort: CanvasEditingInputPort {
-    private var graph: CanvasGraph = .empty
-    private var applyCallCount: Int = 0
-    private var firstApplyContinuation: CheckedContinuation<Void, Never>?
-
-    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
-        applyCallCount += 1
-        if applyCallCount == 1 {
-            await withCheckedContinuation { continuation in
-                firstApplyContinuation = continuation
-            }
-            graph = makeSingleNodeGraph()
-            return ApplyResult(newState: graph)
-        }
-
-        return ApplyResult(newState: .empty)
-    }
-
-    func getCurrentGraph() async -> CanvasGraph {
-        graph
-    }
-
-    func getCurrentResult() async -> ApplyResult {
-        ApplyResult(newState: graph)
-    }
-
-    func undo() async -> ApplyResult {
-        ApplyResult(newState: graph)
-    }
-
-    func redo() async -> ApplyResult {
-        ApplyResult(newState: graph)
-    }
-
-    func releaseFirstApply() {
-        firstApplyContinuation?.resume()
-        firstApplyContinuation = nil
-    }
-}
-
-extension StaleBootstrapApplyCanvasEditingInputPort {
-    private func makeSingleNodeGraph() -> CanvasGraph {
-        let nodeID = CanvasNodeID(rawValue: "node-1")
-        return CanvasGraph(
-            nodesByID: [
-                nodeID: CanvasNode(
-                    id: nodeID,
-                    kind: .text,
-                    text: nil,
-                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
-                )
-            ],
-            edgesByID: [:],
-            focusedNodeID: nodeID
-        )
     }
 }
