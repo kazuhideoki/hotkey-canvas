@@ -299,8 +299,8 @@ func test_translate_commandShiftRightArrow_returnsNudgeNodeRight() throws {
     #expect(commands == [.nudgeNode(.right)])
 }
 
-@Test("CanvasHotkeyTranslator: Arrow with Shift maps to no command")
-func test_translate_shiftArrow_returnsEmpty() throws {
+@Test("CanvasHotkeyTranslator: Arrow with Shift maps to extendSelection")
+func test_translate_shiftArrow_returnsExtendSelection() throws {
     let sut = CanvasHotkeyTranslator()
     let event = try #require(
         NSEvent.keyEvent(
@@ -319,7 +319,7 @@ func test_translate_shiftArrow_returnsEmpty() throws {
 
     let commands = sut.translate(event)
 
-    #expect(commands.isEmpty)
+    #expect(commands == [.extendSelection(.left)])
 }
 
 @Test("CanvasHotkeyTranslator: Arrow with Function flag still maps to moveFocus")
