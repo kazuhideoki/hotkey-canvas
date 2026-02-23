@@ -38,7 +38,9 @@ extension CanvasShortcutCatalogService {
                 name: "Open Command Palette",
                 gesture: CanvasShortcutGesture(key: .character("k"), modifiers: [.command]),
                 action: .openCommandPalette,
-                shortcutLabel: "Command + K",
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("k"), modifiers: [.command])
+                ),
                 searchTokens: ["palette", "command"],
                 isVisibleInCommandPalette: false
             ),
@@ -47,7 +49,9 @@ extension CanvasShortcutCatalogService {
                 name: "Open Command Palette",
                 gesture: CanvasShortcutGesture(key: .character("p"), modifiers: [.command, .shift]),
                 action: .openCommandPalette,
-                shortcutLabel: "Command + Shift + P",
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("p"), modifiers: [.command, .shift])
+                ),
                 searchTokens: ["palette", "command"],
                 isVisibleInCommandPalette: false
             ),
@@ -65,42 +69,54 @@ extension CanvasShortcutCatalogService {
                 name: "Add Child Node",
                 gesture: CanvasShortcutGesture(key: .enter, modifiers: [.command]),
                 action: .apply(commands: [.addChildNode]),
-                shortcutLabel: "Command + Enter"
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .enter, modifiers: [.command])
+                )
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addNode"),
                 name: "Add Node",
                 gesture: CanvasShortcutGesture(key: .enter, modifiers: [.shift]),
                 action: .apply(commands: [.addNode]),
-                shortcutLabel: "Shift + Enter"
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .enter, modifiers: [.shift])
+                )
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addSiblingNodeAbove"),
                 name: "Add Sibling Node Above",
                 gesture: CanvasShortcutGesture(key: .enter, modifiers: [.option]),
                 action: .apply(commands: [.addSiblingNode(position: .above)]),
-                shortcutLabel: "Option + Enter"
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .enter, modifiers: [.option])
+                )
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addSiblingNodeBelow"),
                 name: "Add Sibling Node Below",
                 gesture: CanvasShortcutGesture(key: .enter, modifiers: []),
                 action: .apply(commands: [.addSiblingNode(position: .below)]),
-                shortcutLabel: "Enter"
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .enter, modifiers: [])
+                )
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "deleteFocusedNode"),
                 name: "Delete Focused Node",
                 gesture: CanvasShortcutGesture(key: .deleteBackward, modifiers: []),
                 action: .apply(commands: [.deleteFocusedNode]),
-                shortcutLabel: "Delete"
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .deleteBackward, modifiers: [])
+                )
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "duplicateSelectionAsSibling"),
                 name: "Duplicate Selection as Sibling",
                 gesture: CanvasShortcutGesture(key: .character("d"), modifiers: [.command]),
                 action: .apply(commands: [.duplicateSelectionAsSibling]),
-                shortcutLabel: "Command + D",
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("d"), modifiers: [.command])
+                ),
                 searchTokens: ["duplicate", "selection", "sibling", "tree"]
             ),
         ]
@@ -113,7 +129,9 @@ extension CanvasShortcutCatalogService {
                 name: "Copy Focused Subtree",
                 gesture: CanvasShortcutGesture(key: .character("c"), modifiers: [.command]),
                 action: .apply(commands: [.copyFocusedSubtree]),
-                shortcutLabel: "Command + C",
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("c"), modifiers: [.command])
+                ),
                 searchTokens: ["copy", "subtree"]
             ),
             CanvasShortcutDefinition(
@@ -121,7 +139,9 @@ extension CanvasShortcutCatalogService {
                 name: "Cut Focused Subtree",
                 gesture: CanvasShortcutGesture(key: .character("x"), modifiers: [.command]),
                 action: .apply(commands: [.cutFocusedSubtree]),
-                shortcutLabel: "Command + X",
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("x"), modifiers: [.command])
+                ),
                 searchTokens: ["cut", "subtree"]
             ),
             CanvasShortcutDefinition(
@@ -129,7 +149,9 @@ extension CanvasShortcutCatalogService {
                 name: "Paste Subtree as Child",
                 gesture: CanvasShortcutGesture(key: .character("v"), modifiers: [.command]),
                 action: .apply(commands: [.pasteSubtreeAsChild]),
-                shortcutLabel: "Command + V",
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("v"), modifiers: [.command])
+                ),
                 searchTokens: ["paste", "subtree", "child"]
             ),
         ]
@@ -142,125 +164,101 @@ extension CanvasShortcutCatalogService {
     }
 
     private static func focusNavigationDefinitions() -> [CanvasShortcutDefinition] {
+        focusMoveDefinitions() + focusExtendDefinitions()
+    }
+
+    private static func focusMoveDefinitions() -> [CanvasShortcutDefinition] {
         [
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "moveFocusDown"),
-                name: "Move Focus Down",
-                gesture: CanvasShortcutGesture(key: .arrowDown, modifiers: []),
-                action: .apply(commands: [.moveFocus(.down)]),
-                shortcutLabel: "Down Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "extendSelectionDown"),
-                name: "Extend Selection Down",
-                gesture: CanvasShortcutGesture(key: .arrowDown, modifiers: [.shift]),
-                action: .apply(commands: [.extendSelection(.down)]),
-                shortcutLabel: "Shift + Down Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "moveFocusLeft"),
-                name: "Move Focus Left",
-                gesture: CanvasShortcutGesture(key: .arrowLeft, modifiers: []),
-                action: .apply(commands: [.moveFocus(.left)]),
-                shortcutLabel: "Left Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "extendSelectionLeft"),
-                name: "Extend Selection Left",
-                gesture: CanvasShortcutGesture(key: .arrowLeft, modifiers: [.shift]),
-                action: .apply(commands: [.extendSelection(.left)]),
-                shortcutLabel: "Shift + Left Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "moveFocusRight"),
-                name: "Move Focus Right",
-                gesture: CanvasShortcutGesture(key: .arrowRight, modifiers: []),
-                action: .apply(commands: [.moveFocus(.right)]),
-                shortcutLabel: "Right Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "extendSelectionRight"),
-                name: "Extend Selection Right",
-                gesture: CanvasShortcutGesture(key: .arrowRight, modifiers: [.shift]),
-                action: .apply(commands: [.extendSelection(.right)]),
-                shortcutLabel: "Shift + Right Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "moveFocusUp"),
-                name: "Move Focus Up",
-                gesture: CanvasShortcutGesture(key: .arrowUp, modifiers: []),
-                action: .apply(commands: [.moveFocus(.up)]),
-                shortcutLabel: "Up Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "extendSelectionUp"),
-                name: "Extend Selection Up",
-                gesture: CanvasShortcutGesture(key: .arrowUp, modifiers: [.shift]),
-                action: .apply(commands: [.extendSelection(.up)]),
-                shortcutLabel: "Shift + Up Arrow"
-            ),
+            focusMoveDefinition(direction: .down, key: .arrowDown),
+            focusMoveDefinition(direction: .left, key: .arrowLeft),
+            focusMoveDefinition(direction: .right, key: .arrowRight),
+            focusMoveDefinition(direction: .up, key: .arrowUp),
         ]
     }
 
-    private static func nodeNavigationDefinitions() -> [CanvasShortcutDefinition] {
+    private static func focusExtendDefinitions() -> [CanvasShortcutDefinition] {
         [
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "moveNodeDown"),
-                name: "Move Node Down",
-                gesture: CanvasShortcutGesture(key: .arrowDown, modifiers: [.command]),
-                action: .apply(commands: [.moveNode(.down)]),
-                shortcutLabel: "Command + Down Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "moveNodeLeft"),
-                name: "Move Node Left",
-                gesture: CanvasShortcutGesture(key: .arrowLeft, modifiers: [.command]),
-                action: .apply(commands: [.moveNode(.left)]),
-                shortcutLabel: "Command + Left Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "moveNodeRight"),
-                name: "Move Node Right",
-                gesture: CanvasShortcutGesture(key: .arrowRight, modifiers: [.command]),
-                action: .apply(commands: [.moveNode(.right)]),
-                shortcutLabel: "Command + Right Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "moveNodeUp"),
-                name: "Move Node Up",
-                gesture: CanvasShortcutGesture(key: .arrowUp, modifiers: [.command]),
-                action: .apply(commands: [.moveNode(.up)]),
-                shortcutLabel: "Command + Up Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "nudgeNodeDown"),
-                name: "Nudge Node Down",
-                gesture: CanvasShortcutGesture(key: .arrowDown, modifiers: [.command, .shift]),
-                action: .apply(commands: [.nudgeNode(.down)]),
-                shortcutLabel: "Command + Shift + Down Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "nudgeNodeLeft"),
-                name: "Nudge Node Left",
-                gesture: CanvasShortcutGesture(key: .arrowLeft, modifiers: [.command, .shift]),
-                action: .apply(commands: [.nudgeNode(.left)]),
-                shortcutLabel: "Command + Shift + Left Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "nudgeNodeRight"),
-                name: "Nudge Node Right",
-                gesture: CanvasShortcutGesture(key: .arrowRight, modifiers: [.command, .shift]),
-                action: .apply(commands: [.nudgeNode(.right)]),
-                shortcutLabel: "Command + Shift + Right Arrow"
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "nudgeNodeUp"),
-                name: "Nudge Node Up",
-                gesture: CanvasShortcutGesture(key: .arrowUp, modifiers: [.command, .shift]),
-                action: .apply(commands: [.nudgeNode(.up)]),
-                shortcutLabel: "Command + Shift + Up Arrow"
-            ),
+            focusExtendDefinition(direction: .down, key: .arrowDown),
+            focusExtendDefinition(direction: .left, key: .arrowLeft),
+            focusExtendDefinition(direction: .right, key: .arrowRight),
+            focusExtendDefinition(direction: .up, key: .arrowUp),
         ]
+    }
+
+    private static func focusMoveDefinition(
+        direction: CanvasFocusDirection,
+        key: CanvasShortcutKey
+    ) -> CanvasShortcutDefinition {
+        CanvasShortcutDefinition(
+            id: CanvasShortcutID(rawValue: "moveFocus\(focusDirectionIDSuffix(direction))"),
+            name: "Move Focus \(focusDirectionLabel(direction))",
+            gesture: CanvasShortcutGesture(key: key, modifiers: []),
+            action: .apply(commands: [.moveFocus(direction)]),
+            shortcutLabel: shortcutLabel(for: CanvasShortcutGesture(key: key, modifiers: []))
+        )
+    }
+
+    private static func focusExtendDefinition(
+        direction: CanvasFocusDirection,
+        key: CanvasShortcutKey
+    ) -> CanvasShortcutDefinition {
+        CanvasShortcutDefinition(
+            id: CanvasShortcutID(rawValue: "extendSelection\(focusDirectionIDSuffix(direction))"),
+            name: "Extend Selection \(focusDirectionLabel(direction))",
+            gesture: CanvasShortcutGesture(key: key, modifiers: [.shift]),
+            action: .apply(commands: [.extendSelection(direction)]),
+            shortcutLabel: shortcutLabel(for: CanvasShortcutGesture(key: key, modifiers: [.shift]))
+        )
+    }
+
+    private static func nodeNavigationDefinitions() -> [CanvasShortcutDefinition] {
+        nodeMoveDefinitions() + nodeNudgeDefinitions()
+    }
+
+    private static func nodeMoveDefinitions() -> [CanvasShortcutDefinition] {
+        [
+            nodeMoveDefinition(direction: .down, key: .arrowDown),
+            nodeMoveDefinition(direction: .left, key: .arrowLeft),
+            nodeMoveDefinition(direction: .right, key: .arrowRight),
+            nodeMoveDefinition(direction: .up, key: .arrowUp),
+        ]
+    }
+
+    private static func nodeNudgeDefinitions() -> [CanvasShortcutDefinition] {
+        [
+            nodeNudgeDefinition(direction: .down, key: .arrowDown),
+            nodeNudgeDefinition(direction: .left, key: .arrowLeft),
+            nodeNudgeDefinition(direction: .right, key: .arrowRight),
+            nodeNudgeDefinition(direction: .up, key: .arrowUp),
+        ]
+    }
+
+    private static func nodeMoveDefinition(
+        direction: CanvasNodeMoveDirection,
+        key: CanvasShortcutKey
+    ) -> CanvasShortcutDefinition {
+        CanvasShortcutDefinition(
+            id: CanvasShortcutID(rawValue: "moveNode\(nodeDirectionIDSuffix(direction))"),
+            name: "Move Node \(nodeDirectionLabel(direction))",
+            gesture: CanvasShortcutGesture(key: key, modifiers: [.command]),
+            action: .apply(commands: [.moveNode(direction)]),
+            shortcutLabel: shortcutLabel(for: CanvasShortcutGesture(key: key, modifiers: [.command]))
+        )
+    }
+
+    private static func nodeNudgeDefinition(
+        direction: CanvasNodeMoveDirection,
+        key: CanvasShortcutKey
+    ) -> CanvasShortcutDefinition {
+        CanvasShortcutDefinition(
+            id: CanvasShortcutID(rawValue: "nudgeNode\(nodeDirectionIDSuffix(direction))"),
+            name: "Nudge Node \(nodeDirectionLabel(direction))",
+            gesture: CanvasShortcutGesture(key: key, modifiers: [.command, .shift]),
+            action: .apply(commands: [.nudgeNode(direction)]),
+            shortcutLabel: shortcutLabel(
+                for: CanvasShortcutGesture(key: key, modifiers: [.command, .shift])
+            )
+        )
     }
 
     private static func canvasNavigationDefinitions() -> [CanvasShortcutDefinition] {
@@ -270,7 +268,9 @@ extension CanvasShortcutCatalogService {
                 name: "Connect Focused Node to Node",
                 gesture: CanvasShortcutGesture(key: .character("l"), modifiers: [.command]),
                 action: .beginConnectNodeSelection,
-                shortcutLabel: "Command + L",
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("l"), modifiers: [.command])
+                ),
                 searchTokens: ["connect", "edge", "line", "diagram"]
             ),
             CanvasShortcutDefinition(
@@ -278,14 +278,18 @@ extension CanvasShortcutCatalogService {
                 name: "Center Focused Node",
                 gesture: CanvasShortcutGesture(key: .character("l"), modifiers: [.control]),
                 action: .apply(commands: [.centerFocusedNode]),
-                shortcutLabel: "Control + L"
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("l"), modifiers: [.control])
+                )
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "toggleFoldFocusedSubtree"),
                 name: "Toggle Fold Focused Subtree",
                 gesture: CanvasShortcutGesture(key: .character("."), modifiers: [.option]),
                 action: .apply(commands: [.toggleFoldFocusedSubtree]),
-                shortcutLabel: "Option + .",
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("."), modifiers: [.option])
+                ),
                 searchTokens: ["fold", "collapse", "expand", "subtree"]
             ),
         ]
@@ -298,21 +302,27 @@ extension CanvasShortcutCatalogService {
                 name: "Undo",
                 gesture: CanvasShortcutGesture(key: .character("z"), modifiers: [.command]),
                 action: .undo,
-                shortcutLabel: "Command + Z"
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("z"), modifiers: [.command])
+                )
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "redo.commandShiftZ"),
                 name: "Redo",
                 gesture: CanvasShortcutGesture(key: .character("z"), modifiers: [.command, .shift]),
                 action: .redo,
-                shortcutLabel: "Command + Shift + Z"
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("z"), modifiers: [.command, .shift])
+                )
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "redo.commandY"),
                 name: "Redo",
                 gesture: CanvasShortcutGesture(key: .character("y"), modifiers: [.command]),
                 action: .redo,
-                shortcutLabel: "Command + Y"
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("y"), modifiers: [.command])
+                )
             ),
         ]
     }
@@ -324,7 +334,7 @@ extension CanvasShortcutCatalogService {
                 name: "Zoom In",
                 gesture: CanvasShortcutGesture(key: .character("+"), modifiers: [.command]),
                 action: .zoomIn,
-                shortcutLabel: "Command + +",
+                shortcutLabel: shortcutLabel(modifiers: [.command], keyLabel: "+"),
                 searchTokens: ["zoom", "in", "scale"]
             ),
             CanvasShortcutDefinition(
@@ -332,7 +342,7 @@ extension CanvasShortcutCatalogService {
                 name: "Zoom In",
                 gesture: CanvasShortcutGesture(key: .character(";"), modifiers: [.command, .shift]),
                 action: .zoomIn,
-                shortcutLabel: "Command + +",
+                shortcutLabel: shortcutLabel(modifiers: [.command], keyLabel: "+"),
                 searchTokens: ["zoom", "in", "scale"]
             ),
             CanvasShortcutDefinition(
@@ -340,7 +350,7 @@ extension CanvasShortcutCatalogService {
                 name: "Zoom In",
                 gesture: CanvasShortcutGesture(key: .character("="), modifiers: [.command, .shift]),
                 action: .zoomIn,
-                shortcutLabel: "Command + +",
+                shortcutLabel: shortcutLabel(modifiers: [.command], keyLabel: "+"),
                 searchTokens: ["zoom", "in", "scale"]
             ),
             CanvasShortcutDefinition(
@@ -348,7 +358,9 @@ extension CanvasShortcutCatalogService {
                 name: "Zoom In",
                 gesture: CanvasShortcutGesture(key: .character("="), modifiers: [.command]),
                 action: .zoomIn,
-                shortcutLabel: "Command + =",
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("="), modifiers: [.command])
+                ),
                 searchTokens: ["zoom", "in", "scale"]
             ),
             CanvasShortcutDefinition(
@@ -356,9 +368,118 @@ extension CanvasShortcutCatalogService {
                 name: "Zoom Out",
                 gesture: CanvasShortcutGesture(key: .character("-"), modifiers: [.command]),
                 action: .zoomOut,
-                shortcutLabel: "Command + -",
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("-"), modifiers: [.command])
+                ),
                 searchTokens: ["zoom", "out", "scale"]
             ),
         ]
+    }
+
+    private static func shortcutLabel(for gesture: CanvasShortcutGesture) -> String {
+        shortcutLabel(modifiers: gesture.modifiers, keyLabel: keyLabel(for: gesture.key))
+    }
+
+    private static func shortcutLabel(modifiers: CanvasShortcutModifiers, keyLabel: String) -> String {
+        modifierSymbols(for: modifiers).joined() + keyLabel
+    }
+
+    private static func modifierSymbols(for modifiers: CanvasShortcutModifiers) -> [String] {
+        [
+            modifiers.contains(.command) ? "⌘" : nil,
+            modifiers.contains(.shift) ? "⇧" : nil,
+            modifiers.contains(.control) ? "⌃" : nil,
+            modifiers.contains(.option) ? "⌥" : nil,
+            modifiers.contains(.function) ? "fn" : nil,
+        ].compactMap { $0 }
+    }
+
+    private static func keyLabel(for key: CanvasShortcutKey) -> String {
+        switch key {
+        case .enter:
+            "↩"
+        case .deleteBackward:
+            "⌫"
+        case .deleteForward:
+            "⌦"
+        case .arrowUp:
+            "↑"
+        case .arrowDown:
+            "↓"
+        case .arrowLeft:
+            "←"
+        case .arrowRight:
+            "→"
+        case .character(let character):
+            character.uppercased()
+        }
+    }
+
+    private static func focusDirectionIDSuffix(_ direction: CanvasFocusDirection) -> String {
+        switch direction {
+        case .up:
+            "Up"
+        case .down:
+            "Down"
+        case .left:
+            "Left"
+        case .right:
+            "Right"
+        }
+    }
+
+    private static func focusDirectionLabel(_ direction: CanvasFocusDirection) -> String {
+        switch direction {
+        case .up:
+            "Up"
+        case .down:
+            "Down"
+        case .left:
+            "Left"
+        case .right:
+            "Right"
+        }
+    }
+
+    private static func nodeDirectionIDSuffix(_ direction: CanvasNodeMoveDirection) -> String {
+        switch direction {
+        case .up:
+            "Up"
+        case .down:
+            "Down"
+        case .left:
+            "Left"
+        case .right:
+            "Right"
+        case .upLeft:
+            "UpLeft"
+        case .upRight:
+            "UpRight"
+        case .downLeft:
+            "DownLeft"
+        case .downRight:
+            "DownRight"
+        }
+    }
+
+    private static func nodeDirectionLabel(_ direction: CanvasNodeMoveDirection) -> String {
+        switch direction {
+        case .up:
+            "Up"
+        case .down:
+            "Down"
+        case .left:
+            "Left"
+        case .right:
+            "Right"
+        case .upLeft:
+            "Up Left"
+        case .upRight:
+            "Up Right"
+        case .downLeft:
+            "Down Left"
+        case .downRight:
+            "Down Right"
+        }
     }
 }

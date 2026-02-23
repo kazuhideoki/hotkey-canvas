@@ -28,17 +28,17 @@
 
 - `CanvasShortcutAction` に `zoomIn` / `zoomOut` / `beginConnectNodeSelection` を追加した。
 - `CanvasShortcutCatalogService` の標準定義に以下を追加した。
-- `Command + +`（`Command + Shift + =` / `Command + Shift + ;` / `Command + +` 記号入力）: `zoomIn`
-- `Command + =`: `zoomIn`
-- `Command + -`: `zoomOut`
-- `Command + L`: `beginConnectNodeSelection`
-- `Option + .`: `toggleFoldFocusedSubtree`
-- `Command + Shift + ↑/↓/←/→`: `nudgeNode(.up/.down/.left/.right)`
-- `Shift + ↑/↓/←/→`: `extendSelection(.up/.down/.left/.right)`
-- `Command + C`: `copyFocusedSubtree`
-- `Command + X`: `cutFocusedSubtree`
-- `Command + V`: `pasteSubtreeAsChild`
-- `Command + D`: `duplicateSelectionAsSibling`
+- `⌘+`（`⌘⇧=` / `⌘⇧;` / `⌘+` 記号入力）: `zoomIn`
+- `⌘=`: `zoomIn`
+- `⌘-`: `zoomOut`
+- `⌘L`: `beginConnectNodeSelection`
+- `⌥.`: `toggleFoldFocusedSubtree`
+- `⌘⇧↑/↓/←/→`: `nudgeNode(.up/.down/.left/.right)`
+- `⇧↑/↓/←/→`: `extendSelection(.up/.down/.left/.right)`
+- `⌘C`: `copyFocusedSubtree`
+- `⌘X`: `cutFocusedSubtree`
+- `⌘V`: `pasteSubtreeAsChild`
+- `⌘D`: `duplicateSelectionAsSibling`
 - 利用先:
 - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)` / `shouldBeginConnectNodeSelection(_:)`）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
