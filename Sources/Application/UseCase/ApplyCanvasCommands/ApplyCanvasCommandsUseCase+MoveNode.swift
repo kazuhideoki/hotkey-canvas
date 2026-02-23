@@ -63,85 +63,13 @@ extension ApplyCanvasCommandsUseCase {
         guard areaMode == .diagram else {
             return noOpMutationResult(for: graph)
         }
-        return moveNodeByNudge(in: graph, direction: direction)
+        return nudgeNodeByDirectionSlot(in: graph, direction: direction)
     }
 }
 
 extension ApplyCanvasCommandsUseCase {
     private static let orderingEpsilon: Double = 0.001
     private static let indentHorizontalGap: Double = CanvasDefaultNodeDistance.treeHorizontal
-
-    private func moveNodeByNudge(
-        in graph: CanvasGraph,
-        direction: CanvasNodeMoveDirection
-    ) -> CanvasMutationResult {
-        guard let focusedNodeID = graph.focusedNodeID else {
-            return noOpMutationResult(for: graph)
-        }
-        guard let focusedNode = graph.nodesByID[focusedNodeID] else {
-            return noOpMutationResult(for: graph)
-        }
-
-        let delta = diagramNudgeDelta(for: direction)
-        guard delta.dx != 0 || delta.dy != 0 else {
-            return noOpMutationResult(for: graph)
-        }
-
-        let movedNode = CanvasNode(
-            id: focusedNode.id,
-            kind: focusedNode.kind,
-            text: focusedNode.text,
-            attachments: focusedNode.attachments,
-            bounds: CanvasBounds(
-                x: focusedNode.bounds.x + delta.dx,
-                y: focusedNode.bounds.y + delta.dy,
-                width: focusedNode.bounds.width,
-                height: focusedNode.bounds.height
-            ),
-            metadata: focusedNode.metadata,
-            markdownStyleEnabled: focusedNode.markdownStyleEnabled
-        )
-        let nextGraph = CanvasGraph(
-            nodesByID: graph.nodesByID.merging(
-                [focusedNodeID: movedNode],
-                uniquingKeysWith: { _, new in new }
-            ),
-            edgesByID: graph.edgesByID,
-            focusedNodeID: focusedNodeID,
-            selectedNodeIDs: graph.selectedNodeIDs,
-            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
-            areasByID: graph.areasByID
-        )
-
-        return CanvasMutationResult(
-            graphBeforeMutation: graph,
-            graphAfterMutation: nextGraph,
-            effects: CanvasMutationEffects(
-                didMutateGraph: true,
-                needsTreeLayout: false,
-                needsAreaLayout: false,
-                needsFocusNormalization: false
-            ),
-            areaLayoutSeedNodeID: focusedNodeID
-        )
-    }
-
-    private func diagramNudgeDelta(for direction: CanvasNodeMoveDirection) -> (dx: Double, dy: Double) {
-        let horizontalStep = CanvasDefaultNodeDistance.diagramHorizontal
-        let verticalStep = CanvasDefaultNodeDistance.vertical(for: .diagram)
-        switch direction {
-        case .up:
-            return (0, -verticalStep)
-        case .down:
-            return (0, verticalStep)
-        case .left:
-            return (-horizontalStep, 0)
-        case .right:
-            return (horizontalStep, 0)
-        case .upLeft, .upRight, .downLeft, .downRight:
-            return (0, 0)
-        }
-    }
 
     private func moveNodeVertically(in graph: CanvasGraph, offset: Int) throws -> CanvasGraph {
         guard let focusedNodeID = graph.focusedNodeID else {
