@@ -395,6 +395,7 @@ extension CanvasView {
                 text: editingTextBinding(for: node.id),
                 nodeWidth: CGFloat(node.bounds.width),
                 zoomScale: zoomScale,
+                style: nodeTextStyle,
                 contentAlignment: contentAlignment,
                 selectAllOnFirstFocus: false,
                 initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
@@ -409,7 +410,7 @@ extension CanvasView {
                     cancelNodeEditing()
                 }
             )
-            .padding(NodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
+            .padding(nodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: contentAlignment.frameAlignment)
         } else {
             nonEditingNodeContent(
@@ -437,11 +438,8 @@ extension CanvasView {
                 text: text,
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale,
-<<<<<<< HEAD
-                style: nodeTextStyle
-=======
+                style: nodeTextStyle,
                 contentAlignment: contentAlignment
->>>>>>> main
             )
         } else {
             let scaledPadding = nodeTextStyle.outerPadding * scale
