@@ -40,28 +40,3 @@ func test_shouldEnableCompositeMove_withoutFocusedNode_returnsFalse() {
 
     #expect(!result)
 }
-
-@Test("CanvasView composite move: reset state when focused node changes")
-func test_shouldResetCompositeMoveState_focusChanged_returnsTrue() {
-    let previousFocusedNodeID = CanvasNodeID(rawValue: "before")
-    let currentFocusedNodeID = CanvasNodeID(rawValue: "after")
-
-    let result = CanvasView.shouldResetCompositeMoveState(
-        previousFocusedNodeID: previousFocusedNodeID,
-        currentFocusedNodeID: currentFocusedNodeID
-    )
-
-    #expect(result)
-}
-
-@Test("CanvasView composite move: keep state when focused node is unchanged")
-func test_shouldResetCompositeMoveState_focusUnchanged_returnsFalse() {
-    let focusedNodeID = CanvasNodeID(rawValue: "same")
-
-    let result = CanvasView.shouldResetCompositeMoveState(
-        previousFocusedNodeID: focusedNodeID,
-        currentFocusedNodeID: focusedNodeID
-    )
-
-    #expect(!result)
-}

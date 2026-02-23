@@ -70,6 +70,7 @@ extension ApplyCanvasCommandsUseCase {
 extension ApplyCanvasCommandsUseCase {
     private static let orderingEpsilon: Double = 0.001
     private static let indentHorizontalGap: Double = CanvasDefaultNodeDistance.treeHorizontal
+<<<<<<< HEAD
     private static let diagramSemanticHorizontalGap: Double = CanvasDefaultNodeDistance.diagramHorizontal
     private static let diagramSemanticVerticalGap: Double = CanvasDefaultNodeDistance.vertical(for: .diagram)
 
@@ -139,6 +140,8 @@ extension ApplyCanvasCommandsUseCase {
             areaLayoutSeedNodeID: focusedNodeID
         )
     }
+=======
+>>>>>>> main
 
     private func moveNodeByNudge(
         in graph: CanvasGraph,
@@ -209,70 +212,6 @@ extension ApplyCanvasCommandsUseCase {
         case .upLeft, .upRight, .downLeft, .downRight:
             return (0, 0)
         }
-    }
-
-    private func diagramUnitVector(for direction: CanvasNodeMoveDirection) -> (dx: Double, dy: Double) {
-        switch direction {
-        case .up:
-            return (0, -1)
-        case .down:
-            return (0, 1)
-        case .left:
-            return (-1, 0)
-        case .right:
-            return (1, 0)
-        case .upLeft:
-            return (-1, -1)
-        case .upRight:
-            return (1, -1)
-        case .downLeft:
-            return (-1, 1)
-        case .downRight:
-            return (1, 1)
-        }
-    }
-
-    private func connectedAnchorNode(
-        of focusedNodeID: CanvasNodeID,
-        in graph: CanvasGraph
-    ) -> CanvasNode? {
-        let incomingEdges = graph.edgesByID.values
-            .filter { $0.toNodeID == focusedNodeID && graph.nodesByID[$0.fromNodeID] != nil }
-            .sorted(by: isPreferredAnchorEdge)
-        if let incomingEdge = incomingEdges.first, let anchorNode = graph.nodesByID[incomingEdge.fromNodeID] {
-            return anchorNode
-        }
-
-        let connectedEdges = graph.edgesByID.values
-            .filter {
-                ($0.fromNodeID == focusedNodeID && graph.nodesByID[$0.toNodeID] != nil)
-                    || ($0.toNodeID == focusedNodeID && graph.nodesByID[$0.fromNodeID] != nil)
-            }
-            .sorted(by: isPreferredAnchorEdge)
-        guard let edge = connectedEdges.first else {
-            return nil
-        }
-        let anchorNodeID = edge.fromNodeID == focusedNodeID ? edge.toNodeID : edge.fromNodeID
-        return graph.nodesByID[anchorNodeID]
-    }
-
-    private func isPreferredAnchorEdge(_ lhs: CanvasEdge, _ rhs: CanvasEdge) -> Bool {
-        let lhsPriority = edgePriorityForAnchor(lhs)
-        let rhsPriority = edgePriorityForAnchor(rhs)
-        if lhsPriority != rhsPriority {
-            return lhsPriority < rhsPriority
-        }
-        return lhs.id.rawValue < rhs.id.rawValue
-    }
-
-    private func edgePriorityForAnchor(_ edge: CanvasEdge) -> Int {
-        if edge.relationType == .normal {
-            return 0
-        }
-        if edge.relationType == .parentChild {
-            return 1
-        }
-        return 2
     }
 
     private func moveNodeVertically(in graph: CanvasGraph, offset: Int) throws -> CanvasGraph {
