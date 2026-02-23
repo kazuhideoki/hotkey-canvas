@@ -16,7 +16,7 @@ extension ApplyCanvasCommandsUseCase {
             bounds = makeAvailableNewNodeBounds(in: graph)
         case .diagram:
             let diagramNodeSideLength = CanvasDefaultNodeDistance.diagramNodeSide
-            bounds = makeAvailableNewNodeBounds(
+            bounds = makeAvailableDiagramNewNodeBounds(
                 in: graph,
                 avoiding: area.nodeIDs,
                 width: diagramNodeSideLength,

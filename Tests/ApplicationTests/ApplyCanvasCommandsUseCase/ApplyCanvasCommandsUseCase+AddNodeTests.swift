@@ -262,6 +262,96 @@ func test_apply_addNode_choosesAreaWithLargerMaxYWhenMinYTies() async throws {
     #expect(newNode.bounds.y >= 204)
 }
 
+@Test("ApplyCanvasCommandsUseCase: addNode in diagram continues placement to the right from incoming anchor")
+func test_apply_addNodeInDiagramArea_continuesToRightFromIncomingAnchor() async throws {
+    let anchorID = CanvasNodeID(rawValue: "anchor")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            anchorID: CanvasNode(
+                id: anchorID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            ),
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 440, y: 0, width: 220, height: 220)
+            ),
+        ],
+        edgesByID: [
+            CanvasEdgeID(rawValue: "edge-anchor-focused"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-anchor-focused"),
+                fromNodeID: anchorID,
+                toNodeID: focusedID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: focusedID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [anchorID, focusedID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addNode])
+
+    let newNodeID = try #require(result.newState.focusedNodeID)
+    let newNode = try #require(result.newState.nodesByID[newNodeID])
+    #expect(newNode.bounds.width == 220)
+    #expect(newNode.bounds.height == 220)
+    #expect(newNode.bounds.x == 880)
+    #expect(newNode.bounds.y == 0)
+}
+
+@Test("ApplyCanvasCommandsUseCase: addNode in diagram continues placement upward from incoming anchor")
+func test_apply_addNodeInDiagramArea_continuesUpwardFromIncomingAnchor() async throws {
+    let anchorID = CanvasNodeID(rawValue: "anchor")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            anchorID: CanvasNode(
+                id: anchorID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 440, width: 220, height: 220)
+            ),
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            ),
+        ],
+        edgesByID: [
+            CanvasEdgeID(rawValue: "edge-anchor-focused"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-anchor-focused"),
+                fromNodeID: anchorID,
+                toNodeID: focusedID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: focusedID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [anchorID, focusedID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addNode])
+
+    let newNodeID = try #require(result.newState.focusedNodeID)
+    let newNode = try #require(result.newState.nodesByID[newNodeID])
+    #expect(newNode.bounds.width == 220)
+    #expect(newNode.bounds.height == 220)
+    #expect(newNode.bounds.x == 0)
+    #expect(newNode.bounds.y == -440)
+}
+
 @Test("ApplyCanvasCommandsUseCase: addNode fails without focused node when multiple areas exist")
 func test_apply_addNode_failsWithoutFocusInMultiAreaGraph() async throws {
     let areaA = CanvasAreaID(rawValue: "area-a")
