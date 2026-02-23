@@ -152,6 +152,8 @@ extension CanvasView {
                 applyZoom(action: .zoomIn)
             case .zoomOut:
                 applyZoom(action: .zoomOut)
+            case .beginConnectNodeSelection:
+                presentConnectNodeSelectionIfPossible()
             case .openCommandPalette:
                 return
             }

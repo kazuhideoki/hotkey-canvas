@@ -21,6 +21,15 @@ func test_resolveAction_controlL_returnsCenterFocusedNode() {
     #expect(action == .apply(commands: [.centerFocusedNode]))
 }
 
+@Test("Shortcut catalog: command+l resolves beginConnectNodeSelection")
+func test_resolveAction_commandL_returnsBeginConnectNodeSelection() {
+    let gesture = CanvasShortcutGesture(key: .character("l"), modifiers: [.command])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .beginConnectNodeSelection)
+}
+
 @Test("Shortcut catalog: option+period resolves toggleFoldFocusedSubtree")
 func test_resolveAction_optionPeriod_returnsToggleFoldFocusedSubtree() {
     let gesture = CanvasShortcutGesture(key: .character("."), modifiers: [.option])
