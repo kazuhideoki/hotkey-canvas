@@ -2,6 +2,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case addNode
     case addChildNode
     case addSiblingNode(position: CanvasSiblingNodePosition)
+    case duplicateSelectionAsSibling
     case connectNodes(fromNodeID: CanvasNodeID, toNodeID: CanvasNodeID)
     case alignParentNodesVertically
     case moveFocus(CanvasFocusDirection)

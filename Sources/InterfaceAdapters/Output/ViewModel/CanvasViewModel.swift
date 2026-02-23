@@ -161,7 +161,8 @@ extension CanvasViewModel {
         switch command {
         case .addNode, .addChildNode, .addSiblingNode:
             return true
-        case .alignParentNodesVertically,
+        case .duplicateSelectionAsSibling,
+            .alignParentNodesVertically,
             .connectNodes,
             .moveFocus, .extendSelection, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree, .centerFocusedNode,
             .deleteFocusedNode,

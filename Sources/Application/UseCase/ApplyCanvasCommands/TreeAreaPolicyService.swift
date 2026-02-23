@@ -11,6 +11,7 @@ enum TreeAreaPolicyService {
         case .addNode,
             .addChildNode,
             .addSiblingNode,
+            .duplicateSelectionAsSibling,
             .alignParentNodesVertically,
             .moveFocus,
             .extendSelection,

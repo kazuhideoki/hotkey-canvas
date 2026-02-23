@@ -15,22 +15,37 @@ extension ApplyCanvasCommandsUseCase {
         direction: CanvasNodeMoveDirection,
         areaMode: CanvasEditingMode
     ) throws -> CanvasMutationResult {
+        guard
+            let focusedNodeID = graph.focusedNodeID,
+            graph.nodesByID[focusedNodeID] != nil
+        else {
+            return noOpMutationResult(for: graph)
+        }
+        let targetNodeIDs = moveTargetNodeIDs(in: graph, focusedNodeID: focusedNodeID)
+
         if areaMode == .diagram {
-            return moveNodeByDirectionSlot(in: graph, direction: direction)
+            return moveNodeByDirectionSlot(
+                in: graph,
+                focusedNodeID: focusedNodeID,
+                targetNodeIDs: targetNodeIDs,
+                direction: direction
+            )
         }
 
         let graphAfterMutation: CanvasGraph
-        switch direction {
-        case .up:
-            graphAfterMutation = try moveNodeVertically(in: graph, offset: -1)
-        case .down:
-            graphAfterMutation = try moveNodeVertically(in: graph, offset: 1)
-        case .left:
-            graphAfterMutation = try outdentNode(in: graph)
-        case .right:
-            graphAfterMutation = try indentNode(in: graph)
-        case .upLeft, .upRight, .downLeft, .downRight:
-            graphAfterMutation = graph
+        if targetNodeIDs.count > 1 {
+            graphAfterMutation = try moveTreeNodesAsSiblings(
+                in: graph,
+                focusedNodeID: focusedNodeID,
+                targetNodeIDs: targetNodeIDs,
+                direction: direction
+            )
+        } else {
+            graphAfterMutation = try moveSingleTreeNode(
+                in: graph,
+                focusedNodeID: focusedNodeID,
+                direction: direction
+            )
         }
 
         guard graphAfterMutation != graph else {
@@ -63,13 +78,140 @@ extension ApplyCanvasCommandsUseCase {
         guard areaMode == .diagram else {
             return noOpMutationResult(for: graph)
         }
-        return nudgeNodeByDirectionSlot(in: graph, direction: direction)
+        guard
+            let focusedNodeID = graph.focusedNodeID,
+            graph.nodesByID[focusedNodeID] != nil
+        else {
+            return noOpMutationResult(for: graph)
+        }
+        let targetNodeIDs = moveTargetNodeIDs(in: graph, focusedNodeID: focusedNodeID)
+        return nudgeNodeByDirectionSlot(
+            in: graph,
+            focusedNodeID: focusedNodeID,
+            targetNodeIDs: targetNodeIDs,
+            direction: direction
+        )
     }
 }
 
 extension ApplyCanvasCommandsUseCase {
     private static let orderingEpsilon: Double = 0.001
     private static let indentHorizontalGap: Double = CanvasDefaultNodeDistance.treeHorizontal
+
+    private func moveTargetNodeIDs(
+        in graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID
+    ) -> [CanvasNodeID] {
+        let focusedAreaID: CanvasAreaID
+        switch CanvasAreaMembershipService.areaID(containing: focusedNodeID, in: graph) {
+        case .success(let areaID):
+            focusedAreaID = areaID
+        case .failure:
+            return [focusedNodeID]
+        }
+
+        let selectedNodeIDsInArea = graph.selectedNodeIDs.filter { selectedNodeID in
+            guard graph.nodesByID[selectedNodeID] != nil else {
+                return false
+            }
+            switch CanvasAreaMembershipService.areaID(containing: selectedNodeID, in: graph) {
+            case .success(let selectedAreaID):
+                return selectedAreaID == focusedAreaID
+            case .failure:
+                return false
+            }
+        }
+        guard selectedNodeIDsInArea.contains(focusedNodeID), selectedNodeIDsInArea.count > 1 else {
+            return [focusedNodeID]
+        }
+
+        return selectedNodeIDsInArea.sorted(by: { lhs, rhs in
+            guard
+                let lhsNode = graph.nodesByID[lhs],
+                let rhsNode = graph.nodesByID[rhs]
+            else {
+                return lhs.rawValue < rhs.rawValue
+            }
+            return isPeerNodeOrderedBefore(lhsNode, rhsNode)
+        })
+    }
+
+    private func moveSingleTreeNode(
+        in graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID,
+        direction: CanvasNodeMoveDirection
+    ) throws -> CanvasGraph {
+        let focusedGraph = CanvasGraph(
+            nodesByID: graph.nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+            areasByID: graph.areasByID
+        )
+        switch direction {
+        case .up:
+            return try moveNodeVertically(in: focusedGraph, offset: -1)
+        case .down:
+            return try moveNodeVertically(in: focusedGraph, offset: 1)
+        case .left:
+            return try outdentNode(in: focusedGraph)
+        case .right:
+            return try indentNode(in: focusedGraph)
+        case .upLeft, .upRight, .downLeft, .downRight:
+            return graph
+        }
+    }
+
+    private func moveTreeNodesAsSiblings(
+        in graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID,
+        targetNodeIDs: [CanvasNodeID],
+        direction: CanvasNodeMoveDirection
+    ) throws -> CanvasGraph {
+        let focusedMovedGraph = try moveSingleTreeNode(
+            in: graph,
+            focusedNodeID: focusedNodeID,
+            direction: direction
+        )
+        guard focusedMovedGraph != graph else {
+            return graph
+        }
+        guard let movedFocusedNode = focusedMovedGraph.nodesByID[focusedNodeID] else {
+            return graph
+        }
+
+        let targetNodeIDSet = Set(targetNodeIDs)
+        let destinationParentNodeID = resolvedTreeDestinationParentNodeID(
+            of: focusedNodeID,
+            in: focusedMovedGraph,
+            excluding: targetNodeIDSet
+        )
+
+        let nextEdgesByID = rewiredTreeEdgesForSiblingMove(
+            from: graph.edgesByID,
+            targetNodeIDs: targetNodeIDs,
+            destinationParentNodeID: destinationParentNodeID
+        )
+        guard let focusedIndex = targetNodeIDs.firstIndex(of: focusedNodeID) else {
+            return graph
+        }
+        let nodeOverrides = movedTreeNodesAsSiblings(
+            from: focusedMovedGraph.nodesByID,
+            targetNodeIDs: targetNodeIDs,
+            focusedIndex: focusedIndex,
+            focusedBounds: movedFocusedNode.bounds
+        )
+
+        return CanvasGraph(
+            nodesByID: focusedMovedGraph.nodesByID.merging(nodeOverrides, uniquingKeysWith: { _, new in new }),
+            edgesByID: nextEdgesByID,
+            focusedNodeID: focusedMovedGraph.focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+            areasByID: graph.areasByID
+        )
+    }
 
     private func moveNodeVertically(in graph: CanvasGraph, offset: Int) throws -> CanvasGraph {
         guard let focusedNodeID = graph.focusedNodeID else {
