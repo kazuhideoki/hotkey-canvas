@@ -81,11 +81,17 @@ public enum CanvasFoldedSubtreeVisibilityService {
             }
         let normalizedCollapsedRootNodeIDs = normalizedCollapsedRootNodeIDs(in: graph)
             .intersection(visibleNodeIDs)
+        let visibleSelectedNodeIDs = CanvasSelectionService.normalizedSelectedNodeIDs(
+            from: graph.selectedNodeIDs.intersection(visibleNodeIDs),
+            in: graph,
+            focusedNodeID: visibleFocusedNodeID
+        )
 
         return CanvasGraph(
             nodesByID: visibleNodesByID,
             edgesByID: visibleEdgesByID,
             focusedNodeID: visibleFocusedNodeID,
+            selectedNodeIDs: visibleSelectedNodeIDs,
             collapsedRootNodeIDs: normalizedCollapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
