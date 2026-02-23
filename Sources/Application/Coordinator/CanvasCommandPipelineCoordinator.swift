@@ -75,6 +75,9 @@ extension CanvasCommandPipelineCoordinator {
         if effects.didMutateGraph && effects.needsFocusNormalization {
             graph = runFocusNormalizationStage(on: graph)
         }
+        if effects.didMutateGraph {
+            graph = runSelectionNormalizationStage(on: graph)
+        }
 
         return graph
     }
@@ -114,6 +117,7 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -314,6 +318,7 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -363,6 +368,7 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -379,6 +385,7 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: normalizedCollapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -394,6 +401,23 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: normalizedFocusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+            areasByID: graph.areasByID
+        )
+    }
+
+    /// Ensures selected nodes stay visible/existing and always include the focused node.
+    private func runSelectionNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {
+        let normalizedSelectedNodeIDs = CanvasSelectionService.normalizedSelectedNodeIDs(in: graph)
+        guard normalizedSelectedNodeIDs != graph.selectedNodeIDs else {
+            return graph
+        }
+        return CanvasGraph(
+            nodesByID: graph.nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: graph.focusedNodeID,
+            selectedNodeIDs: normalizedSelectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )

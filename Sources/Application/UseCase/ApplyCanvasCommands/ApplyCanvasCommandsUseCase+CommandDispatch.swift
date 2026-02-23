@@ -49,6 +49,8 @@ extension ApplyCanvasCommandsUseCase {
             return alignParentNodesVertically(in: graph, areaID: resolvedAreaID)
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
+        case .extendSelection(let direction):
+            return extendSelection(in: graph, direction: direction)
         case .moveNode(let direction):
             return try moveNode(
                 in: graph,
@@ -66,7 +68,11 @@ extension ApplyCanvasCommandsUseCase {
         case .centerFocusedNode:
             return noOpMutationResult(for: graph)
         case .deleteFocusedNode:
-            return try deleteFocusedNode(in: graph)
+            return try deleteFocusedNode(
+                in: graph,
+                areaID: resolvedAreaID,
+                areaMode: resolvedAreaMode
+            )
         case .copyFocusedSubtree:
             return copyFocusedSubtree(in: graph)
         case .cutFocusedSubtree:
@@ -100,6 +106,7 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .alignParentNodesVertically,
             .moveFocus,
+            .extendSelection,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,
@@ -140,6 +147,7 @@ extension ApplyCanvasCommandsUseCase {
             .connectNodes,
             .alignParentNodesVertically,
             .moveFocus,
+            .extendSelection,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,
@@ -184,6 +192,7 @@ extension ApplyCanvasCommandsUseCase {
             .connectNodes,
             .alignParentNodesVertically,
             .moveFocus,
+            .extendSelection,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,
@@ -251,6 +260,7 @@ extension ApplyCanvasCommandsUseCase {
             .addSiblingNode,
             .alignParentNodesVertically,
             .moveFocus,
+            .extendSelection,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,

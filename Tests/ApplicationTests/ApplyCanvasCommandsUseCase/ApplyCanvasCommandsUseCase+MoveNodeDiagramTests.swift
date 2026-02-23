@@ -61,6 +61,67 @@ func test_apply_moveNodeInDiagramArea_resolvesOverlapWithinSameArea() async thro
     #expect(boundsOverlap(focusedAfter.bounds, blockerAfter.bounds, spacing: 0) == false)
 }
 
+@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area moves focused node without anchor")
+func test_apply_moveNodeInDiagramArea_movesFocusedNodeWithoutAnchor() async throws {
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            )
+        ],
+        focusedNodeID: focusedID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.right)])
+
+    let movedNode = try #require(result.newState.nodesByID[focusedID])
+    #expect(movedNode.bounds.x == 440)
+    #expect(movedNode.bounds.y == 0)
+}
+
+@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area moves unconnected focused node")
+func test_apply_moveNodeInDiagramArea_movesUnconnectedFocusedNode() async throws {
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let otherID = CanvasNodeID(rawValue: "other")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            ),
+            otherID: CanvasNode(
+                id: otherID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 2000, y: 0, width: 220, height: 220)
+            ),
+        ],
+        focusedNodeID: focusedID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedID, otherID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.down)])
+
+    let movedNode = try #require(result.newState.nodesByID[focusedID])
+    #expect(movedNode.bounds.x == 0)
+    #expect(movedNode.bounds.y == 440)
+}
+
 @Test("ApplyCanvasCommandsUseCase: moveNode in diagram area keeps moving by grid slots from current position")
 func test_apply_moveNodeInDiagramArea_movesByGridFromCurrentPosition() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
