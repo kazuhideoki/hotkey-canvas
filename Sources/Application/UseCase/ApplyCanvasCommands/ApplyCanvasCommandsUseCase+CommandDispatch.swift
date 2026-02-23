@@ -39,7 +39,7 @@ extension ApplyCanvasCommandsUseCase {
         resolvedAreaMode: CanvasEditingMode
     ) throws -> CanvasMutationResult {
         switch command {
-        case .addNode, .addChildNode, .addSiblingNode, .connectNodes:
+        case .addNode, .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .connectNodes:
             return try applyNodeStructureCommand(
                 command: command,
                 to: graph,
@@ -94,6 +94,8 @@ extension ApplyCanvasCommandsUseCase {
             return try addChildNode(in: graph, requiresTopLevelParent: false)
         case .addSiblingNode(let position):
             return try addSiblingNode(in: graph, position: position)
+        case .duplicateSelectionAsSibling:
+            return try duplicateSelectionAsSibling(in: graph, resolvedAreaID: resolvedAreaID)
         case .connectNodes(let fromNodeID, let toNodeID):
             return try connectNodes(
                 in: graph,
@@ -140,6 +142,7 @@ extension ApplyCanvasCommandsUseCase {
         case .addNode,
             .addChildNode,
             .addSiblingNode,
+            .duplicateSelectionAsSibling,
             .connectNodes,
             .alignParentNodesVertically,
             .moveFocus,
@@ -185,6 +188,7 @@ extension ApplyCanvasCommandsUseCase {
         case .addNode,
             .addChildNode,
             .addSiblingNode,
+            .duplicateSelectionAsSibling,
             .connectNodes,
             .alignParentNodesVertically,
             .moveFocus,
@@ -254,6 +258,7 @@ extension ApplyCanvasCommandsUseCase {
             return CanvasAreaMembershipService.areaID(containing: fromNodeID, in: graph)
         case .addChildNode,
             .addSiblingNode,
+            .duplicateSelectionAsSibling,
             .alignParentNodesVertically,
             .moveFocus,
             .extendSelection,

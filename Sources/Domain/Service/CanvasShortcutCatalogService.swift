@@ -95,6 +95,14 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.deleteFocusedNode]),
                 shortcutLabel: "Delete"
             ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "duplicateSelectionAsSibling"),
+                name: "Duplicate Selection as Sibling",
+                gesture: CanvasShortcutGesture(key: .character("d"), modifiers: [.command]),
+                action: .apply(commands: [.duplicateSelectionAsSibling]),
+                shortcutLabel: "Command + D",
+                searchTokens: ["duplicate", "selection", "sibling", "tree"]
+            ),
         ]
     }
 
