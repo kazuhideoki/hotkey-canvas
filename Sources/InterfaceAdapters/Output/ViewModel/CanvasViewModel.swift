@@ -27,10 +27,14 @@ public final class CanvasViewModel: ObservableObject {
     /// - Returns: `true` when the canvas is empty and UI should present add-node mode selection.
     @discardableResult
     public func onAppear() async -> Bool {
-        let requestIDAtStart = latestDisplayedRequestID
+        let displayedRequestIDAtStart = latestDisplayedRequestID
+        let issuedRequestIDAtStart = nextRequestID
         let result = await inputPort.getCurrentResult()
-        // Ignore stale snapshot when a newer apply() result has already been displayed.
-        guard requestIDAtStart == latestDisplayedRequestID else {
+        // Ignore stale snapshot when a newer request has started or been displayed.
+        guard
+            displayedRequestIDAtStart == latestDisplayedRequestID,
+            issuedRequestIDAtStart == nextRequestID
+        else {
             return false
         }
 

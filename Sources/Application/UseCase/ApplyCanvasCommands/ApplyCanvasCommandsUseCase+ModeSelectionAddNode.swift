@@ -16,29 +16,25 @@ extension ApplyCanvasCommandsUseCase {
         try CanvasAreaMembershipService.validate(in: graph).get()
         let addTarget = try resolveAddTargetForModeSelection(in: graph, selectedMode: selectedMode)
         let addMutationResult = try addNode(in: addTarget.graph, areaID: addTarget.areaID)
-        guard let addedNodeID = addMutationResult.graphAfterMutation.focusedNodeID else {
-            return addMutationResult
-        }
-        guard
+        var graphAfterModeSelection = addMutationResult.graphAfterMutation
+        if let addedNodeID = addMutationResult.graphAfterMutation.focusedNodeID,
             requiresModeSelectionAreaCreation(
                 selectedMode: selectedMode,
                 addedNodeID: addedNodeID,
                 in: addMutationResult.graphAfterMutation
             )
-        else {
-            return addMutationResult
+        {
+            graphAfterModeSelection = try CanvasAreaMembershipService.createArea(
+                id: nextAreaID(for: selectedMode, in: addMutationResult.graphAfterMutation),
+                mode: selectedMode,
+                nodeIDs: [addedNodeID],
+                in: addMutationResult.graphAfterMutation
+            ).get()
         }
-
-        let graphAfterModeAssignment = try CanvasAreaMembershipService.createArea(
-            id: nextAreaID(for: selectedMode, in: addMutationResult.graphAfterMutation),
-            mode: selectedMode,
-            nodeIDs: [addedNodeID],
-            in: addMutationResult.graphAfterMutation
-        ).get()
 
         return CanvasMutationResult(
             graphBeforeMutation: graph,
-            graphAfterMutation: graphAfterModeAssignment,
+            graphAfterMutation: graphAfterModeSelection,
             effects: addMutationResult.effects,
             areaLayoutSeedNodeID: addMutationResult.areaLayoutSeedNodeID
         )
@@ -73,7 +69,7 @@ extension ApplyCanvasCommandsUseCase {
     ) -> CanvasAreaID? {
         switch selectedMode {
         case .tree:
-            if graph.areasByID[.defaultTree] != nil {
+            if let defaultTreeArea = graph.areasByID[.defaultTree], defaultTreeArea.editingMode == .tree {
                 return .defaultTree
             }
         case .diagram:
