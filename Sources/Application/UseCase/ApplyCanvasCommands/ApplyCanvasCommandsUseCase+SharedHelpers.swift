@@ -29,13 +29,19 @@ extension ApplyCanvasCommandsUseCase {
     /// - Parameters:
     ///   - parentID: Source node identifier treated as the parent.
     ///   - childID: Destination node identifier treated as the child.
+    ///   - order: Stable sibling order under the parent.
     /// - Returns: A parent-child edge with a generated identifier.
-    func makeParentChildEdge(from parentID: CanvasNodeID, to childID: CanvasNodeID) -> CanvasEdge {
+    func makeParentChildEdge(
+        from parentID: CanvasNodeID,
+        to childID: CanvasNodeID,
+        order: Int
+    ) -> CanvasEdge {
         CanvasEdge(
             id: CanvasEdgeID(rawValue: "edge-\(UUID().uuidString.lowercased())"),
             fromNodeID: parentID,
             toNodeID: childID,
-            relationType: .parentChild
+            relationType: .parentChild,
+            parentChildOrder: order
         )
     }
 
@@ -231,27 +237,14 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 
-    /// Returns children of a parent sorted by visual order.
+    /// Returns children of a parent sorted by stable sibling order and visual fallback order.
     /// - Parameters:
     ///   - parentID: Parent node identifier.
     ///   - graph: Current canvas graph.
-    /// - Returns: Child nodes sorted by top-to-bottom and then left-to-right.
+    /// - Returns: Child nodes sorted by sibling order and deterministic visual fallback.
     func childNodes(of parentID: CanvasNodeID, in graph: CanvasGraph) -> [CanvasNode] {
-        graph.edgesByID.values
-            .filter {
-                $0.relationType == .parentChild
-                    && $0.fromNodeID == parentID
-            }
+        parentChildEdges(of: parentID, in: graph)
             .compactMap { graph.nodesByID[$0.toNodeID] }
-            .sorted { lhs, rhs in
-                if lhs.bounds.y == rhs.bounds.y {
-                    if lhs.bounds.x == rhs.bounds.x {
-                        return lhs.id.rawValue < rhs.id.rawValue
-                    }
-                    return lhs.bounds.x < rhs.bounds.x
-                }
-                return lhs.bounds.y < rhs.bounds.y
-            }
     }
 
     /// Computes insertion Y that preserves requested above/below order in sibling sorting.

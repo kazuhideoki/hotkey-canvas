@@ -3,8 +3,6 @@ import Foundation
 // Background: Tree relayout needs stable ordering and edge filtering to keep results deterministic.
 // Responsibility: Provide ordering helpers shared by tree relayout internals.
 extension CanvasTreeLayoutService {
-    // Future work: introduce an explicit sibling-order key (or edge insertion order)
-    // so tree ordering does not depend on temporary node coordinates after paste.
     static func validParentChildEdges(in graph: CanvasGraph) -> [CanvasEdge] {
         graph.edgesByID.values.filter { edge in
             edge.relationType == .parentChild
@@ -40,5 +38,35 @@ extension CanvasTreeLayoutService {
             return lhs.fromNodeID.rawValue < rhs.fromNodeID.rawValue
         }
         return lhs.id.rawValue < rhs.id.rawValue
+    }
+
+    static func fallbackSiblingOrderByEdgeID(
+        parentNodeID: CanvasNodeID,
+        parentChildEdges: [CanvasEdge],
+        graph: CanvasGraph
+    ) -> [CanvasEdgeID: Int] {
+        let sortedEdges =
+            parentChildEdges
+            .filter { $0.fromNodeID == parentNodeID }
+            .sorted { lhs, rhs in
+                guard
+                    let lhsNode = graph.nodesByID[lhs.toNodeID],
+                    let rhsNode = graph.nodesByID[rhs.toNodeID]
+                else {
+                    return lhs.id.rawValue < rhs.id.rawValue
+                }
+                if isNodeOrderedBefore(lhsNode, rhsNode) {
+                    return true
+                }
+                if isNodeOrderedBefore(rhsNode, lhsNode) {
+                    return false
+                }
+                return lhs.id.rawValue < rhs.id.rawValue
+            }
+        return Dictionary(
+            uniqueKeysWithValues: sortedEdges.enumerated().map { (index, edge) in
+                (edge.id, index)
+            }
+        )
     }
 }

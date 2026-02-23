@@ -323,17 +323,27 @@ private func makeSiblingGraph(
 private func childNodeIDs(of parentID: CanvasNodeID, in graph: CanvasGraph) -> [CanvasNodeID] {
     graph.edgesByID.values
         .filter { $0.relationType == .parentChild && $0.fromNodeID == parentID }
-        .compactMap { graph.nodesByID[$0.toNodeID] }
         .sorted {
-            if $0.bounds.y == $1.bounds.y {
-                if $0.bounds.x == $1.bounds.x {
-                    return $0.id.rawValue < $1.id.rawValue
-                }
-                return $0.bounds.x < $1.bounds.x
+            let lhsOrder = $0.parentChildOrder ?? Int.max
+            let rhsOrder = $1.parentChildOrder ?? Int.max
+            if lhsOrder != rhsOrder {
+                return lhsOrder < rhsOrder
             }
-            return $0.bounds.y < $1.bounds.y
+            guard
+                let lhsNode = graph.nodesByID[$0.toNodeID],
+                let rhsNode = graph.nodesByID[$1.toNodeID]
+            else {
+                return $0.id.rawValue < $1.id.rawValue
+            }
+            if lhsNode.bounds.y == rhsNode.bounds.y {
+                if lhsNode.bounds.x == rhsNode.bounds.x {
+                    return lhsNode.id.rawValue < rhsNode.id.rawValue
+                }
+                return lhsNode.bounds.x < rhsNode.bounds.x
+            }
+            return lhsNode.bounds.y < rhsNode.bounds.y
         }
-        .map(\.id)
+        .map(\.toNodeID)
 }
 
 private func hasParentChildEdge(from parentID: CanvasNodeID, to childID: CanvasNodeID, in graph: CanvasGraph) -> Bool {

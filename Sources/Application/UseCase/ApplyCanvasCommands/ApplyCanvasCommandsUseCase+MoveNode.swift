@@ -92,14 +92,75 @@ extension ApplyCanvasCommandsUseCase {
             return graph
         }
 
+        if let parentID = parentNodeID(of: focusedNodeID, in: graph),
+            let nextGraph = swapSiblingOrder(
+                parentID: parentID,
+                focusedNodeID: focusedNodeID,
+                destinationNodeID: destination.id,
+                in: graph
+            )
+        {
+            return nextGraph
+        }
+
+        return swapPeerBounds(
+            focusedNodeID: focusedNodeID,
+            focusedNode: focusedNode,
+            destinationNode: destination,
+            graph: graph
+        )
+    }
+
+    private func swapSiblingOrder(
+        parentID: CanvasNodeID,
+        focusedNodeID: CanvasNodeID,
+        destinationNodeID: CanvasNodeID,
+        in graph: CanvasGraph
+    ) -> CanvasGraph? {
+        let normalizedGraph = normalizeParentChildOrder(for: parentID, in: graph)
+        let siblingEdges = parentChildEdges(of: parentID, in: normalizedGraph)
+        guard
+            let focusedEdge = siblingEdges.first(where: { $0.toNodeID == focusedNodeID }),
+            let destinationEdge = siblingEdges.first(where: { $0.toNodeID == destinationNodeID }),
+            let focusedOrder = focusedEdge.parentChildOrder,
+            let destinationOrder = destinationEdge.parentChildOrder
+        else {
+            return nil
+        }
+
+        var edgesByID = normalizedGraph.edgesByID
+        edgesByID[focusedEdge.id] = edgeByReplacingParentChildOrder(
+            edge: focusedEdge,
+            parentChildOrder: destinationOrder
+        )
+        edgesByID[destinationEdge.id] = edgeByReplacingParentChildOrder(
+            edge: destinationEdge,
+            parentChildOrder: focusedOrder
+        )
+        return CanvasGraph(
+            nodesByID: normalizedGraph.nodesByID,
+            edgesByID: edgesByID,
+            focusedNodeID: normalizedGraph.focusedNodeID,
+            selectedNodeIDs: normalizedGraph.selectedNodeIDs,
+            collapsedRootNodeIDs: normalizedGraph.collapsedRootNodeIDs,
+            areasByID: normalizedGraph.areasByID
+        )
+    }
+
+    private func swapPeerBounds(
+        focusedNodeID: CanvasNodeID,
+        focusedNode: CanvasNode,
+        destinationNode: CanvasNode,
+        graph: CanvasGraph
+    ) -> CanvasGraph {
         let focusedWithMovedBounds = CanvasNode(
             id: focusedNode.id,
             kind: focusedNode.kind,
             text: focusedNode.text,
             attachments: focusedNode.attachments,
             bounds: CanvasBounds(
-                x: destination.bounds.x,
-                y: destination.bounds.y,
+                x: destinationNode.bounds.x,
+                y: destinationNode.bounds.y,
                 width: focusedNode.bounds.width,
                 height: focusedNode.bounds.height
             ),
@@ -107,24 +168,24 @@ extension ApplyCanvasCommandsUseCase {
             markdownStyleEnabled: focusedNode.markdownStyleEnabled
         )
         let destinationWithMovedBounds = CanvasNode(
-            id: destination.id,
-            kind: destination.kind,
-            text: destination.text,
-            attachments: destination.attachments,
+            id: destinationNode.id,
+            kind: destinationNode.kind,
+            text: destinationNode.text,
+            attachments: destinationNode.attachments,
             bounds: CanvasBounds(
                 x: focusedNode.bounds.x,
                 y: focusedNode.bounds.y,
-                width: destination.bounds.width,
-                height: destination.bounds.height
+                width: destinationNode.bounds.width,
+                height: destinationNode.bounds.height
             ),
-            metadata: destination.metadata,
-            markdownStyleEnabled: destination.markdownStyleEnabled
+            metadata: destinationNode.metadata,
+            markdownStyleEnabled: destinationNode.markdownStyleEnabled
         )
         return CanvasGraph(
             nodesByID: graph.nodesByID.merging(
                 [
                     focusedNodeID: focusedWithMovedBounds,
-                    destination.id: destinationWithMovedBounds,
+                    destinationNode.id: destinationWithMovedBounds,
                 ],
                 uniquingKeysWith: { _, new in new }
             ),
@@ -156,11 +217,16 @@ extension ApplyCanvasCommandsUseCase {
             return graph
         }
 
-        var nextGraph = try CanvasGraphCRUDService.deleteEdge(id: parentEdge.id, in: graph).get()
-        nextGraph = try CanvasGraphCRUDService.createEdge(
-            makeParentChildEdge(from: grandparentNode.id, to: focusedNodeID),
-            in: nextGraph
-        ).get()
+        guard
+            var nextGraph = try outdentedGraph(
+                focusedNodeID: focusedNodeID,
+                parentNode: parentNode,
+                grandparentNode: grandparentNode,
+                graph: graph
+            )?.0
+        else {
+            return graph
+        }
 
         let updatedFocusedNode = CanvasNode(
             id: focusedNode.id,
@@ -187,6 +253,44 @@ extension ApplyCanvasCommandsUseCase {
         )
 
         return nextGraph
+    }
+
+    private func outdentedGraph(
+        focusedNodeID: CanvasNodeID,
+        parentNode: CanvasNode,
+        grandparentNode: CanvasNode,
+        graph: CanvasGraph
+    ) throws -> (CanvasGraph, Int)? {
+        var nextGraph = normalizeParentChildOrder(for: grandparentNode.id, in: graph)
+        guard
+            let parentAsChildEdge = parentChildEdges(of: grandparentNode.id, in: nextGraph).first(where: {
+                $0.toNodeID == parentNode.id
+            }),
+            let parentOrder = parentAsChildEdge.parentChildOrder
+        else {
+            return nil
+        }
+        let insertionOrder = parentOrder + 1
+        nextGraph = shiftParentChildOrder(
+            for: grandparentNode.id,
+            atOrAfter: insertionOrder,
+            by: 1,
+            in: nextGraph
+        )
+
+        guard let latestParentEdge = parentChildIncomingEdge(of: focusedNodeID, in: nextGraph) else {
+            return nil
+        }
+        nextGraph = try CanvasGraphCRUDService.deleteEdge(id: latestParentEdge.id, in: nextGraph).get()
+        nextGraph = try CanvasGraphCRUDService.createEdge(
+            makeParentChildEdge(
+                from: grandparentNode.id,
+                to: focusedNodeID,
+                order: insertionOrder
+            ),
+            in: nextGraph
+        ).get()
+        return (nextGraph, insertionOrder)
     }
 
     private func indentNode(in graph: CanvasGraph) throws -> CanvasGraph {
@@ -219,8 +323,10 @@ extension ApplyCanvasCommandsUseCase {
         if let currentParentEdge = parentChildIncomingEdge(of: focusedNodeID, in: graph) {
             nextGraph = try CanvasGraphCRUDService.deleteEdge(id: currentParentEdge.id, in: nextGraph).get()
         }
+        nextGraph = normalizeParentChildOrder(for: newParent.id, in: nextGraph)
+        let appendedOrder = nextParentChildOrder(for: newParent.id, in: nextGraph)
         nextGraph = try CanvasGraphCRUDService.createEdge(
-            makeParentChildEdge(from: newParent.id, to: focusedNodeID),
+            makeParentChildEdge(from: newParent.id, to: focusedNodeID, order: appendedOrder),
             in: nextGraph
         ).get()
 
@@ -274,13 +380,6 @@ extension ApplyCanvasCommandsUseCase {
             .sorted(by: isPeerNodeOrderedBefore)
     }
 
-    private func parentChildIncomingEdge(of nodeID: CanvasNodeID, in graph: CanvasGraph) -> CanvasEdge? {
-        graph.edgesByID.values
-            .filter { $0.relationType == .parentChild && $0.toNodeID == nodeID }
-            .sorted { $0.id.rawValue < $1.id.rawValue }
-            .first
-    }
-
     private func isPeerNodeOrderedBefore(_ lhs: CanvasNode, _ rhs: CanvasNode) -> Bool {
         if lhs.bounds.y != rhs.bounds.y {
             return lhs.bounds.y < rhs.bounds.y
@@ -290,4 +389,5 @@ extension ApplyCanvasCommandsUseCase {
         }
         return lhs.id.rawValue < rhs.id.rawValue
     }
+
 }
