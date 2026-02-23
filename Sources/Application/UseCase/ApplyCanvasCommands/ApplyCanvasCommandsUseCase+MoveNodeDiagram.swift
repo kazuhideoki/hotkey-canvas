@@ -1,7 +1,8 @@
 import Domain
 
-// Background: Diagram-mode node move must feel like continuous grid movement around a connected anchor.
-// Responsibility: Resolve diagram move target from current slot and skip anchor-overlapping candidates.
+// Background: Diagram-mode node move must feel like continuous grid movement with or without a connected anchor.
+// Responsibility: Resolve diagram move target from current slot.
+// Skip anchor-overlapping candidates only when a connected anchor exists.
 extension ApplyCanvasCommandsUseCase {
     private static let diagramSemanticHorizontalGap: Double = CanvasDefaultNodeDistance.diagramHorizontal
     private static let diagramSemanticVerticalGap: Double = CanvasDefaultNodeDistance.vertical(for: .diagram)
@@ -16,13 +17,11 @@ extension ApplyCanvasCommandsUseCase {
         guard let focusedNode = graph.nodesByID[focusedNodeID] else {
             return noOpMutationResult(for: graph)
         }
-        guard let anchorNode = connectedAnchorNode(of: focusedNodeID, in: graph) else {
-            return noOpMutationResult(for: graph)
-        }
         let unit = diagramUnitVector(for: direction)
         guard unit.dx != 0 || unit.dy != 0 else {
             return noOpMutationResult(for: graph)
         }
+        let anchorNode = connectedAnchorNode(of: focusedNodeID, in: graph)
 
         let targetBounds = moveNodeTargetBoundsByDiagramGrid(
             focusedNode: focusedNode,
@@ -65,7 +64,7 @@ extension ApplyCanvasCommandsUseCase {
 
     private func moveNodeTargetBoundsByDiagramGrid(
         focusedNode: CanvasNode,
-        anchorNode: CanvasNode,
+        anchorNode: CanvasNode?,
         direction: (dx: Int, dy: Int)
     ) -> CanvasBounds {
         let distance = diagramMoveDistance(anchorNode: anchorNode, focusedNode: focusedNode)
@@ -73,20 +72,23 @@ extension ApplyCanvasCommandsUseCase {
         let deltaY = Double(direction.dy) * distance.vertical
         var targetBounds = translateBounds(focusedNode.bounds, dx: deltaX, dy: deltaY)
 
-        while boundsOverlap(targetBounds, anchorNode.bounds) {
-            targetBounds = translateBounds(targetBounds, dx: deltaX, dy: deltaY)
+        if let anchorNode {
+            while boundsOverlap(targetBounds, anchorNode.bounds) {
+                targetBounds = translateBounds(targetBounds, dx: deltaX, dy: deltaY)
+            }
         }
         return targetBounds
     }
 
     private func diagramMoveDistance(
-        anchorNode: CanvasNode,
+        anchorNode: CanvasNode?,
         focusedNode: CanvasNode
     ) -> (horizontal: Double, vertical: Double) {
-        (
-            horizontal: ((anchorNode.bounds.width + focusedNode.bounds.width) / 2)
+        let referenceNode = anchorNode ?? focusedNode
+        return (
+            horizontal: ((referenceNode.bounds.width + focusedNode.bounds.width) / 2)
                 + Self.diagramSemanticHorizontalGap,
-            vertical: ((anchorNode.bounds.height + focusedNode.bounds.height) / 2)
+            vertical: ((referenceNode.bounds.height + focusedNode.bounds.height) / 2)
                 + Self.diagramSemanticVerticalGap
         )
     }
