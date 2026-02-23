@@ -17,7 +17,7 @@
 | ID | ドメイン名 | 主な型/サービス |
 | --- | --- | --- |
 | D1 | キャンバスグラフ編集 | `CanvasGraph`, `CanvasNode`, `CanvasEdge`, `CanvasCommand`, `CanvasDefaultNodeDistance`, `CanvasGraphCRUDService`, `CanvasGraphError` |
-| D2 | フォーカス移動 | `CanvasFocusDirection`, `CanvasFocusNavigationService` |
+| D2 | フォーカス移動と複数選択 | `CanvasFocusDirection`, `CanvasFocusNavigationService`, `CanvasSelectionService` |
 | D3 | エリアレイアウト | `CanvasNodeArea`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService` |
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
 | D5 | ショートカットカタログ | `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService` |
@@ -34,6 +34,7 @@
 - `Command + L`: `beginConnectNodeSelection`
 - `Option + .`: `toggleFoldFocusedSubtree`
 - `Command + Shift + ↑/↓/←/→`: `nudgeNode(.up/.down/.left/.right)`
+- `Shift + ↑/↓/←/→`: `extendSelection(.up/.down/.left/.right)`
 - `Command + C`: `copyFocusedSubtree`
 - `Command + X`: `cutFocusedSubtree`
 - `Command + V`: `pasteSubtreeAsChild`
@@ -49,7 +50,7 @@
 #### 構造
 
 - 集約
-  - `CanvasGraph`: ノード/エッジ/フォーカス/折りたたみルートを保持する不変スナップショット。
+- `CanvasGraph`: ノード/エッジ/フォーカス/選択集合/折りたたみルートを保持する不変スナップショット。
 - エンティティ/値オブジェクト
   - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.imagePath` はノード内画像ファイルパス、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`
@@ -68,6 +69,7 @@
   - `CanvasCommand.pasteSubtreeAsChild`
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
   - `CanvasCommand.alignParentNodesVertically`
+  - `CanvasCommand.extendSelection`
 - エラー
   - `CanvasGraphError`
 - サービス
@@ -129,7 +131,7 @@
   - `edgeNotFound(CanvasEdgeID)`
   - `edgeEndpointNotFound(CanvasNodeID)`
 
-### D2. フォーカス移動ドメイン
+### D2. フォーカス移動と複数選択ドメイン
 
 #### 構造
 
@@ -139,6 +141,7 @@
   - `CanvasGraph`, `CanvasNode`, `CanvasBounds`
 - サービス
   - `CanvasFocusNavigationService`
+  - `CanvasSelectionService`
 
 #### サービス詳細
 
@@ -155,18 +158,29 @@
 - 副軸ずれが小さい候補群を優先し、同点時は距離・ID で決定して決定性を担保。
 - 空グラフでは `nil` を返し、候補なしでは現在フォーカスを維持する。
 
+`CanvasSelectionService` は複数選択状態の正規化を担当する。
+
+| メソッド | 責務 |
+| --- | --- |
+| `normalizedSelectedNodeIDs(from:in:focusedNodeID:)` | 可視ノード以外を除外し、フォーカスノードを必ず選択集合へ含める。 |
+| `normalizedSelectedNodeIDs(in:)` | `CanvasGraph` 内の `selectedNodeIDs` を正規化する。 |
+
 #### 利用状況（どこから使われるか）
 
 - Application ユースケース
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveFocus.swift`
+    - `moveFocus` はフォーカス移動時に選択集合を単一ノードへ置き換える。
+    - `extendSelection` は `shift+矢印` 用にフォーカス移動先を選択集合へ追加する。
   - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
     - `needsFocusNormalization` が `true` のときに Focus Normalization Stage が実行される。
     - `focusedNodeID` が無効な場合は `y -> x -> id` 順で先頭ノードへ正規化する。
+    - グラフ更新後は Selection Normalization Stage で `selectedNodeIDs` を正規化する。
 - コマンド発行
-  - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（矢印キー -> `.moveFocus`、`cmd+矢印キー` -> `.moveNode`、`cmd+shift+矢印キー` -> `.nudgeNode`）
+  - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（矢印キー -> `.moveFocus`、`shift+矢印キー` -> `.extendSelection`、`cmd+矢印キー` -> `.moveNode`、`cmd+shift+矢印キー` -> `.nudgeNode`）
   - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+CompositeMove.swift`（`cmd+矢印` の連続入力を合成し、`upLeft/upRight/downLeft/downRight` を `.moveNode` として適用）
 - 主要テスト
   - `Tests/DomainTests/CanvasFocusNavigationServiceTests.swift`
+  - `Tests/DomainTests/CanvasSelectionServiceTests.swift`
   - `Tests/ApplicationTests/ApplyCanvasCommandsUseCase/ApplyCanvasCommandsUseCase+MoveFocusTests.swift`
 
 #### 不変条件・エラー一覧
@@ -175,6 +189,8 @@
   - ノード列の並びは `y -> x -> id` で決定的に処理する。
   - `focusedNodeID` が不正な場合はソート先頭ノードを基準にする。
   - 候補が無いときは現在フォーカスを返す（空グラフを除く）。
+  - `selectedNodeIDs` は可視ノードかつ既存ノードのみを保持する。
+  - `focusedNodeID != nil` のとき、`selectedNodeIDs` は必ず `focusedNodeID` を含む。
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 
@@ -352,6 +368,7 @@
 
 - 不変条件
   - 標準ショートカット定義は実装内の静的配列で管理し、入力解決とコマンドパレット表示で共有する。
+  - `Shift + 矢印` は `.extendSelection` に解決し、`moveFocus` と競合しない。
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 
@@ -400,6 +417,7 @@
   - 折りたたみは「ルート自体は可視、子孫のみ非表示」で扱う。
   - 折りたたみルートは、存在するノードかつ子孫を持つノードのみ有効。
   - 可視グラフ上で無効なフォーカス ID は `nil` として扱う。
+  - 可視グラフ上で `selectedNodeIDs` は可視集合へ正規化され、可視フォーカスを必ず含む。
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 
@@ -532,3 +550,4 @@
 - 2026-02-22: 全ノード削除後に複数空エリアが残る状態でも、`Shift + Enter` のモード選択追加が失敗しないように、ノード未存在時は選択モードに合うエリアを優先解決（なければ新規作成）する仕様へ更新。
 - 2026-02-23: `Shift + Enter` モード選択追加の empty graph 分岐を修正し、選択モードと不一致な `defaultTree` の誤優先を禁止。あわせて空グラフで area を事前作成した場合でも、履歴の `graphBeforeMutation` は必ず元グラフを保持して undo 整合性を維持するよう更新。
 - 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
+- 2026-02-23: 複数選択の導入として `CanvasGraph.selectedNodeIDs`、`CanvasCommand.extendSelection`、`CanvasSelectionService` を追加。`Shift + 矢印` による選択拡張、パイプラインでの selection 正規化、表示側での複数選択ハイライト連携を追記した。

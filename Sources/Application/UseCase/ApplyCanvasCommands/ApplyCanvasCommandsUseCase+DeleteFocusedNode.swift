@@ -39,6 +39,7 @@ extension ApplyCanvasCommandsUseCase {
             nodesByID: graphAfterDelete.nodesByID,
             edgesByID: graphAfterDelete.edgesByID,
             focusedNodeID: nextFocusNodeID,
+            selectedNodeIDs: nextFocusNodeID.map { [$0] } ?? [],
             collapsedRootNodeIDs: CanvasFoldedSubtreeVisibilityService.normalizedCollapsedRootNodeIDs(
                 in: graphAfterDelete
             ),

@@ -203,6 +203,7 @@ public struct CanvasView: View {
                     ForEach(displayNodes, id: \.id) { node in
                         if let renderedNode = renderedNodesByID[node.id] {
                             let isFocused = viewModel.focusedNodeID == node.id
+                            let isSelected = viewModel.selectedNodeIDs.contains(node.id)
                             let isCollapsedRoot = viewModel.collapsedRootNodeIDs.contains(node.id)
                             let isEditing = editingContext?.nodeID == node.id
                             let isDiagramNode = viewModel.diagramNodeIDs.contains(node.id)
@@ -220,12 +221,14 @@ public struct CanvasView: View {
                                             connectNodeSelectionBorderColor(
                                                 for: node.id,
                                                 isEditing: isEditing,
-                                                isFocused: isFocused
+                                                isFocused: isFocused,
+                                                isSelected: isSelected
                                             ),
                                             lineWidth: connectNodeSelectionBorderLineWidth(
                                                 for: node.id,
                                                 isEditing: isEditing,
-                                                isFocused: isFocused
+                                                isFocused: isFocused,
+                                                isSelected: isSelected
                                             )
                                         )
                                 )

@@ -12,6 +12,7 @@ extension CanvasGraph {
             nodesByID: nodesByID,
             edgesByID: edgesByID,
             focusedNodeID: focusedNodeID,
+            selectedNodeIDs: selectedNodeIDs,
             collapsedRootNodeIDs: collapsedRootNodeIDs,
             areasByID: [
                 .defaultTree: CanvasArea(

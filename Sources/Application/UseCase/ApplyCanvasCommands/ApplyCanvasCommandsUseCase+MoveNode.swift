@@ -108,6 +108,7 @@ extension ApplyCanvasCommandsUseCase {
             ),
             edgesByID: graph.edgesByID,
             focusedNodeID: focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -191,7 +192,7 @@ extension ApplyCanvasCommandsUseCase {
             metadata: destination.metadata,
             markdownStyleEnabled: destination.markdownStyleEnabled
         )
-        let graphAfterSwap = CanvasGraph(
+        return CanvasGraph(
             nodesByID: graph.nodesByID.merging(
                 [
                     focusedNodeID: focusedWithMovedBounds,
@@ -201,10 +202,10 @@ extension ApplyCanvasCommandsUseCase {
             ),
             edgesByID: graph.edgesByID,
             focusedNodeID: focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
-        return graphAfterSwap
     }
 
     private func outdentNode(in graph: CanvasGraph) throws -> CanvasGraph {
@@ -252,6 +253,7 @@ extension ApplyCanvasCommandsUseCase {
                 [focusedNodeID: updatedFocusedNode], uniquingKeysWith: { _, new in new }),
             edgesByID: nextGraph.edgesByID,
             focusedNodeID: focusedNodeID,
+            selectedNodeIDs: nextGraph.selectedNodeIDs,
             collapsedRootNodeIDs: nextGraph.collapsedRootNodeIDs,
             areasByID: nextGraph.areasByID
         )
@@ -313,6 +315,7 @@ extension ApplyCanvasCommandsUseCase {
                 [focusedNodeID: updatedFocusedNode], uniquingKeysWith: { _, new in new }),
             edgesByID: nextGraph.edgesByID,
             focusedNodeID: nextGraph.collapsedRootNodeIDs.contains(newParent.id) ? newParent.id : focusedNodeID,
+            selectedNodeIDs: nextGraph.selectedNodeIDs,
             collapsedRootNodeIDs: nextGraph.collapsedRootNodeIDs,
             areasByID: nextGraph.areasByID
         )

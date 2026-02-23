@@ -49,6 +49,8 @@ extension ApplyCanvasCommandsUseCase {
             return alignParentNodesVertically(in: graph, areaID: resolvedAreaID)
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
+        case .extendSelection(let direction):
+            return extendSelection(in: graph, direction: direction)
         case .moveNode(let direction):
             return try moveNode(
                 in: graph,
@@ -100,6 +102,7 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .alignParentNodesVertically,
             .moveFocus,
+            .extendSelection,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,
@@ -140,6 +143,7 @@ extension ApplyCanvasCommandsUseCase {
             .connectNodes,
             .alignParentNodesVertically,
             .moveFocus,
+            .extendSelection,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,
@@ -184,6 +188,7 @@ extension ApplyCanvasCommandsUseCase {
             .connectNodes,
             .alignParentNodesVertically,
             .moveFocus,
+            .extendSelection,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,
@@ -251,6 +256,7 @@ extension ApplyCanvasCommandsUseCase {
             .addSiblingNode,
             .alignParentNodesVertically,
             .moveFocus,
+            .extendSelection,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,

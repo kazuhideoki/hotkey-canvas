@@ -143,11 +143,25 @@ extension CanvasShortcutCatalogService {
                 shortcutLabel: "Down Arrow"
             ),
             CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "extendSelectionDown"),
+                name: "Extend Selection Down",
+                gesture: CanvasShortcutGesture(key: .arrowDown, modifiers: [.shift]),
+                action: .apply(commands: [.extendSelection(.down)]),
+                shortcutLabel: "Shift + Down Arrow"
+            ),
+            CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "moveFocusLeft"),
                 name: "Move Focus Left",
                 gesture: CanvasShortcutGesture(key: .arrowLeft, modifiers: []),
                 action: .apply(commands: [.moveFocus(.left)]),
                 shortcutLabel: "Left Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "extendSelectionLeft"),
+                name: "Extend Selection Left",
+                gesture: CanvasShortcutGesture(key: .arrowLeft, modifiers: [.shift]),
+                action: .apply(commands: [.extendSelection(.left)]),
+                shortcutLabel: "Shift + Left Arrow"
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "moveFocusRight"),
@@ -157,11 +171,25 @@ extension CanvasShortcutCatalogService {
                 shortcutLabel: "Right Arrow"
             ),
             CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "extendSelectionRight"),
+                name: "Extend Selection Right",
+                gesture: CanvasShortcutGesture(key: .arrowRight, modifiers: [.shift]),
+                action: .apply(commands: [.extendSelection(.right)]),
+                shortcutLabel: "Shift + Right Arrow"
+            ),
+            CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "moveFocusUp"),
                 name: "Move Focus Up",
                 gesture: CanvasShortcutGesture(key: .arrowUp, modifiers: []),
                 action: .apply(commands: [.moveFocus(.up)]),
                 shortcutLabel: "Up Arrow"
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "extendSelectionUp"),
+                name: "Extend Selection Up",
+                gesture: CanvasShortcutGesture(key: .arrowUp, modifiers: [.shift]),
+                action: .apply(commands: [.extendSelection(.up)]),
+                shortcutLabel: "Shift + Up Arrow"
             ),
         ]
     }
