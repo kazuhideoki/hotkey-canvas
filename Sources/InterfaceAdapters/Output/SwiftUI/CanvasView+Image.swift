@@ -154,6 +154,7 @@ extension CanvasView {
 
     @ViewBuilder
     func nonEditingNodeContent(node: CanvasNode, zoomScale: Double) -> some View {
+        let contentAlignment = nodeTextContentAlignment(for: node.id)
         if let imagePath = node.imagePath, let image = Self.nodeImageCache.image(atFilePath: imagePath) {
             let scale = CGFloat(zoomScale)
             let scaledPadding = NodeTextStyle.outerPadding * scale
@@ -165,24 +166,28 @@ extension CanvasView {
             )
             let imageDisplayWidth = max(CGFloat(unscaledImageDisplayWidth) * scale, 1)
             VStack(
-                alignment: .leading,
+                alignment: contentAlignment.horizontalAlignment,
                 spacing: hasText ? NodeTextStyle.imageTextSpacing * scale : 0
             ) {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: min(imageDisplayWidth, contentWidth), alignment: .leading)
+                    .frame(
+                        width: min(imageDisplayWidth, contentWidth),
+                        alignment: contentAlignment.frameAlignment
+                    )
                     .clipShape(
                         RoundedRectangle(cornerRadius: NodeTextStyle.imageCornerRadius * scale)
                     )
                 if hasText {
                     nonEditingNodeTextBody(
                         node: node,
-                        zoomScale: zoomScale
+                        zoomScale: zoomScale,
+                        contentAlignment: contentAlignment
                     )
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: contentAlignment.frameAlignment)
             .padding(scaledPadding)
         } else {
             nonEditingNodeText(node: node, zoomScale: zoomScale)
@@ -190,26 +195,37 @@ extension CanvasView {
     }
 
     @ViewBuilder
-    func nonEditingNodeTextBody(node: CanvasNode, zoomScale: Double) -> some View {
+    func nonEditingNodeTextBody(
+        node: CanvasNode,
+        zoomScale: Double,
+        contentAlignment: NodeTextContentAlignment
+    ) -> some View {
         let text = node.text ?? ""
         if node.markdownStyleEnabled {
             NodeMarkdownDisplay(
                 text: text,
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale,
-                appliesOuterPadding: false
+                appliesOuterPadding: false,
+                contentAlignment: contentAlignment
             )
         } else {
             nonEditingPlainNodeTextBody(
                 text: text,
                 nodeWidth: node.bounds.width,
-                zoomScale: zoomScale
+                zoomScale: zoomScale,
+                contentAlignment: contentAlignment
             )
         }
     }
 
     @ViewBuilder
-    private func nonEditingPlainNodeTextBody(text: String, nodeWidth: Double, zoomScale: Double) -> some View {
+    private func nonEditingPlainNodeTextBody(
+        text: String,
+        nodeWidth: Double,
+        zoomScale: Double,
+        contentAlignment: NodeTextContentAlignment
+    ) -> some View {
         let scale = CGFloat(zoomScale)
         let contentWidth = max(
             (CGFloat(nodeWidth) * scale) - (NodeTextStyle.outerPadding * scale * 2),
@@ -218,8 +234,8 @@ extension CanvasView {
         Text(text)
             .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
             .lineLimit(nil)
-            .multilineTextAlignment(.leading)
-            .frame(width: contentWidth, alignment: .topLeading)
+            .multilineTextAlignment(contentAlignment.textAlignment)
+            .frame(width: contentWidth, alignment: contentAlignment.frameAlignment)
             .fixedSize(horizontal: false, vertical: true)
     }
 }
