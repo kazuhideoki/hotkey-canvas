@@ -133,7 +133,17 @@ extension ApplyCanvasCommandsUseCase {
         let duplicateRootNode = makeDuplicatedNode(from: sourceRootNode, bounds: duplicateBounds)
         var graphAfterMutation = try CanvasGraphCRUDService.createNode(duplicateRootNode, in: graph).get()
         graphAfterMutation = normalizeParentChildOrder(for: parentID, in: graphAfterMutation)
-        let rootOrder = nextParentChildOrder(for: parentID, in: graphAfterMutation)
+        let rootOrder = duplicateRootInsertionOrder(
+            parentID: parentID,
+            sourceRootNodeID: sourceRootNodeID,
+            graph: graphAfterMutation
+        )
+        graphAfterMutation = shiftParentChildOrder(
+            for: parentID,
+            atOrAfter: rootOrder,
+            by: 1,
+            in: graphAfterMutation
+        )
         graphAfterMutation = try CanvasGraphCRUDService.createEdge(
             makeParentChildEdge(from: parentID, to: duplicateRootNode.id, order: rootOrder),
             in: graphAfterMutation
@@ -315,5 +325,18 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentNodeID, to: childNodeID, order: nextOrder),
             in: normalizedGraph
         ).get()
+    }
+
+    /// Resolves insertion order so duplicate roots are placed next to the source root node.
+    private func duplicateRootInsertionOrder(
+        parentID: CanvasNodeID,
+        sourceRootNodeID: CanvasNodeID,
+        graph: CanvasGraph
+    ) -> Int {
+        let siblingEdges = parentChildEdges(of: parentID, in: graph)
+        guard let sourceIndex = siblingEdges.firstIndex(where: { $0.toNodeID == sourceRootNodeID }) else {
+            return nextParentChildOrder(for: parentID, in: graph)
+        }
+        return sourceIndex + 1
     }
 }

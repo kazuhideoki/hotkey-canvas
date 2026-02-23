@@ -187,6 +187,7 @@ extension ApplyCanvasCommandsUseCase {
 
         let nextEdgesByID = rewiredTreeEdgesForSiblingMove(
             from: focusedMovedGraph.edgesByID,
+            focusedNodeID: focusedNodeID,
             nodesByID: focusedMovedGraph.nodesByID,
             targetNodeIDs: targetNodeIDs,
             destinationParentNodeID: destinationParentNodeID
@@ -496,5 +497,4 @@ extension ApplyCanvasCommandsUseCase {
 
         return nextGraph
     }
-
 }
