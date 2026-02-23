@@ -522,3 +522,5 @@
 - 2026-02-22: `CanvasNodeMoveDirection` を8方向（斜め4方向を追加）へ拡張し、Diagram mode では `moveNode` を接続アンカー基準の8方向スロット移動に変更した。微調整移動は `nudgeNode`（`cmd+shift+矢印`）として分離した。
 - 2026-02-22: `alignParentNodesVertically` コマンドを追加し、Command Palette からフォーカスエリア内の親ノードを最左基準で縦一列に整列できるようにした（Tree/Diagram 両対応）。
 - 2026-02-22: `CanvasDefaultNodeDistance` を更新し、Tree/Diagram の既定ノード間距離（Tree: 横 `32` / 縦 `24`、Diagram: 横 `220` / 縦 `220`）を Domain で一元管理する仕様へ更新。
+- 2026-02-22: 新規ウィンドウ起動時の初期ノード自動生成を廃止し、ノード未存在時は `Shift + Enter` と同一の Tree/Diagram モード選択導線から最初のノードを追加する仕様へ更新。
+- 2026-02-22: 全ノード削除後に複数空エリアが残る状態でも、`Shift + Enter` のモード選択追加が失敗しないように、ノード未存在時は選択モードに合うエリアを優先解決（なければ新規作成）する仕様へ更新。

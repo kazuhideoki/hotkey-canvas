@@ -19,3 +19,43 @@ func test_addNodeFromModeSelection_isUndoableInOneStep() async throws {
     #expect(!undone.canUndo)
     #expect(undone.canRedo)
 }
+
+@Test("ApplyCanvasCommandsUseCase: mode-selected add-node works after deleting all nodes with multiple empty areas")
+func test_addNodeFromModeSelection_worksAfterDeletingAllNodes() async throws {
+    let sut = ApplyCanvasCommandsUseCase()
+
+    let firstAdd = try await sut.addNodeFromModeSelection(mode: .diagram)
+    let firstNodeID = try #require(firstAdd.newState.focusedNodeID)
+    let firstNodeAreaMode = try #require(modeOfAreaContaining(nodeID: firstNodeID, in: firstAdd.newState))
+    #expect(firstNodeAreaMode == .diagram)
+
+    _ = try await sut.apply(commands: [.deleteFocusedNode])
+    let deletedState = await sut.getCurrentResult()
+    #expect(deletedState.newState.nodesByID.isEmpty)
+
+    let secondAdd = try await sut.addNodeFromModeSelection(mode: .diagram)
+    let secondNodeID = try #require(secondAdd.newState.focusedNodeID)
+    let secondNodeAreaMode = try #require(modeOfAreaContaining(nodeID: secondNodeID, in: secondAdd.newState))
+    #expect(secondNodeAreaMode == .diagram)
+    #expect(secondAdd.newState.nodesByID.count == 1)
+}
+
+@Test("ApplyCanvasCommandsUseCase: empty graph mode-selected add-node picks selected tree mode area")
+func test_addNodeFromModeSelection_emptyGraphRespectsSelectedTreeMode() async throws {
+    let sut = ApplyCanvasCommandsUseCase()
+
+    _ = try await sut.addNodeFromModeSelection(mode: .diagram)
+    _ = try await sut.apply(commands: [.deleteFocusedNode])
+
+    let applied = try await sut.addNodeFromModeSelection(mode: .tree)
+    let focusedNodeID = try #require(applied.newState.focusedNodeID)
+    let areaMode = try #require(modeOfAreaContaining(nodeID: focusedNodeID, in: applied.newState))
+    #expect(areaMode == .tree)
+}
+
+private func modeOfAreaContaining(nodeID: CanvasNodeID, in graph: CanvasGraph) -> CanvasEditingMode? {
+    graph.areasByID.values
+        .sorted(by: { $0.id.rawValue < $1.id.rawValue })
+        .first(where: { $0.nodeIDs.contains(nodeID) })?
+        .editingMode
+}
