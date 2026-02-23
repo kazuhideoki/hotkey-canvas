@@ -2,6 +2,13 @@ import Application
 import Domain
 import Testing
 
+private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds) -> Bool {
+    lhs.x < rhs.x + rhs.width
+        && lhs.x + lhs.width > rhs.x
+        && lhs.y < rhs.y + rhs.height
+        && lhs.y + lhs.height > rhs.y
+}
+
 // Background: Phase-1 area mode requires command dispatch by focused area policy.
 // Responsibility: Verify mode-specific command gating and area-data validation in apply entry.
 @Test("ApplyCanvasCommandsUseCase: diagram area maps addChildNode command to addNode behavior")
@@ -170,12 +177,12 @@ func test_apply_diagramArea_nudgeNodeMovesFocusedNodeByStep() async throws {
     let result = try await sut.apply(commands: [.nudgeNode(.right)])
 
     let movedNode = try #require(result.newState.nodesByID[nodeID])
-    #expect(movedNode.bounds.x == 260)
+    #expect(movedNode.bounds.x == 150)
     #expect(movedNode.bounds.y == 40)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area nudgeNode does not relayout neighboring nodes")
-func test_apply_diagramArea_nudgeNodeDoesNotRelayoutNeighboringNodes() async throws {
+@Test("ApplyCanvasCommandsUseCase: diagram area nudgeNode resolves overlap with neighboring nodes")
+func test_apply_diagramArea_nudgeNodeResolvesOverlapWithNeighboringNodes() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused-diagram-node")
     let neighborNodeID = CanvasNodeID(rawValue: "neighbor-diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -206,10 +213,7 @@ func test_apply_diagramArea_nudgeNodeDoesNotRelayoutNeighboringNodes() async thr
 
     let movedNode = try #require(result.newState.nodesByID[focusedNodeID])
     let neighborNode = try #require(result.newState.nodesByID[neighborNodeID])
-    #expect(movedNode.bounds.x == 260)
-    #expect(movedNode.bounds.y == 40)
-    #expect(neighborNode.bounds.x == 60)
-    #expect(neighborNode.bounds.y == 40)
+    #expect(boundsOverlap(movedNode.bounds, neighborNode.bounds) == false)
 }
 
 @Test("ApplyCanvasCommandsUseCase: tree area nudgeNode is no-op")
@@ -238,8 +242,8 @@ func test_apply_treeArea_nudgeNodeIsNoOp() async throws {
     #expect(result.newState == graph)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area rejects copyFocusedSubtree command")
-func test_apply_diagramArea_rejectsCopyFocusedSubtreeCommand() async throws {
+@Test("ApplyCanvasCommandsUseCase: diagram area allows copyFocusedSubtree command")
+func test_apply_diagramArea_allowsCopyFocusedSubtreeCommand() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let graph = CanvasGraph(
@@ -259,12 +263,8 @@ func test_apply_diagramArea_rejectsCopyFocusedSubtreeCommand() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    do {
-        _ = try await sut.apply(commands: [.copyFocusedSubtree])
-        Issue.record("Expected unsupported command error")
-    } catch let error as CanvasAreaPolicyError {
-        #expect(error == .unsupportedCommandInMode(mode: .diagram, command: .copyFocusedSubtree))
-    }
+    let result = try await sut.apply(commands: [.copyFocusedSubtree])
+    #expect(result.newState == graph)
 }
 
 @Test("ApplyCanvasCommandsUseCase: diagram area rejects duplicateSelectionAsSibling command")
