@@ -376,7 +376,8 @@ extension CanvasView {
     }
 
     func measuredNodeLayout(text: String, nodeWidth: Double) -> NodeTextLayoutMetrics {
-        nodeTextHeightMeasurer.measureLayout(text: text, nodeWidth: CGFloat(nodeWidth))
+        let measurer = NodeTextHeightMeasurer(style: nodeTextStyle)
+        return measurer.measureLayout(text: text, nodeWidth: CGFloat(nodeWidth))
     }
 
     func isDiagramNode(_ nodeID: CanvasNodeID) -> Bool {
@@ -394,6 +395,7 @@ extension CanvasView {
                 text: editingTextBinding(for: node.id),
                 nodeWidth: CGFloat(node.bounds.width),
                 zoomScale: zoomScale,
+                style: nodeTextStyle,
                 contentAlignment: contentAlignment,
                 selectAllOnFirstFocus: false,
                 initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
@@ -408,7 +410,7 @@ extension CanvasView {
                     cancelNodeEditing()
                 }
             )
-            .padding(NodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
+            .padding(nodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: contentAlignment.frameAlignment)
         } else {
             nonEditingNodeContent(
@@ -436,13 +438,14 @@ extension CanvasView {
                 text: text,
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale,
+                style: nodeTextStyle,
                 contentAlignment: contentAlignment
             )
         } else {
-            let scaledPadding = NodeTextStyle.outerPadding * scale
+            let scaledPadding = nodeTextStyle.outerPadding * scale
             let textWidth = max((CGFloat(node.bounds.width) * scale) - (scaledPadding * 2), 1)
             Text(text)
-                .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
+                .font(.system(size: nodeTextStyle.fontSize * scale, weight: nodeTextStyle.displayFontWeight))
                 .lineLimit(nil)
                 .multilineTextAlignment(contentAlignment.textAlignment)
                 .frame(width: textWidth, alignment: contentAlignment.frameAlignment)

@@ -40,7 +40,13 @@ extension ApplyCanvasCommandsUseCase {
         }
 
         _ = copyFocusedSubtree(in: graph)
-        return try deleteFocusedNode(in: graph)
+        let focusedAreaID = try CanvasAreaMembershipService.focusedAreaID(in: graph).get()
+        let focusedArea = try CanvasAreaMembershipService.area(withID: focusedAreaID, in: graph).get()
+        return try deleteFocusedNode(
+            in: graph,
+            areaID: focusedAreaID,
+            areaMode: focusedArea.editingMode
+        )
     }
 
     /// Pastes clipboard nodes into the focused area using mode-specific placement and parent attachment rules.
