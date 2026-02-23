@@ -54,7 +54,7 @@
 - エンティティ/値オブジェクト
   - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.attachments` はノード内添付、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
   - `CanvasAttachment`, `CanvasAttachmentID`, `CanvasAttachmentKind`, `CanvasAttachmentPlacement`
-  - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`
+  - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`（`parentChild` エッジは `parentChildOrder` で兄弟順序を保持）
   - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`）
 - コマンド
   - `CanvasCommand`
@@ -122,6 +122,7 @@
   - ノードの Markdown スタイル適用フラグは `Bool` で保持し、新規ノードは既定で `true`。
   - エッジ ID は空文字を許容しない。
   - エッジの `fromNodeID` / `toNodeID` はグラフ内に存在する必要がある。
+  - `parentChildOrder` は `parentChild` エッジの兄弟順序を表す任意値で、未設定時は座標順フォールバックで決定する。
   - ノード/エッジの ID 重複は許容しない。
 - エラー（`CanvasGraphError`）
   - `invalidNodeID`
@@ -289,7 +290,7 @@
 アルゴリズム要点:
 
 - `parentChild` エッジのみを対象に連結成分を作る。
-- 子ノードの並びは `y -> x -> id` で決定し、途中挿入時も順序を保持する。
+- 子ノードの並びは `parentChildOrder` を優先し、未設定時のみ `y -> x -> id` へフォールバックする。
 - 子サブツリーを縦方向に積み上げ、親ノードを子クラスタの中心に配置する。
 - 子ノードの X は `parent.width + horizontalSpacing` で親から右へ進める。
 - ルートノードは元の座標をアンカーとして、再配置による急激なジャンプを抑える。

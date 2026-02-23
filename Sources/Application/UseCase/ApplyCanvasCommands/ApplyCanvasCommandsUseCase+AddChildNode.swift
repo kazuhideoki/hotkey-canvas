@@ -27,8 +27,10 @@ extension ApplyCanvasCommandsUseCase {
         )
 
         var graphWithChild = try CanvasGraphCRUDService.createNode(childNode, in: graph).get()
+        graphWithChild = normalizeParentChildOrder(for: parentID, in: graphWithChild)
+        let nextOrder = nextParentChildOrder(for: parentID, in: graphWithChild)
         graphWithChild = try CanvasGraphCRUDService.createEdge(
-            makeParentChildEdge(from: parentID, to: childNode.id),
+            makeParentChildEdge(from: parentID, to: childNode.id, order: nextOrder),
             in: graphWithChild
         ).get()
         let parentAreaID = try CanvasAreaMembershipService.areaID(containing: parentID, in: graphWithChild).get()

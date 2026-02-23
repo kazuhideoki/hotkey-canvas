@@ -74,11 +74,36 @@ func test_relayoutParentChildTrees_keepsRootAnchor() throws {
     #expect(root.y == 260)
 }
 
+@Test("CanvasTreeLayoutService: explicit parentChildOrder controls sibling order before coordinates")
+func test_relayoutParentChildTrees_parentChildOrderHasPriorityOverBounds() throws {
+    let fixture = makeParentChildOrderPriorityFixture()
+
+    let result = CanvasTreeLayoutService.relayoutParentChildTrees(
+        in: fixture.graph,
+        verticalSpacing: 24,
+        horizontalSpacing: 32
+    )
+
+    let first = try #require(result[fixture.firstID])
+    let second = try #require(result[fixture.secondID])
+    let third = try #require(result[fixture.thirdID])
+
+    #expect(second.y < third.y)
+    #expect(third.y < first.y)
+}
+
 private struct SymmetricLayoutFixture {
     let rootID: CanvasNodeID
     let childAID: CanvasNodeID
     let childBID: CanvasNodeID
     let childCID: CanvasNodeID
+    let graph: CanvasGraph
+}
+
+private struct ParentChildOrderPriorityFixture {
+    let firstID: CanvasNodeID
+    let secondID: CanvasNodeID
+    let thirdID: CanvasNodeID
     let graph: CanvasGraph
 }
 
@@ -143,5 +168,69 @@ private func makeSymmetricLayoutFixture() -> SymmetricLayoutFixture {
         childBID: childBID,
         childCID: childCID,
         graph: graph
+    )
+}
+
+private func makeParentChildOrderPriorityFixture() -> ParentChildOrderPriorityFixture {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let firstID = CanvasNodeID(rawValue: "first")
+    let secondID = CanvasNodeID(rawValue: "second")
+    let thirdID = CanvasNodeID(rawValue: "third")
+
+    return ParentChildOrderPriorityFixture(
+        firstID: firstID,
+        secondID: secondID,
+        thirdID: thirdID,
+        graph: CanvasGraph(
+            nodesByID: [
+                rootID: CanvasNode(
+                    id: rootID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 120, y: 120, width: 220, height: 120)
+                ),
+                firstID: CanvasNode(
+                    id: firstID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 460, y: 420, width: 220, height: 120)
+                ),
+                secondID: CanvasNode(
+                    id: secondID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 460, y: 40, width: 220, height: 120)
+                ),
+                thirdID: CanvasNode(
+                    id: thirdID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 460, y: 220, width: 220, height: 120)
+                ),
+            ],
+            edgesByID: [
+                CanvasEdgeID(rawValue: "edge-root-first"): CanvasEdge(
+                    id: CanvasEdgeID(rawValue: "edge-root-first"),
+                    fromNodeID: rootID,
+                    toNodeID: firstID,
+                    relationType: .parentChild,
+                    parentChildOrder: 2
+                ),
+                CanvasEdgeID(rawValue: "edge-root-second"): CanvasEdge(
+                    id: CanvasEdgeID(rawValue: "edge-root-second"),
+                    fromNodeID: rootID,
+                    toNodeID: secondID,
+                    relationType: .parentChild,
+                    parentChildOrder: 0
+                ),
+                CanvasEdgeID(rawValue: "edge-root-third"): CanvasEdge(
+                    id: CanvasEdgeID(rawValue: "edge-root-third"),
+                    fromNodeID: rootID,
+                    toNodeID: thirdID,
+                    relationType: .parentChild,
+                    parentChildOrder: 1
+                ),
+            ]
+        )
     )
 }

@@ -99,15 +99,20 @@ extension CanvasTreeLayoutService {
         }
 
         let componentNodeIDSet = Set(componentNodes.map(\.id))
-        let parentByChildID = makeParentByChildID(
+        let parentEdgeByChildID = makeParentEdgeByChildID(
             nodeIDs: componentNodeIDSet,
             edges: edges
+        )
+        let parentByChildID = Dictionary(
+            uniqueKeysWithValues: parentEdgeByChildID.map { (childNodeID, edge) in
+                (childNodeID, edge.fromNodeID)
+            }
         )
         let roots = makeRoots(nodes: componentNodes, parentByChildID: parentByChildID)
             .sorted(by: isNodeIDOrderedBefore(graph: graph))
         let childrenByParentID = makeChildrenByParentID(
             nodes: componentNodes,
-            parentByChildID: parentByChildID,
+            parentEdgeByChildID: parentEdgeByChildID,
             graph: graph
         )
 
@@ -118,19 +123,19 @@ extension CanvasTreeLayoutService {
         )
     }
 
-    private static func makeParentByChildID(
+    private static func makeParentEdgeByChildID(
         nodeIDs: Set<CanvasNodeID>,
         edges: [CanvasEdge]
-    ) -> [CanvasNodeID: CanvasNodeID] {
+    ) -> [CanvasNodeID: CanvasEdge] {
         let edgeCandidates =
             edges
             .filter { nodeIDs.contains($0.fromNodeID) && nodeIDs.contains($0.toNodeID) }
             .sorted(by: isEdgeOrderedBefore)
-        var parentByChildID: [CanvasNodeID: CanvasNodeID] = [:]
-        for edge in edgeCandidates where parentByChildID[edge.toNodeID] == nil {
-            parentByChildID[edge.toNodeID] = edge.fromNodeID
+        var parentEdgeByChildID: [CanvasNodeID: CanvasEdge] = [:]
+        for edge in edgeCandidates where parentEdgeByChildID[edge.toNodeID] == nil {
+            parentEdgeByChildID[edge.toNodeID] = edge
         }
-        return parentByChildID
+        return parentEdgeByChildID
     }
 
     private static func makeRoots(
@@ -146,19 +151,50 @@ extension CanvasTreeLayoutService {
 
     private static func makeChildrenByParentID(
         nodes: [CanvasNode],
-        parentByChildID: [CanvasNodeID: CanvasNodeID],
+        parentEdgeByChildID: [CanvasNodeID: CanvasEdge],
         graph: CanvasGraph
     ) -> [CanvasNodeID: [CanvasNodeID]] {
         var childrenByParentID = Dictionary(
             uniqueKeysWithValues: nodes.map { ($0.id, [CanvasNodeID]()) }
         )
-        for (childNodeID, parentNodeID) in parentByChildID {
-            childrenByParentID[parentNodeID, default: []].append(childNodeID)
+        for (childNodeID, edge) in parentEdgeByChildID {
+            childrenByParentID[edge.fromNodeID, default: []].append(childNodeID)
         }
         for parentNodeID in childrenByParentID.keys {
-            childrenByParentID[parentNodeID]?.sort(by: isNodeIDOrderedBefore(graph: graph))
+            let effectiveOrderByChildID = effectiveSiblingOrderByChildID(
+                parentNodeID: parentNodeID,
+                parentEdgeByChildID: parentEdgeByChildID,
+                graph: graph
+            )
+            childrenByParentID[parentNodeID]?.sort { lhs, rhs in
+                let lhsOrder = effectiveOrderByChildID[lhs] ?? Int.max
+                let rhsOrder = effectiveOrderByChildID[rhs] ?? Int.max
+                if lhsOrder != rhsOrder {
+                    return lhsOrder < rhsOrder
+                }
+                return isNodeIDOrderedBefore(graph: graph)(lhs, rhs)
+            }
         }
         return childrenByParentID
+    }
+
+    private static func effectiveSiblingOrderByChildID(
+        parentNodeID: CanvasNodeID,
+        parentEdgeByChildID: [CanvasNodeID: CanvasEdge],
+        graph: CanvasGraph
+    ) -> [CanvasNodeID: Int] {
+        let parentEdges = parentEdgeByChildID.values.filter { $0.fromNodeID == parentNodeID }
+        let fallbackOrderByEdgeID = fallbackSiblingOrderByEdgeID(
+            parentNodeID: parentNodeID,
+            parentChildEdges: parentEdges,
+            graph: graph
+        )
+        return Dictionary(
+            uniqueKeysWithValues: parentEdges.map { edge in
+                let effectiveOrder = edge.parentChildOrder ?? fallbackOrderByEdgeID[edge.id] ?? Int.max
+                return (edge.toNodeID, effectiveOrder)
+            }
+        )
     }
 
     private static func makePositionedNodes(

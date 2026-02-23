@@ -34,8 +34,21 @@ extension ApplyCanvasCommandsUseCase {
         )
 
         var graphWithSibling = try CanvasGraphCRUDService.createNode(siblingNode, in: graph).get()
+        graphWithSibling = normalizeParentChildOrder(for: parentID, in: graphWithSibling)
+        let insertionOrder = siblingInsertionOrder(
+            parentID: parentID,
+            focusedNodeID: focusedNodeID,
+            position: position,
+            graph: graphWithSibling
+        )
+        graphWithSibling = shiftParentChildOrder(
+            for: parentID,
+            atOrAfter: insertionOrder,
+            by: 1,
+            in: graphWithSibling
+        )
         graphWithSibling = try CanvasGraphCRUDService.createEdge(
-            makeParentChildEdge(from: parentID, to: siblingNode.id),
+            makeParentChildEdge(from: parentID, to: siblingNode.id, order: insertionOrder),
             in: graphWithSibling
         ).get()
         let parentAreaID = try CanvasAreaMembershipService.areaID(containing: parentID, in: graphWithSibling).get()
@@ -44,16 +57,46 @@ extension ApplyCanvasCommandsUseCase {
             to: parentAreaID,
             in: graphWithSibling
         ).get()
+        return makeAddSiblingMutationResult(
+            graphBeforeMutation: graph,
+            graphAfterMutation: graphWithSibling,
+            siblingNodeID: siblingNode.id
+        )
+    }
+
+    private func siblingInsertionOrder(
+        parentID: CanvasNodeID,
+        focusedNodeID: CanvasNodeID,
+        position: CanvasSiblingNodePosition,
+        graph: CanvasGraph
+    ) -> Int {
+        let orderedEdges = parentChildEdges(of: parentID, in: graph)
+        guard let focusedIndex = orderedEdges.firstIndex(where: { $0.toNodeID == focusedNodeID }) else {
+            return nextParentChildOrder(for: parentID, in: graph)
+        }
+        switch position {
+        case .above:
+            return focusedIndex
+        case .below:
+            return focusedIndex + 1
+        }
+    }
+
+    private func makeAddSiblingMutationResult(
+        graphBeforeMutation: CanvasGraph,
+        graphAfterMutation: CanvasGraph,
+        siblingNodeID: CanvasNodeID
+    ) -> CanvasMutationResult {
         let nextGraph = CanvasGraph(
-            nodesByID: graphWithSibling.nodesByID,
-            edgesByID: graphWithSibling.edgesByID,
-            focusedNodeID: siblingNode.id,
-            selectedNodeIDs: [siblingNode.id],
-            collapsedRootNodeIDs: graphWithSibling.collapsedRootNodeIDs,
-            areasByID: graphWithSibling.areasByID
+            nodesByID: graphAfterMutation.nodesByID,
+            edgesByID: graphAfterMutation.edgesByID,
+            focusedNodeID: siblingNodeID,
+            selectedNodeIDs: [siblingNodeID],
+            collapsedRootNodeIDs: graphAfterMutation.collapsedRootNodeIDs,
+            areasByID: graphAfterMutation.areasByID
         )
         return CanvasMutationResult(
-            graphBeforeMutation: graph,
+            graphBeforeMutation: graphBeforeMutation,
             graphAfterMutation: nextGraph,
             effects: CanvasMutationEffects(
                 didMutateGraph: true,
@@ -61,7 +104,7 @@ extension ApplyCanvasCommandsUseCase {
                 needsAreaLayout: true,
                 needsFocusNormalization: false
             ),
-            areaLayoutSeedNodeID: siblingNode.id
+            areaLayoutSeedNodeID: siblingNodeID
         )
     }
 }

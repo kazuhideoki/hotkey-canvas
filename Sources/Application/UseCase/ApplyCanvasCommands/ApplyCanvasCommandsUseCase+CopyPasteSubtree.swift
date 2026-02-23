@@ -147,12 +147,16 @@ extension ApplyCanvasCommandsUseCase {
         from nodeIDs: Set<CanvasNodeID>,
         in graph: CanvasGraph
     ) -> CanvasClipboardPayload {
+        let graphForCopy = graphByNormalizingParentChildOrderForCopiedSubtree(
+            nodeIDs: nodeIDs,
+            in: graph
+        )
         let sortedNodeIDs = nodeIDs.sorted { $0.rawValue < $1.rawValue }
         let nodePayloads = sortedNodeIDs.compactMap { nodeID in
-            makeClipboardNodePayload(for: nodeID, in: graph)
+            makeClipboardNodePayload(for: nodeID, in: graphForCopy)
         }
 
-        let internalEdges = graph.edgesByID.values
+        let internalEdges = graphForCopy.edgesByID.values
             .filter { edge in
                 nodeIDs.contains(edge.fromNodeID) && nodeIDs.contains(edge.toNodeID)
             }
@@ -161,11 +165,12 @@ extension ApplyCanvasCommandsUseCase {
                 CanvasClipboardEdgePayload(
                     fromSourceReferenceID: edge.fromNodeID.rawValue,
                     toSourceReferenceID: edge.toNodeID.rawValue,
-                    relationType: edge.relationType
+                    relationType: edge.relationType,
+                    parentChildOrder: edge.parentChildOrder
                 )
             }
 
-        let rootNodeReferenceIDs = treeRootReferenceIDs(in: nodeIDs, edgesByID: graph.edgesByID)
+        let rootNodeReferenceIDs = treeRootReferenceIDs(in: nodeIDs, edgesByID: graphForCopy.edgesByID)
         return CanvasClipboardPayload(
             nodes: nodePayloads,
             edges: internalEdges,
@@ -356,6 +361,9 @@ extension ApplyCanvasCommandsUseCase {
             if $0.toSourceReferenceID != $1.toSourceReferenceID {
                 return $0.toSourceReferenceID < $1.toSourceReferenceID
             }
+            if $0.parentChildOrder != $1.parentChildOrder {
+                return ($0.parentChildOrder ?? Int.max) < ($1.parentChildOrder ?? Int.max)
+            }
             return $0.relationType.rawValue < $1.relationType.rawValue
         }
         for edgePayload in sortedEdgePayloads {
@@ -369,7 +377,8 @@ extension ApplyCanvasCommandsUseCase {
                 id: CanvasEdgeID(rawValue: "edge-\(UUID().uuidString.lowercased())"),
                 fromNodeID: fromNodeID,
                 toNodeID: toNodeID,
-                relationType: edgePayload.relationType
+                relationType: edgePayload.relationType,
+                parentChildOrder: edgePayload.parentChildOrder
             )
             graph = try CanvasGraphCRUDService.createEdge(newEdge, in: graph).get()
         }
@@ -385,11 +394,14 @@ extension ApplyCanvasCommandsUseCase {
         guard mode == .tree else {
             return
         }
-        for rootNodeID in rootNodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
+        graph = normalizeParentChildOrder(for: parentNodeID, in: graph)
+        var nextOrder = nextParentChildOrder(for: parentNodeID, in: graph)
+        for rootNodeID in rootNodeIDs {
             graph = try CanvasGraphCRUDService.createEdge(
-                makeParentChildEdge(from: parentNodeID, to: rootNodeID),
+                makeParentChildEdge(from: parentNodeID, to: rootNodeID, order: nextOrder),
                 in: graph
             ).get()
+            nextOrder += 1
         }
     }
 

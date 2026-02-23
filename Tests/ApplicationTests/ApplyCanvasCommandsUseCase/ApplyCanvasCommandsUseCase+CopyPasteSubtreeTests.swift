@@ -119,6 +119,43 @@ func test_apply_treeArea_copyPasteMultipleSelection_pastesSelectedNodesAsChildre
 
 @Test("ApplyCanvasCommandsUseCase: diagram area copy/paste multiple selection keeps only internal edges")
 func test_apply_diagramArea_copyPasteMultipleSelection_preservesInternalEdges() async throws {
+    let fixture = makeDiagramCopyPasteInternalEdgeFixture()
+    let graph = fixture.graph
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    _ = try await sut.apply(commands: [.copyFocusedSubtree])
+    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
+
+    #expect(pasteResult.newState.nodesByID.count == 5)
+    let insertedNodeIDs = Set(pasteResult.newState.nodesByID.keys).subtracting(graph.nodesByID.keys)
+    #expect(insertedNodeIDs.count == 2)
+
+    let insertedNormalEdges = pasteResult.newState.edgesByID.values.filter {
+        $0.relationType == .normal
+            && insertedNodeIDs.contains($0.fromNodeID)
+            && insertedNodeIDs.contains($0.toNodeID)
+    }
+    #expect(insertedNormalEdges.count == 1)
+
+    let insertedParentChildEdges = pasteResult.newState.edgesByID.values.filter {
+        $0.relationType == .parentChild
+            && $0.fromNodeID == fixture.focusedTargetID
+            && insertedNodeIDs.contains($0.toNodeID)
+    }
+    #expect(insertedParentChildEdges.isEmpty)
+    let insertedNodes = insertedNodeIDs.compactMap { pasteResult.newState.nodesByID[$0] }
+    let pastedMinX = try #require(insertedNodes.map(\.bounds.x).min())
+    let pastedMinY = try #require(insertedNodes.map(\.bounds.y).min())
+    #expect(pastedMinX == 40)
+    #expect(pastedMinY == 480)
+}
+
+private struct DiagramCopyPasteInternalEdgeFixture {
+    let graph: CanvasGraph
+    let focusedTargetID: CanvasNodeID
+}
+
+private func makeDiagramCopyPasteInternalEdgeFixture() -> DiagramCopyPasteInternalEdgeFixture {
     let focusedTargetID = CanvasNodeID(rawValue: "target")
     let sourceAID = CanvasNodeID(rawValue: "source-a")
     let sourceBID = CanvasNodeID(rawValue: "source-b")
@@ -158,33 +195,10 @@ func test_apply_diagramArea_copyPasteMultipleSelection_preservesInternalEdges() 
             areaID: CanvasArea(id: areaID, nodeIDs: [focusedTargetID, sourceAID, sourceBID], editingMode: .diagram)
         ]
     )
-    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
-
-    _ = try await sut.apply(commands: [.copyFocusedSubtree])
-    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
-
-    #expect(pasteResult.newState.nodesByID.count == 5)
-    let insertedNodeIDs = Set(pasteResult.newState.nodesByID.keys).subtracting(graph.nodesByID.keys)
-    #expect(insertedNodeIDs.count == 2)
-
-    let insertedNormalEdges = pasteResult.newState.edgesByID.values.filter {
-        $0.relationType == .normal
-            && insertedNodeIDs.contains($0.fromNodeID)
-            && insertedNodeIDs.contains($0.toNodeID)
-    }
-    #expect(insertedNormalEdges.count == 1)
-
-    let insertedParentChildEdges = pasteResult.newState.edgesByID.values.filter {
-        $0.relationType == .parentChild
-            && $0.fromNodeID == focusedTargetID
-            && insertedNodeIDs.contains($0.toNodeID)
-    }
-    #expect(insertedParentChildEdges.isEmpty)
-    let insertedNodes = insertedNodeIDs.compactMap { pasteResult.newState.nodesByID[$0] }
-    let pastedMinX = try #require(insertedNodes.map(\.bounds.x).min())
-    let pastedMinY = try #require(insertedNodes.map(\.bounds.y).min())
-    #expect(pastedMinX == 40)
-    #expect(pastedMinY == 480)
+    return DiagramCopyPasteInternalEdgeFixture(
+        graph: graph,
+        focusedTargetID: focusedTargetID
+    )
 }
 
 @Test("ApplyCanvasCommandsUseCase: diagram area paste keeps group footprint and relative positions")

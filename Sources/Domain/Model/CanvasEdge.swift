@@ -10,6 +10,9 @@ public struct CanvasEdge: Equatable, Sendable {
     public let toNodeID: CanvasNodeID
     /// Semantic relation kind.
     public let relationType: CanvasEdgeRelationType
+    /// Stable sibling order used by tree layout for `parentChild` edges.
+    /// `nil` is allowed for non-`parentChild` edges or legacy edges without explicit order.
+    public let parentChildOrder: Int?
     /// Optional user-visible label.
     public let label: String?
     /// Additional key-value metadata.
@@ -21,6 +24,7 @@ public struct CanvasEdge: Equatable, Sendable {
     ///   - fromNodeID: Source node identifier.
     ///   - toNodeID: Destination node identifier.
     ///   - relationType: Semantic relation kind.
+    ///   - parentChildOrder: Stable sibling order for `parentChild` edges.
     ///   - label: Optional edge label.
     ///   - metadata: Additional metadata attributes.
     public init(
@@ -28,6 +32,7 @@ public struct CanvasEdge: Equatable, Sendable {
         fromNodeID: CanvasNodeID,
         toNodeID: CanvasNodeID,
         relationType: CanvasEdgeRelationType = .normal,
+        parentChildOrder: Int? = nil,
         label: String? = nil,
         metadata: [String: String] = [:]
     ) {
@@ -35,6 +40,7 @@ public struct CanvasEdge: Equatable, Sendable {
         self.fromNodeID = fromNodeID
         self.toNodeID = toNodeID
         self.relationType = relationType
+        self.parentChildOrder = parentChildOrder
         self.label = label
         self.metadata = metadata
     }
