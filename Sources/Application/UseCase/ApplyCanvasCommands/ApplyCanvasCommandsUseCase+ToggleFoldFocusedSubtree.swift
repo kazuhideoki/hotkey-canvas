@@ -29,6 +29,7 @@ extension ApplyCanvasCommandsUseCase {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: nextCollapsedRootNodeIDs,
             areasByID: graph.areasByID
         )

@@ -48,6 +48,7 @@ extension ApplyCanvasCommandsUseCase {
             nodesByID: graphWithSibling.nodesByID,
             edgesByID: graphWithSibling.edgesByID,
             focusedNodeID: siblingNode.id,
+            selectedNodeIDs: [siblingNode.id],
             collapsedRootNodeIDs: graphWithSibling.collapsedRootNodeIDs,
             areasByID: graphWithSibling.areasByID
         )

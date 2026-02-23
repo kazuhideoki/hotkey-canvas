@@ -17,7 +17,12 @@ extension CanvasView {
         connectNodeSelectionTargetNodeID == nodeID
     }
 
-    func connectNodeSelectionBorderColor(for nodeID: CanvasNodeID, isEditing: Bool, isFocused: Bool) -> Color {
+    func connectNodeSelectionBorderColor(
+        for nodeID: CanvasNodeID,
+        isEditing: Bool,
+        isFocused: Bool,
+        isSelected: Bool
+    ) -> Color {
         if isEditing {
             return Color(nsColor: .systemPink)
         }
@@ -30,11 +35,19 @@ extension CanvasView {
         if isFocused {
             return Color.accentColor
         }
+        if isSelected {
+            return Color.accentColor.opacity(0.55)
+        }
         return Color(nsColor: .separatorColor)
     }
 
-    func connectNodeSelectionBorderLineWidth(for nodeID: CanvasNodeID, isEditing: Bool, isFocused: Bool) -> CGFloat {
-        if isEditing || isFocused || isConnectNodeSelectionSourceNode(nodeID)
+    func connectNodeSelectionBorderLineWidth(
+        for nodeID: CanvasNodeID,
+        isEditing: Bool,
+        isFocused: Bool,
+        isSelected: Bool
+    ) -> CGFloat {
+        if isEditing || isFocused || isSelected || isConnectNodeSelectionSourceNode(nodeID)
             || isConnectNodeSelectionTargetNode(nodeID)
         {
             return NodeTextStyle.focusedBorderLineWidth
@@ -143,7 +156,8 @@ extension CanvasView {
         let selectionGraph = CanvasGraph(
             nodesByID: nodesByID,
             edgesByID: [:],
-            focusedNodeID: currentTargetNodeID
+            focusedNodeID: currentTargetNodeID,
+            selectedNodeIDs: [currentTargetNodeID]
         )
         guard
             let nextFocusedNodeID = CanvasFocusNavigationService.nextFocusedNodeID(

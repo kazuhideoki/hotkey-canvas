@@ -119,3 +119,12 @@ func test_resolveAction_commandV_returnsPasteSubtreeAsChild() {
 
     #expect(action == .apply(commands: [.pasteSubtreeAsChild]))
 }
+
+@Test("Shortcut catalog: shift+left resolves extendSelection")
+func test_resolveAction_shiftLeft_returnsExtendSelection() {
+    let gesture = CanvasShortcutGesture(key: .arrowLeft, modifiers: [.shift])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .apply(commands: [.extendSelection(.left)]))
+}
