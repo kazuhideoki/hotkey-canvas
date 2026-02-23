@@ -16,9 +16,13 @@ extension ApplyCanvasCommandsUseCase {
             bounds = makeAvailableNewNodeBounds(in: graph)
         case .diagram:
             let diagramNodeSideLength = CanvasDefaultNodeDistance.diagramNodeSide
+            let placementCollisionNodeIDs =
+                area.nodeIDs.isEmpty
+                ? Set(graph.nodesByID.keys)
+                : area.nodeIDs
             bounds = makeAvailableDiagramNewNodeBounds(
                 in: graph,
-                avoiding: area.nodeIDs,
+                avoiding: placementCollisionNodeIDs,
                 width: diagramNodeSideLength,
                 height: diagramNodeSideLength,
                 verticalSpacing: CanvasDefaultNodeDistance.vertical(for: .diagram)
@@ -33,7 +37,8 @@ extension ApplyCanvasCommandsUseCase {
         ).get()
         if area.editingMode == .diagram,
             let focusedNodeID = graph.focusedNodeID,
-            graph.nodesByID[focusedNodeID] != nil
+            graph.nodesByID[focusedNodeID] != nil,
+            isFocusedNodeInArea(graph: graph, focusedNodeID: focusedNodeID, areaID: areaID)
         {
             graphAfterMutation = try CanvasGraphCRUDService.createEdge(
                 CanvasEdge(
@@ -63,5 +68,18 @@ extension ApplyCanvasCommandsUseCase {
             ),
             areaLayoutSeedNodeID: node.id
         )
+    }
+
+    private func isFocusedNodeInArea(
+        graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID,
+        areaID: CanvasAreaID
+    ) -> Bool {
+        switch CanvasAreaMembershipService.areaID(containing: focusedNodeID, in: graph) {
+        case .success(let focusedAreaID):
+            return focusedAreaID == areaID
+        case .failure:
+            return false
+        }
     }
 }
