@@ -555,8 +555,5 @@
 - 2026-02-22: 全ノード削除後に複数空エリアが残る状態でも、`Shift + Enter` のモード選択追加が失敗しないように、ノード未存在時は選択モードに合うエリアを優先解決（なければ新規作成）する仕様へ更新。
 - 2026-02-23: `Shift + Enter` モード選択追加の empty graph 分岐を修正し、選択モードと不一致な `defaultTree` の誤優先を禁止。あわせて空グラフで area を事前作成した場合でも、履歴の `graphBeforeMutation` は必ず元グラフを保持して undo 整合性を維持するよう更新。
 - 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
-<<<<<<< HEAD
-- 2026-02-23: 複数選択の導入として `CanvasGraph.selectedNodeIDs`、`CanvasCommand.extendSelection`、`CanvasSelectionService` を追加。`Shift + 矢印` による選択拡張、パイプラインでの selection 正規化、表示側での複数選択ハイライト連携を追記した。
-=======
 - 2026-02-23: 画像専用の `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を廃止し、`CanvasAttachment` / `upsertNodeAttachment` に統合。ノード添付を将来拡張可能な複数要素として扱う仕様へ更新した。
->>>>>>> main
+- 2026-02-23: 複数選択の導入として `CanvasGraph.selectedNodeIDs`、`CanvasCommand.extendSelection`、`CanvasSelectionService` を追加。`Shift + 矢印` による選択拡張、パイプラインでの selection 正規化、表示側での複数選択ハイライト連携を追記した。
