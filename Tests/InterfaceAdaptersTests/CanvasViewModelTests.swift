@@ -1403,8 +1403,6 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
         ApplyResult(newState: graph)
     }
 }
-<<<<<<< HEAD
-
 actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
     private var graph: CanvasGraph = .empty
     private var getCurrentResultCallCount: Int = 0
@@ -1524,5 +1522,3 @@ extension StaleBootstrapApplyCanvasEditingInputPort {
         )
     }
 }
-=======
->>>>>>> main
