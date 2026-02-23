@@ -14,34 +14,73 @@ extension ApplyCanvasCommandsUseCase {
         selectedMode: CanvasEditingMode
     ) throws -> CanvasMutationResult {
         try CanvasAreaMembershipService.validate(in: graph).get()
-        let areaID = try resolveAreaIDForAddNode(in: graph).get()
-        let addMutationResult = try addNode(in: graph, areaID: areaID)
-        guard let addedNodeID = addMutationResult.graphAfterMutation.focusedNodeID else {
-            return addMutationResult
-        }
-        guard
+        let addTarget = try resolveAddTargetForModeSelection(in: graph, selectedMode: selectedMode)
+        let addMutationResult = try addNode(in: addTarget.graph, areaID: addTarget.areaID)
+        var graphAfterModeSelection = addMutationResult.graphAfterMutation
+        if let addedNodeID = addMutationResult.graphAfterMutation.focusedNodeID,
             requiresModeSelectionAreaCreation(
                 selectedMode: selectedMode,
                 addedNodeID: addedNodeID,
                 in: addMutationResult.graphAfterMutation
             )
-        else {
-            return addMutationResult
+        {
+            graphAfterModeSelection = try CanvasAreaMembershipService.createArea(
+                id: nextAreaID(for: selectedMode, in: addMutationResult.graphAfterMutation),
+                mode: selectedMode,
+                nodeIDs: [addedNodeID],
+                in: addMutationResult.graphAfterMutation
+            ).get()
         }
-
-        let graphAfterModeAssignment = try CanvasAreaMembershipService.createArea(
-            id: nextAreaID(for: selectedMode, in: addMutationResult.graphAfterMutation),
-            mode: selectedMode,
-            nodeIDs: [addedNodeID],
-            in: addMutationResult.graphAfterMutation
-        ).get()
 
         return CanvasMutationResult(
             graphBeforeMutation: graph,
-            graphAfterMutation: graphAfterModeAssignment,
+            graphAfterMutation: graphAfterModeSelection,
             effects: addMutationResult.effects,
             areaLayoutSeedNodeID: addMutationResult.areaLayoutSeedNodeID
         )
+    }
+
+    private func resolveAddTargetForModeSelection(
+        in graph: CanvasGraph,
+        selectedMode: CanvasEditingMode
+    ) throws -> AddNodeTarget {
+        guard graph.nodesByID.isEmpty else {
+            let areaID = try resolveAreaIDForAddNode(in: graph).get()
+            return AddNodeTarget(graph: graph, areaID: areaID)
+        }
+
+        if let existingAreaID = preferredAreaIDForEmptyGraph(in: graph, selectedMode: selectedMode) {
+            return AddNodeTarget(graph: graph, areaID: existingAreaID)
+        }
+
+        let createdAreaID = nextAreaID(for: selectedMode, in: graph)
+        let graphWithCreatedArea = try CanvasAreaMembershipService.createArea(
+            id: createdAreaID,
+            mode: selectedMode,
+            nodeIDs: [],
+            in: graph
+        ).get()
+        return AddNodeTarget(graph: graphWithCreatedArea, areaID: createdAreaID)
+    }
+
+    private func preferredAreaIDForEmptyGraph(
+        in graph: CanvasGraph,
+        selectedMode: CanvasEditingMode
+    ) -> CanvasAreaID? {
+        switch selectedMode {
+        case .tree:
+            if let defaultTreeArea = graph.areasByID[.defaultTree], defaultTreeArea.editingMode == .tree {
+                return .defaultTree
+            }
+        case .diagram:
+            break
+        }
+
+        return graph.areasByID.values
+            .filter { $0.editingMode == selectedMode }
+            .map(\.id)
+            .sorted(by: { $0.rawValue < $1.rawValue })
+            .first
     }
 
     private func requiresModeSelectionAreaCreation(
@@ -86,4 +125,9 @@ extension ApplyCanvasCommandsUseCase {
         }
         return .failure(.focusedNodeNotFound)
     }
+}
+
+private struct AddNodeTarget {
+    let graph: CanvasGraph
+    let areaID: CanvasAreaID
 }

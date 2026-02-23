@@ -24,46 +24,23 @@ public final class CanvasViewModel: ObservableObject {
         self.inputPort = inputPort
     }
 
+    /// Loads current snapshot for initial rendering.
+    /// - Returns: `true` when the canvas is empty and UI should present add-node mode selection.
     @discardableResult
-    public func onAppear() async -> CanvasNodeID? {
-        let requestIDAtStart = latestDisplayedRequestID
+    public func onAppear() async -> Bool {
+        let displayedRequestIDAtStart = latestDisplayedRequestID
+        let issuedRequestIDAtStart = nextRequestID
         let result = await inputPort.getCurrentResult()
-        // Ignore stale snapshot when a newer apply() result has already been displayed.
-        guard requestIDAtStart == latestDisplayedRequestID else {
-            return nil
+        // Ignore stale snapshot when a newer request has started or been displayed.
+        guard
+            displayedRequestIDAtStart == latestDisplayedRequestID,
+            issuedRequestIDAtStart == nextRequestID
+        else {
+            return false
         }
 
-        guard result.newState.nodesByID.isEmpty else {
-            updateDisplay(with: result)
-            return nil
-        }
-
-        let requestID = consumeNextRequestID()
-        // Re-check current graph right before bootstrapping to avoid double add
-        // when another apply() was already started while the first snapshot was loading.
-        let latestResult = await inputPort.getCurrentResult()
-        guard shouldDisplayResult(for: requestID) else {
-            return nil
-        }
-        guard latestResult.newState.nodesByID.isEmpty else {
-            updateDisplay(with: latestResult)
-            markDisplayed(requestID)
-            return nil
-        }
-
-        do {
-            let initialNodeResult = try await inputPort.apply(commands: [.addNode])
-            guard shouldDisplayResult(for: requestID) else {
-                await refreshDisplayFromCurrentResult()
-                return nil
-            }
-            updateDisplay(with: initialNodeResult)
-            markDisplayed(requestID)
-            return initialNodeResult.newState.focusedNodeID
-        } catch {
-            // Keep current display state when initial node creation fails.
-            return nil
-        }
+        updateDisplay(with: result)
+        return result.newState.nodesByID.isEmpty
     }
 
     public func apply(commands: [CanvasCommand]) async {
@@ -216,11 +193,6 @@ extension CanvasViewModel {
         viewportIntent = result.viewportIntent
         canUndo = result.canUndo
         canRedo = result.canRedo
-    }
-
-    private func refreshDisplayFromCurrentResult() async {
-        let latestResult = await inputPort.getCurrentResult()
-        updateDisplay(with: latestResult)
     }
 
     private func sortedNodes(in graph: CanvasGraph) -> [CanvasNode] {
