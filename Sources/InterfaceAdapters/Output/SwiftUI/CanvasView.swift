@@ -358,8 +358,11 @@ public struct CanvasView: View {
                 alignment: .topLeading
             )
             .task {
-                let initialEditingNodeID = await viewModel.onAppear()
-                startInitialNodeEditingIfNeeded(nodeID: initialEditingNodeID)
+                let shouldPresentAddNodeModeSelection = await viewModel.onAppear()
+                guard shouldPresentAddNodeModeSelection else {
+                    return
+                }
+                presentAddNodeModeSelectionPopup()
             }
             .onAppear {
                 applyFocusVisibilityRule(viewportSize: viewportSize)
