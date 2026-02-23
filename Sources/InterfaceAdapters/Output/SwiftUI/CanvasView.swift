@@ -1,6 +1,7 @@
 // Background: The canvas needs a single view that coordinates rendering, hotkeys, and inline text editing.
 // Responsibility: Render nodes/edges and orchestrate transitions between hotkey mode and node-editing mode.
 import AppKit
+import Application
 import Combine
 import Domain
 import SwiftUI
@@ -29,19 +30,28 @@ public struct CanvasView: View {
     @State var connectNodeSelectionSourceNodeID: CanvasNodeID?
     @State var connectNodeSelectionTargetNodeID: CanvasNodeID?
     let hotkeyTranslator: CanvasHotkeyTranslator
+    let styleSheet: CanvasStyleSheet
     private let onDisappearHandler: () -> Void
     let addNodeModeSelectionHotkeyResolver = AddNodeModeSelectionHotkeyResolver()
     let connectNodeSelectionHotkeyResolver = ConnectNodeSelectionHotkeyResolver()
     let editingStartResolver = NodeEditingStartResolver()
-    let nodeTextHeightMeasurer = NodeTextHeightMeasurer()
+    var nodeTextStyle: NodeTextStyle {
+        NodeTextStyle(styleSheet: styleSheet)
+    }
     public init(
         viewModel: CanvasViewModel,
         hotkeyTranslator: CanvasHotkeyTranslator = CanvasHotkeyTranslator(),
+        styleSheet: CanvasStyleSheet = CanvasStylePalette.defaultStyleSheet,
         onDisappear: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.hotkeyTranslator = hotkeyTranslator
+        self.styleSheet = styleSheet
         onDisappearHandler = onDisappear
+    }
+
+    func styleColor(_ token: CanvasStyleColorToken) -> Color {
+        CanvasStylePalette.color(token)
     }
     public var body: some View {
         let displayNodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
@@ -71,7 +81,7 @@ public struct CanvasView: View {
             )
             let commandPaletteItems = filteredCommandPaletteItems()
             ZStack(alignment: .topLeading) {
-                Color(nsColor: .textBackgroundColor)
+                styleColor(.textBackground)
                     .ignoresSafeArea()
                     .contentShape(Rectangle())
                 if isCommandPalettePresented {
@@ -100,16 +110,16 @@ public struct CanvasView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
                             RoundedRectangle(cornerRadius: 6)
-                                .fill(Color(nsColor: .textBackgroundColor))
+                                .fill(styleColor(.textBackground))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                                .stroke(styleColor(.separator), lineWidth: 1)
                         )
                         .padding(.horizontal, 12)
                         .padding(.top, 8)
                         Rectangle()
-                            .fill(Color(nsColor: .separatorColor))
+                            .fill(styleColor(.separator))
                             .frame(height: 1)
                             .padding(.top, 10)
                         ScrollViewReader { scrollProxy in
@@ -175,7 +185,7 @@ public struct CanvasView: View {
                     .background(.regularMaterial)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                            .stroke(styleColor(.separator), lineWidth: 1)
                     )
                     .padding(.top, 20)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -197,7 +207,10 @@ public struct CanvasView: View {
                                         effectiveOffset: cameraOffset
                                     )
                                 )
-                                .stroke(Color(nsColor: .separatorColor), lineWidth: 2.25)
+                                .stroke(
+                                    styleColor(styleSheet.edge.strokeColor),
+                                    lineWidth: styleSheet.edge.lineWidth
+                                )
                         }
                     }
                     ForEach(displayNodes, id: \.id) { node in
@@ -207,11 +220,11 @@ public struct CanvasView: View {
                             let isEditing = editingContext?.nodeID == node.id
                             let isDiagramNode = viewModel.diagramNodeIDs.contains(node.id)
                             let isTreeRootNode = viewModel.treeRootNodeIDs.contains(node.id)
-                            let nodeCornerRadius: CGFloat = isDiagramNode ? 0 : NodeTextStyle.cornerRadius
+                            let nodeCornerRadius: CGFloat = isDiagramNode ? 0 : nodeTextStyle.cornerRadius
                             let nodeFillColor =
                                 isTreeRootNode
-                                ? Color(nsColor: .systemGray)
-                                : Color(nsColor: .windowBackgroundColor)
+                                ? styleColor(styleSheet.nodeChrome.treeRootFillColor)
+                                : styleColor(styleSheet.nodeChrome.defaultFillColor)
                             RoundedRectangle(cornerRadius: nodeCornerRadius)
                                 .fill(nodeFillColor)
                                 .overlay(
@@ -235,6 +248,7 @@ public struct CanvasView: View {
                                             text: editingTextBinding(for: node.id),
                                             nodeWidth: CGFloat(node.bounds.width),
                                             zoomScale: zoomScale,
+                                            style: nodeTextStyle,
                                             selectAllOnFirstFocus: false,
                                             initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
                                             initialTypingEvent: editingContext?.initialTypingEvent,
@@ -248,7 +262,7 @@ public struct CanvasView: View {
                                                 cancelNodeEditing()
                                             }
                                         )
-                                        .padding(NodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
+                                        .padding(nodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
                                     } else {
                                         nonEditingNodeContent(
                                             node: node,
@@ -261,18 +275,18 @@ public struct CanvasView: View {
                                         Image(systemName: "chevron.right.circle.fill")
                                             .foregroundStyle(
                                                 isFocused
-                                                    ? Color.accentColor
-                                                    : Color(nsColor: .secondaryLabelColor)
+                                                    ? styleColor(.accent)
+                                                    : styleColor(.secondaryLabel)
                                             )
                                             .font(
                                                 .system(
-                                                    size: NodeTextStyle.collapsedBadgeFontSize
+                                                    size: nodeTextStyle.collapsedBadgeFontSize
                                                         * CGFloat(zoomScale),
                                                     weight: .semibold
                                                 )
                                             )
                                             .offset(
-                                                x: NodeTextStyle.collapsedBadgeTrailingOffset
+                                                x: nodeTextStyle.collapsedBadgeTrailingOffset
                                                     * CGFloat(zoomScale)
                                             )
                                     }
@@ -297,6 +311,7 @@ public struct CanvasView: View {
                 .allowsHitTesting(!isAddNodeModePopupPresented)
                 if isAddNodeModePopupPresented {
                     SelectionPopup(
+                        styleSheet: styleSheet,
                         title: "Select Node Mode",
                         footerText: "Press Enter to confirm, Esc to cancel.",
                         options: addNodeModeSelectionOptions(),
@@ -315,7 +330,7 @@ public struct CanvasView: View {
                 }
                 connectNodeSelectionBanner()
                 if let zoomRatioPopupText {
-                    ZoomRatioPopup(text: zoomRatioPopupText)
+                    ZoomRatioPopup(styleSheet: styleSheet, text: zoomRatioPopupText)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                         .allowsHitTesting(false)
                         .zIndex(12)
