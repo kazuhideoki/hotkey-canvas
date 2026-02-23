@@ -7,5 +7,6 @@ public enum CanvasShortcutAction: Equatable, Sendable {
     case redo
     case zoomIn
     case zoomOut
+    case beginConnectNodeSelection
     case openCommandPalette
 }
