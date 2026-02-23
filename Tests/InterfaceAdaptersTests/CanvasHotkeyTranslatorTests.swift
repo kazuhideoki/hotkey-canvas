@@ -276,6 +276,29 @@ func test_translate_commandDownArrow_returnsMoveNodeDown() throws {
     #expect(commands == [.moveNode(.down)])
 }
 
+@Test("CanvasHotkeyTranslator: Command+D maps to duplicateSelectionAsSibling")
+func test_translate_commandD_returnsDuplicateSelectionAsSibling() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "d",
+            charactersIgnoringModifiers: "d",
+            isARepeat: false,
+            keyCode: 2
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands == [.duplicateSelectionAsSibling])
+}
+
 @Test("CanvasHotkeyTranslator: Command+Shift+Right maps to nudgeNode right")
 func test_translate_commandShiftRightArrow_returnsNudgeNodeRight() throws {
     let sut = CanvasHotkeyTranslator()

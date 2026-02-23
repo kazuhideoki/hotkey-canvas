@@ -408,6 +408,18 @@ func test_apply_addSiblingNode_setsPendingEditingNodeID() async throws {
 }
 
 @MainActor
+@Test("CanvasViewModel: duplicate apply does not publish pending editing node")
+func test_apply_duplicateSelectionAsSibling_doesNotSetPendingEditingNodeID() async throws {
+    let inputPort = DuplicateSelectionCanvasEditingInputPort()
+    let viewModel = CanvasViewModel(inputPort: inputPort)
+
+    await viewModel.apply(commands: [.duplicateSelectionAsSibling])
+
+    #expect(viewModel.nodes.count == 1)
+    #expect(viewModel.pendingEditingNodeID == nil)
+}
+
+@MainActor
 @Test("CanvasViewModel: apply publishes viewport intent from input port")
 func test_apply_setsViewportIntent_fromApplyResult() async throws {
     let inputPort = ViewportIntentCanvasEditingInputPort()
@@ -447,7 +459,8 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
                 didAddNode = true
-            case .addChildNode, .addSiblingNode, .moveFocus, .extendSelection, .moveNode, .nudgeNode,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .extendSelection, .moveNode,
+                .nudgeNode,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
                 .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode,
@@ -600,7 +613,8 @@ extension OverlappingFailureCanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
                 didAddNode = true
-            case .addChildNode, .addSiblingNode, .moveFocus, .extendSelection, .moveNode, .nudgeNode,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .extendSelection, .moveNode,
+                .nudgeNode,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
                 .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode,
@@ -797,7 +811,8 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .upsertNodeAttachment:
                 continue
-            case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .extendSelection, .moveNode, .nudgeNode,
+            case .addNode, .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .extendSelection,
+                .moveNode, .nudgeNode,
                 .toggleFoldFocusedSubtree, .centerFocusedNode,
                 .deleteFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
                 .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
@@ -913,6 +928,46 @@ actor AddSiblingCanvasEditingInputPort: CanvasEditingInputPort {
     }
 }
 
+actor DuplicateSelectionCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        guard commands.contains(.duplicateSelectionAsSibling) else {
+            return ApplyResult(newState: graph)
+        }
+        let nodeID = CanvasNodeID(rawValue: "duplicate-1")
+        let node = CanvasNode(
+            id: nodeID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+        )
+        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph).get()
+        graph = CanvasGraph(
+            nodesByID: nextGraph.nodesByID,
+            edgesByID: nextGraph.edgesByID,
+            focusedNodeID: nodeID
+        )
+        return ApplyResult(newState: graph, didAddNode: true)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+}
+
 actor ViewportIntentCanvasEditingInputPort: CanvasEditingInputPort {
     private let focusedNodeID = CanvasNodeID(rawValue: "focused")
 
@@ -989,7 +1044,8 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                     nodeIDs: nodeIDs,
                     in: nextGraph
                 ).get()
-            case .addChildNode, .addSiblingNode, .moveFocus, .extendSelection, .moveNode, .nudgeNode,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .extendSelection, .moveNode,
+                .nudgeNode,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
@@ -1091,7 +1147,8 @@ actor TreeModeSelectionFromDiagramCanvasEditingInputPort: CanvasEditingInputPort
                     nodeIDs: nodeIDs,
                     in: nextGraph
                 ).get()
-            case .addChildNode, .addSiblingNode, .moveFocus, .extendSelection, .moveNode, .nudgeNode,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .extendSelection, .moveNode,
+                .nudgeNode,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
@@ -1192,7 +1249,8 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
                     nodeIDs: nodeIDs,
                     in: nextGraph
                 ).get()
-            case .addChildNode, .addSiblingNode, .moveFocus, .extendSelection, .moveNode, .nudgeNode,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .extendSelection, .moveNode,
+                .nudgeNode,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
@@ -1271,7 +1329,8 @@ actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                     nodeIDs: nodeIDs,
                     in: nextGraph
                 ).get()
-            case .addChildNode, .addSiblingNode, .moveFocus, .extendSelection, .moveNode, .nudgeNode,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .extendSelection, .moveNode,
+                .nudgeNode,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
@@ -1383,7 +1442,8 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nodeID
                 )
-            case .addChildNode, .addSiblingNode, .moveFocus, .extendSelection, .moveNode, .nudgeNode,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .extendSelection, .moveNode,
+                .nudgeNode,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
@@ -1435,7 +1495,8 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nodeID
                 )
-            case .addChildNode, .addSiblingNode, .moveFocus, .extendSelection, .moveNode, .nudgeNode,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .extendSelection, .moveNode,
+                .nudgeNode,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,

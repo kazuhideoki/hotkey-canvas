@@ -330,6 +330,98 @@ func test_apply_moveNodeInDiagramArea_nudgeStepIsQuarterOfMoveStep() async throw
     #expect(moveDelta == nudgeDelta * 4)
 }
 
+@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area translates selected nodes together")
+func test_apply_moveNodeInDiagramArea_multiSelection_translatesAsGroup() async throws {
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let anchorID = CanvasNodeID(rawValue: "anchor")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let selectedID = CanvasNodeID(rawValue: "selected")
+    let edgeID = CanvasEdgeID(rawValue: "edge-anchor-focused")
+    let graph = CanvasGraph(
+        nodesByID: [
+            anchorID: CanvasNode(
+                id: anchorID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            ),
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 440, y: 0, width: 220, height: 220)
+            ),
+            selectedID: CanvasNode(
+                id: selectedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 900, y: 110, width: 220, height: 220)
+            ),
+        ],
+        edgesByID: [
+            edgeID: CanvasEdge(
+                id: edgeID,
+                fromNodeID: anchorID,
+                toNodeID: focusedID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: focusedID,
+        selectedNodeIDs: [focusedID, selectedID],
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [anchorID, focusedID, selectedID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.right)])
+
+    let focusedAfter = try #require(result.newState.nodesByID[focusedID])
+    let selectedAfter = try #require(result.newState.nodesByID[selectedID])
+    #expect(focusedAfter.bounds.x == 880)
+    #expect(focusedAfter.bounds.y == 0)
+    #expect(selectedAfter.bounds.x == 1340)
+    #expect(selectedAfter.bounds.y == 110)
+}
+
+@Test("ApplyCanvasCommandsUseCase: nudgeNode in diagram area translates selected nodes together")
+func test_apply_nudgeNodeInDiagramArea_multiSelection_translatesAsGroup() async throws {
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let selectedID = CanvasNodeID(rawValue: "selected")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            ),
+            selectedID: CanvasNode(
+                id: selectedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 330, y: -120, width: 220, height: 220)
+            ),
+        ],
+        focusedNodeID: focusedID,
+        selectedNodeIDs: [focusedID, selectedID],
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedID, selectedID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.nudgeNode(.down)])
+
+    let focusedAfter = try #require(result.newState.nodesByID[focusedID])
+    let selectedAfter = try #require(result.newState.nodesByID[selectedID])
+    #expect(focusedAfter.bounds.y == 110)
+    #expect(selectedAfter.bounds.y == -10)
+    #expect(focusedAfter.bounds.x == 0)
+    #expect(selectedAfter.bounds.x == 330)
+}
+
 private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds, spacing: Double = 0) -> Bool {
     let halfSpacing = max(0, spacing) / 2
     let lhsLeft = lhs.x - halfSpacing

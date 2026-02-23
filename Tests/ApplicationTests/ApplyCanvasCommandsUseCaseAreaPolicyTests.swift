@@ -267,6 +267,35 @@ func test_apply_diagramArea_allowsCopyFocusedSubtreeCommand() async throws {
     #expect(result.newState == graph)
 }
 
+@Test("ApplyCanvasCommandsUseCase: diagram area rejects duplicateSelectionAsSibling command")
+func test_apply_diagramArea_rejectsDuplicateSelectionAsSiblingCommand() async throws {
+    let nodeID = CanvasNodeID(rawValue: "diagram-node")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    do {
+        _ = try await sut.apply(commands: [.duplicateSelectionAsSibling])
+        Issue.record("Expected unsupported command error")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .unsupportedCommandInMode(mode: .diagram, command: .duplicateSelectionAsSibling))
+    }
+}
+
 @Test("ApplyCanvasCommandsUseCase: diagram area allows assignNodesToArea command")
 func test_apply_diagramArea_allowsAssignNodesToAreaCommand() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")

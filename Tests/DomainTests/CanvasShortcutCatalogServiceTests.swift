@@ -120,6 +120,15 @@ func test_resolveAction_commandV_returnsPasteSubtreeAsChild() {
     #expect(action == .apply(commands: [.pasteSubtreeAsChild]))
 }
 
+@Test("Shortcut catalog: command+d resolves duplicateSelectionAsSibling")
+func test_resolveAction_commandD_returnsDuplicateSelectionAsSibling() {
+    let gesture = CanvasShortcutGesture(key: .character("d"), modifiers: [.command])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .apply(commands: [.duplicateSelectionAsSibling]))
+}
+
 @Test("Shortcut catalog: shift+left resolves extendSelection")
 func test_resolveAction_shiftLeft_returnsExtendSelection() {
     let gesture = CanvasShortcutGesture(key: .arrowLeft, modifiers: [.shift])
