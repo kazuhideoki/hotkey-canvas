@@ -176,6 +176,22 @@ extension CanvasGraphCRUDService {
         if node.bounds.width <= 0 || node.bounds.height <= 0 {
             return .failure(.invalidNodeBounds)
         }
+        var seenAttachmentIDs: Set<CanvasAttachmentID> = []
+        for attachment in node.attachments {
+            if attachment.id.rawValue.isEmpty {
+                return .failure(.invalidAttachmentID)
+            }
+            if seenAttachmentIDs.contains(attachment.id) {
+                return .failure(.duplicateAttachmentID(attachment.id))
+            }
+            seenAttachmentIDs.insert(attachment.id)
+            switch attachment.kind {
+            case .image(let filePath):
+                if filePath.isEmpty {
+                    return .failure(.invalidAttachmentPayload)
+                }
+            }
+        }
         return .success(())
     }
 

@@ -111,7 +111,12 @@ public final class CanvasViewModel: ObservableObject {
     }
 
     public func insertNodeImage(nodeID: CanvasNodeID, imagePath: String, nodeHeight: Double) async {
-        await apply(commands: [.setNodeImage(nodeID: nodeID, imagePath: imagePath, nodeHeight: nodeHeight)])
+        let attachment = CanvasAttachment(
+            id: CanvasAttachmentID(rawValue: "attachment-image-above-text"),
+            kind: .image(filePath: imagePath),
+            placement: .aboveText
+        )
+        await apply(commands: [.upsertNodeAttachment(nodeID: nodeID, attachment: attachment, nodeHeight: nodeHeight)])
     }
 
     public func consumePendingEditingNodeID() {
@@ -161,7 +166,7 @@ extension CanvasViewModel {
             .moveFocus, .extendSelection, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree, .centerFocusedNode,
             .deleteFocusedNode,
             .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
-            .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
+            .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
             .assignNodesToArea:
             return false
         }

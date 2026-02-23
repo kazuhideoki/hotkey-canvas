@@ -61,7 +61,7 @@ extension CanvasView {
     func measuredNodeHeightAfterReplacingImage(in node: CanvasNode, imageSize newImageSize: CGSize) -> Double {
         let hasText = (node.text ?? "").isEmpty == false
         let currentImageHeight: Double =
-            if let currentImagePath = node.imagePath,
+            if let currentImagePath = primaryImagePath(in: node),
                 let currentImageSize = imageSize(atFilePath: currentImagePath)
             {
                 measuredImageDisplayHeight(imageSize: currentImageSize, nodeWidth: node.bounds.width)
@@ -80,7 +80,7 @@ extension CanvasView {
             currentImageHeight: currentImageHeight,
             currentImageSpacing: currentSpacing,
             textOnlyHeight: textOnlyHeight,
-            hadExistingImagePath: node.imagePath != nil
+            hadExistingImagePath: primaryImagePath(in: node) != nil
         )
 
         let insertedImageHeight = measuredImageDisplayHeight(
@@ -120,7 +120,7 @@ extension CanvasView {
         measuredTextHeight: Double,
         node: CanvasNode
     ) -> Double {
-        guard node.imagePath != nil else {
+        guard primaryImagePath(in: node) != nil else {
             return measuredTextHeight
         }
         let hasText = text.isEmpty == false
@@ -134,7 +134,7 @@ extension CanvasView {
 
     func measuredImageLayoutForNode(_ node: CanvasNode, hasText: Bool) -> (height: Double, spacing: Double) {
         guard
-            let imagePath = node.imagePath,
+            let imagePath = primaryImagePath(in: node),
             let imageSize = imageSize(atFilePath: imagePath)
         else {
             return (height: 0, spacing: 0)
@@ -154,7 +154,8 @@ extension CanvasView {
 
     @ViewBuilder
     func nonEditingNodeContent(node: CanvasNode, zoomScale: Double) -> some View {
-        if let imagePath = node.imagePath, let image = Self.nodeImageCache.image(atFilePath: imagePath) {
+        let contentAlignment = nodeTextContentAlignment(for: node.id)
+        if let imagePath = primaryImagePath(in: node), let image = Self.nodeImageCache.image(atFilePath: imagePath) {
             let scale = CGFloat(zoomScale)
             let scaledPadding = NodeTextStyle.outerPadding * scale
             let contentWidth = max((CGFloat(node.bounds.width) * scale) - (scaledPadding * 2), 1)
@@ -165,24 +166,28 @@ extension CanvasView {
             )
             let imageDisplayWidth = max(CGFloat(unscaledImageDisplayWidth) * scale, 1)
             VStack(
-                alignment: .leading,
+                alignment: contentAlignment.horizontalAlignment,
                 spacing: hasText ? NodeTextStyle.imageTextSpacing * scale : 0
             ) {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: min(imageDisplayWidth, contentWidth), alignment: .leading)
+                    .frame(
+                        width: min(imageDisplayWidth, contentWidth),
+                        alignment: contentAlignment.frameAlignment
+                    )
                     .clipShape(
                         RoundedRectangle(cornerRadius: NodeTextStyle.imageCornerRadius * scale)
                     )
                 if hasText {
                     nonEditingNodeTextBody(
                         node: node,
-                        zoomScale: zoomScale
+                        zoomScale: zoomScale,
+                        contentAlignment: contentAlignment
                     )
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: contentAlignment.frameAlignment)
             .padding(scaledPadding)
         } else {
             nonEditingNodeText(node: node, zoomScale: zoomScale)
@@ -190,26 +195,37 @@ extension CanvasView {
     }
 
     @ViewBuilder
-    func nonEditingNodeTextBody(node: CanvasNode, zoomScale: Double) -> some View {
+    func nonEditingNodeTextBody(
+        node: CanvasNode,
+        zoomScale: Double,
+        contentAlignment: NodeTextContentAlignment
+    ) -> some View {
         let text = node.text ?? ""
         if node.markdownStyleEnabled {
             NodeMarkdownDisplay(
                 text: text,
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale,
-                appliesOuterPadding: false
+                appliesOuterPadding: false,
+                contentAlignment: contentAlignment
             )
         } else {
             nonEditingPlainNodeTextBody(
                 text: text,
                 nodeWidth: node.bounds.width,
-                zoomScale: zoomScale
+                zoomScale: zoomScale,
+                contentAlignment: contentAlignment
             )
         }
     }
 
     @ViewBuilder
-    private func nonEditingPlainNodeTextBody(text: String, nodeWidth: Double, zoomScale: Double) -> some View {
+    private func nonEditingPlainNodeTextBody(
+        text: String,
+        nodeWidth: Double,
+        zoomScale: Double,
+        contentAlignment: NodeTextContentAlignment
+    ) -> some View {
         let scale = CGFloat(zoomScale)
         let contentWidth = max(
             (CGFloat(nodeWidth) * scale) - (NodeTextStyle.outerPadding * scale * 2),
@@ -218,8 +234,8 @@ extension CanvasView {
         Text(text)
             .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
             .lineLimit(nil)
-            .multilineTextAlignment(.leading)
-            .frame(width: contentWidth, alignment: .topLeading)
+            .multilineTextAlignment(contentAlignment.textAlignment)
+            .frame(width: contentWidth, alignment: contentAlignment.frameAlignment)
             .fixedSize(horizontal: false, vertical: true)
     }
 }
@@ -285,4 +301,7 @@ private final class NodeImageCacheEntry {
         self.image = image
         self.fileSignature = fileSignature
     }
+}
+func primaryImagePath(in node: CanvasNode) -> String? {
+    node.primaryImageAttachmentFilePath
 }

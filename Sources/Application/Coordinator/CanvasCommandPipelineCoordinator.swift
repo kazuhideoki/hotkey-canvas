@@ -106,7 +106,7 @@ extension CanvasCommandPipelineCoordinator {
                 id: node.id,
                 kind: node.kind,
                 text: node.text,
-                imagePath: node.imagePath,
+                attachments: node.attachments,
                 bounds: bounds,
                 metadata: node.metadata,
                 markdownStyleEnabled: node.markdownStyleEnabled
@@ -301,7 +301,7 @@ extension CanvasCommandPipelineCoordinator {
                     id: node.id,
                     kind: node.kind,
                     text: node.text,
-                    imagePath: node.imagePath,
+                    attachments: node.attachments,
                     bounds: CanvasBounds(
                         x: node.bounds.x + translation.dx,
                         y: node.bounds.y + translation.dy,
@@ -350,7 +350,7 @@ extension CanvasCommandPipelineCoordinator {
                 id: node.id,
                 kind: node.kind,
                 text: node.text,
-                imagePath: node.imagePath,
+                attachments: node.attachments,
                 bounds: CanvasBounds(
                     x: node.bounds.x,
                     y: node.bounds.y,

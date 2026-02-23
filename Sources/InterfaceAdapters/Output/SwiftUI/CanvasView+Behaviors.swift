@@ -113,7 +113,7 @@ extension CanvasView {
             id: node.id,
             kind: node.kind,
             text: node.text,
-            imagePath: node.imagePath,
+            attachments: node.attachments,
             bounds: CanvasBounds(
                 x: renderedRect.origin.x,
                 y: renderedRect.origin.y,
@@ -150,7 +150,7 @@ extension CanvasView {
             id: node.id,
             kind: node.kind,
             text: node.text,
-            imagePath: node.imagePath,
+            attachments: node.attachments,
             bounds: resizedBounds,
             metadata: node.metadata,
             markdownStyleEnabled: node.markdownStyleEnabled
@@ -384,14 +384,59 @@ extension CanvasView {
     }
 
     @ViewBuilder
+    func nodeContentOverlay(
+        node: CanvasNode,
+        zoomScale: Double,
+        contentAlignment: NodeTextContentAlignment
+    ) -> some View {
+        if editingContext?.nodeID == node.id {
+            NodeTextEditor(
+                text: editingTextBinding(for: node.id),
+                nodeWidth: CGFloat(node.bounds.width),
+                zoomScale: zoomScale,
+                contentAlignment: contentAlignment,
+                selectAllOnFirstFocus: false,
+                initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
+                initialTypingEvent: editingContext?.initialTypingEvent,
+                onLayoutMetricsChange: { metrics in
+                    updateEditingNodeLayout(for: node.id, metrics: metrics)
+                },
+                onCommit: {
+                    commitNodeEditing()
+                },
+                onCancel: {
+                    cancelNodeEditing()
+                }
+            )
+            .padding(NodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: contentAlignment.frameAlignment)
+        } else {
+            nonEditingNodeContent(
+                node: node,
+                zoomScale: zoomScale
+            )
+        }
+    }
+
+    static func nodeTextContentAlignment(isDiagramNode: Bool) -> NodeTextContentAlignment {
+        isDiagramNode ? .center : .topLeading
+    }
+
+    func nodeTextContentAlignment(for nodeID: CanvasNodeID) -> NodeTextContentAlignment {
+        Self.nodeTextContentAlignment(isDiagramNode: isDiagramNode(nodeID))
+    }
+
+    @ViewBuilder
     func nonEditingNodeText(node: CanvasNode, zoomScale: Double) -> some View {
         let text = node.text ?? ""
         let scale = CGFloat(zoomScale)
+        let contentAlignment = nodeTextContentAlignment(for: node.id)
         if node.markdownStyleEnabled {
             NodeMarkdownDisplay(
                 text: text,
                 nodeWidth: node.bounds.width,
-                zoomScale: zoomScale
+                zoomScale: zoomScale,
+                contentAlignment: contentAlignment
             )
         } else {
             let scaledPadding = NodeTextStyle.outerPadding * scale
@@ -399,10 +444,10 @@ extension CanvasView {
             Text(text)
                 .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
                 .lineLimit(nil)
-                .multilineTextAlignment(.leading)
-                .frame(width: textWidth, alignment: .topLeading)
+                .multilineTextAlignment(contentAlignment.textAlignment)
+                .frame(width: textWidth, alignment: contentAlignment.frameAlignment)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: contentAlignment.frameAlignment)
                 .padding(scaledPadding)
         }
     }
