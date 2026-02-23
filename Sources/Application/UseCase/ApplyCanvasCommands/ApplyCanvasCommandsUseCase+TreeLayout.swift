@@ -29,7 +29,7 @@ extension ApplyCanvasCommandsUseCase {
                 id: node.id,
                 kind: node.kind,
                 text: node.text,
-                imagePath: node.imagePath,
+                attachments: node.attachments,
                 bounds: bounds,
                 metadata: node.metadata,
                 markdownStyleEnabled: node.markdownStyleEnabled

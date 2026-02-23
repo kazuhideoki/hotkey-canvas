@@ -449,7 +449,8 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
-                .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
+                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode,
+                .createArea,
                 .assignNodesToArea, .connectNodes, .alignParentNodesVertically:
                 continue
             case .deleteFocusedNode:
@@ -600,7 +601,8 @@ extension OverlappingFailureCanvasEditingInputPort {
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
-                .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
+                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode,
+                .createArea,
                 .assignNodesToArea, .connectNodes, .alignParentNodesVertically:
                 continue
             case .deleteFocusedNode:
@@ -791,7 +793,7 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nextGraph.focusedNodeID
                 )
-            case .setNodeImage:
+            case .upsertNodeAttachment:
                 continue
             case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode,
                 .toggleFoldFocusedSubtree, .centerFocusedNode,
@@ -987,7 +989,7 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 ).get()
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
                 .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
                 .alignParentNodesVertically:
                 continue
@@ -1088,7 +1090,7 @@ actor TreeModeSelectionFromDiagramCanvasEditingInputPort: CanvasEditingInputPort
                 ).get()
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
                 .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
                 .alignParentNodesVertically:
                 continue
@@ -1188,7 +1190,7 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
                 ).get()
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
                 .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
                 .alignParentNodesVertically:
                 continue
@@ -1266,7 +1268,7 @@ actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 ).get()
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
                 .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
                 .alignParentNodesVertically:
                 continue
@@ -1377,7 +1379,7 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
                 .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
                 .alignParentNodesVertically:
                 continue
@@ -1428,7 +1430,7 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
                 .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
                 .alignParentNodesVertically:
                 continue
