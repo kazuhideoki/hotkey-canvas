@@ -28,17 +28,17 @@
 
 - `CanvasShortcutAction` に `zoomIn` / `zoomOut` / `beginConnectNodeSelection` を追加した。
 - `CanvasShortcutCatalogService` の標準定義に以下を追加した。
-- `Command + +`（`Command + Shift + =` / `Command + Shift + ;` / `Command + +` 記号入力）: `zoomIn`
-- `Command + =`: `zoomIn`
-- `Command + -`: `zoomOut`
-- `Command + L`: `beginConnectNodeSelection`
-- `Option + .`: `toggleFoldFocusedSubtree`
-- `Command + Shift + ↑/↓/←/→`: `nudgeNode(.up/.down/.left/.right)`
-- `Shift + ↑/↓/←/→`: `extendSelection(.up/.down/.left/.right)`
-- `Command + C`: `copyFocusedSubtree`
-- `Command + X`: `cutFocusedSubtree`
-- `Command + V`: `pasteSubtreeAsChild`
-- `Command + D`: `duplicateSelectionAsSibling`
+- `⌘+`（`⌘⇧=` / `⌘⇧;` / `⌘+` 記号入力）: `zoomIn`
+- `⌘=`: `zoomIn`
+- `⌘-`: `zoomOut`
+- `⌘L`: `beginConnectNodeSelection`
+- `⌥.`: `toggleFoldFocusedSubtree`
+- `⌘⇧↑/↓/←/→`: `nudgeNode(.up/.down/.left/.right)`
+- `⇧↑/↓/←/→`: `extendSelection(.up/.down/.left/.right)`
+- `⌘C`: `copyFocusedSubtree`
+- `⌘X`: `cutFocusedSubtree`
+- `⌘V`: `pasteSubtreeAsChild`
+- `⌘D`: `duplicateSelectionAsSibling`
 - 利用先:
 - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)` / `shouldBeginConnectNodeSelection(_:)`）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
@@ -467,7 +467,7 @@
     - Diagram エリアでは `addChildNode` を `addNode` へ正規化する。
     - Diagram エリアでは `duplicateSelectionAsSibling` を不許可とする（`unsupportedCommandInMode`）。
     - Diagram エリアでは `connectNodes` を許可し、同一エリア内の既存ノード同士を `normal` エッジで接続する（自己接続・重複接続・跨ぎ接続は no-op）。
-    - Tree エリアでは `moveNode` 実行時、フォーカスが選択集合に含まれ同一エリアで2件以上選択されている場合、選択ノード群をフォーカス移動先の親配下へ兄弟として再配置する。複数の親にまたがる選択でも移動後は同一親へ一本化し、選択内の親子関係はフラット化する。
+    - Tree エリアでは `moveNode` 実行時、フォーカスが選択集合に含まれ同一エリアで2件以上選択されている場合、選択ノード群をフォーカス移動先の親配下へ兄弟として再配置する。複数の親にまたがる選択でも移動後は同一親へ一本化し、選択内の親子関係はフラット化する。`up` / `down` は選択中の兄弟ノードを飛ばして非選択兄弟と入れ替え、複数選択を1ブロックとして並び替える。
     - Diagram エリアでは `moveNode` を8方向移動として扱う。接続アンカーがある場合はアンカー基準でステップ距離（`CanvasDefaultNodeDistance` 横 `220`・縦 `220`）を決定し、候補位置がアンカー矩形と重なる場合は同方向に追加ステップして飛び越える。接続アンカーがない場合でも、フォーカスノード自身の寸法を基準に同じグリッド間隔で移動できる。複数選択条件（フォーカスを含む同一エリア2件以上）を満たす場合は、フォーカスで解決した移動量を選択ノード群へ同一の平行移動として適用する。
     - Diagram エリアで `moveNode` を適用した後は、同一エリア内ノード衝突も即時解消するために area layout を実行する。
     - Diagram エリアでは `nudgeNode` も `moveNode` と同じ位置解決ロジック（アンカー重なり回避を含む）を使い、ステップのみ `moveNode` の 1/4 倍（`cmd+矢印 : cmd+shift+矢印 = 4:1`）で移動する。複数選択条件を満たす場合は `moveNode` と同様に選択ノード群を一括平行移動する。

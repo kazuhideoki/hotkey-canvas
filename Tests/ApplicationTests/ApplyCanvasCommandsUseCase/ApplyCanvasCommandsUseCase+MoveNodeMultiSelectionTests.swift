@@ -11,14 +11,42 @@ func test_apply_moveNodeDown_multiSelectionAcrossParents_becomesSiblingsAtDestin
 
     let result = try await sut.apply(commands: [.moveNode(.down)])
 
-    #expect(parentNodeID(of: fixture.focusedID, in: result.newState) == fixture.parentAID)
-    #expect(parentNodeID(of: fixture.selectedID, in: result.newState) == fixture.parentAID)
+    #expect(multiSelectionParentNodeID(of: fixture.focusedID, in: result.newState) == fixture.parentAID)
+    #expect(multiSelectionParentNodeID(of: fixture.selectedID, in: result.newState) == fixture.parentAID)
     #expect(
-        childNodeIDs(of: fixture.parentAID, in: result.newState) == [
+        multiSelectionChildNodeIDs(of: fixture.parentAID, in: result.newState) == [
             fixture.lowerSiblingID, fixture.focusedID, fixture.selectedID,
         ])
     #expect(result.newState.focusedNodeID == fixture.focusedID)
     #expect(result.newState.selectedNodeIDs == [fixture.focusedID, fixture.selectedID])
+}
+
+@Test("ApplyCanvasCommandsUseCase: moveNode down swaps sibling block when multi-selection is adjacent")
+func test_apply_moveNodeDown_multiSelectionSiblings_swapsAsBlock() async throws {
+    let fixture = makeMoveNodeSiblingBlockMultiSelectionFixture()
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
+
+    let result = try await sut.apply(commands: [.moveNode(.down)])
+
+    #expect(
+        multiSelectionChildNodeIDs(of: fixture.rootID, in: result.newState) == [
+            fixture.topID, fixture.bottomID, fixture.focusedID, fixture.selectedID,
+        ]
+    )
+}
+
+@Test("ApplyCanvasCommandsUseCase: moveNode up swaps sibling block when multi-selection is adjacent")
+func test_apply_moveNodeUp_multiSelectionSiblings_swapsAsBlock() async throws {
+    let fixture = makeMoveNodeSiblingBlockMultiSelectionFixture()
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
+
+    let result = try await sut.apply(commands: [.moveNode(.up)])
+
+    #expect(
+        multiSelectionChildNodeIDs(of: fixture.rootID, in: result.newState) == [
+            fixture.focusedID, fixture.selectedID, fixture.topID, fixture.bottomID,
+        ]
+    )
 }
 
 @Test("ApplyCanvasCommandsUseCase: moveNode right flattens selected parent-child relation into siblings")
@@ -28,10 +56,10 @@ func test_apply_moveNodeRight_multiSelectionWithNestedNodes_flattensToSiblings()
 
     let result = try await sut.apply(commands: [.moveNode(.right)])
 
-    #expect(parentNodeID(of: fixture.focusedID, in: result.newState) == fixture.previousID)
-    #expect(parentNodeID(of: fixture.selectedChildID, in: result.newState) == fixture.previousID)
+    #expect(multiSelectionParentNodeID(of: fixture.focusedID, in: result.newState) == fixture.previousID)
+    #expect(multiSelectionParentNodeID(of: fixture.selectedChildID, in: result.newState) == fixture.previousID)
     #expect(
-        hasParentChildEdge(
+        multiSelectionHasParentChildEdge(
             from: fixture.focusedID,
             to: fixture.selectedChildID,
             in: result.newState
@@ -47,8 +75,8 @@ func test_apply_moveNodeRight_multiSelectionKeepsCollapsedDestinationParentFocus
     let result = try await sut.apply(commands: [.moveNode(.right)])
 
     #expect(result.newState.focusedNodeID == fixture.previousID)
-    #expect(parentNodeID(of: fixture.focusedID, in: result.newState) == fixture.previousID)
-    #expect(parentNodeID(of: fixture.selectedChildID, in: result.newState) == fixture.previousID)
+    #expect(multiSelectionParentNodeID(of: fixture.focusedID, in: result.newState) == fixture.previousID)
+    #expect(multiSelectionParentNodeID(of: fixture.selectedChildID, in: result.newState) == fixture.previousID)
 }
 
 private struct MoveNodeDownMultiSelectionFixture {
@@ -57,6 +85,135 @@ private struct MoveNodeDownMultiSelectionFixture {
     let focusedID: CanvasNodeID
     let selectedID: CanvasNodeID
     let lowerSiblingID: CanvasNodeID
+}
+
+private struct MoveNodeSiblingBlockMultiSelectionFixture {
+    let graph: CanvasGraph
+    let rootID: CanvasNodeID
+    let topID: CanvasNodeID
+    let focusedID: CanvasNodeID
+    let selectedID: CanvasNodeID
+    let bottomID: CanvasNodeID
+}
+
+private func makeMoveNodeSiblingBlockMultiSelectionFixture() -> MoveNodeSiblingBlockMultiSelectionFixture {
+    let rootID = CanvasNodeID(rawValue: "root-sibling-block")
+    let topID = CanvasNodeID(rawValue: "top-sibling-block")
+    let focusedID = CanvasNodeID(rawValue: "focused-sibling-block")
+    let selectedID = CanvasNodeID(rawValue: "selected-sibling-block")
+    let bottomID = CanvasNodeID(rawValue: "bottom-sibling-block")
+
+    let graph = makeMoveNodeSiblingBlockGraph(
+        rootID: rootID,
+        topID: topID,
+        focusedID: focusedID,
+        selectedID: selectedID,
+        bottomID: bottomID
+    )
+
+    return MoveNodeSiblingBlockMultiSelectionFixture(
+        graph: graph,
+        rootID: rootID,
+        topID: topID,
+        focusedID: focusedID,
+        selectedID: selectedID,
+        bottomID: bottomID
+    )
+}
+
+private func makeMoveNodeSiblingBlockGraph(
+    rootID: CanvasNodeID,
+    topID: CanvasNodeID,
+    focusedID: CanvasNodeID,
+    selectedID: CanvasNodeID,
+    bottomID: CanvasNodeID
+) -> CanvasGraph {
+    CanvasGraph(
+        nodesByID: makeMoveNodeSiblingBlockNodes(
+            rootID: rootID,
+            topID: topID,
+            focusedID: focusedID,
+            selectedID: selectedID,
+            bottomID: bottomID
+        ),
+        edgesByID: makeMoveNodeSiblingBlockEdges(
+            rootID: rootID,
+            topID: topID,
+            focusedID: focusedID,
+            selectedID: selectedID,
+            bottomID: bottomID
+        ),
+        focusedNodeID: focusedID,
+        selectedNodeIDs: [focusedID, selectedID]
+    )
+}
+
+private func makeMoveNodeSiblingBlockNodes(
+    rootID: CanvasNodeID,
+    topID: CanvasNodeID,
+    focusedID: CanvasNodeID,
+    selectedID: CanvasNodeID,
+    bottomID: CanvasNodeID
+) -> [CanvasNodeID: CanvasNode] {
+    [
+        rootID: CanvasNode(
+            id: rootID, kind: .text, text: nil, bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)),
+        topID: CanvasNode(
+            id: topID, kind: .text, text: nil, bounds: CanvasBounds(x: 260, y: 0, width: 220, height: 120)),
+        focusedID: CanvasNode(
+            id: focusedID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 260, y: 140, width: 220, height: 120)
+        ),
+        selectedID: CanvasNode(
+            id: selectedID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 260, y: 280, width: 220, height: 120)
+        ),
+        bottomID: CanvasNode(
+            id: bottomID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 260, y: 420, width: 220, height: 120)
+        ),
+    ]
+}
+
+private func makeMoveNodeSiblingBlockEdges(
+    rootID: CanvasNodeID,
+    topID: CanvasNodeID,
+    focusedID: CanvasNodeID,
+    selectedID: CanvasNodeID,
+    bottomID: CanvasNodeID
+) -> [CanvasEdgeID: CanvasEdge] {
+    [
+        CanvasEdgeID(rawValue: "edge-root-top-sibling-block"): CanvasEdge(
+            id: CanvasEdgeID(rawValue: "edge-root-top-sibling-block"),
+            fromNodeID: rootID,
+            toNodeID: topID,
+            relationType: .parentChild
+        ),
+        CanvasEdgeID(rawValue: "edge-root-focused-sibling-block"): CanvasEdge(
+            id: CanvasEdgeID(rawValue: "edge-root-focused-sibling-block"),
+            fromNodeID: rootID,
+            toNodeID: focusedID,
+            relationType: .parentChild
+        ),
+        CanvasEdgeID(rawValue: "edge-root-selected-sibling-block"): CanvasEdge(
+            id: CanvasEdgeID(rawValue: "edge-root-selected-sibling-block"),
+            fromNodeID: rootID,
+            toNodeID: selectedID,
+            relationType: .parentChild
+        ),
+        CanvasEdgeID(rawValue: "edge-root-bottom-sibling-block"): CanvasEdge(
+            id: CanvasEdgeID(rawValue: "edge-root-bottom-sibling-block"),
+            fromNodeID: rootID,
+            toNodeID: bottomID,
+            relationType: .parentChild
+        ),
+    ]
 }
 
 private func makeMoveNodeDownMultiSelectionFixture() -> MoveNodeDownMultiSelectionFixture {
@@ -309,41 +466,4 @@ private func makeMoveNodeRightCollapsedFocusGraph(
         selectedNodeIDs: [focusedID, selectedChildID],
         collapsedRootNodeIDs: [previousID]
     )
-}
-
-private func hasParentChildEdge(from parentID: CanvasNodeID, to childID: CanvasNodeID, in graph: CanvasGraph) -> Bool {
-    graph.edgesByID.values.contains {
-        $0.relationType == .parentChild
-            && $0.fromNodeID == parentID
-            && $0.toNodeID == childID
-    }
-}
-
-private func parentNodeID(of nodeID: CanvasNodeID, in graph: CanvasGraph) -> CanvasNodeID? {
-    graph.edgesByID.values
-        .filter {
-            $0.relationType == .parentChild
-                && $0.toNodeID == nodeID
-        }
-        .sorted { $0.id.rawValue < $1.id.rawValue }
-        .first?
-        .fromNodeID
-}
-
-private func childNodeIDs(of parentID: CanvasNodeID, in graph: CanvasGraph) -> [CanvasNodeID] {
-    graph.edgesByID.values
-        .filter {
-            $0.relationType == .parentChild
-                && $0.fromNodeID == parentID
-        }
-        .compactMap { edge in
-            graph.nodesByID[edge.toNodeID]
-        }
-        .sorted { lhs, rhs in
-            if lhs.bounds.y == rhs.bounds.y {
-                return lhs.id.rawValue < rhs.id.rawValue
-            }
-            return lhs.bounds.y < rhs.bounds.y
-        }
-        .map(\.id)
 }
