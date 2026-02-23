@@ -20,6 +20,13 @@ public enum CanvasDefaultNodeDistance {
     /// Default vertical spacing between top-level tree roots.
     public static let treeRootVertical: Double = treeVertical * 2
 
+    /// Step multiplier for diagram semantic move (`cmd + arrow`).
+    public static let diagramMoveStepMultiplier: Double = 1
+
+    /// Step multiplier for diagram nudge (`cmd + shift + arrow`).
+    /// Keep this as one quarter of semantic move to preserve a 4:1 ratio.
+    public static let diagramNudgeStepMultiplier: Double = 0.25
+
     /// Backward-compatible alias for tree horizontal distance.
     public static let horizontal: Double = treeHorizontal
 

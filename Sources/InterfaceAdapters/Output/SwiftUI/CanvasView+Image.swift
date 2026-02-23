@@ -68,7 +68,7 @@ extension CanvasView {
             } else {
                 0
             }
-        let currentSpacing = currentImageHeight > 0 && hasText ? Double(NodeTextStyle.imageTextSpacing) : 0
+        let currentSpacing = currentImageHeight > 0 && hasText ? Double(nodeTextStyle.imageTextSpacing) : 0
         let textOnlyHeight = Double(
             measuredNodeLayout(
                 text: node.text ?? "",
@@ -87,7 +87,7 @@ extension CanvasView {
             imageSize: newImageSize,
             nodeWidth: node.bounds.width
         )
-        let insertedSpacing = hasText ? Double(NodeTextStyle.imageTextSpacing) : 0
+        let insertedSpacing = hasText ? Double(nodeTextStyle.imageTextSpacing) : 0
         return max(baseHeight + insertedImageHeight + insertedSpacing, 1)
     }
 
@@ -105,13 +105,33 @@ extension CanvasView {
     }
 
     func measuredImageDisplayHeight(imageSize: CGSize, nodeWidth: Double) -> Double {
-        let displayWidth = Self.measuredImageDisplayWidth(imageSize: imageSize, nodeWidth: nodeWidth)
+        let displayWidth = measuredImageDisplayWidth(imageSize: imageSize, nodeWidth: nodeWidth)
         let scale = displayWidth / imageSize.width
         return max(Double(imageSize.height * scale), 1)
     }
 
+    func measuredImageDisplayWidth(imageSize: CGSize, nodeWidth: Double) -> Double {
+        Self.measuredImageDisplayWidth(
+            imageSize: imageSize,
+            nodeWidth: nodeWidth,
+            outerPadding: Double(nodeTextStyle.outerPadding)
+        )
+    }
+
     static func measuredImageDisplayWidth(imageSize: CGSize, nodeWidth: Double) -> Double {
-        let contentWidth = max(nodeWidth - (Double(NodeTextStyle.outerPadding) * 2), 1)
+        measuredImageDisplayWidth(
+            imageSize: imageSize,
+            nodeWidth: nodeWidth,
+            outerPadding: Double(NodeTextStyle.outerPadding)
+        )
+    }
+
+    static func measuredImageDisplayWidth(
+        imageSize: CGSize,
+        nodeWidth: Double,
+        outerPadding: Double
+    ) -> Double {
+        let contentWidth = max(nodeWidth - (outerPadding * 2), 1)
         return min(contentWidth, imageSize.width)
     }
 
@@ -140,7 +160,7 @@ extension CanvasView {
             return (height: 0, spacing: 0)
         }
         let height = measuredImageDisplayHeight(imageSize: imageSize, nodeWidth: node.bounds.width)
-        let spacing = hasText ? Double(NodeTextStyle.imageTextSpacing) : 0
+        let spacing = hasText ? Double(nodeTextStyle.imageTextSpacing) : 0
         return (height: height, spacing: spacing)
     }
 
@@ -157,17 +177,17 @@ extension CanvasView {
         let contentAlignment = nodeTextContentAlignment(for: node.id)
         if let imagePath = primaryImagePath(in: node), let image = Self.nodeImageCache.image(atFilePath: imagePath) {
             let scale = CGFloat(zoomScale)
-            let scaledPadding = NodeTextStyle.outerPadding * scale
+            let scaledPadding = nodeTextStyle.outerPadding * scale
             let contentWidth = max((CGFloat(node.bounds.width) * scale) - (scaledPadding * 2), 1)
             let hasText = (node.text ?? "").isEmpty == false
-            let unscaledImageDisplayWidth = Self.measuredImageDisplayWidth(
+            let unscaledImageDisplayWidth = measuredImageDisplayWidth(
                 imageSize: image.size,
                 nodeWidth: node.bounds.width
             )
             let imageDisplayWidth = max(CGFloat(unscaledImageDisplayWidth) * scale, 1)
             VStack(
                 alignment: contentAlignment.horizontalAlignment,
-                spacing: hasText ? NodeTextStyle.imageTextSpacing * scale : 0
+                spacing: hasText ? nodeTextStyle.imageTextSpacing * scale : 0
             ) {
                 Image(nsImage: image)
                     .resizable()
@@ -177,7 +197,7 @@ extension CanvasView {
                         alignment: contentAlignment.frameAlignment
                     )
                     .clipShape(
-                        RoundedRectangle(cornerRadius: NodeTextStyle.imageCornerRadius * scale)
+                        RoundedRectangle(cornerRadius: nodeTextStyle.imageCornerRadius * scale)
                     )
                 if hasText {
                     nonEditingNodeTextBody(
@@ -207,6 +227,7 @@ extension CanvasView {
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale,
                 appliesOuterPadding: false,
+                style: nodeTextStyle,
                 contentAlignment: contentAlignment
             )
         } else {
@@ -228,11 +249,11 @@ extension CanvasView {
     ) -> some View {
         let scale = CGFloat(zoomScale)
         let contentWidth = max(
-            (CGFloat(nodeWidth) * scale) - (NodeTextStyle.outerPadding * scale * 2),
+            (CGFloat(nodeWidth) * scale) - (nodeTextStyle.outerPadding * scale * 2),
             1
         )
         Text(text)
-            .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
+            .font(.system(size: nodeTextStyle.fontSize * scale, weight: nodeTextStyle.displayFontWeight))
             .lineLimit(nil)
             .multilineTextAlignment(contentAlignment.textAlignment)
             .frame(width: contentWidth, alignment: contentAlignment.frameAlignment)

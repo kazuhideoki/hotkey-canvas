@@ -11,10 +11,36 @@ extension ApplyCanvasCommandsUseCase {
         in graph: CanvasGraph,
         direction: CanvasNodeMoveDirection
     ) -> CanvasMutationResult {
+        moveDiagramNode(
+            in: graph,
+            direction: direction,
+            stepMultiplier: CanvasDefaultNodeDistance.diagramMoveStepMultiplier
+        )
+    }
+
+    func nudgeNodeByDirectionSlot(
+        in graph: CanvasGraph,
+        direction: CanvasNodeMoveDirection
+    ) -> CanvasMutationResult {
+        moveDiagramNode(
+            in: graph,
+            direction: direction,
+            stepMultiplier: CanvasDefaultNodeDistance.diagramNudgeStepMultiplier
+        )
+    }
+
+    private func moveDiagramNode(
+        in graph: CanvasGraph,
+        direction: CanvasNodeMoveDirection,
+        stepMultiplier: Double
+    ) -> CanvasMutationResult {
         guard let focusedNodeID = graph.focusedNodeID else {
             return noOpMutationResult(for: graph)
         }
         guard let focusedNode = graph.nodesByID[focusedNodeID] else {
+            return noOpMutationResult(for: graph)
+        }
+        guard stepMultiplier > 0 else {
             return noOpMutationResult(for: graph)
         }
         let unit = diagramUnitVector(for: direction)
@@ -26,7 +52,8 @@ extension ApplyCanvasCommandsUseCase {
         let targetBounds = moveNodeTargetBoundsByDiagramGrid(
             focusedNode: focusedNode,
             anchorNode: anchorNode,
-            direction: unit
+            direction: unit,
+            stepMultiplier: stepMultiplier
         )
         guard targetBounds != focusedNode.bounds else {
             return noOpMutationResult(for: graph)
@@ -66,11 +93,12 @@ extension ApplyCanvasCommandsUseCase {
     private func moveNodeTargetBoundsByDiagramGrid(
         focusedNode: CanvasNode,
         anchorNode: CanvasNode?,
-        direction: (dx: Int, dy: Int)
+        direction: (dx: Int, dy: Int),
+        stepMultiplier: Double
     ) -> CanvasBounds {
         let distance = diagramMoveDistance(anchorNode: anchorNode, focusedNode: focusedNode)
-        let deltaX = Double(direction.dx) * distance.horizontal
-        let deltaY = Double(direction.dy) * distance.vertical
+        let deltaX = Double(direction.dx) * distance.horizontal * stepMultiplier
+        let deltaY = Double(direction.dy) * distance.vertical * stepMultiplier
         var targetBounds = translateBounds(focusedNode.bounds, dx: deltaX, dy: deltaY)
 
         if let anchorNode {

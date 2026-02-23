@@ -1,5 +1,6 @@
 // Background: Keyboard-first workflows need a reusable modal popup for quick mode and option selection.
 // Responsibility: Render a generic, modal selection popup with highlighted option and confirm/dismiss callbacks.
+import Application
 import SwiftUI
 
 /// Reusable option model for `SelectionPopup`.
@@ -11,6 +12,7 @@ struct SelectionPopupOption: Equatable, Identifiable {
 
 /// Reusable modal popup that allows selecting one option and confirming it immediately.
 struct SelectionPopup: View {
+    let styleSheet: CanvasStyleSheet
     let title: String
     let footerText: String
     let options: [SelectionPopupOption]
@@ -21,7 +23,8 @@ struct SelectionPopup: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.12)
+            CanvasStylePalette.color(.shadow)
+                .opacity(styleSheet.overlay.dimmedBackgroundOpacity)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -43,7 +46,7 @@ struct SelectionPopup: View {
             .background(.regularMaterial)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                    .stroke(CanvasStylePalette.color(styleSheet.overlay.popupBorderColor), lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
@@ -72,8 +75,10 @@ struct SelectionPopup: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(
                         selectedOptionID == option.id
-                            ? Color.accentColor.opacity(0.2)
-                            : Color(nsColor: .textBackgroundColor).opacity(0.35)
+                            ? CanvasStylePalette.color(styleSheet.overlay.popupSelectedRowColor)
+                                .opacity(styleSheet.overlay.popupSelectedRowOpacity)
+                            : CanvasStylePalette.color(styleSheet.overlay.popupUnselectedRowColor)
+                                .opacity(styleSheet.overlay.popupUnselectedRowOpacity)
                     )
             )
         }
