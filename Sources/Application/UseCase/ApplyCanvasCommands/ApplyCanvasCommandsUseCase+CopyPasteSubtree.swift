@@ -33,7 +33,13 @@ extension ApplyCanvasCommandsUseCase {
     /// - Throws: Propagates deletion failures.
     func cutFocusedSubtree(in graph: CanvasGraph) throws -> CanvasMutationResult {
         _ = copyFocusedSubtree(in: graph)
-        return try deleteFocusedNode(in: graph)
+        let focusedAreaID = try CanvasAreaMembershipService.focusedAreaID(in: graph).get()
+        let focusedArea = try CanvasAreaMembershipService.area(withID: focusedAreaID, in: graph).get()
+        return try deleteFocusedNode(
+            in: graph,
+            areaID: focusedAreaID,
+            areaMode: focusedArea.editingMode
+        )
     }
 
     /// Pastes clipboard subtree as a child of the focused node with fresh node and edge identifiers.
