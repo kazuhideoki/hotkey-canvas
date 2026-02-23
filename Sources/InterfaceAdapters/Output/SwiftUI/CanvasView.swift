@@ -18,7 +18,6 @@ public struct CanvasView: View {
     @State var selectedCommandPaletteIndex: Int = 0
     @State var isAddNodeModePopupPresented = false
     @State var selectedAddNodeMode: CanvasEditingMode = .tree
-    @State private var previousSelectedCommandPaletteIndex: Int = 0
     @State var hasInitializedCameraAnchor = false
     @State var cameraAnchorPoint: CGPoint = .zero
     @State var manualPanOffset: CGSize = .zero
@@ -163,11 +162,9 @@ public struct CanvasView: View {
                                 guard commandPaletteItems.indices.contains(selectedIndex) else {
                                     return
                                 }
-                                let isMovingDown = selectedIndex > previousSelectedCommandPaletteIndex
-                                previousSelectedCommandPaletteIndex = selectedIndex
                                 scrollProxy.scrollTo(
                                     commandPaletteItems[selectedIndex].id,
-                                    anchor: isMovingDown ? .bottom : .top
+                                    anchor: .center
                                 )
                             }
                             .onChange(of: commandPaletteQuery) { _ in
