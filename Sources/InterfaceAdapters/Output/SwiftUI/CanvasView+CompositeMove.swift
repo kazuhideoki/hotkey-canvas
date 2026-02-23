@@ -1,5 +1,5 @@
-// Background: Diagram movement should support diagonal stepping from sequential command-arrow inputs.
-// Responsibility: Convert consecutive command-arrow key presses into cardinal/diagonal move commands.
+// Background: Diagram movement should react directly to command-arrow input without hidden direction conversion.
+// Responsibility: Capture command-arrow events for diagram nodes and forward them as move commands.
 import AppKit
 import Domain
 
@@ -11,31 +11,14 @@ extension CanvasView {
 
     func handleCompositeMoveHotkey(_ event: NSEvent) -> Bool {
         guard isCompositeMoveEnabled() else {
-            previousCompositeMoveInputDirection = nil
-            previousCompositeMoveFocusedNodeID = nil
             return false
-        }
-        let focusedNodeID = viewModel.focusedNodeID
-        if Self.shouldResetCompositeMoveState(
-            previousFocusedNodeID: previousCompositeMoveFocusedNodeID,
-            currentFocusedNodeID: focusedNodeID
-        ) {
-            previousCompositeMoveInputDirection = nil
         }
         guard let direction = commandOnlyArrowDirection(from: event) else {
-            previousCompositeMoveInputDirection = nil
             return false
         }
 
-        let outputDirection = compositeDirection(
-            previousInput: previousCompositeMoveInputDirection,
-            currentInput: direction
-        )
-        previousCompositeMoveFocusedNodeID = focusedNodeID
-        previousCompositeMoveInputDirection = direction
-
         Task {
-            await viewModel.apply(commands: [.moveNode(outputDirection)])
+            await viewModel.apply(commands: [.moveNode(direction)])
         }
         return true
     }
@@ -55,13 +38,6 @@ extension CanvasView {
             return false
         }
         return diagramNodeIDs.contains(focusedNodeID)
-    }
-
-    static func shouldResetCompositeMoveState(
-        previousFocusedNodeID: CanvasNodeID?,
-        currentFocusedNodeID: CanvasNodeID?
-    ) -> Bool {
-        previousFocusedNodeID != currentFocusedNodeID
     }
 
     func commandOnlyArrowDirection(from event: NSEvent) -> CanvasNodeMoveDirection? {
@@ -93,24 +69,4 @@ extension CanvasView {
         }
     }
 
-    func compositeDirection(
-        previousInput: CanvasNodeMoveDirection?,
-        currentInput: CanvasNodeMoveDirection
-    ) -> CanvasNodeMoveDirection {
-        guard let previousInput else {
-            return currentInput
-        }
-        switch (previousInput, currentInput) {
-        case (.up, .left), (.left, .up):
-            return .upLeft
-        case (.up, .right), (.right, .up):
-            return .upRight
-        case (.down, .left), (.left, .down):
-            return .downLeft
-        case (.down, .right), (.right, .down):
-            return .downRight
-        default:
-            return currentInput
-        }
-    }
 }
