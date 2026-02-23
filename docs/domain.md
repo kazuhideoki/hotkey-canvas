@@ -482,6 +482,8 @@
     - `deleteFocusedNode` は複数選択時にフォーカス所属エリア内の選択ノードを削除対象へ昇格する。Tree では各選択ノードの subtree まで削除し、Diagram では選択ノード自体のみ削除する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
     - 追加/削除時の所属更新を行う。
+    - `copyFocusedSubtree` / `cutFocusedSubtree` は「同一フォーカスエリア内で複数選択が2件以上ある場合」に選択集合を対象として扱い、それ以外は従来どおりフォーカス部分木を対象とする。
+    - `pasteSubtreeAsChild` は Tree/Diagram の両モードで実行可能。Tree では貼り付けルート群をフォーカスノード配下に親子接続し、Diagram では内部エッジを保ったまま親子接続を追加せず同一エリアへ再構成する。
 - 主要テスト
   - `Tests/DomainTests/CanvasAreaMembershipServiceTests.swift`
   - `Tests/ApplicationTests/ApplyCanvasCommandsUseCaseAreaPolicyTests.swift`
@@ -560,6 +562,7 @@
 - 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
 - 2026-02-23: 画像専用の `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を廃止し、`CanvasAttachment` / `upsertNodeAttachment` に統合。ノード添付を将来拡張可能な複数要素として扱う仕様へ更新した。
 - 2026-02-23: 複数選択の導入として `CanvasGraph.selectedNodeIDs`、`CanvasCommand.extendSelection`、`CanvasSelectionService` を追加。`Shift + 矢印` による選択拡張、パイプラインでの selection 正規化、表示側での複数選択ハイライト連携を追記した。
+- 2026-02-23: `copyFocusedSubtree` / `cutFocusedSubtree` / `pasteSubtreeAsChild` を更新し、同一フォーカスエリア内の複数選択コピー&ペーストを Tree/Diagram の両モードで実行可能にした。Tree は貼り付け時に親子接続を追加し、Diagram は内部エッジのみを再構成する。
 - 2026-02-23: Diagram mode の `moveNode` / `nudgeNode` の位置解決ロジックを共通化し、`nudgeNode` の移動量を `moveNode` の 1/4（4:1 比率）へ統一。`nudgeNode` でも area layout による重なり解消を適用する仕様へ更新。
 - 2026-02-23: `deleteFocusedNode` を拡張し、複数選択時はフォーカス所属エリア内の選択ノードを削除対象として扱う仕様を追加（Tree は subtree まで、Diagram は選択ノードのみ）。
 - 2026-02-23: `moveNode` / `nudgeNode` を拡張し、フォーカスを含む同一エリア複数選択時は一括移動に対応。Tree では移動後に選択ノードを同一親配下の兄弟へ一本化し、Diagram ではフォーカス基準の移動量を選択ノード群へ同一平行移動として適用する仕様を追加。

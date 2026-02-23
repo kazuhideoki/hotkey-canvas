@@ -3,6 +3,8 @@ import Foundation
 // Background: Tree relayout needs stable ordering and edge filtering to keep results deterministic.
 // Responsibility: Provide ordering helpers shared by tree relayout internals.
 extension CanvasTreeLayoutService {
+    // Future work: introduce an explicit sibling-order key (or edge insertion order)
+    // so tree ordering does not depend on temporary node coordinates after paste.
     static func validParentChildEdges(in graph: CanvasGraph) -> [CanvasEdge] {
         graph.edgesByID.values.filter { edge in
             edge.relationType == .parentChild

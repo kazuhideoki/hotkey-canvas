@@ -2,6 +2,13 @@ import Application
 import Domain
 import Testing
 
+private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds) -> Bool {
+    lhs.x < rhs.x + rhs.width
+        && lhs.x + lhs.width > rhs.x
+        && lhs.y < rhs.y + rhs.height
+        && lhs.y + lhs.height > rhs.y
+}
+
 // Background: Phase-1 area mode requires command dispatch by focused area policy.
 // Responsibility: Verify mode-specific command gating and area-data validation in apply entry.
 @Test("ApplyCanvasCommandsUseCase: diagram area maps addChildNode command to addNode behavior")
@@ -235,15 +242,8 @@ func test_apply_treeArea_nudgeNodeIsNoOp() async throws {
     #expect(result.newState == graph)
 }
 
-private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds) -> Bool {
-    lhs.x < rhs.x + rhs.width
-        && lhs.x + lhs.width > rhs.x
-        && lhs.y < rhs.y + rhs.height
-        && lhs.y + lhs.height > rhs.y
-}
-
-@Test("ApplyCanvasCommandsUseCase: diagram area rejects copyFocusedSubtree command")
-func test_apply_diagramArea_rejectsCopyFocusedSubtreeCommand() async throws {
+@Test("ApplyCanvasCommandsUseCase: diagram area allows copyFocusedSubtree command")
+func test_apply_diagramArea_allowsCopyFocusedSubtreeCommand() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let graph = CanvasGraph(
@@ -263,12 +263,8 @@ func test_apply_diagramArea_rejectsCopyFocusedSubtreeCommand() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    do {
-        _ = try await sut.apply(commands: [.copyFocusedSubtree])
-        Issue.record("Expected unsupported command error")
-    } catch let error as CanvasAreaPolicyError {
-        #expect(error == .unsupportedCommandInMode(mode: .diagram, command: .copyFocusedSubtree))
-    }
+    let result = try await sut.apply(commands: [.copyFocusedSubtree])
+    #expect(result.newState == graph)
 }
 
 @Test("ApplyCanvasCommandsUseCase: diagram area allows assignNodesToArea command")
