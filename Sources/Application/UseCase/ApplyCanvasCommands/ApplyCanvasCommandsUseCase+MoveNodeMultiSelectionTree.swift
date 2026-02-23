@@ -13,6 +13,12 @@ extension ApplyCanvasCommandsUseCase {
         destinationParentNodeID: CanvasNodeID?
     ) -> [CanvasEdgeID: CanvasEdge] {
         let targetNodeIDSet = Set(targetNodeIDs)
+        let graphBeforeRewire = CanvasGraph(
+            nodesByID: nodesByID,
+            edgesByID: originalEdgesByID,
+            focusedNodeID: nil,
+            selectedNodeIDs: []
+        )
         var nextEdgesByID = originalEdgesByID.filter { _, edge in
             if edge.relationType != .parentChild {
                 return true
@@ -26,15 +32,9 @@ extension ApplyCanvasCommandsUseCase {
             return true
         }
         if let destinationParentNodeID {
-            let graphBeforeInsertion = CanvasGraph(
-                nodesByID: nodesByID,
-                edgesByID: nextEdgesByID,
-                focusedNodeID: nil,
-                selectedNodeIDs: []
-            )
             let orderedDestinationChildNodeIDs = parentChildEdges(
                 of: destinationParentNodeID,
-                in: graphBeforeInsertion
+                in: graphBeforeRewire
             )
             .map(\.toNodeID)
             let insertionTargetNodeIDs = targetNodeIDs.filter { $0 != destinationParentNodeID }
@@ -94,6 +94,32 @@ extension ApplyCanvasCommandsUseCase {
             candidateParentNodeID = parentNodeID(of: unwrappedParentNodeID, in: graph)
         }
         return candidateParentNodeID
+    }
+
+    func moveNodeVerticallyInMultiSelection(
+        in graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID,
+        offset: Int,
+        targetNodeIDs: Set<CanvasNodeID>
+    ) throws -> CanvasGraph {
+        let peers = orderedPeerNodes(of: focusedNodeID, in: graph)
+        guard let focusedIndex = peers.firstIndex(where: { $0.id == focusedNodeID }) else {
+            return graph
+        }
+        var destinationIndex = focusedIndex + offset
+        while peers.indices.contains(destinationIndex) {
+            let candidateNodeID = peers[destinationIndex].id
+            if targetNodeIDs.contains(candidateNodeID) {
+                destinationIndex += offset
+                continue
+            }
+            return moveNodeVertically(
+                in: graph,
+                focusedNodeID: focusedNodeID,
+                destinationNodeID: candidateNodeID
+            )
+        }
+        return graph
     }
 
     private func resolvedInsertionIndex(
