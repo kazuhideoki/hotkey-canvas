@@ -14,6 +14,7 @@ struct NodeTextEditor: NSViewRepresentable {
     @Binding var text: String
     let nodeWidth: CGFloat
     let zoomScale: Double
+    let style: NodeTextStyle
     let selectAllOnFirstFocus: Bool
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
     let initialTypingEvent: NSEvent?
@@ -40,7 +41,7 @@ struct NodeTextEditor: NSViewRepresentable {
         nsView.onCancel = onCancel
         configureTextViewAppearance(nsView, zoomScale: zoomScale)
         nsView.typingAttributes[.foregroundColor] = NSColor.labelColor
-        nsView.typingAttributes[.font] = nsView.font ?? NodeTextStyle.font
+        nsView.typingAttributes[.font] = nsView.font ?? style.font
         nsView.textColor = .labelColor
         nsView.insertionPointColor = .labelColor
         context.coordinator.pendingTypingEvent = initialTypingEvent
@@ -56,7 +57,8 @@ struct NodeTextEditor: NSViewRepresentable {
             selectAllOnFirstFocus: selectAllOnFirstFocus,
             initialCursorPlacement: initialCursorPlacement,
             initialTypingEvent: initialTypingEvent,
-            onLayoutMetricsChange: onLayoutMetricsChange
+            onLayoutMetricsChange: onLayoutMetricsChange,
+            style: style
         )
     }
 }
@@ -71,7 +73,8 @@ extension NodeTextEditor {
         var pendingTypingEvent: NSEvent?
         var lastReplayedTypingEventTimestamp: TimeInterval = -1
         let onLayoutMetricsChange: (NodeTextLayoutMetrics) -> Void
-        let nodeTextHeightMeasurer = NodeTextHeightMeasurer()
+        // future work: Rebuild this measurer when runtime style updates are supported during active editing.
+        let nodeTextHeightMeasurer: NodeTextHeightMeasurer
         var hasFocusedEditor: Bool = false
         /// Monotonic token used to cancel stale focus retries from older update cycles.
         var focusRequestID: UInt64 = 0
@@ -83,7 +86,8 @@ extension NodeTextEditor {
             selectAllOnFirstFocus: Bool,
             initialCursorPlacement: NodeTextEditorInitialCursorPlacement,
             initialTypingEvent: NSEvent?,
-            onLayoutMetricsChange: @escaping (NodeTextLayoutMetrics) -> Void
+            onLayoutMetricsChange: @escaping (NodeTextLayoutMetrics) -> Void,
+            style: NodeTextStyle
         ) {
             self.text = text
             self.nodeWidth = nodeWidth
@@ -92,6 +96,7 @@ extension NodeTextEditor {
             self.initialCursorPlacement = initialCursorPlacement
             self.pendingTypingEvent = initialTypingEvent
             self.onLayoutMetricsChange = onLayoutMetricsChange
+            nodeTextHeightMeasurer = NodeTextHeightMeasurer(style: style)
         }
 
         func textDidChange(_ notification: Notification) {
@@ -116,8 +121,8 @@ extension NodeTextEditor {
         textView.drawsBackground = false
         textView.backgroundColor = .clear
         textView.font = .systemFont(
-            ofSize: NodeTextStyle.fontSize * clampedZoomScale,
-            weight: NodeTextStyle.fontWeight
+            ofSize: style.fontSize * clampedZoomScale,
+            weight: style.fontWeight
         )
         textView.textColor = .labelColor
         textView.insertionPointColor = .labelColor
@@ -125,8 +130,8 @@ extension NodeTextEditor {
         textView.isHorizontallyResizable = false
         textView.isVerticallyResizable = true
         textView.textContainerInset = NSSize(
-            width: NodeTextStyle.textContainerInset * clampedZoomScale,
-            height: NodeTextStyle.textContainerInset * clampedZoomScale
+            width: style.textContainerInset * clampedZoomScale,
+            height: style.textContainerInset * clampedZoomScale
         )
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainer?.widthTracksTextView = true
@@ -136,7 +141,7 @@ extension NodeTextEditor {
         )
         textView.typingAttributes = [
             .foregroundColor: NSColor.labelColor,
-            .font: textView.font ?? NodeTextStyle.font,
+            .font: textView.font ?? style.font,
         ]
     }
 
