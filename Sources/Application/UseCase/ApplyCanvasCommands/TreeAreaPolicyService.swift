@@ -28,6 +28,8 @@ enum TreeAreaPolicyService {
             .createArea,
             .assignNodesToArea:
             return true
+        case .connectNodes:
+            return false
         }
     }
 }

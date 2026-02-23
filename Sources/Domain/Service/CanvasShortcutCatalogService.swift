@@ -230,6 +230,14 @@ extension CanvasShortcutCatalogService {
     private static func canvasNavigationDefinitions() -> [CanvasShortcutDefinition] {
         [
             CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "beginConnectNodeSelection"),
+                name: "Connect Focused Node to Node",
+                gesture: CanvasShortcutGesture(key: .character("l"), modifiers: [.command]),
+                action: .beginConnectNodeSelection,
+                shortcutLabel: "Command + L",
+                searchTokens: ["connect", "edge", "line", "diagram"]
+            ),
+            CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "centerFocusedNode"),
                 name: "Center Focused Node",
                 gesture: CanvasShortcutGesture(key: .character("l"), modifiers: [.control]),

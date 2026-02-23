@@ -24,20 +24,21 @@
 | D6 | 折りたたみ可視性 | `CanvasFoldedSubtreeVisibilityService` |
 | D7 | エリアモード所属管理 | `CanvasAreaID`, `CanvasEditingMode`, `CanvasArea`, `CanvasAreaMembershipService`, `CanvasAreaPolicyError` |
 
-### D5 追加仕様（ズーム/折りたたみショートカット）
+### D5 追加仕様（ズーム/折りたたみ/接続ショートカット）
 
-- `CanvasShortcutAction` に `zoomIn` / `zoomOut` を追加した。
+- `CanvasShortcutAction` に `zoomIn` / `zoomOut` / `beginConnectNodeSelection` を追加した。
 - `CanvasShortcutCatalogService` の標準定義に以下を追加した。
 - `Command + +`（`Command + Shift + =` / `Command + Shift + ;` / `Command + +` 記号入力）: `zoomIn`
 - `Command + =`: `zoomIn`
 - `Command + -`: `zoomOut`
+- `Command + L`: `beginConnectNodeSelection`
 - `Option + .`: `toggleFoldFocusedSubtree`
 - `Command + Shift + ↑/↓/←/→`: `nudgeNode(.up/.down/.left/.right)`
 - `Command + C`: `copyFocusedSubtree`
 - `Command + X`: `cutFocusedSubtree`
 - `Command + V`: `pasteSubtreeAsChild`
 - 利用先:
-- `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)`）
+- `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)` / `shouldBeginConnectNodeSelection(_:)`）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+CommandPalette.swift`（コマンドパレットからのズーム実行）
 
@@ -57,6 +58,7 @@
   - `CanvasCommand`
   - `CanvasNodeMoveDirection`
   - `CanvasCommand.nudgeNode`
+  - `CanvasCommand.connectNodes(fromNodeID:toNodeID:)`
   - `CanvasSiblingNodePosition`
   - `CanvasCommand.centerFocusedNode`
   - `CanvasCommand.toggleFoldFocusedSubtree`
@@ -89,6 +91,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ConnectNodes.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
@@ -435,6 +438,7 @@
     - コマンド適用前に所属整合性検証と対象エリア解決を行う。
     - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
     - Diagram エリアでは `addChildNode` を `addNode` へ正規化する。
+    - Diagram エリアでは `connectNodes` を許可し、同一エリア内の既存ノード同士を `normal` エッジで接続する（自己接続・重複接続・跨ぎ接続は no-op）。
     - Diagram エリアでは `moveNode` を接続アンカー基準の8方向スロット移動として扱い、スロット間隔の既定値は `CanvasDefaultNodeDistance`（横 `220`・縦 `220`）を使う。
     - Diagram エリアで `moveNode` を適用した後は、同一エリア内ノード衝突も即時解消するために area layout を実行する。
     - Diagram エリアでは `nudgeNode` を座標微調整として扱い、既定ステップは `CanvasDefaultNodeDistance`（横 `220`・縦 `220`）を使う。
@@ -448,6 +452,7 @@
     - グラフ変更後に Diagram エリア所属ノードの寸法を Tree ノード横幅（`220`）正方形へ正規化し、`convertFocusedAreaMode` / `createArea` / `assignNodesToArea` 経由でも形状不変条件を維持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ConnectNodes.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
     - 追加/削除時の所属更新を行う。
@@ -522,3 +527,4 @@
 - 2026-02-22: `CanvasNodeMoveDirection` を8方向（斜め4方向を追加）へ拡張し、Diagram mode では `moveNode` を接続アンカー基準の8方向スロット移動に変更した。微調整移動は `nudgeNode`（`cmd+shift+矢印`）として分離した。
 - 2026-02-22: `alignParentNodesVertically` コマンドを追加し、Command Palette からフォーカスエリア内の親ノードを最左基準で縦一列に整列できるようにした（Tree/Diagram 両対応）。
 - 2026-02-22: `CanvasDefaultNodeDistance` を更新し、Tree/Diagram の既定ノード間距離（Tree: 横 `32` / 縦 `24`、Diagram: 横 `220` / 縦 `220`）を Domain で一元管理する仕様へ更新。
+- 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
