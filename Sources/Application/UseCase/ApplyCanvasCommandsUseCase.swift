@@ -132,7 +132,7 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
 /// In-memory clipboard state for internal tree copy/cut/paste phase.
 enum CanvasTreeClipboardState: Equatable, Sendable {
     case empty
-    case subtree(CanvasTreeClipboardPayload)
+    case subtree(CanvasClipboardPayload)
 }
 
 extension ApplyCanvasCommandsUseCase {

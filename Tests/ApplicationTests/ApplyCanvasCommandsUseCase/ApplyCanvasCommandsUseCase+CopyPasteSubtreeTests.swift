@@ -64,6 +64,193 @@ func test_apply_cutThenPasteAsChild_underNextFocusedSibling() async throws {
     #expect(targetChildren.count == 2)
 }
 
+@Test("ApplyCanvasCommandsUseCase: tree area copies multiple selected nodes and pastes them under focused node")
+func test_apply_treeArea_copyPasteMultipleSelection_pastesSelectedNodesAsChildren() async throws {
+    let focusedTargetID = CanvasNodeID(rawValue: "target")
+    let sourceAID = CanvasNodeID(rawValue: "source-a")
+    let sourceBID = CanvasNodeID(rawValue: "source-b")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedTargetID: CanvasNode(
+                id: focusedTargetID,
+                kind: .text,
+                text: "target",
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 80)
+            ),
+            sourceAID: CanvasNode(
+                id: sourceAID,
+                kind: .text,
+                text: "source-a",
+                bounds: CanvasBounds(x: 320, y: 40, width: 220, height: 80)
+            ),
+            sourceBID: CanvasNode(
+                id: sourceBID,
+                kind: .text,
+                text: "source-b",
+                bounds: CanvasBounds(x: 320, y: 160, width: 220, height: 80)
+            ),
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedTargetID,
+        selectedNodeIDs: Set([sourceAID, sourceBID])
+    ).withDefaultTreeAreaIfMissing()
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    _ = try await sut.apply(commands: [.copyFocusedSubtree])
+    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
+
+    #expect(pasteResult.newState.nodesByID.count == 5)
+    let insertedNodeIDs = Set(pasteResult.newState.nodesByID.keys).subtracting(graph.nodesByID.keys)
+    #expect(insertedNodeIDs.count == 2)
+    let insertedTexts = insertedNodeIDs.compactMap { pasteResult.newState.nodesByID[$0]?.text }
+    #expect(Set(insertedTexts) == Set(["source-a", "source-b"]))
+    let focusedNode = try #require(
+        pasteResult.newState.focusedNodeID.flatMap { pasteResult.newState.nodesByID[$0] }
+    )
+    #expect(focusedNode.text == "source-a")
+
+    let pastedParentChildEdges = pasteResult.newState.edgesByID.values.filter {
+        $0.relationType == .parentChild
+            && $0.fromNodeID == focusedTargetID
+            && insertedNodeIDs.contains($0.toNodeID)
+    }
+    #expect(pastedParentChildEdges.count == 2)
+}
+
+@Test("ApplyCanvasCommandsUseCase: diagram area copy/paste multiple selection keeps only internal edges")
+func test_apply_diagramArea_copyPasteMultipleSelection_preservesInternalEdges() async throws {
+    let focusedTargetID = CanvasNodeID(rawValue: "target")
+    let sourceAID = CanvasNodeID(rawValue: "source-a")
+    let sourceBID = CanvasNodeID(rawValue: "source-b")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedTargetID: CanvasNode(
+                id: focusedTargetID,
+                kind: .text,
+                text: "target",
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 220)
+            ),
+            sourceAID: CanvasNode(
+                id: sourceAID,
+                kind: .text,
+                text: "source-a",
+                bounds: CanvasBounds(x: 440, y: 40, width: 220, height: 220)
+            ),
+            sourceBID: CanvasNode(
+                id: sourceBID,
+                kind: .text,
+                text: "source-b",
+                bounds: CanvasBounds(x: 440, y: 320, width: 220, height: 220)
+            ),
+        ],
+        edgesByID: [
+            CanvasEdgeID(rawValue: "edge-source-a-b"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-source-a-b"),
+                fromNodeID: sourceAID,
+                toNodeID: sourceBID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: focusedTargetID,
+        selectedNodeIDs: Set([sourceAID, sourceBID]),
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedTargetID, sourceAID, sourceBID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    _ = try await sut.apply(commands: [.copyFocusedSubtree])
+    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
+
+    #expect(pasteResult.newState.nodesByID.count == 5)
+    let insertedNodeIDs = Set(pasteResult.newState.nodesByID.keys).subtracting(graph.nodesByID.keys)
+    #expect(insertedNodeIDs.count == 2)
+
+    let insertedNormalEdges = pasteResult.newState.edgesByID.values.filter {
+        $0.relationType == .normal
+            && insertedNodeIDs.contains($0.fromNodeID)
+            && insertedNodeIDs.contains($0.toNodeID)
+    }
+    #expect(insertedNormalEdges.count == 1)
+
+    let insertedParentChildEdges = pasteResult.newState.edgesByID.values.filter {
+        $0.relationType == .parentChild
+            && $0.fromNodeID == focusedTargetID
+            && insertedNodeIDs.contains($0.toNodeID)
+    }
+    #expect(insertedParentChildEdges.isEmpty)
+    let insertedNodes = insertedNodeIDs.compactMap { pasteResult.newState.nodesByID[$0] }
+    let pastedMinX = try #require(insertedNodes.map(\.bounds.x).min())
+    let pastedMinY = try #require(insertedNodes.map(\.bounds.y).min())
+    #expect(pastedMinX == 40)
+    #expect(pastedMinY == 480)
+}
+
+@Test("ApplyCanvasCommandsUseCase: diagram area paste keeps group footprint and relative positions")
+func test_apply_diagramArea_pastePreservesGroupFootprintAndRelativePositions() async throws {
+    let focusedTargetID = CanvasNodeID(rawValue: "target")
+    let sourceAID = CanvasNodeID(rawValue: "source-a")
+    let sourceBID = CanvasNodeID(rawValue: "source-b")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let sourceABounds = CanvasBounds(x: 880, y: 480, width: 220, height: 220)
+    let sourceBBounds = CanvasBounds(x: 440, y: 40, width: 220, height: 220)
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedTargetID: CanvasNode(
+                id: focusedTargetID,
+                kind: .text,
+                text: "target",
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 220)
+            ),
+            sourceAID: CanvasNode(
+                id: sourceAID,
+                kind: .text,
+                text: "source-a",
+                bounds: sourceABounds
+            ),
+            sourceBID: CanvasNode(
+                id: sourceBID,
+                kind: .text,
+                text: "source-b",
+                bounds: sourceBBounds
+            ),
+        ],
+        edgesByID: [
+            CanvasEdgeID(rawValue: "edge-source-a-b"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-source-a-b"),
+                fromNodeID: sourceAID,
+                toNodeID: sourceBID,
+                relationType: .parentChild
+            )
+        ],
+        focusedNodeID: focusedTargetID,
+        selectedNodeIDs: Set([sourceAID, sourceBID]),
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedTargetID, sourceAID, sourceBID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    _ = try await sut.apply(commands: [.copyFocusedSubtree])
+    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
+
+    let insertedNodeIDs = Set(pasteResult.newState.nodesByID.keys).subtracting(graph.nodesByID.keys)
+    #expect(insertedNodeIDs.count == 2)
+
+    let pastedSourceA = try #require(
+        insertedNodeIDs.compactMap { pasteResult.newState.nodesByID[$0] }.first(where: { $0.text == "source-a" })
+    )
+    let pastedSourceB = try #require(
+        insertedNodeIDs.compactMap { pasteResult.newState.nodesByID[$0] }.first(where: { $0.text == "source-b" })
+    )
+    let pastedXValues = insertedNodeIDs.compactMap { pasteResult.newState.nodesByID[$0]?.bounds.x }
+    let pastedMinX = try #require(pastedXValues.min())
+    #expect(pastedMinX == 40)
+    #expect((pastedSourceA.bounds.x - pastedSourceB.bounds.x) == (sourceABounds.x - sourceBBounds.x))
+    #expect((pastedSourceA.bounds.y - pastedSourceB.bounds.y) == (sourceABounds.y - sourceBBounds.y))
+}
+
 @Test("ApplyCanvasCommandsUseCase: pasteSubtreeAsChild is no-op when clipboard is empty")
 func test_apply_pasteSubtreeAsChild_noOpWhenClipboardIsEmpty() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
