@@ -6,8 +6,6 @@ import SwiftUI
 /// Computes MindNode-like edge routes with a shared branch axis per parent node.
 enum CanvasEdgeRouting {
     private static let minimumBranchGap: Double = 12
-    private static let maximumBranchOffset: Double = 72
-    private static let minimumBranchOffset: Double = 24
     private static let minimumLegLength: Double = 6
     private static let defaultCornerRadius: Double = 14
     private static let verticalPreferenceRatio: Double = 0.9
@@ -171,7 +169,7 @@ enum CanvasEdgeRouting {
         let endCoordinate = axis == .horizontal ? endX : endY
         let branchCoordinate = constrainBranchCoordinate(
             branchCoordinateByParentAndDirection[directionKey]
-                ?? (startCoordinate + (direction * minimumBranchOffset)),
+                ?? (startCoordinate + ((endCoordinate - startCoordinate) / 2)),
             start: startCoordinate,
             end: endCoordinate
         )
@@ -258,12 +256,7 @@ extension CanvasEdgeRouting {
             } else {
                 childEntryCoordinates.max() ?? exitCoordinate
             }
-        let available = abs(closestChildEntryCoordinate - exitCoordinate)
-        let offset = max(
-            minimumBranchOffset,
-            min(maximumBranchOffset, available * 0.45)
-        )
-        let baseBranchCoordinate = exitCoordinate + (direction * offset)
+        let baseBranchCoordinate = exitCoordinate + ((closestChildEntryCoordinate - exitCoordinate) / 2)
         return constrainBranchCoordinate(
             baseBranchCoordinate,
             start: exitCoordinate,

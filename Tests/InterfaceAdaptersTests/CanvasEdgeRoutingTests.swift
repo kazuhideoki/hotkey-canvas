@@ -34,6 +34,29 @@ func test_branchCoordinateByParentAndDirection_rightSideChildren_placesBranchBet
     }
 }
 
+@Test("CanvasEdgeRouting: single right-side child places branch at midpoint between node sides")
+func test_branchCoordinateByParentAndDirection_singleRightChild_placesBranchAtMidpoint() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 40, y: 200, width: 220, height: 56),
+        childID: makeNode(id: childID, x: 420, y: 240, width: 220, height: 56),
+    ]
+    let edges = [
+        CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    ]
+
+    let branchCoordinateByParentAndDirection = CanvasEdgeRouting.branchCoordinateByParentAndDirection(
+        edges: edges,
+        nodesByID: nodesByID
+    )
+    let key = CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .horizontal, direction: 1)
+    let branchCoordinate = try #require(branchCoordinateByParentAndDirection[key])
+
+    // Midpoint between parent right edge (260) and child left edge (420).
+    #expect(branchCoordinate == 340)
+}
+
 @Test("CanvasEdgeRouting: mixed left and right children keep separate branch columns")
 func test_branchCoordinateByParentAndDirection_mixedSideChildren_buildsBothBranchColumns() {
     let parentID = CanvasNodeID(rawValue: "parent")
@@ -68,6 +91,28 @@ func test_branchCoordinateByParentAndDirection_mixedSideChildren_buildsBothBranc
         #expect(leftBranchCoordinate < 300)  // parent left edge
         #expect(leftBranchCoordinate > 240)  // left child right edge
     }
+}
+
+@Test("CanvasEdgeRouting: route geometry fallback uses midpoint when shared branch is absent")
+func test_routeGeometry_withoutSharedBranch_usesMidpointFallback() {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 80, y: 200, width: 220, height: 56),
+        childID: makeNode(id: childID, x: 460, y: 360, width: 220, height: 56),
+    ]
+
+    let geometry = CanvasEdgeRouting.routeGeometry(
+        for: edge,
+        nodesByID: nodesByID,
+        branchCoordinateByParentAndDirection: [:]
+    )
+
+    #expect(geometry != nil)
+    #expect(geometry?.axis == .horizontal)
+    // Midpoint between parent right edge (300) and child left edge (460).
+    #expect(geometry?.branchCoordinate == 380)
 }
 
 @Test("CanvasEdgeRouting: route geometry uses side anchors and shared branch column")
