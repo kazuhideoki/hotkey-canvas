@@ -13,6 +13,10 @@ func test_apply_moveNodeDown_multiSelectionAcrossParents_becomesSiblingsAtDestin
 
     #expect(parentNodeID(of: fixture.focusedID, in: result.newState) == fixture.parentAID)
     #expect(parentNodeID(of: fixture.selectedID, in: result.newState) == fixture.parentAID)
+    #expect(
+        childNodeIDs(of: fixture.parentAID, in: result.newState) == [
+            fixture.lowerSiblingID, fixture.focusedID, fixture.selectedID,
+        ])
     #expect(result.newState.focusedNodeID == fixture.focusedID)
     #expect(result.newState.selectedNodeIDs == [fixture.focusedID, fixture.selectedID])
 }
@@ -35,11 +39,24 @@ func test_apply_moveNodeRight_multiSelectionWithNestedNodes_flattensToSiblings()
     )
 }
 
+@Test("ApplyCanvasCommandsUseCase: moveNode right keeps collapsed destination parent focus in multi-selection")
+func test_apply_moveNodeRight_multiSelectionKeepsCollapsedDestinationParentFocus() async throws {
+    let fixture = makeMoveNodeRightCollapsedFocusMultiSelectionFixture()
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
+
+    let result = try await sut.apply(commands: [.moveNode(.right)])
+
+    #expect(result.newState.focusedNodeID == fixture.previousID)
+    #expect(parentNodeID(of: fixture.focusedID, in: result.newState) == fixture.previousID)
+    #expect(parentNodeID(of: fixture.selectedChildID, in: result.newState) == fixture.previousID)
+}
+
 private struct MoveNodeDownMultiSelectionFixture {
     let graph: CanvasGraph
     let parentAID: CanvasNodeID
     let focusedID: CanvasNodeID
     let selectedID: CanvasNodeID
+    let lowerSiblingID: CanvasNodeID
 }
 
 private func makeMoveNodeDownMultiSelectionFixture() -> MoveNodeDownMultiSelectionFixture {
@@ -72,7 +89,8 @@ private func makeMoveNodeDownMultiSelectionFixture() -> MoveNodeDownMultiSelecti
         graph: graph,
         parentAID: parentAID,
         focusedID: focusedID,
-        selectedID: selectedID
+        selectedID: selectedID,
+        lowerSiblingID: lowerSiblingID
     )
 }
 
@@ -218,6 +236,81 @@ private func makeMoveNodeRightMultiSelectionFixture() -> MoveNodeRightMultiSelec
     )
 }
 
+private struct MoveNodeRightCollapsedFocusFixture {
+    let graph: CanvasGraph
+    let previousID: CanvasNodeID
+    let focusedID: CanvasNodeID
+    let selectedChildID: CanvasNodeID
+}
+
+private func makeMoveNodeRightCollapsedFocusMultiSelectionFixture() -> MoveNodeRightCollapsedFocusFixture {
+    let rootID = CanvasNodeID(rawValue: "root")
+    let previousID = CanvasNodeID(rawValue: "previous-collapsed")
+    let focusedID = CanvasNodeID(rawValue: "focused-collapsed")
+    let selectedChildID = CanvasNodeID(rawValue: "selected-child-collapsed")
+
+    let graph = makeMoveNodeRightCollapsedFocusGraph(
+        rootID: rootID,
+        previousID: previousID,
+        focusedID: focusedID,
+        selectedChildID: selectedChildID
+    )
+
+    return MoveNodeRightCollapsedFocusFixture(
+        graph: graph,
+        previousID: previousID,
+        focusedID: focusedID,
+        selectedChildID: selectedChildID
+    )
+}
+
+private func makeMoveNodeRightCollapsedFocusGraph(
+    rootID: CanvasNodeID,
+    previousID: CanvasNodeID,
+    focusedID: CanvasNodeID,
+    selectedChildID: CanvasNodeID
+) -> CanvasGraph {
+    CanvasGraph(
+        nodesByID: [
+            rootID: CanvasNode(
+                id: rootID, kind: .text, text: nil, bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 120)),
+            previousID: CanvasNode(
+                id: previousID, kind: .text, text: nil, bounds: CanvasBounds(x: 260, y: 0, width: 220, height: 120)),
+            focusedID: CanvasNode(
+                id: focusedID, kind: .text, text: nil, bounds: CanvasBounds(x: 260, y: 220, width: 220, height: 120)),
+            selectedChildID: CanvasNode(
+                id: selectedChildID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 520, y: 220, width: 220, height: 120)
+            ),
+        ],
+        edgesByID: [
+            CanvasEdgeID(rawValue: "edge-root-previous-collapsed"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-root-previous-collapsed"),
+                fromNodeID: rootID,
+                toNodeID: previousID,
+                relationType: .parentChild
+            ),
+            CanvasEdgeID(rawValue: "edge-root-focused-collapsed"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-root-focused-collapsed"),
+                fromNodeID: rootID,
+                toNodeID: focusedID,
+                relationType: .parentChild
+            ),
+            CanvasEdgeID(rawValue: "edge-focused-selected-collapsed"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-focused-selected-collapsed"),
+                fromNodeID: focusedID,
+                toNodeID: selectedChildID,
+                relationType: .parentChild
+            ),
+        ],
+        focusedNodeID: focusedID,
+        selectedNodeIDs: [focusedID, selectedChildID],
+        collapsedRootNodeIDs: [previousID]
+    )
+}
+
 private func hasParentChildEdge(from parentID: CanvasNodeID, to childID: CanvasNodeID, in graph: CanvasGraph) -> Bool {
     graph.edgesByID.values.contains {
         $0.relationType == .parentChild
@@ -235,4 +328,22 @@ private func parentNodeID(of nodeID: CanvasNodeID, in graph: CanvasGraph) -> Can
         .sorted { $0.id.rawValue < $1.id.rawValue }
         .first?
         .fromNodeID
+}
+
+private func childNodeIDs(of parentID: CanvasNodeID, in graph: CanvasGraph) -> [CanvasNodeID] {
+    graph.edgesByID.values
+        .filter {
+            $0.relationType == .parentChild
+                && $0.fromNodeID == parentID
+        }
+        .compactMap { edge in
+            graph.nodesByID[edge.toNodeID]
+        }
+        .sorted { lhs, rhs in
+            if lhs.bounds.y == rhs.bounds.y {
+                return lhs.id.rawValue < rhs.id.rawValue
+            }
+            return lhs.bounds.y < rhs.bounds.y
+        }
+        .map(\.id)
 }
