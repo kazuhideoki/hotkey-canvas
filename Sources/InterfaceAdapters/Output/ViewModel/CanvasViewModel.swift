@@ -7,6 +7,7 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var nodes: [CanvasNode] = []
     @Published public private(set) var edges: [CanvasEdge] = []
     @Published public private(set) var focusedNodeID: CanvasNodeID?
+    @Published public private(set) var selectedNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var collapsedRootNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var diagramNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var treeRootNodeIDs: Set<CanvasNodeID> = []
@@ -157,7 +158,8 @@ extension CanvasViewModel {
             return true
         case .alignParentNodesVertically,
             .connectNodes,
-            .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree, .centerFocusedNode, .deleteFocusedNode,
+            .moveFocus, .extendSelection, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree, .centerFocusedNode,
+            .deleteFocusedNode,
             .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
             .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
             .assignNodesToArea:
@@ -184,6 +186,7 @@ extension CanvasViewModel {
         nodes = sortedNodes(in: visibleGraph)
         edges = sortedEdges(in: visibleGraph)
         focusedNodeID = visibleGraph.focusedNodeID
+        selectedNodeIDs = visibleGraph.selectedNodeIDs
         collapsedRootNodeIDs = CanvasFoldedSubtreeVisibilityService.normalizedCollapsedRootNodeIDs(
             in: result.newState
         )

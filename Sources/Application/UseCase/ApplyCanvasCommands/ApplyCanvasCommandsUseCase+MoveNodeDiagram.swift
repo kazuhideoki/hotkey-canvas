@@ -46,6 +46,7 @@ extension ApplyCanvasCommandsUseCase {
             nodesByID: graph.nodesByID.merging([focusedNodeID: movedNode], uniquingKeysWith: { _, new in new }),
             edgesByID: graph.edgesByID,
             focusedNodeID: focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )

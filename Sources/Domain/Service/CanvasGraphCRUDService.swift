@@ -38,6 +38,7 @@ public enum CanvasGraphCRUDService {
                 nodesByID: nodes,
                 edgesByID: graph.edgesByID,
                 focusedNodeID: graph.focusedNodeID,
+                selectedNodeIDs: graph.selectedNodeIDs,
                 collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
                 areasByID: areasByID
             ))
@@ -66,6 +67,7 @@ public enum CanvasGraphCRUDService {
                 nodesByID: nodes,
                 edgesByID: graph.edgesByID,
                 focusedNodeID: graph.focusedNodeID,
+                selectedNodeIDs: graph.selectedNodeIDs,
                 collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
                 areasByID: graph.areasByID
             ))
@@ -104,6 +106,7 @@ public enum CanvasGraphCRUDService {
                 nodesByID: nodes,
                 edgesByID: edges,
                 focusedNodeID: nextFocusedNodeID,
+                selectedNodeIDs: graph.selectedNodeIDs.subtracting([id]),
                 collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
                 areasByID: nextAreasByID
             ))
@@ -132,6 +135,7 @@ public enum CanvasGraphCRUDService {
                 nodesByID: graph.nodesByID,
                 edgesByID: edges,
                 focusedNodeID: graph.focusedNodeID,
+                selectedNodeIDs: graph.selectedNodeIDs,
                 collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
                 areasByID: graph.areasByID
             ))
@@ -154,6 +158,7 @@ public enum CanvasGraphCRUDService {
                 nodesByID: graph.nodesByID,
                 edgesByID: edges,
                 focusedNodeID: graph.focusedNodeID,
+                selectedNodeIDs: graph.selectedNodeIDs,
                 collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
                 areasByID: graph.areasByID
             ))
