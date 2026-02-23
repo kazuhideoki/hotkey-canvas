@@ -17,6 +17,9 @@ enum DiagramAreaPolicyService {
             .nudgeNode,
             .centerFocusedNode,
             .deleteFocusedNode,
+            .copyFocusedSubtree,
+            .cutFocusedSubtree,
+            .pasteSubtreeAsChild,
             .setNodeText,
             .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
@@ -26,10 +29,7 @@ enum DiagramAreaPolicyService {
             return true
         case .addChildNode,
             .addSiblingNode,
-            .toggleFoldFocusedSubtree,
-            .copyFocusedSubtree,
-            .cutFocusedSubtree,
-            .pasteSubtreeAsChild:
+            .toggleFoldFocusedSubtree:
             return false
         }
     }
