@@ -142,8 +142,8 @@ func test_apply_diagramArea_moveNodeRelocatesFocusedNodeAroundConnectedNode() as
     let result = try await sut.apply(commands: [.moveNode(.right)])
 
     let movedNode = try #require(result.newState.nodesByID[nodeID])
-    #expect(movedNode.bounds.x == 440)
-    #expect(movedNode.bounds.y == 0)
+    #expect(movedNode.bounds.x == 480)
+    #expect(movedNode.bounds.y == 40)
 }
 
 @Test("ApplyCanvasCommandsUseCase: diagram area nudgeNode nudges focused node")

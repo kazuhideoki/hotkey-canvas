@@ -26,8 +26,6 @@ public struct CanvasView: View {
     @State var zoomRatioPopupRequestID: UInt64 = 0
     /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
-    @State var previousCompositeMoveInputDirection: CanvasNodeMoveDirection?
-    @State var previousCompositeMoveFocusedNodeID: CanvasNodeID?
     @State var connectNodeSelectionSourceNodeID: CanvasNodeID?
     @State var connectNodeSelectionTargetNodeID: CanvasNodeID?
     let hotkeyTranslator: CanvasHotkeyTranslator
@@ -368,8 +366,6 @@ public struct CanvasView: View {
                 applyFocusVisibilityRule(viewportSize: viewportSize)
             }
             .onChange(of: viewModel.focusedNodeID) { _ in
-                previousCompositeMoveInputDirection = nil
-                previousCompositeMoveFocusedNodeID = viewModel.focusedNodeID
                 applyFocusVisibilityRule(viewportSize: viewportSize)
                 synchronizeConnectNodeSelectionState()
             }
