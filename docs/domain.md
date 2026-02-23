@@ -559,8 +559,5 @@
 - 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
 - 2026-02-23: 画像専用の `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を廃止し、`CanvasAttachment` / `upsertNodeAttachment` に統合。ノード添付を将来拡張可能な複数要素として扱う仕様へ更新した。
 - 2026-02-23: 複数選択の導入として `CanvasGraph.selectedNodeIDs`、`CanvasCommand.extendSelection`、`CanvasSelectionService` を追加。`Shift + 矢印` による選択拡張、パイプラインでの selection 正規化、表示側での複数選択ハイライト連携を追記した。
-<<<<<<< HEAD
 - 2026-02-23: Diagram mode の `moveNode` / `nudgeNode` の位置解決ロジックを共通化し、`nudgeNode` の移動量を `moveNode` の 1/4（4:1 比率）へ統一。`nudgeNode` でも area layout による重なり解消を適用する仕様へ更新。
-=======
 - 2026-02-23: `deleteFocusedNode` を拡張し、複数選択時はフォーカス所属エリア内の選択ノードを削除対象として扱う仕様を追加（Tree は subtree まで、Diagram は選択ノードのみ）。
->>>>>>> main
