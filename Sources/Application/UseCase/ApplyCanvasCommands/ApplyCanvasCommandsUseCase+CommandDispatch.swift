@@ -75,7 +75,7 @@ extension ApplyCanvasCommandsUseCase {
             return try cutFocusedSubtree(in: graph)
         case .pasteSubtreeAsChild:
             return try pasteSubtreeAsChild(in: graph)
-        case .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle:
+        case .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle:
             return try applyNodeContentCommand(command: command, to: graph)
         case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return noOpMutationResult(for: graph)
@@ -112,7 +112,7 @@ extension ApplyCanvasCommandsUseCase {
             .cutFocusedSubtree,
             .pasteSubtreeAsChild,
             .setNodeText,
-            .setNodeImage,
+            .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,
@@ -128,11 +128,11 @@ extension ApplyCanvasCommandsUseCase {
         switch command {
         case .setNodeText(let nodeID, let text, let nodeHeight):
             return try setNodeText(in: graph, nodeID: nodeID, text: text, nodeHeight: nodeHeight)
-        case .setNodeImage(let nodeID, let imagePath, let nodeHeight):
-            return try setNodeImage(
+        case .upsertNodeAttachment(let nodeID, let attachment, let nodeHeight):
+            return try upsertNodeAttachment(
                 in: graph,
                 nodeID: nodeID,
-                imagePath: imagePath,
+                attachment: attachment,
                 nodeHeight: nodeHeight
             )
         case .toggleFocusedNodeMarkdownStyle:
@@ -198,7 +198,7 @@ extension ApplyCanvasCommandsUseCase {
             .cutFocusedSubtree,
             .pasteSubtreeAsChild,
             .setNodeText,
-            .setNodeImage,
+            .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle:
             return noOpMutationResult(for: graph)
         }
@@ -248,7 +248,7 @@ extension ApplyCanvasCommandsUseCase {
             return .failure(.focusedNodeNotFound)
         case .setNodeText(let nodeID, _, _):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
-        case .setNodeImage(let nodeID, _, _):
+        case .upsertNodeAttachment(let nodeID, _, _):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
         case .connectNodes(let fromNodeID, _):
             return CanvasAreaMembershipService.areaID(containing: fromNodeID, in: graph)

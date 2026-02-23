@@ -1,5 +1,5 @@
 // Background: Interface adapter tests use concise node fixtures to verify rendering and view-model behavior.
-// Responsibility: Provide a test-only convenience initializer that defaults imagePath to nil.
+// Responsibility: Provide a test-only convenience initializer that defaults attachments to empty.
 import Domain
 
 extension CanvasNode {
@@ -15,7 +15,7 @@ extension CanvasNode {
             id: id,
             kind: kind,
             text: text,
-            imagePath: nil,
+            attachments: [],
             bounds: bounds,
             metadata: metadata,
             markdownStyleEnabled: markdownStyleEnabled

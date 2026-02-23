@@ -23,7 +23,7 @@ enum TreeAreaPolicyService {
             .cutFocusedSubtree,
             .pasteSubtreeAsChild,
             .setNodeText,
-            .setNodeImage,
+            .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,

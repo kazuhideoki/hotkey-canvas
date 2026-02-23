@@ -132,7 +132,7 @@ extension ApplyCanvasCommandsUseCase {
         return CanvasTreeClipboardNodePayload(
             kind: node.kind,
             text: node.text,
-            imagePath: node.imagePath,
+            attachments: node.attachments,
             markdownStyleEnabled: node.markdownStyleEnabled,
             metadata: node.metadata,
             children: childrenPayload
@@ -155,7 +155,7 @@ extension ApplyCanvasCommandsUseCase {
             id: CanvasNodeID(rawValue: "node-\(UUID().uuidString.lowercased())"),
             kind: payload.kind,
             text: payload.text,
-            imagePath: payload.imagePath,
+            attachments: payload.attachments,
             bounds: rootBounds,
             metadata: payload.metadata,
             markdownStyleEnabled: payload.markdownStyleEnabled

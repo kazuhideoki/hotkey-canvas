@@ -208,6 +208,7 @@ public struct CanvasView: View {
                             let isEditing = editingContext?.nodeID == node.id
                             let isDiagramNode = viewModel.diagramNodeIDs.contains(node.id)
                             let isTreeRootNode = viewModel.treeRootNodeIDs.contains(node.id)
+                            let textContentAlignment = nodeTextContentAlignment(for: node.id)
                             let nodeCornerRadius: CGFloat = isDiagramNode ? 0 : NodeTextStyle.cornerRadius
                             let nodeFillColor =
                                 isTreeRootNode
@@ -233,31 +234,11 @@ public struct CanvasView: View {
                                         )
                                 )
                                 .overlay(alignment: .topLeading) {
-                                    if editingContext?.nodeID == node.id {
-                                        NodeTextEditor(
-                                            text: editingTextBinding(for: node.id),
-                                            nodeWidth: CGFloat(node.bounds.width),
-                                            zoomScale: zoomScale,
-                                            selectAllOnFirstFocus: false,
-                                            initialCursorPlacement: editingContext?.initialCursorPlacement ?? .end,
-                                            initialTypingEvent: editingContext?.initialTypingEvent,
-                                            onLayoutMetricsChange: { metrics in
-                                                updateEditingNodeLayout(for: node.id, metrics: metrics)
-                                            },
-                                            onCommit: {
-                                                commitNodeEditing()
-                                            },
-                                            onCancel: {
-                                                cancelNodeEditing()
-                                            }
-                                        )
-                                        .padding(NodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
-                                    } else {
-                                        nonEditingNodeContent(
-                                            node: node,
-                                            zoomScale: zoomScale
-                                        )
-                                    }
+                                    nodeContentOverlay(
+                                        node: node,
+                                        zoomScale: zoomScale,
+                                        contentAlignment: textContentAlignment
+                                    )
                                 }
                                 .overlay(alignment: .trailing) {
                                     if isCollapsedRoot {

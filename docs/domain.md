@@ -52,7 +52,8 @@
 - 集約
 - `CanvasGraph`: ノード/エッジ/フォーカス/選択集合/折りたたみルートを保持する不変スナップショット。
 - エンティティ/値オブジェクト
-  - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.imagePath` はノード内画像ファイルパス、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
+  - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.attachments` はノード内添付、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
+  - `CanvasAttachment`, `CanvasAttachmentID`, `CanvasAttachmentKind`, `CanvasAttachmentPlacement`
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`
   - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`）
 - コマンド
@@ -63,7 +64,7 @@
   - `CanvasSiblingNodePosition`
   - `CanvasCommand.centerFocusedNode`
   - `CanvasCommand.toggleFoldFocusedSubtree`
-  - `CanvasCommand.setNodeImage(nodeID:imagePath:nodeHeight:)`
+  - `CanvasCommand.upsertNodeAttachment(nodeID:attachment:nodeHeight:)`
   - `CanvasCommand.copyFocusedSubtree`
   - `CanvasCommand.cutFocusedSubtree`
   - `CanvasCommand.pasteSubtreeAsChild`
@@ -98,7 +99,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
-  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeImage.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+UpsertNodeAttachment.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ToggleFocusedNodeMarkdownStyle.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AlignParentNodesVertically.swift`
 - 入力境界/コマンド流入
@@ -116,7 +117,8 @@
 - 不変条件
   - ノード ID は空文字を許容しない。
   - ノードの `width` / `height` は正値である必要がある。
-  - ノード画像は `imagePath == nil` で未設定を表し、同一ノードへの再挿入は `imagePath` の上書き（置換）として扱う。
+  - ノード添付は `attachments` の空配列で未設定を表し、ノード内で `CanvasAttachment.id` の重複を許容しない。
+  - 画像添付 (`CanvasAttachmentKind.image`) は `filePath` の空文字を許容しない。
   - ノードの Markdown スタイル適用フラグは `Bool` で保持し、新規ノードは既定で `true`。
   - エッジ ID は空文字を許容しない。
   - エッジの `fromNodeID` / `toNodeID` はグラフ内に存在する必要がある。
@@ -125,6 +127,9 @@
   - `invalidNodeID`
   - `invalidEdgeID`
   - `invalidNodeBounds`
+  - `invalidAttachmentID`
+  - `invalidAttachmentPayload`
+  - `duplicateAttachmentID(CanvasAttachmentID)`
   - `nodeAlreadyExists(CanvasNodeID)`
   - `nodeNotFound(CanvasNodeID)`
   - `edgeAlreadyExists(CanvasEdgeID)`
@@ -550,4 +555,8 @@
 - 2026-02-22: 全ノード削除後に複数空エリアが残る状態でも、`Shift + Enter` のモード選択追加が失敗しないように、ノード未存在時は選択モードに合うエリアを優先解決（なければ新規作成）する仕様へ更新。
 - 2026-02-23: `Shift + Enter` モード選択追加の empty graph 分岐を修正し、選択モードと不一致な `defaultTree` の誤優先を禁止。あわせて空グラフで area を事前作成した場合でも、履歴の `graphBeforeMutation` は必ず元グラフを保持して undo 整合性を維持するよう更新。
 - 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
+<<<<<<< HEAD
 - 2026-02-23: 複数選択の導入として `CanvasGraph.selectedNodeIDs`、`CanvasCommand.extendSelection`、`CanvasSelectionService` を追加。`Shift + 矢印` による選択拡張、パイプラインでの selection 正規化、表示側での複数選択ハイライト連携を追記した。
+=======
+- 2026-02-23: 画像専用の `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を廃止し、`CanvasAttachment` / `upsertNodeAttachment` に統合。ノード添付を将来拡張可能な複数要素として扱う仕様へ更新した。
+>>>>>>> main

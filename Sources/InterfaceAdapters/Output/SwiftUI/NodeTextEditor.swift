@@ -14,6 +14,7 @@ struct NodeTextEditor: NSViewRepresentable {
     @Binding var text: String
     let nodeWidth: CGFloat
     let zoomScale: Double
+    let contentAlignment: NodeTextContentAlignment
     let selectAllOnFirstFocus: Bool
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
     let initialTypingEvent: NSEvent?
@@ -26,7 +27,11 @@ struct NodeTextEditor: NSViewRepresentable {
         textView.delegate = context.coordinator
         textView.onCommit = onCommit
         textView.onCancel = onCancel
-        configureTextViewAppearance(textView, zoomScale: zoomScale)
+        configureTextViewAppearance(
+            textView,
+            zoomScale: zoomScale,
+            contentAlignment: contentAlignment
+        )
         return textView
     }
 
@@ -38,11 +43,14 @@ struct NodeTextEditor: NSViewRepresentable {
         context.coordinator.zoomScale = zoomScale
         nsView.onCommit = onCommit
         nsView.onCancel = onCancel
-        configureTextViewAppearance(nsView, zoomScale: zoomScale)
-        nsView.typingAttributes[.foregroundColor] = NSColor.labelColor
-        nsView.typingAttributes[.font] = nsView.font ?? NodeTextStyle.font
+        configureTextViewAppearance(
+            nsView,
+            zoomScale: zoomScale,
+            contentAlignment: contentAlignment
+        )
         nsView.textColor = .labelColor
         nsView.insertionPointColor = .labelColor
+        nsView.applyContentLayout()
         context.coordinator.pendingTypingEvent = initialTypingEvent
         context.coordinator.pushLayoutMetrics(for: nsView.string)
         focusEditorIfNeeded(nsView, coordinator: context.coordinator)
@@ -111,7 +119,11 @@ extension NodeTextEditor {
         }
     }
 
-    private func configureTextViewAppearance(_ textView: NodeTextEditorTextView, zoomScale: Double) {
+    private func configureTextViewAppearance(
+        _ textView: NodeTextEditorTextView,
+        zoomScale: Double,
+        contentAlignment: NodeTextContentAlignment
+    ) {
         let clampedZoomScale = max(CGFloat(zoomScale), 0.0001)
         textView.drawsBackground = false
         textView.backgroundColor = .clear
@@ -123,21 +135,20 @@ extension NodeTextEditor {
         textView.insertionPointColor = .labelColor
         textView.isRichText = false
         textView.isHorizontallyResizable = false
-        textView.isVerticallyResizable = true
-        textView.textContainerInset = NSSize(
-            width: NodeTextStyle.textContainerInset * clampedZoomScale,
-            height: NodeTextStyle.textContainerInset * clampedZoomScale
-        )
+        textView.isVerticallyResizable = contentAlignment == .topLeading
+        textView.baseTextContainerInset = NodeTextStyle.textContainerInset * clampedZoomScale
+        textView.nodeTextContentAlignment = contentAlignment
         textView.textContainer?.lineFragmentPadding = 0
-        textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.widthTracksTextView = false
         textView.textContainer?.containerSize = NSSize(
-            width: CGFloat.greatestFiniteMagnitude,
+            width: 1,
             height: CGFloat.greatestFiniteMagnitude
         )
         textView.typingAttributes = [
             .foregroundColor: NSColor.labelColor,
             .font: textView.font ?? NodeTextStyle.font,
         ]
+        textView.applyContentLayout()
     }
 
     private func focusEditorIfNeeded(
@@ -253,6 +264,26 @@ class NodeTextEditorTextView: NSTextView {
 
     var onCommit: (() -> Void)?
     var onCancel: (() -> Void)?
+    var baseTextContainerInset: CGFloat = NodeTextStyle.textContainerInset {
+        didSet {
+            applyContentLayout()
+        }
+    }
+    var nodeTextContentAlignment: NodeTextContentAlignment = .topLeading {
+        didSet {
+            applyContentLayout()
+        }
+    }
+
+    override func didChangeText() {
+        super.didChangeText()
+        applyContentLayout()
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        applyContentLayout()
+    }
 
     override func keyDown(with event: NSEvent) {
         if event.keyCode == Self.escapeKeyCode {
@@ -294,5 +325,86 @@ class NodeTextEditorTextView: NSTextView {
             return
         }
         super.keyDown(with: event)
+    }
+
+    func applyContentLayout() {
+        applyTextContainerSize()
+        let paragraphAlignment = nodeTextContentAlignment.paragraphAlignment
+        applyParagraphAlignment(paragraphAlignment)
+        let contentHeight = measuredTextContentHeight()
+        let verticalInset = Self.verticalInset(
+            boundsHeight: bounds.height,
+            contentHeight: contentHeight,
+            baseInset: baseTextContainerInset,
+            contentAlignment: nodeTextContentAlignment
+        )
+        let nextInset = NSSize(width: baseTextContainerInset, height: verticalInset)
+        if textContainerInset != nextInset {
+            textContainerInset = nextInset
+        }
+    }
+
+    static func verticalInset(
+        boundsHeight: CGFloat,
+        contentHeight: CGFloat,
+        baseInset: CGFloat,
+        contentAlignment: NodeTextContentAlignment
+    ) -> CGFloat {
+        let clampedBaseInset = max(baseInset, 0)
+        guard boundsHeight.isFinite, contentHeight.isFinite else {
+            return clampedBaseInset
+        }
+        switch contentAlignment {
+        case .topLeading:
+            return clampedBaseInset
+        case .center:
+            return max((boundsHeight - contentHeight) / 2, clampedBaseInset)
+        }
+    }
+}
+
+extension NodeTextEditorTextView {
+    private func applyTextContainerSize() {
+        guard let textContainer else {
+            return
+        }
+        let clampedInset = max(baseTextContainerInset, 0)
+        let targetWidth = max(bounds.width - (clampedInset * 2), 1)
+        let targetSize = NSSize(width: targetWidth, height: CGFloat.greatestFiniteMagnitude)
+        if textContainer.widthTracksTextView {
+            textContainer.widthTracksTextView = false
+        }
+        if textContainer.containerSize != targetSize {
+            textContainer.containerSize = targetSize
+        }
+    }
+
+    private func applyParagraphAlignment(_ alignment: NSTextAlignment) {
+        if self.alignment != alignment {
+            self.alignment = alignment
+        }
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = alignment
+        var attributes = typingAttributes
+        attributes[.paragraphStyle] = paragraphStyle
+        attributes[.foregroundColor] = textColor ?? NSColor.labelColor
+        attributes[.font] = font ?? NodeTextStyle.font
+        typingAttributes = attributes
+        let textLength = (string as NSString).length
+        guard textLength > 0 else {
+            return
+        }
+        setAlignment(alignment, range: NSRange(location: 0, length: textLength))
+    }
+
+    private func measuredTextContentHeight() -> CGFloat {
+        guard let layoutManager, let textContainer else {
+            return NSLayoutManager().defaultLineHeight(for: font ?? NodeTextStyle.font)
+        }
+        let glyphRange = layoutManager.glyphRange(for: textContainer)
+        layoutManager.ensureLayout(forGlyphRange: glyphRange)
+        let usedHeight = layoutManager.usedRect(for: textContainer).height
+        let defaultLineHeight = layoutManager.defaultLineHeight(for: font ?? NodeTextStyle.font)
+        return max(ceil(usedHeight), defaultLineHeight)
     }
 }
