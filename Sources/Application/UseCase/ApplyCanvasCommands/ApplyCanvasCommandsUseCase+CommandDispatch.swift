@@ -68,7 +68,11 @@ extension ApplyCanvasCommandsUseCase {
         case .centerFocusedNode:
             return noOpMutationResult(for: graph)
         case .deleteFocusedNode:
-            return try deleteFocusedNode(in: graph)
+            return try deleteFocusedNode(
+                in: graph,
+                areaID: resolvedAreaID,
+                areaMode: resolvedAreaMode
+            )
         case .copyFocusedSubtree:
             return copyFocusedSubtree(in: graph)
         case .cutFocusedSubtree:

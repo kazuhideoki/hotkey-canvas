@@ -9,6 +9,7 @@ struct NodeMarkdownDisplay: View {
     let nodeWidth: Double
     let zoomScale: Double
     let appliesOuterPadding: Bool
+    let style: NodeTextStyle
     let contentAlignment: NodeTextContentAlignment
 
     init(
@@ -16,12 +17,14 @@ struct NodeMarkdownDisplay: View {
         nodeWidth: Double,
         zoomScale: Double,
         appliesOuterPadding: Bool = true,
+        style: NodeTextStyle = .defaultStyle,
         contentAlignment: NodeTextContentAlignment = .topLeading
     ) {
         self.text = text
         self.nodeWidth = nodeWidth
         self.zoomScale = zoomScale
         self.appliesOuterPadding = appliesOuterPadding
+        self.style = style
         self.contentAlignment = contentAlignment
     }
 
@@ -31,10 +34,10 @@ struct NodeMarkdownDisplay: View {
 
     var body: some View {
         let scale = CGFloat(zoomScale)
-        let contentInset = NodeTextStyle.outerPadding * scale
+        let contentInset = style.outerPadding * scale
         let contentWidth = max((CGFloat(nodeWidth) * scale) - (contentInset * 2), 1)
 
-        VStack(alignment: contentAlignment.horizontalAlignment, spacing: NodeTextStyle.markdownBlockSpacing * scale) {
+        VStack(alignment: contentAlignment.horizontalAlignment, spacing: style.markdownBlockSpacing * scale) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
                 blockView(block, scale: scale)
             }
@@ -49,35 +52,35 @@ struct NodeMarkdownDisplay: View {
         switch block {
         case .paragraph(let text):
             inlineMarkdownText(text)
-                .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
-                .lineSpacing(NodeTextStyle.markdownLineSpacing * scale)
+                .font(.system(size: style.fontSize * scale, weight: style.displayFontWeight))
+                .lineSpacing(style.markdownLineSpacing * scale)
                 .multilineTextAlignment(contentAlignment.textAlignment)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: contentAlignment.frameAlignment)
         case .heading(let level, let text):
             inlineMarkdownText(text)
                 .font(.system(size: headingFontSize(level: level, scale: scale), weight: .bold))
-                .lineSpacing(NodeTextStyle.markdownLineSpacing * scale)
+                .lineSpacing(style.markdownLineSpacing * scale)
                 .multilineTextAlignment(contentAlignment.textAlignment)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: contentAlignment.frameAlignment)
         case .unorderedListItem(let text):
-            HStack(alignment: .firstTextBaseline, spacing: NodeTextStyle.markdownListMarkerSpacing * scale) {
+            HStack(alignment: .firstTextBaseline, spacing: style.markdownListMarkerSpacing * scale) {
                 Text("\u{2022}")
-                    .font(.system(size: NodeTextStyle.fontSize * scale, weight: .bold))
+                    .font(.system(size: style.fontSize * scale, weight: .bold))
                 inlineMarkdownText(text)
-                    .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
-                    .lineSpacing(NodeTextStyle.markdownLineSpacing * scale)
+                    .font(.system(size: style.fontSize * scale, weight: style.displayFontWeight))
+                    .lineSpacing(style.markdownLineSpacing * scale)
             }
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: contentAlignment.frameAlignment)
         case .orderedListItem(let marker, let text):
-            HStack(alignment: .firstTextBaseline, spacing: NodeTextStyle.markdownListMarkerSpacing * scale) {
+            HStack(alignment: .firstTextBaseline, spacing: style.markdownListMarkerSpacing * scale) {
                 Text(marker)
-                    .font(.system(size: NodeTextStyle.fontSize * scale, weight: .semibold))
+                    .font(.system(size: style.fontSize * scale, weight: .semibold))
                 inlineMarkdownText(text)
-                    .font(.system(size: NodeTextStyle.fontSize * scale, weight: NodeTextStyle.displayFontWeight))
-                    .lineSpacing(NodeTextStyle.markdownLineSpacing * scale)
+                    .font(.system(size: style.fontSize * scale, weight: style.displayFontWeight))
+                    .lineSpacing(style.markdownLineSpacing * scale)
             }
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: contentAlignment.frameAlignment)
@@ -91,39 +94,39 @@ struct NodeMarkdownDisplay: View {
         return Text(code)
             .font(
                 .system(
-                    size: NodeTextStyle.markdownCodeFontSize * scale,
+                    size: style.markdownCodeFontSize * scale,
                     weight: .regular,
                     design: .monospaced
                 )
             )
-            .foregroundStyle(accent.opacity(NodeTextStyle.markdownCodeTextOpacity))
-            .lineSpacing(NodeTextStyle.markdownLineSpacing * scale)
+            .foregroundStyle(accent.opacity(style.markdownCodeTextOpacity))
+            .lineSpacing(style.markdownLineSpacing * scale)
             .frame(maxWidth: .infinity, alignment: contentAlignment.frameAlignment)
-            .padding(NodeTextStyle.markdownCodeBlockPadding * scale)
+            .padding(style.markdownCodeBlockPadding * scale)
             .background(
-                RoundedRectangle(cornerRadius: NodeTextStyle.markdownCodeBlockCornerRadius * scale)
-                    .fill(accent.opacity(NodeTextStyle.markdownCodeBlockOpacity))
+                RoundedRectangle(cornerRadius: style.markdownCodeBlockCornerRadius * scale)
+                    .fill(accent.opacity(style.markdownCodeBlockOpacity))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: NodeTextStyle.markdownCodeBlockCornerRadius * scale)
+                RoundedRectangle(cornerRadius: style.markdownCodeBlockCornerRadius * scale)
                     .stroke(
-                        accent.opacity(NodeTextStyle.markdownCodeBorderOpacity),
-                        lineWidth: NodeTextStyle.markdownCodeBorderLineWidth * scale
+                        accent.opacity(style.markdownCodeBorderOpacity),
+                        lineWidth: style.markdownCodeBorderLineWidth * scale
                     )
             )
             .overlay(alignment: .leading) {
                 Rectangle()
-                    .fill(accent.opacity(NodeTextStyle.markdownCodeLeadingBarOpacity))
-                    .frame(width: NodeTextStyle.markdownCodeLeadingBarWidth * scale)
+                    .fill(accent.opacity(style.markdownCodeLeadingBarOpacity))
+                    .frame(width: style.markdownCodeLeadingBarWidth * scale)
                     .clipShape(
-                        RoundedRectangle(cornerRadius: NodeTextStyle.markdownCodeBlockCornerRadius * scale)
+                        RoundedRectangle(cornerRadius: style.markdownCodeBlockCornerRadius * scale)
                     )
             }
             .fixedSize(horizontal: false, vertical: true)
     }
 
     private func headingFontSize(level: Int, scale: CGFloat) -> CGFloat {
-        let base = NodeTextStyle.fontSize
+        let base = style.fontSize
         let multiplier: CGFloat
         switch level {
         case 1:

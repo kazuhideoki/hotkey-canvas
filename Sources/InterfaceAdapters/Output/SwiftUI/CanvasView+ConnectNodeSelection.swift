@@ -24,21 +24,21 @@ extension CanvasView {
         isSelected: Bool
     ) -> Color {
         if isEditing {
-            return Color(nsColor: .systemPink)
+            return styleColor(styleSheet.nodeChrome.connectSelectionEditingBorderColor)
         }
         if isConnectNodeSelectionTargetNode(nodeID) {
-            return Color(nsColor: .systemGreen)
+            return styleColor(styleSheet.nodeChrome.connectSelectionTargetBorderColor)
         }
         if isConnectNodeSelectionSourceNode(nodeID) {
-            return Color(nsColor: .systemOrange)
+            return styleColor(styleSheet.nodeChrome.connectSelectionSourceBorderColor)
         }
         if isFocused {
-            return Color.accentColor
+            return styleColor(styleSheet.nodeChrome.focusedBorderColor)
         }
         if isSelected {
-            return Color.accentColor.opacity(0.55)
+            return styleColor(styleSheet.nodeChrome.focusedBorderColor).opacity(0.55)
         }
-        return Color(nsColor: .separatorColor)
+        return styleColor(styleSheet.nodeChrome.defaultBorderColor)
     }
 
     func connectNodeSelectionBorderLineWidth(
@@ -50,9 +50,9 @@ extension CanvasView {
         if isEditing || isFocused || isSelected || isConnectNodeSelectionSourceNode(nodeID)
             || isConnectNodeSelectionTargetNode(nodeID)
         {
-            return NodeTextStyle.focusedBorderLineWidth
+            return nodeTextStyle.focusedBorderLineWidth
         }
-        return NodeTextStyle.borderLineWidth
+        return nodeTextStyle.borderLineWidth
     }
 
     func presentConnectNodeSelectionIfPossible() {

@@ -14,6 +14,7 @@ struct NodeTextEditor: NSViewRepresentable {
     @Binding var text: String
     let nodeWidth: CGFloat
     let zoomScale: Double
+    let style: NodeTextStyle
     let contentAlignment: NodeTextContentAlignment
     let selectAllOnFirstFocus: Bool
     let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
@@ -30,7 +31,8 @@ struct NodeTextEditor: NSViewRepresentable {
         configureTextViewAppearance(
             textView,
             zoomScale: zoomScale,
-            contentAlignment: contentAlignment
+            contentAlignment: contentAlignment,
+            style: style
         )
         return textView
     }
@@ -46,7 +48,8 @@ struct NodeTextEditor: NSViewRepresentable {
         configureTextViewAppearance(
             nsView,
             zoomScale: zoomScale,
-            contentAlignment: contentAlignment
+            contentAlignment: contentAlignment,
+            style: style
         )
         nsView.textColor = .labelColor
         nsView.insertionPointColor = .labelColor
@@ -64,7 +67,8 @@ struct NodeTextEditor: NSViewRepresentable {
             selectAllOnFirstFocus: selectAllOnFirstFocus,
             initialCursorPlacement: initialCursorPlacement,
             initialTypingEvent: initialTypingEvent,
-            onLayoutMetricsChange: onLayoutMetricsChange
+            onLayoutMetricsChange: onLayoutMetricsChange,
+            style: style
         )
     }
 }
@@ -79,7 +83,8 @@ extension NodeTextEditor {
         var pendingTypingEvent: NSEvent?
         var lastReplayedTypingEventTimestamp: TimeInterval = -1
         let onLayoutMetricsChange: (NodeTextLayoutMetrics) -> Void
-        let nodeTextHeightMeasurer = NodeTextHeightMeasurer()
+        // future work: Rebuild this measurer when runtime style updates are supported during active editing.
+        let nodeTextHeightMeasurer: NodeTextHeightMeasurer
         var hasFocusedEditor: Bool = false
         /// Monotonic token used to cancel stale focus retries from older update cycles.
         var focusRequestID: UInt64 = 0
@@ -91,7 +96,8 @@ extension NodeTextEditor {
             selectAllOnFirstFocus: Bool,
             initialCursorPlacement: NodeTextEditorInitialCursorPlacement,
             initialTypingEvent: NSEvent?,
-            onLayoutMetricsChange: @escaping (NodeTextLayoutMetrics) -> Void
+            onLayoutMetricsChange: @escaping (NodeTextLayoutMetrics) -> Void,
+            style: NodeTextStyle
         ) {
             self.text = text
             self.nodeWidth = nodeWidth
@@ -100,6 +106,7 @@ extension NodeTextEditor {
             self.initialCursorPlacement = initialCursorPlacement
             self.pendingTypingEvent = initialTypingEvent
             self.onLayoutMetricsChange = onLayoutMetricsChange
+            nodeTextHeightMeasurer = NodeTextHeightMeasurer(style: style)
         }
 
         func textDidChange(_ notification: Notification) {
@@ -122,21 +129,22 @@ extension NodeTextEditor {
     private func configureTextViewAppearance(
         _ textView: NodeTextEditorTextView,
         zoomScale: Double,
-        contentAlignment: NodeTextContentAlignment
+        contentAlignment: NodeTextContentAlignment,
+        style: NodeTextStyle
     ) {
         let clampedZoomScale = max(CGFloat(zoomScale), 0.0001)
         textView.drawsBackground = false
         textView.backgroundColor = .clear
         textView.font = .systemFont(
-            ofSize: NodeTextStyle.fontSize * clampedZoomScale,
-            weight: NodeTextStyle.fontWeight
+            ofSize: style.fontSize * clampedZoomScale,
+            weight: style.fontWeight
         )
         textView.textColor = .labelColor
         textView.insertionPointColor = .labelColor
         textView.isRichText = false
         textView.isHorizontallyResizable = false
         textView.isVerticallyResizable = contentAlignment == .topLeading
-        textView.baseTextContainerInset = NodeTextStyle.textContainerInset * clampedZoomScale
+        textView.baseTextContainerInset = style.textContainerInset * clampedZoomScale
         textView.nodeTextContentAlignment = contentAlignment
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainer?.widthTracksTextView = false
@@ -146,7 +154,7 @@ extension NodeTextEditor {
         )
         textView.typingAttributes = [
             .foregroundColor: NSColor.labelColor,
-            .font: textView.font ?? NodeTextStyle.font,
+            .font: textView.font ?? style.font,
         ]
         textView.applyContentLayout()
     }
