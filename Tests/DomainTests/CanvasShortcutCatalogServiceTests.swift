@@ -75,6 +75,18 @@ func test_commandPaletteDefinitions_excludeOpenPaletteAction() {
     #expect(!definitions.contains(where: { $0.action == .openCommandPalette }))
 }
 
+@Test("Shortcut catalog: command palette labels use symbol notation")
+func test_commandPaletteDefinitions_useSymbolShortcutLabels() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions()
+    let labelsByID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0.shortcutLabel) })
+
+    #expect(labelsByID["addChildNode"] == "⌘↩")
+    #expect(labelsByID["extendSelectionUp"] == "⇧↑")
+    #expect(labelsByID["centerFocusedNode"] == "⌃L")
+    #expect(labelsByID["toggleFoldFocusedSubtree"] == "⌥.")
+    #expect(labelsByID["zoomIn.commandShiftEquals"] == "⌘+")
+}
+
 @Test("Shortcut catalog: command-plus resolves zoom in")
 func test_resolveAction_commandPlus_returnsZoomIn() {
     let gesture = CanvasShortcutGesture(key: .character("+"), modifiers: [.command])

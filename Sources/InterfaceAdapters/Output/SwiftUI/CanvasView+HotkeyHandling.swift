@@ -11,7 +11,7 @@ extension CanvasView {
             VStack(spacing: 6) {
                 Text("Connect Mode")
                     .font(.system(size: 14, weight: .semibold))
-                Text("Arrow: Select target  Enter: Connect  Esc: Cancel")
+                Text("↑↓←→: Select target  ↩: Connect  ⎋: Cancel")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
             }
