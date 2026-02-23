@@ -132,6 +132,7 @@ public enum CanvasAreaMembershipService {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: nextAreasByID
         )
@@ -195,6 +196,7 @@ public enum CanvasAreaMembershipService {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: nextAreasByID
         )
@@ -233,6 +235,7 @@ public enum CanvasAreaMembershipService {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            selectedNodeIDs: graph.selectedNodeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: nextAreasByID
         )
@@ -266,6 +269,7 @@ public enum CanvasAreaMembershipService {
                 nodesByID: graph.nodesByID,
                 edgesByID: graph.edgesByID,
                 focusedNodeID: graph.focusedNodeID,
+                selectedNodeIDs: graph.selectedNodeIDs,
                 collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
                 areasByID: nextAreasByID
             )

@@ -123,3 +123,127 @@ func test_apply_moveFocus_prefersAlignedNode_overOffsetNearNode() async throws {
 
     #expect(result.newState.focusedNodeID == rightAlignedFarID)
 }
+
+@Test("ApplyCanvasCommandsUseCase: moveFocus updates selection to focused node only")
+func test_apply_moveFocus_updatesSelectionToFocusedNodeOnly() async throws {
+    let centerID = CanvasNodeID(rawValue: "center")
+    let rightID = CanvasNodeID(rawValue: "right")
+    let graph = CanvasGraph(
+        nodesByID: [
+            centerID: CanvasNode(
+                id: centerID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 100, y: 100, width: 100, height: 100)
+            ),
+            rightID: CanvasNode(
+                id: rightID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 240, y: 100, width: 100, height: 100)
+            ),
+        ],
+        edgesByID: [:],
+        focusedNodeID: centerID,
+        selectedNodeIDs: [centerID, rightID]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
+
+    let result = try await sut.apply(commands: [.moveFocus(.right)])
+
+    #expect(result.newState.focusedNodeID == rightID)
+    #expect(result.newState.selectedNodeIDs == [rightID])
+}
+
+@Test("ApplyCanvasCommandsUseCase: extendSelection keeps previous selection and adds next focused node")
+func test_apply_extendSelection_addsNextFocusedNode() async throws {
+    let centerID = CanvasNodeID(rawValue: "center")
+    let rightID = CanvasNodeID(rawValue: "right")
+    let graph = CanvasGraph(
+        nodesByID: [
+            centerID: CanvasNode(
+                id: centerID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 100, y: 100, width: 100, height: 100)
+            ),
+            rightID: CanvasNode(
+                id: rightID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 240, y: 100, width: 100, height: 100)
+            ),
+        ],
+        edgesByID: [:],
+        focusedNodeID: centerID,
+        selectedNodeIDs: [centerID]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
+
+    let result = try await sut.apply(commands: [.extendSelection(.right)])
+
+    #expect(result.newState.focusedNodeID == rightID)
+    #expect(result.newState.selectedNodeIDs == [centerID, rightID])
+}
+
+@Test("ApplyCanvasCommandsUseCase: moveFocus collapses selection when direction has no candidate")
+func test_apply_moveFocus_collapsesSelection_whenDirectionHasNoCandidate() async throws {
+    let centerID = CanvasNodeID(rawValue: "center")
+    let rightID = CanvasNodeID(rawValue: "right")
+    let graph = CanvasGraph(
+        nodesByID: [
+            centerID: CanvasNode(
+                id: centerID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 100, y: 100, width: 100, height: 100)
+            ),
+            rightID: CanvasNode(
+                id: rightID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 240, y: 100, width: 100, height: 100)
+            ),
+        ],
+        edgesByID: [:],
+        focusedNodeID: centerID,
+        selectedNodeIDs: [centerID, rightID]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
+
+    let result = try await sut.apply(commands: [.moveFocus(.left)])
+
+    #expect(result.newState.focusedNodeID == centerID)
+    #expect(result.newState.selectedNodeIDs == [centerID])
+}
+
+@Test("ApplyCanvasCommandsUseCase: extendSelection includes focused node when selection is empty")
+func test_apply_extendSelection_includesFocusedNode_whenSelectionIsEmpty() async throws {
+    let centerID = CanvasNodeID(rawValue: "center")
+    let rightID = CanvasNodeID(rawValue: "right")
+    let graph = CanvasGraph(
+        nodesByID: [
+            centerID: CanvasNode(
+                id: centerID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 100, y: 100, width: 100, height: 100)
+            ),
+            rightID: CanvasNode(
+                id: rightID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 240, y: 100, width: 100, height: 100)
+            ),
+        ],
+        edgesByID: [:],
+        focusedNodeID: centerID,
+        selectedNodeIDs: []
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
+
+    let result = try await sut.apply(commands: [.extendSelection(.right)])
+
+    #expect(result.newState.focusedNodeID == rightID)
+    #expect(result.newState.selectedNodeIDs == [centerID, rightID])
+}
