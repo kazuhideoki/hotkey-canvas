@@ -24,7 +24,7 @@
 | D6 | 折りたたみ可視性 | `CanvasFoldedSubtreeVisibilityService` |
 | D7 | エリアモード所属管理 | `CanvasAreaID`, `CanvasEditingMode`, `CanvasArea`, `CanvasAreaMembershipService`, `CanvasAreaPolicyError` |
 
-### D5 追加仕様（ズーム/折りたたみ/接続ショートカット）
+### D5 追加仕様（ズーム/折りたたみ/接続/複製ショートカット）
 
 - `CanvasShortcutAction` に `zoomIn` / `zoomOut` / `beginConnectNodeSelection` を追加した。
 - `CanvasShortcutCatalogService` の標準定義に以下を追加した。
@@ -38,6 +38,7 @@
 - `Command + C`: `copyFocusedSubtree`
 - `Command + X`: `cutFocusedSubtree`
 - `Command + V`: `pasteSubtreeAsChild`
+- `Command + D`: `duplicateSelectionAsSibling`
 - 利用先:
 - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)` / `shouldBeginConnectNodeSelection(_:)`）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
@@ -68,6 +69,7 @@
   - `CanvasCommand.copyFocusedSubtree`
   - `CanvasCommand.cutFocusedSubtree`
   - `CanvasCommand.pasteSubtreeAsChild`
+  - `CanvasCommand.duplicateSelectionAsSibling`
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
   - `CanvasCommand.alignParentNodesVertically`
   - `CanvasCommand.extendSelection`
@@ -97,6 +99,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ConnectNodes.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DuplicateSelectionAsSibling.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+UpsertNodeAttachment.swift`
@@ -461,6 +464,7 @@
     - コマンド適用前に所属整合性検証と対象エリア解決を行う。
     - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
     - Diagram エリアでは `addChildNode` を `addNode` へ正規化する。
+    - Diagram エリアでは `duplicateSelectionAsSibling` を不許可とする（`unsupportedCommandInMode`）。
     - Diagram エリアでは `connectNodes` を許可し、同一エリア内の既存ノード同士を `normal` エッジで接続する（自己接続・重複接続・跨ぎ接続は no-op）。
     - Diagram エリアでは `moveNode` を8方向移動として扱う。接続アンカーがある場合はアンカー基準でステップ距離（`CanvasDefaultNodeDistance` 横 `220`・縦 `220`）を決定し、候補位置がアンカー矩形と重なる場合は同方向に追加ステップして飛び越える。接続アンカーがない場合でも、フォーカスノード自身の寸法を基準に同じグリッド間隔で移動できる。
     - Diagram エリアで `moveNode` を適用した後は、同一エリア内ノード衝突も即時解消するために area layout を実行する。
@@ -557,3 +561,4 @@
 - 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
 - 2026-02-23: 画像専用の `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を廃止し、`CanvasAttachment` / `upsertNodeAttachment` に統合。ノード添付を将来拡張可能な複数要素として扱う仕様へ更新した。
 - 2026-02-23: 複数選択の導入として `CanvasGraph.selectedNodeIDs`、`CanvasCommand.extendSelection`、`CanvasSelectionService` を追加。`Shift + 矢印` による選択拡張、パイプラインでの selection 正規化、表示側での複数選択ハイライト連携を追記した。
+- 2026-02-23: `CanvasCommand.duplicateSelectionAsSibling` と `Command + D` を追加し、Tree エリアで「選択優先・未選択時はフォーカス」のサブツリー複製を sibling 追加として実行する仕様を導入した。Diagram エリアでは不許可とした。
