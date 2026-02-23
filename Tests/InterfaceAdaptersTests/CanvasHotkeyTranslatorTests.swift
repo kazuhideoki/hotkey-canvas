@@ -163,6 +163,50 @@ func test_translate_controlL_returnsCenterFocusedNode() throws {
     #expect(commands == [.centerFocusedNode])
 }
 
+@Test("CanvasHotkeyTranslator: Command+L opens connect-node selection mode")
+func test_shouldBeginConnectNodeSelection_commandL_returnsTrue() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "l",
+            charactersIgnoringModifiers: "l",
+            isARepeat: false,
+            keyCode: 37
+        )
+    )
+
+    #expect(sut.shouldBeginConnectNodeSelection(event))
+}
+
+@Test("CanvasHotkeyTranslator: Command+L does not emit canvas command directly")
+func test_translate_commandL_returnsEmpty() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "l",
+            charactersIgnoringModifiers: "l",
+            isARepeat: false,
+            keyCode: 37
+        )
+    )
+
+    let commands = sut.translate(event)
+
+    #expect(commands.isEmpty)
+}
+
 @Test("CanvasHotkeyTranslator: Option+Period maps to toggleFoldFocusedSubtree")
 func test_translate_optionPeriod_returnsToggleFoldFocusedSubtree() throws {
     let sut = CanvasHotkeyTranslator()

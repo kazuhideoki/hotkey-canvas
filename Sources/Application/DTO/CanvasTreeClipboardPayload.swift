@@ -20,8 +20,8 @@ public struct CanvasTreeClipboardNodePayload: Equatable, Sendable {
     public let kind: CanvasNodeKind
     /// Optional text payload to preserve editor content.
     public let text: String?
-    /// Optional image file path to preserve node image on paste.
-    public let imagePath: String?
+    /// Attachment payloads to preserve non-text node content on paste.
+    public let attachments: [CanvasAttachment]
     /// Whether markdown styling is enabled for the node.
     public let markdownStyleEnabled: Bool
     /// Metadata payload copied from source node.
@@ -33,21 +33,21 @@ public struct CanvasTreeClipboardNodePayload: Equatable, Sendable {
     /// - Parameters:
     ///   - kind: Semantic node kind.
     ///   - text: Optional node text.
-    ///   - imagePath: Optional node image file path.
+    ///   - attachments: Node attachment payloads.
     ///   - markdownStyleEnabled: Markdown style flag for rendering.
     ///   - metadata: Node metadata dictionary.
     ///   - children: Child payload list in deterministic order.
     public init(
         kind: CanvasNodeKind,
         text: String?,
-        imagePath: String?,
+        attachments: [CanvasAttachment],
         markdownStyleEnabled: Bool,
         metadata: [String: String],
         children: [CanvasTreeClipboardNodePayload]
     ) {
         self.kind = kind
         self.text = text
-        self.imagePath = imagePath
+        self.attachments = attachments
         self.markdownStyleEnabled = markdownStyleEnabled
         self.metadata = metadata
         self.children = children

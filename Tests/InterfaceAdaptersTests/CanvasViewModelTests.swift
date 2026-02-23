@@ -13,57 +13,40 @@ func test_onAppear_doesNotOverwriteApplyResult() async throws {
     let onAppearTask = Task { await viewModel.onAppear() }
     try await Task.sleep(nanoseconds: 20_000_000)
     await viewModel.apply(commands: [.addNode])
-    _ = await onAppearTask.value
+    let shouldPresentAddNodeModeSelection = await onAppearTask.value
 
+    #expect(!shouldPresentAddNodeModeSelection)
     #expect(viewModel.nodes.count == 1)
 }
 
 @MainActor
-@Test("CanvasViewModel: onAppear creates initial node and returns editing target when graph is empty")
-func test_onAppear_createsInitialNode_andReturnsEditingTarget() async throws {
+@Test("CanvasViewModel: onAppear requests mode-selection popup when graph is empty")
+func test_onAppear_requestsModeSelectionPopup_whenGraphIsEmpty() async throws {
     let inputPort = EmptyBootstrapCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
 
-    let initialEditingNodeID = await viewModel.onAppear()
+    let shouldPresentAddNodeModeSelection = await viewModel.onAppear()
 
-    #expect(viewModel.nodes.count == 1)
-    #expect(viewModel.focusedNodeID == CanvasNodeID(rawValue: "node-1"))
-    #expect(initialEditingNodeID == CanvasNodeID(rawValue: "node-1"))
+    #expect(shouldPresentAddNodeModeSelection)
+    #expect(viewModel.nodes.isEmpty)
+    #expect(viewModel.focusedNodeID == nil)
 }
 
 @MainActor
-@Test("CanvasViewModel: onAppear does not add duplicate initial node during overlapping add")
-func test_onAppear_avoidsDuplicateInitialNode_duringOverlappingAdd() async throws {
-    let inputPort = OverlappingInitialNodeCanvasEditingInputPort()
+@Test("CanvasViewModel: onAppear does not request mode-selection popup while add-node apply is in flight")
+func test_onAppear_doesNotRequestModeSelectionPopup_whenAddNodeApplyIsInFlight() async throws {
+    let inputPort = InFlightAddNodeCanvasEditingInputPort(getDelayNanoseconds: 200_000_000)
     let viewModel = CanvasViewModel(inputPort: inputPort)
 
     let onAppearTask = Task { await viewModel.onAppear() }
     try await Task.sleep(nanoseconds: 20_000_000)
-    let addTask = Task { await viewModel.apply(commands: [.addNode]) }
+    let applyTask = Task { await viewModel.apply(commands: [.addNode]) }
+    let shouldPresentAddNodeModeSelection = await onAppearTask.value
+    await inputPort.releaseApply()
+    await applyTask.value
 
-    await addTask.value
-    _ = await onAppearTask.value
-
+    #expect(!shouldPresentAddNodeModeSelection)
     #expect(viewModel.nodes.count == 1)
-    #expect(await inputPort.nodeCount() == 1)
-}
-
-@MainActor
-@Test("CanvasViewModel: onAppear refreshes from current result when bootstrap apply becomes stale")
-func test_onAppear_refreshesCurrentResult_whenBootstrapApplyBecomesStale() async throws {
-    let inputPort = StaleBootstrapApplyCanvasEditingInputPort()
-    let viewModel = CanvasViewModel(inputPort: inputPort)
-
-    let onAppearTask = Task { await viewModel.onAppear() }
-    try await Task.sleep(nanoseconds: 20_000_000)
-    let newerApplyTask = Task { await viewModel.apply(commands: [.moveFocus(.down)]) }
-    await newerApplyTask.value
-    await inputPort.releaseFirstApply()
-    let initialEditingNodeID = await onAppearTask.value
-
-    #expect(initialEditingNodeID == nil)
-    #expect(viewModel.nodes.count == 1)
-    #expect(viewModel.focusedNodeID == CanvasNodeID(rawValue: "node-1"))
 }
 
 @MainActor
@@ -466,8 +449,9 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
-                .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
-                .assignNodesToArea, .alignParentNodesVertically:
+                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode,
+                .createArea,
+                .assignNodesToArea, .connectNodes, .alignParentNodesVertically:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -494,6 +478,65 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
 
     func redo() async -> ApplyResult {
         ApplyResult(newState: graph)
+    }
+}
+
+actor InFlightAddNodeCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+    private var applyContinuation: CheckedContinuation<Void, Never>?
+    private let getDelayNanoseconds: UInt64
+
+    init(getDelayNanoseconds: UInt64) {
+        self.getDelayNanoseconds = getDelayNanoseconds
+    }
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        await withCheckedContinuation { continuation in
+            applyContinuation = continuation
+        }
+        guard commands.contains(.addNode) else {
+            return ApplyResult(newState: graph)
+        }
+        let nodeID = CanvasNodeID(rawValue: "node-1")
+        let node = CanvasNode(
+            id: nodeID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+        )
+        let nextGraph = try CanvasGraphCRUDService.createNode(node, in: graph).get()
+        graph = CanvasGraph(
+            nodesByID: nextGraph.nodesByID,
+            edgesByID: nextGraph.edgesByID,
+            focusedNodeID: nodeID,
+            collapsedRootNodeIDs: nextGraph.collapsedRootNodeIDs,
+            areasByID: nextGraph.areasByID
+        )
+        return ApplyResult(newState: graph, didAddNode: true)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        let snapshot = graph
+        try? await Task.sleep(nanoseconds: getDelayNanoseconds)
+        return snapshot
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        let snapshot = await getCurrentGraph()
+        return ApplyResult(newState: snapshot)
+    }
+
+    func releaseApply() {
+        applyContinuation?.resume()
+        applyContinuation = nil
     }
 }
 
@@ -558,8 +601,9 @@ extension OverlappingFailureCanvasEditingInputPort {
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
-                .setNodeText, .setNodeImage, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
-                .assignNodesToArea, .alignParentNodesVertically:
+                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode,
+                .createArea,
+                .assignNodesToArea, .connectNodes, .alignParentNodesVertically:
                 continue
             case .deleteFocusedNode:
                 continue
@@ -749,13 +793,13 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nextGraph.focusedNodeID
                 )
-            case .setNodeImage:
+            case .upsertNodeAttachment:
                 continue
             case .addNode, .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode,
                 .toggleFoldFocusedSubtree, .centerFocusedNode,
                 .deleteFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
                 .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
-                .assignNodesToArea, .alignParentNodesVertically:
+                .assignNodesToArea, .connectNodes, .alignParentNodesVertically:
                 continue
             }
         }
@@ -945,8 +989,9 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 ).get()
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .alignParentNodesVertically:
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
+                .alignParentNodesVertically:
                 continue
             }
         }
@@ -1045,8 +1090,9 @@ actor TreeModeSelectionFromDiagramCanvasEditingInputPort: CanvasEditingInputPort
                 ).get()
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .alignParentNodesVertically:
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
+                .alignParentNodesVertically:
                 continue
             }
         }
@@ -1144,8 +1190,9 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
                 ).get()
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .alignParentNodesVertically:
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
+                .alignParentNodesVertically:
                 continue
             }
         }
@@ -1221,8 +1268,9 @@ actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 ).get()
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .alignParentNodesVertically:
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
+                .alignParentNodesVertically:
                 continue
             }
         }
@@ -1331,8 +1379,8 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
                 .alignParentNodesVertically:
                 continue
             }
@@ -1357,7 +1405,6 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
         ApplyResult(newState: graph)
     }
 }
-
 actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
     private var graph: CanvasGraph = .empty
     private var getCurrentResultCallCount: Int = 0
@@ -1383,8 +1430,8 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addChildNode, .addSiblingNode, .moveFocus, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .setNodeImage, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
                 .alignParentNodesVertically:
                 continue
             }

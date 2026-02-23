@@ -22,12 +22,14 @@ enum TreeAreaPolicyService {
             .cutFocusedSubtree,
             .pasteSubtreeAsChild,
             .setNodeText,
-            .setNodeImage,
+            .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
             return true
+        case .connectNodes:
+            return false
         }
     }
 }

@@ -9,6 +9,7 @@ enum DiagramAreaPolicyService {
     static func supports(_ command: CanvasCommand) -> Bool {
         switch command {
         case .addNode,
+            .connectNodes,
             .alignParentNodesVertically,
             .moveFocus,
             .moveNode,
@@ -16,7 +17,7 @@ enum DiagramAreaPolicyService {
             .centerFocusedNode,
             .deleteFocusedNode,
             .setNodeText,
-            .setNodeImage,
+            .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,
