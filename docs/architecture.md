@@ -71,8 +71,11 @@ HotkeyCanvas は、キーボードファーストでキャンバスを編集で�
 |-- Tests/                                # テスト群（本体と同じ責務分割を反映）
 |   |-- DomainTests/                      # Domain の純粋関数・不変条件テスト
 |   |-- ApplicationTests/                 # UseCase/Port 契約テスト
-|   `-- InterfaceAdaptersTests/           # 入出力変換、Mapper テスト
-|                                         # ファイル命名: <TypeName>Tests.swift / 関数命名: test_<condition>_<expected>()
+|   `-- InterfaceAdaptersTests/           # 入出力変換、Mapper、UI相当シナリオ（基追）テスト
+|                                         # ファイル命名:
+|                                         # - 単体・変換: <TypeName>Tests.swift
+|                                         # - UI相当シナリオ: <ScenarioName>UITests.swift
+|                                         # 関数命名: test_<condition>_<expected>()
 |
 `-- docs/                                 # 設計・運用ドキュメント
 ```
