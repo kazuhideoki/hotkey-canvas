@@ -18,6 +18,8 @@ extension CanvasView {
     }
 
     func openCommandPalette() {
+        isSearchPresented = false
+        searchFocusedMatch = nil
         isCommandPalettePresented = true
         selectedCommandPaletteIndex = 0
         commandPaletteQuery = ""

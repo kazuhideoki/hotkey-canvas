@@ -32,6 +32,9 @@ extension CanvasView {
         if isConnectNodeSelectionSourceNode(nodeID) {
             return styleColor(styleSheet.nodeChrome.connectSelectionSourceBorderColor)
         }
+        if isSearchFocusedNode(nodeID) {
+            return styleColor(.accent)
+        }
         if isFocused {
             return styleColor(styleSheet.nodeChrome.focusedBorderColor)
         }
@@ -47,7 +50,8 @@ extension CanvasView {
         isFocused: Bool,
         isSelected: Bool
     ) -> CGFloat {
-        if isEditing || isFocused || isSelected || isConnectNodeSelectionSourceNode(nodeID)
+        if isEditing || isFocused || isSelected || isSearchFocusedNode(nodeID)
+            || isConnectNodeSelectionSourceNode(nodeID)
             || isConnectNodeSelectionTargetNode(nodeID)
         {
             return nodeTextStyle.focusedBorderLineWidth
