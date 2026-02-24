@@ -73,6 +73,7 @@
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
   - `CanvasCommand.alignParentNodesVertically`
   - `CanvasCommand.extendSelection`
+  - `CanvasCommand.focusNode(CanvasNodeID)`
 - エラー
   - `CanvasGraphError`
 - サービス
@@ -187,6 +188,7 @@
 - コマンド発行
   - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（矢印キー -> `.moveFocus`、`shift+矢印キー` -> `.extendSelection`、`cmd+矢印キー` -> `.moveNode`、`cmd+shift+矢印キー` -> `.nudgeNode`）
   - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+CompositeMove.swift`（`cmd+矢印` の連続入力を合成し、`upLeft/upRight/downLeft/downRight` を `.moveNode` として適用）
+  - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+Search.swift`（`esc` で検索解除時に `.focusNode` を適用し、検索移動先ノードへフォーカス同期）
 - 主要テスト
   - `Tests/DomainTests/CanvasFocusNavigationServiceTests.swift`
   - `Tests/DomainTests/CanvasSelectionServiceTests.swift`

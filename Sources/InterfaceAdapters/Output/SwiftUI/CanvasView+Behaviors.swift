@@ -433,7 +433,8 @@ extension CanvasView {
         let text = node.text ?? ""
         let scale = CGFloat(zoomScale)
         let contentAlignment = nodeTextContentAlignment(for: node.id)
-        if node.markdownStyleEnabled {
+        let shouldRenderSearchHighlight = hasSearchMatches(in: node)
+        if node.markdownStyleEnabled && !shouldRenderSearchHighlight {
             NodeMarkdownDisplay(
                 text: text,
                 nodeWidth: node.bounds.width,

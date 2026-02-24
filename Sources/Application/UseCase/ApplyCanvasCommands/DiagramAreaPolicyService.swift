@@ -12,6 +12,7 @@ enum DiagramAreaPolicyService {
             .connectNodes,
             .alignParentNodesVertically,
             .moveFocus,
+            .focusNode,
             .extendSelection,
             .moveNode,
             .nudgeNode,

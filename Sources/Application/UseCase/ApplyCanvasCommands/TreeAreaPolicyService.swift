@@ -14,6 +14,7 @@ enum TreeAreaPolicyService {
             .duplicateSelectionAsSibling,
             .alignParentNodesVertically,
             .moveFocus,
+            .focusNode,
             .extendSelection,
             .moveNode,
             .nudgeNode,
