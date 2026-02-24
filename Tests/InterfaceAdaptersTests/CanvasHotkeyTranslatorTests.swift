@@ -634,6 +634,27 @@ func test_shouldOpenSearch_commandShiftF_returnsFalse() throws {
     #expect(!sut.shouldOpenSearch(event))
 }
 
+@Test("CanvasHotkeyTranslator: Command+F with Caps Lock opens search field")
+func test_shouldOpenSearch_commandFWithCapsLock_returnsTrue() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .capsLock],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "f",
+            charactersIgnoringModifiers: "f",
+            isARepeat: false,
+            keyCode: 3
+        )
+    )
+
+    #expect(sut.shouldOpenSearch(event))
+}
+
 @Test("CanvasHotkeyTranslator: Command+Shift+= maps to zoomIn action")
 func test_zoomAction_commandShiftEquals_returnsZoomIn() throws {
     let sut = CanvasHotkeyTranslator()

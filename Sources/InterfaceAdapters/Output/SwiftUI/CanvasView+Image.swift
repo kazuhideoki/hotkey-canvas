@@ -220,8 +220,12 @@ extension CanvasView {
         zoomScale: Double,
         contentAlignment: NodeTextContentAlignment
     ) -> some View {
-        let text = node.text ?? ""
-        if node.markdownStyleEnabled {
+        let shouldRenderSearchHighlight = hasSearchMatches(in: node)
+        if Self.shouldRenderMarkdownText(
+            markdownStyleEnabled: node.markdownStyleEnabled,
+            hasSearchMatches: shouldRenderSearchHighlight
+        ) {
+            let text = node.text ?? ""
             NodeMarkdownDisplay(
                 text: text,
                 nodeWidth: node.bounds.width,
@@ -232,7 +236,7 @@ extension CanvasView {
             )
         } else {
             nonEditingPlainNodeTextBody(
-                text: text,
+                attributedText: highlightedNodeText(for: node),
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale,
                 contentAlignment: contentAlignment
@@ -242,7 +246,7 @@ extension CanvasView {
 
     @ViewBuilder
     private func nonEditingPlainNodeTextBody(
-        text: String,
+        attributedText: AttributedString,
         nodeWidth: Double,
         zoomScale: Double,
         contentAlignment: NodeTextContentAlignment
@@ -252,12 +256,16 @@ extension CanvasView {
             (CGFloat(nodeWidth) * scale) - (nodeTextStyle.outerPadding * scale * 2),
             1
         )
-        Text(text)
+        Text(attributedText)
             .font(.system(size: nodeTextStyle.fontSize * scale, weight: nodeTextStyle.displayFontWeight))
             .lineLimit(nil)
             .multilineTextAlignment(contentAlignment.textAlignment)
             .frame(width: contentWidth, alignment: contentAlignment.frameAlignment)
             .fixedSize(horizontal: false, vertical: true)
+    }
+
+    static func shouldRenderMarkdownText(markdownStyleEnabled: Bool, hasSearchMatches: Bool) -> Bool {
+        markdownStyleEnabled && !hasSearchMatches
     }
 }
 
