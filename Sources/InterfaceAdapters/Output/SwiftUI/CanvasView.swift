@@ -16,6 +16,9 @@ public struct CanvasView: View {
     @State var commandPaletteQuery: String = ""
     @State var isCommandPalettePresented = false
     @State var selectedCommandPaletteIndex: Int = 0
+    @State var searchQuery: String = ""
+    @State var isSearchPresented = false
+    @State var searchFocusedMatch: CanvasSearchMatch?
     @State var isAddNodeModePopupPresented = false
     @State var selectedAddNodeMode: CanvasEditingMode = .tree
     @State var hasInitializedCameraAnchor = false
@@ -309,6 +312,7 @@ public struct CanvasView: View {
                     .zIndex(11)
                 }
                 connectNodeSelectionBanner()
+                searchPanel(displayNodes: displayNodes)
                 if let zoomRatioPopupText {
                     ZoomRatioPopup(styleSheet: styleSheet, text: zoomRatioPopupText)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -321,7 +325,9 @@ public struct CanvasView: View {
                         .contentShape(Rectangle())
                         .allowsHitTesting(false)
                 }
-                CanvasHotkeyCaptureView(isEnabled: editingContext == nil && !isCommandPalettePresented) { event in
+                CanvasHotkeyCaptureView(
+                    isEnabled: editingContext == nil && !isCommandPalettePresented && !isSearchPresented
+                ) { event in
                     handleCanvasHotkeyEvent(event, displayNodes: displayNodes)
                 }
                 .frame(width: 1, height: 1)
@@ -440,6 +446,9 @@ public struct CanvasView: View {
         }
         .onChange(of: commandPaletteQuery) { _ in
             selectedCommandPaletteIndex = 0
+        }
+        .onChange(of: searchQuery) { _ in
+            onSearchQueryChange(displayNodes: displayNodes)
         }
         .onChange(of: isCommandPalettePresented) { isVisible in
             if !isVisible {

@@ -44,6 +44,19 @@ public struct CanvasHotkeyTranslator {
         action(for: event) == .openCommandPalette
     }
 
+    /// Returns true when Command+F should open the inline canvas search field.
+    public func shouldOpenSearch(_ event: NSEvent) -> Bool {
+        guard event.type == .keyDown else {
+            return false
+        }
+        let flags = normalizedFlags(from: event)
+        let expected: NSEvent.ModifierFlags = [.command]
+        guard flags == expected else {
+            return false
+        }
+        return event.charactersIgnoringModifiers?.lowercased() == "f"
+    }
+
     /// Returns true when Shift+Enter should open mode selection instead of direct add-node apply.
     public func shouldPresentAddNodeModeSelection(_ event: NSEvent) -> Bool {
         action(for: event) == .apply(commands: [.addNode])

@@ -444,7 +444,7 @@ extension CanvasView {
         } else {
             let scaledPadding = nodeTextStyle.outerPadding * scale
             let textWidth = max((CGFloat(node.bounds.width) * scale) - (scaledPadding * 2), 1)
-            Text(text)
+            Text(highlightedNodeText(for: node))
                 .font(.system(size: nodeTextStyle.fontSize * scale, weight: nodeTextStyle.displayFontWeight))
                 .lineLimit(nil)
                 .multilineTextAlignment(contentAlignment.textAlignment)

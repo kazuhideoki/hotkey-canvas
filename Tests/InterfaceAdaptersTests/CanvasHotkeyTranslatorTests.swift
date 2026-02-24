@@ -592,6 +592,48 @@ func test_shouldOpenCommandPalette_commandFunctionK_returnsFalse() throws {
     #expect(!sut.shouldOpenCommandPalette(event))
 }
 
+@Test("CanvasHotkeyTranslator: Command+F opens search field")
+func test_shouldOpenSearch_commandF_returnsTrue() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "f",
+            charactersIgnoringModifiers: "f",
+            isARepeat: false,
+            keyCode: 3
+        )
+    )
+
+    #expect(sut.shouldOpenSearch(event))
+}
+
+@Test("CanvasHotkeyTranslator: Command+Shift+F does not open search field")
+func test_shouldOpenSearch_commandShiftF_returnsFalse() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try #require(
+        NSEvent.keyEvent(
+            with: .keyDown,
+            location: .zero,
+            modifierFlags: [.command, .shift],
+            timestamp: 0,
+            windowNumber: 0,
+            context: nil,
+            characters: "F",
+            charactersIgnoringModifiers: "f",
+            isARepeat: false,
+            keyCode: 3
+        )
+    )
+
+    #expect(!sut.shouldOpenSearch(event))
+}
+
 @Test("CanvasHotkeyTranslator: Command+Shift+= maps to zoomIn action")
 func test_zoomAction_commandShiftEquals_returnsZoomIn() throws {
     let sut = CanvasHotkeyTranslator()

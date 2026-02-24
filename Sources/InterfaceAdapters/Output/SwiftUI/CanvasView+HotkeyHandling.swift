@@ -51,6 +51,10 @@ extension CanvasView {
             openCommandPalette()
             return true
         }
+        if hotkeyTranslator.shouldOpenSearch(event) {
+            openSearch()
+            return true
+        }
         if let zoomAction = hotkeyTranslator.zoomAction(event) {
             applyZoom(action: zoomAction)
             return true
