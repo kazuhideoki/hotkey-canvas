@@ -49,6 +49,8 @@ extension ApplyCanvasCommandsUseCase {
             return alignParentNodesVertically(in: graph, areaID: resolvedAreaID)
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
+        case .focusNode(let nodeID):
+            return focusNode(in: graph, nodeID: nodeID)
         case .extendSelection(let direction):
             return extendSelection(in: graph, direction: direction)
         case .moveNode(let direction):
@@ -108,6 +110,7 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .alignParentNodesVertically,
             .moveFocus,
+            .focusNode,
             .extendSelection,
             .moveNode,
             .nudgeNode,
@@ -150,6 +153,7 @@ extension ApplyCanvasCommandsUseCase {
             .connectNodes,
             .alignParentNodesVertically,
             .moveFocus,
+            .focusNode,
             .extendSelection,
             .moveNode,
             .nudgeNode,
@@ -196,6 +200,7 @@ extension ApplyCanvasCommandsUseCase {
             .connectNodes,
             .alignParentNodesVertically,
             .moveFocus,
+            .focusNode,
             .extendSelection,
             .moveNode,
             .nudgeNode,
@@ -257,6 +262,8 @@ extension ApplyCanvasCommandsUseCase {
         case .setNodeText(let nodeID, _, _):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
         case .upsertNodeAttachment(let nodeID, _, _):
+            return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
+        case .focusNode(let nodeID):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
         case .connectNodes(let fromNodeID, _):
             return CanvasAreaMembershipService.areaID(containing: fromNodeID, in: graph)

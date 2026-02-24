@@ -100,10 +100,21 @@ extension CanvasView {
         isSearchPresented = true
     }
 
-    func closeSearch() {
+    func closeSearch(displayNodes: [CanvasNode]) {
+        let nodeIDToFocus = searchFocusedMatch?.nodeID
         isSearchPresented = false
         searchQuery = ""
         searchFocusedMatch = nil
+
+        guard
+            let nodeIDToFocus,
+            displayNodes.contains(where: { $0.id == nodeIDToFocus })
+        else {
+            return
+        }
+        Task {
+            await viewModel.apply(commands: [.focusNode(nodeIDToFocus)])
+        }
     }
 
     func moveSearchFocus(direction: CanvasSearchDirection, displayNodes: [CanvasNode]) {
@@ -145,32 +156,46 @@ extension CanvasView {
     func highlightedNodeText(for node: CanvasNode) -> AttributedString {
         let text = node.text ?? ""
         var attributedText = AttributedString(text)
-        guard !node.markdownStyleEnabled else {
+        let normalizedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedQuery.isEmpty else {
             return attributedText
         }
-        guard
-            let searchFocusedMatch,
-            searchFocusedMatch.nodeID == node.id,
-            searchFocusedMatch.length > 0
-        else {
+
+        let nodeMatches =
+            CanvasSearchNavigator
+            .matches(query: normalizedQuery, nodes: [node])
+            .filter { $0.nodeID == node.id && $0.length > 0 }
+        guard !nodeMatches.isEmpty else {
             return attributedText
         }
+
         let nsText = text as NSString
-        guard
-            searchFocusedMatch.location >= 0,
-            searchFocusedMatch.location + searchFocusedMatch.length <= nsText.length
-        else {
-            return attributedText
+        for match in nodeMatches {
+            guard match.location >= 0, match.location + match.length <= nsText.length else {
+                continue
+            }
+            let nsRange = NSRange(location: match.location, length: match.length)
+            guard
+                let stringRange = Range(nsRange, in: text),
+                let attributedRange = Range(stringRange, in: attributedText)
+            else {
+                continue
+            }
+            let isFocused = searchFocusedMatch == match
+            attributedText[attributedRange].backgroundColor =
+                isFocused
+                ? Color(nsColor: .systemYellow)
+                : Color(nsColor: NSColor.systemYellow.withAlphaComponent(0.6))
         }
-        let nsRange = NSRange(location: searchFocusedMatch.location, length: searchFocusedMatch.length)
-        guard
-            let stringRange = Range(nsRange, in: text),
-            let attributedRange = Range(stringRange, in: attributedText)
-        else {
-            return attributedText
-        }
-        attributedText[attributedRange].backgroundColor = Color(nsColor: .systemYellow).opacity(0.45)
         return attributedText
+    }
+
+    func hasSearchMatches(in node: CanvasNode) -> Bool {
+        let normalizedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedQuery.isEmpty else {
+            return false
+        }
+        return CanvasSearchNavigator.matches(query: normalizedQuery, nodes: [node]).isEmpty == false
     }
 
     @ViewBuilder
@@ -189,7 +214,7 @@ extension CanvasView {
                         moveSearchFocus(direction: .backward, displayNodes: displayNodes)
                     },
                     onCancel: {
-                        closeSearch()
+                        closeSearch(displayNodes: displayNodes)
                     }
                 )
                 if !searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
