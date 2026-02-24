@@ -11,6 +11,11 @@ swift test
 ./scripts/lint_and_format.sh
 ```
 
+## Test Conventions
+
+- Unit/contract tests: `*Tests.swift`
+- UI-like regression scenarios on `swift test`: `*UITests.swift`
+
 ## Roadmap
 
 - Mind map-style node management

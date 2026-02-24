@@ -54,6 +54,8 @@ Canonical commands:
 
 - Test placement and naming rules are defined in `docs/architecture.md`.
 - Prioritize domain invariants and use-case behavior first, then adapter mapping and integration flows.
+- UI-like regression scenarios that run on `swift test` must use `*UITests.swift` naming.
+- Place UI-like regression scenarios under `Tests/InterfaceAdaptersTests/` unless a different layer is explicitly required.
 - Add regression tests with each bug fix.
 
 ## Commit & Pull Request Guidelines
