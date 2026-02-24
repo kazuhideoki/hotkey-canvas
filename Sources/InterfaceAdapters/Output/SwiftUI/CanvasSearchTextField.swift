@@ -90,7 +90,13 @@ extension CanvasSearchTextField {
         ) -> Bool {
             switch commandSelector {
             case #selector(NSResponder.insertNewline(_:)):
-                let flags = NSApp.currentEvent?.modifierFlags.intersection(.deviceIndependentFlagsMask) ?? []
+                guard textView.hasMarkedText() == false else {
+                    return false
+                }
+                let flags =
+                    NSApplication.shared.currentEvent?.modifierFlags.intersection(
+                        .deviceIndependentFlagsMask
+                    ) ?? []
                 if flags.contains(.shift) {
                     onSubmitBackward()
                 } else {
