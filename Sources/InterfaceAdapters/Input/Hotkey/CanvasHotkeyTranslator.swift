@@ -50,8 +50,7 @@ public struct CanvasHotkeyTranslator {
             return false
         }
         let flags = normalizedFlags(from: event)
-        let expected: NSEvent.ModifierFlags = [.command]
-        guard flags == expected else {
+        guard hasExactSearchModifiers(flags) else {
             return false
         }
         return event.charactersIgnoringModifiers?.lowercased() == "f"
@@ -152,6 +151,19 @@ extension CanvasHotkeyTranslator {
             return false
         }
         return !hasOption && !hasControl && !hasFunction
+    }
+
+    private func hasExactSearchModifiers(_ flags: NSEvent.ModifierFlags) -> Bool {
+        let hasCommand = flags.contains(.command)
+        let hasShift = flags.contains(.shift)
+        let hasOption = flags.contains(.option)
+        let hasControl = flags.contains(.control)
+        let hasFunction = flags.contains(.function)
+
+        guard hasCommand else {
+            return false
+        }
+        return !hasShift && !hasOption && !hasControl && !hasFunction
     }
 
     private func gesture(from event: NSEvent) -> CanvasShortcutGesture? {
