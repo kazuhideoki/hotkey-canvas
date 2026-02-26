@@ -11,6 +11,9 @@ public enum CanvasDefaultNodeDistance {
     /// Default square side length used by diagram nodes.
     public static let diagramNodeSide: Double = 220
 
+    /// Maximum square side length allowed for diagram nodes with image attachments.
+    public static let diagramImageMaxSide: Double = diagramNodeSide * 1.5
+
     /// Default horizontal distance between diagram nodes.
     public static let diagramHorizontal: Double = diagramNodeSide
 
