@@ -208,6 +208,52 @@ func test_apply_moveNodeInDiagramArea_movesRelativeToCurrentSlotDirection() asyn
     #expect(movedNode.bounds.y == -440)
 }
 
+@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area keeps semantic distance when moving toward anchor")
+func test_apply_moveNodeInDiagramArea_keepsSemanticDistanceWhenMovingTowardAnchor() async throws {
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let anchorID = CanvasNodeID(rawValue: "anchor")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let edgeID = CanvasEdgeID(rawValue: "edge-anchor-focused")
+    let graph = CanvasGraph(
+        nodesByID: [
+            anchorID: CanvasNode(
+                id: anchorID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            ),
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 200, y: 0, width: 220, height: 220)
+            ),
+        ],
+        edgesByID: [
+            edgeID: CanvasEdge(
+                id: edgeID,
+                fromNodeID: anchorID,
+                toNodeID: focusedID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: focusedID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [anchorID, focusedID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.moveNode(.left)])
+
+    let movedNode = try #require(result.newState.nodesByID[focusedID])
+    let anchorNode = try #require(result.newState.nodesByID[anchorID])
+    let leftGap = anchorNode.bounds.x - (movedNode.bounds.x + movedNode.bounds.width)
+    #expect(movedNode.bounds.x == -440)
+    #expect(movedNode.bounds.y == 0)
+    #expect(leftGap == CanvasDefaultNodeDistance.diagramHorizontal)
+}
+
 @Test("ApplyCanvasCommandsUseCase: moveNode in diagram area skips candidate that overlaps anchor")
 func test_apply_moveNodeInDiagramArea_skipsAnchorOverlappingCandidate() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -250,7 +296,7 @@ func test_apply_moveNodeInDiagramArea_skipsAnchorOverlappingCandidate() async th
     let anchorNode = try #require(graph.nodesByID[anchorID])
     #expect(boundsOverlap(movedNode.bounds, anchorNode.bounds) == false)
     #expect(movedNode.bounds.x == 0)
-    #expect(movedNode.bounds.y == 580)
+    #expect(movedNode.bounds.y == 440)
 }
 
 @Test("ApplyCanvasCommandsUseCase: moveNode in diagram area does not drift diagonally after nudge")
