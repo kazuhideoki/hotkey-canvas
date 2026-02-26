@@ -59,13 +59,15 @@ extension CanvasView {
             guard definition.isVisibleInCommandPalette else {
                 continue
             }
-            let searchText = ([definition.name, definition.shortcutLabel] + definition.searchTokens).joined(
-                separator: " "
+            let searchText = Self.commandPaletteSearchText(
+                title: definition.title,
+                shortcutLabel: definition.shortcutLabel,
+                searchTokens: definition.searchTokens
             )
             items.append(
                 CommandPaletteItem(
                     id: definition.id.rawValue,
-                    title: definition.name,
+                    title: definition.title,
                     shortcutLabel: definition.shortcutLabel,
                     searchText: searchText,
                     action: .shortcut(definition.action)
@@ -78,9 +80,13 @@ extension CanvasView {
         items.append(
             CommandPaletteItem(
                 id: "insertImageFromFinder",
-                title: "Insert Image from Finder",
+                title: "Image: Insert From Finder",
                 shortcutLabel: "Finder",
-                searchText: "insert image finder photo picture",
+                searchText: Self.commandPaletteSearchText(
+                    title: "Image: Insert From Finder",
+                    shortcutLabel: "Finder",
+                    searchTokens: ["insert", "image", "finder", "photo", "picture"]
+                ),
                 action: .insertImageFromFinder
             )
         )
@@ -93,21 +99,23 @@ extension CanvasView {
     private func focusedNodeMarkdownToggleCommandPaletteItem() -> CommandPaletteItem? {
         guard
             let focusedNodeID = viewModel.focusedNodeID,
-            let focusedNode = viewModel.nodes.first(where: { $0.id == focusedNodeID })
+            viewModel.nodes.contains(where: { $0.id == focusedNodeID })
         else {
             return nil
         }
 
-        let title =
-            focusedNode.markdownStyleEnabled
-            ? "Disable Markdown Style"
-            : "Enable Markdown Style"
-        let searchText = "markdown style toggle format heading list code block"
+        let title = "Node: Toggle Markdown Style"
+        let searchText =
+            "markdown style toggle enable disable on off format heading list code block"
         return CommandPaletteItem(
             id: "toggleFocusedNodeMarkdownStyle",
             title: title,
             shortcutLabel: "Focused Node",
-            searchText: searchText,
+            searchText: Self.commandPaletteSearchText(
+                title: title,
+                shortcutLabel: "Focused Node",
+                searchTokens: searchText.components(separatedBy: " ")
+            ),
             action: .shortcut(.apply(commands: [.toggleFocusedNodeMarkdownStyle]))
         )
     }
@@ -118,9 +126,13 @@ extension CanvasView {
         }
         return CommandPaletteItem(
             id: "alignParentNodesVertically",
-            title: "Align Parent Nodes Vertically",
+            title: "Node: Align Parents Vertically",
             shortcutLabel: "Focused Area",
-            searchText: "align parent nodes vertical left line tree diagram",
+            searchText: Self.commandPaletteSearchText(
+                title: "Node: Align Parents Vertically",
+                shortcutLabel: "Focused Area",
+                searchTokens: ["align", "parent", "nodes", "vertical", "left", "line", "tree", "diagram"]
+            ),
             action: .shortcut(.apply(commands: [.alignParentNodesVertically]))
         )
     }
@@ -185,4 +197,29 @@ extension CanvasView {
         return true
     }
 
+    static func commandPaletteSearchText(
+        title: String,
+        shortcutLabel: String,
+        searchTokens: [String]
+    ) -> String {
+        ([title, shortcutLabel] + searchTokens + commandPaletteVerbFirstAliases(from: title)).joined(
+            separator: " "
+        )
+    }
+
+    static func commandPaletteVerbFirstAliases(from title: String) -> [String] {
+        let components = title.split(separator: ":", maxSplits: 1).map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        guard components.count == 2 else {
+            return []
+        }
+
+        let noun = components[0]
+        let verb = components[1]
+        guard !noun.isEmpty, !verb.isEmpty else {
+            return []
+        }
+        return ["\(verb) \(noun)"]
+    }
 }

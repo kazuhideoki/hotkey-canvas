@@ -4,8 +4,8 @@
 public struct CanvasShortcutDefinition: Equatable, Sendable {
     /// Stable identifier for this shortcut rule.
     public let id: CanvasShortcutID
-    /// Human-readable command name.
-    public let name: String
+    /// Structured label rendered in Noun: Verb format.
+    public let commandPaletteLabel: CanvasCommandPaletteLabel
     /// Matching gesture.
     public let gesture: CanvasShortcutGesture
     /// Action invoked when the gesture matches.
@@ -20,7 +20,7 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
     /// Creates a shortcut catalog entry.
     /// - Parameters:
     ///   - id: Stable identifier.
-    ///   - name: Human-readable command name.
+    ///   - commandPaletteLabel: Structured title model for command palette display.
     ///   - gesture: Matching gesture.
     ///   - action: Action to invoke.
     ///   - shortcutLabel: UI-facing shortcut hint text.
@@ -28,7 +28,7 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
     ///   - isVisibleInCommandPalette: Visibility flag for command palette listing.
     public init(
         id: CanvasShortcutID,
-        name: String,
+        commandPaletteLabel: CanvasCommandPaletteLabel,
         gesture: CanvasShortcutGesture,
         action: CanvasShortcutAction,
         shortcutLabel: String,
@@ -36,11 +36,16 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
         isVisibleInCommandPalette: Bool = true
     ) {
         self.id = id
-        self.name = name
+        self.commandPaletteLabel = commandPaletteLabel
         self.gesture = gesture
         self.action = action
         self.shortcutLabel = shortcutLabel
         self.searchTokens = searchTokens
         self.isVisibleInCommandPalette = isVisibleInCommandPalette
+    }
+
+    /// Display title rendered in Noun: Verb format.
+    public var title: String {
+        commandPaletteLabel.title
     }
 }

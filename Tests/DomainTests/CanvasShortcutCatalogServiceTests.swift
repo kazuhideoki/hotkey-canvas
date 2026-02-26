@@ -87,6 +87,32 @@ func test_commandPaletteDefinitions_useSymbolShortcutLabels() {
     #expect(labelsByID["zoomIn.commandShiftEquals"] == "⌘+")
 }
 
+@Test("Shortcut catalog: command palette titles use noun-colon-verb format")
+func test_commandPaletteDefinitions_useNounColonVerbTitles() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions()
+
+    #expect(!definitions.isEmpty)
+    #expect(
+        definitions.allSatisfy { definition in
+            let parts = definition.title.split(separator: ":")
+            guard parts.count == 2 else {
+                return false
+            }
+            return !parts[0].trimmingCharacters(in: .whitespaces).isEmpty
+                && !parts[1].trimmingCharacters(in: .whitespaces).isEmpty
+        }
+    )
+}
+
+@Test("Shortcut catalog: fold command uses toggle wording")
+func test_commandPaletteDefinitions_toggleCommand_usesToggleVerb() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions()
+    let definitionByID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0) })
+
+    #expect(definitionByID["toggleFoldFocusedSubtree"]?.title == "Subtree: Toggle Fold")
+    #expect(definitionByID["toggleFoldFocusedSubtree"]?.searchTokens.contains("focused") == true)
+}
+
 @Test("Shortcut catalog: command-plus resolves zoom in")
 func test_resolveAction_commandPlus_returnsZoomIn() {
     let gesture = CanvasShortcutGesture(key: .character("+"), modifiers: [.command])
