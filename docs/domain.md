@@ -20,7 +20,7 @@
 | D2 | フォーカス移動と複数選択 | `CanvasFocusDirection`, `CanvasFocusNavigationService`, `CanvasSelectionService` |
 | D3 | エリアレイアウト | `CanvasNodeArea`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService` |
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
-| D5 | ショートカットカタログ | `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService` |
+| D5 | ショートカットカタログ | `CanvasCommandPaletteLabel`, `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService` |
 | D6 | 折りたたみ可視性 | `CanvasFoldedSubtreeVisibilityService` |
 | D7 | エリアモード所属管理 | `CanvasAreaID`, `CanvasEditingMode`, `CanvasArea`, `CanvasAreaMembershipService`, `CanvasAreaPolicyError` |
 
@@ -348,6 +348,7 @@
   - `CanvasShortcutModifiers`
   - `CanvasShortcutGesture`
 - モデル
+  - `CanvasCommandPaletteLabel`
   - `CanvasShortcutDefinition`
 - アクション
   - `CanvasShortcutAction`（`apply(commands:)` / `undo` / `redo` / `openCommandPalette`）
@@ -379,6 +380,8 @@
 
 - 不変条件
   - 標準ショートカット定義は実装内の静的配列で管理し、入力解決とコマンドパレット表示で共有する。
+  - `CanvasCommandPaletteLabel` は `Noun: Verb` 形式でタイトルを生成し、コマンド名の表記ゆれを防ぐ。
+  - 状態依存の ON/OFF 操作は原則 `toggle` 動詞で表記し、`enable/disable/on/off` は検索トークンで吸収する。
   - `Shift + 矢印` は `.extendSelection` に解決し、`moveFocus` と競合しない。
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
@@ -574,3 +577,4 @@
 - 2026-02-23: `deleteFocusedNode` を拡張し、複数選択時はフォーカス所属エリア内の選択ノードを削除対象として扱う仕様を追加（Tree は subtree まで、Diagram は選択ノードのみ）。
 - 2026-02-23: `moveNode` / `nudgeNode` を拡張し、フォーカスを含む同一エリア複数選択時は一括移動に対応。Tree では移動後に選択ノードを同一親配下の兄弟へ一本化し、Diagram ではフォーカス基準の移動量を選択ノード群へ同一平行移動として適用する仕様を追加。
 - 2026-02-23: `CanvasCommand.duplicateSelectionAsSibling` と `Command + D` を追加し、Tree エリアで「選択優先・未選択時はフォーカス」のサブツリー複製を sibling 追加として実行する仕様を導入した。Diagram エリアでは不許可とした。
+- 2026-02-26: `CanvasCommandPaletteLabel` を追加し、コマンドパレット表示名を `Noun: Verb` へ統一。状態依存操作は `toggle` 表記を標準とし、`enable/disable/on/off` は検索トークンで補完する仕様へ更新。
