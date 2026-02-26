@@ -35,15 +35,17 @@ extension CanvasView {
             return
         }
 
-        let nodeHeight = measuredNodeHeightAfterReplacingImage(
+        let nodeSize = measuredNodeSizeAfterReplacingImage(
             in: focusedNode,
-            imageSize: imageSize
+            imageSize: imageSize,
+            isDiagramNode: viewModel.diagramNodeIDs.contains(focusedNodeID)
         )
         Task {
             await viewModel.insertNodeImage(
                 nodeID: focusedNodeID,
                 imagePath: selectedURL.path,
-                nodeHeight: nodeHeight
+                nodeWidth: nodeSize.width,
+                nodeHeight: nodeSize.height
             )
         }
     }
@@ -58,7 +60,20 @@ extension CanvasView {
         return size
     }
 
-    func measuredNodeHeightAfterReplacingImage(in node: CanvasNode, imageSize newImageSize: CGSize) -> Double {
+    func measuredNodeSizeAfterReplacingImage(
+        in node: CanvasNode,
+        imageSize newImageSize: CGSize,
+        isDiagramNode: Bool
+    ) -> (width: Double, height: Double) {
+        let replacementNodeWidth =
+            if isDiagramNode {
+                Self.diagramImageNodeSideLength(
+                    imageSize: newImageSize,
+                    currentNodeWidth: node.bounds.width
+                )
+            } else {
+                node.bounds.width
+            }
         let hasText = (node.text ?? "").isEmpty == false
         let currentImageHeight: Double =
             if let currentImagePath = primaryImagePath(in: node),
@@ -85,10 +100,14 @@ extension CanvasView {
 
         let insertedImageHeight = measuredImageDisplayHeight(
             imageSize: newImageSize,
-            nodeWidth: node.bounds.width
+            nodeWidth: replacementNodeWidth
         )
         let insertedSpacing = hasText ? Double(nodeTextStyle.imageTextSpacing) : 0
-        return max(baseHeight + insertedImageHeight + insertedSpacing, 1)
+        let replacementNodeHeight = max(baseHeight + insertedImageHeight + insertedSpacing, 1)
+        if isDiagramNode {
+            return (width: replacementNodeWidth, height: replacementNodeWidth)
+        }
+        return (width: replacementNodeWidth, height: replacementNodeHeight)
     }
 
     static func replacementBaseNodeHeight(
@@ -133,6 +152,20 @@ extension CanvasView {
     ) -> Double {
         let contentWidth = max(nodeWidth - (outerPadding * 2), 1)
         return min(contentWidth, imageSize.width)
+    }
+
+    static func diagramImageNodeSideLength(
+        imageSize: CGSize,
+        currentNodeWidth: Double
+    ) -> Double {
+        let minimumSide = CanvasDefaultNodeDistance.diagramNodeSide
+        let maximumSide = CanvasDefaultNodeDistance.diagramImageMaxSide
+        let outerPadding = Double(NodeTextStyle.outerPadding)
+        let maxContentWidth = max(maximumSide - (outerPadding * 2), 1)
+        let imageDisplayWidth = min(imageSize.width, maxContentWidth)
+        let requiredNodeWidth = imageDisplayWidth + (outerPadding * 2)
+        let baselineNodeWidth = max(currentNodeWidth, requiredNodeWidth)
+        return max(min(baselineNodeWidth, maximumSide), minimumSide)
     }
 
     func measuredNodeHeightForEditing(

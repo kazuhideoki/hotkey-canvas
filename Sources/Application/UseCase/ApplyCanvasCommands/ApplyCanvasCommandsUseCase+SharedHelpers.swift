@@ -424,7 +424,8 @@ extension ApplyCanvasCommandsUseCase {
         return graph.nodesByID[edge.fromNodeID]
     }
 
-    /// Maps anchor->focused geometric relation to a unit direction used for chained diagram placement.
+    /// Maps anchor->focused relation to one cardinal unit direction for chained diagram placement.
+    /// Diagonal relations are snapped to the dominant axis (horizontal on ties).
     private func diagramDirectionalUnit(
         from anchorNode: CanvasNode,
         to focusedNode: CanvasNode
@@ -432,12 +433,13 @@ extension ApplyCanvasCommandsUseCase {
         let deltaX = focusedNode.bounds.x - anchorNode.bounds.x
         let deltaY = focusedNode.bounds.y - anchorNode.bounds.y
         let epsilon = 0.001
-        let dx = abs(deltaX) <= epsilon ? 0 : (deltaX > 0 ? 1 : -1)
-        let dy = abs(deltaY) <= epsilon ? 0 : (deltaY > 0 ? 1 : -1)
-        guard dx != 0 || dy != 0 else {
+        if abs(deltaX) <= epsilon, abs(deltaY) <= epsilon {
             return nil
         }
-        return (dx, dy)
+        if abs(deltaX) >= abs(deltaY) {
+            return (deltaX >= 0 ? 1 : -1, 0)
+        }
+        return (0, deltaY >= 0 ? 1 : -1)
     }
 
     /// Returns deterministic edge priority for placement anchor selection.
