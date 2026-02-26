@@ -477,7 +477,7 @@
     - Diagram エリアで `moveNode` を適用した後は、同一エリア内ノード衝突も即時解消するために area layout を実行する。
     - Diagram エリアでは `nudgeNode` も `moveNode` と同じ位置解決ロジック（アンカー距離補正と重なり回避を含む）を使い、ステップのみ `moveNode` の 1/4 倍（`cmd+矢印 : cmd+shift+矢印 = 4:1`）で移動する。複数選択条件を満たす場合は `moveNode` と同様に選択ノード群を一括平行移動する。
     - Diagram エリアでは `nudgeNode` 適用後も `moveNode` と同様に area layout を実行し、同一エリア内のノード重なりを即時解消する。
-    - `alignParentNodesVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス中エリア内の親ノード（エリア内で親子入辺を持たないノード）の `x` を最左ノード基準に揃える。整列時は親ノード配下サブツリーを一括で同じ `dx` 平行移動し、エリア内の相対位置を維持する。さらに整列後は親サブツリー同士の重なりを `y` 方向の平行移動で解消し、縦一列の `x` 基準を維持する。
+    - `alignParentNodesVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス有無で実行可否を判定しつつ、処理対象はキャンバス内の全エリアとする。各エリアの外接矩形を単位に、全エリアの最左 `x` へ揃え、`y` は上から順に重なりが解消される位置へ再配置する。ノード移動はエリア単位の一括平行移動で行い、各エリア内の相対配置は維持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
     - Diagram エリアでは `addNode` 実行時、フォーカスノードが存在する場合に `relationType = .normal` のエッジで新規ノードと接続する。
     - Diagram エリアで新規作成されるノードは、Tree ノード横幅（`220`）を一辺とする正方形で生成する。
@@ -579,4 +579,8 @@
 - 2026-02-23: `CanvasCommand.duplicateSelectionAsSibling` と `Command + D` を追加し、Tree エリアで「選択優先・未選択時はフォーカス」のサブツリー複製を sibling 追加として実行する仕様を導入した。Diagram エリアでは不許可とした。
 - 2026-02-26: `CanvasCommandPaletteLabel` を追加し、コマンドパレット表示名を `Noun: Verb` へ統一。状態依存操作は `toggle` 表記を標準とし、`enable/disable/on/off` は検索トークンで補完する仕様へ更新。
 - 2026-02-26: 画像添付時の Diagram ノード寸法ルールを更新し、`upsertNodeAttachment` で `nodeWidth` を受け取って `220...330` の正方形を許可。画像なしは従来どおり `220` 正方形を維持し、`setNodeText` とパイプライン正規化でも同ルールを適用する仕様へ更新。
+<<<<<<< HEAD
 - 2026-02-26: Diagram mode の `moveNode` / `nudgeNode` を更新し、アンカーと同じ行/列で移動先が近すぎる場合は移動方向の軸距離を最低1ステップへ補正して、左右/上下で見かけの間隔が偏らないようにした。補正後に重なる場合のみ追加ステップで回避する。
+=======
+- 2026-02-26: `alignParentNodesVertically` を更新し、フォーカス中エリア内の親サブツリー整列から、キャンバス内の全エリアを左詰め縦整列する挙動へ変更。整列時はエリア内ノードの相対配置を保持したまま、エリア単位で平行移動する仕様へ更新した。
+>>>>>>> main
