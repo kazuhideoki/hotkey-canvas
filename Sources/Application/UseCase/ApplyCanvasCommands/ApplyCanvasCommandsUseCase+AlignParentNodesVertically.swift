@@ -1,43 +1,44 @@
 import Domain
 
-// Background: Users need a fast way to visually organize root-level nodes in one area.
-// Responsibility: Align parent nodes to the leftmost x-position within the focused area.
+// Background: Users need one command that can align split areas into a readable vertical column.
+// Responsibility: Translate each area as a rigid block, preserving intra-area layout.
 extension ApplyCanvasCommandsUseCase {
-    /// Aligns parent nodes in one area to a single vertical line using the leftmost parent node as anchor.
+    /// Aligns all non-empty areas to a common left edge and stacks them vertically.
     /// - Parameters:
     ///   - graph: Current graph snapshot.
-    ///   - areaID: Area identifier whose parent nodes are aligned.
-    /// - Returns: Mutation result with updated node bounds, or no-op when alignment has no effect.
+    ///   - areaID: Focused area identifier resolved by command dispatch. The command still applies to all areas.
+    /// - Returns: Mutation result with translated area blocks, or no-op when nothing moves.
     func alignParentNodesVertically(
         in graph: CanvasGraph,
-        areaID: CanvasAreaID
+        areaID _: CanvasAreaID
     ) -> CanvasMutationResult {
-        guard let area = graph.areasByID[areaID] else {
+        let alignmentPlans = areaAlignmentPlans(in: graph)
+        guard !alignmentPlans.isEmpty else {
             return noOpMutationResult(for: graph)
         }
-        let parentNodeIDs = parentNodeIDs(in: area, graph: graph)
-        guard !parentNodeIDs.isEmpty else {
-            return noOpMutationResult(for: graph)
-        }
-        let memberNodeIDs = area.nodeIDs
+
         var nodesByID = graph.nodesByID
-        var didTranslateAnyNode = applyParentSubtreeHorizontalAlignment(
-            parentNodeIDs: parentNodeIDs,
-            memberNodeIDs: memberNodeIDs,
-            graph: graph,
-            nodesByID: &nodesByID
-        )
-
-        let movedParentNodeIDs = resolveParentSubtreeVerticalOverlaps(
-            parentNodeIDs: parentNodeIDs,
-            memberNodeIDs: memberNodeIDs,
-            graph: graph,
-            nodesByID: &nodesByID
-        )
-        if !movedParentNodeIDs.isEmpty {
-            didTranslateAnyNode = true
+        var didTranslateAnyNode = false
+        for plan in alignmentPlans {
+            guard plan.dx != 0 || plan.dy != 0 else {
+                continue
+            }
+            for nodeID in plan.nodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
+                guard let node = nodesByID[nodeID] else {
+                    continue
+                }
+                nodesByID[nodeID] = CanvasNode(
+                    id: node.id,
+                    kind: node.kind,
+                    text: node.text,
+                    attachments: node.attachments,
+                    bounds: translate(node.bounds, dx: plan.dx, dy: plan.dy),
+                    metadata: node.metadata,
+                    markdownStyleEnabled: node.markdownStyleEnabled
+                )
+                didTranslateAnyNode = true
+            }
         }
-
         guard didTranslateAnyNode else {
             return noOpMutationResult(for: graph)
         }
@@ -62,189 +63,74 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 
-    /// Aligns each parent-rooted subtree to the leftmost parent x-position.
-    /// - Parameters:
-    ///   - parentNodeIDs: Parent node identifiers.
-    ///   - memberNodeIDs: Area member node identifiers.
-    ///   - graph: Current graph snapshot.
-    ///   - nodesByID: Mutable node table.
-    /// - Returns: `true` when at least one node moved horizontally.
-    private func applyParentSubtreeHorizontalAlignment(
-        parentNodeIDs: Set<CanvasNodeID>,
-        memberNodeIDs: Set<CanvasNodeID>,
-        graph: CanvasGraph,
-        nodesByID: inout [CanvasNodeID: CanvasNode]
-    ) -> Bool {
-        let parentNodes = parentNodeIDs.compactMap { graph.nodesByID[$0] }
-        guard let leftmostX = parentNodes.map(\.bounds.x).min() else {
-            return false
+    /// Builds rigid-translation plans that align area bounds to one left column.
+    /// - Parameter graph: Current graph snapshot.
+    /// - Returns: Ordered alignment plans. Empty when there is one or zero non-empty areas.
+    private func areaAlignmentPlans(in graph: CanvasGraph) -> [AreaAlignmentPlan] {
+        let snapshots = areaBoundsSnapshots(in: graph)
+        guard snapshots.count > 1 else {
+            return []
         }
-        let horizontalDeltaByParentID: [CanvasNodeID: Double] = Dictionary(
-            uniqueKeysWithValues: parentNodes.compactMap { parentNode in
-                let dx = leftmostX - parentNode.bounds.x
-                guard dx != 0 else {
-                    return nil
-                }
-                return (parentNode.id, dx)
-            }
-        )
+        guard let alignedMinX = snapshots.map(\.bounds.minX).min() else {
+            return []
+        }
 
-        var didTranslateAnyNode = false
-        var translatedNodeIDs: Set<CanvasNodeID> = []
-        for nodeID in parentNodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
-            guard let dx = horizontalDeltaByParentID[nodeID] else {
-                continue
+        let orderedSnapshots = snapshots.sorted { lhs, rhs in
+            if lhs.bounds.minY != rhs.bounds.minY {
+                return lhs.bounds.minY < rhs.bounds.minY
             }
-            let subtreeNodeIDs = subtreeNodeIDs(
-                rootedAt: nodeID,
-                in: graph,
-                memberNodeIDs: memberNodeIDs
-            )
-            for subtreeNodeID in subtreeNodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
-                guard !translatedNodeIDs.contains(subtreeNodeID) else {
-                    continue
-                }
-                guard let node = nodesByID[subtreeNodeID] else {
-                    continue
-                }
-                nodesByID[subtreeNodeID] = CanvasNode(
-                    id: node.id,
-                    kind: node.kind,
-                    text: node.text,
-                    attachments: node.attachments,
-                    bounds: CanvasBounds(
-                        x: node.bounds.x + dx,
-                        y: node.bounds.y,
-                        width: node.bounds.width,
-                        height: node.bounds.height
-                    ),
-                    metadata: node.metadata,
-                    markdownStyleEnabled: node.markdownStyleEnabled
+            if lhs.bounds.minX != rhs.bounds.minX {
+                return lhs.bounds.minX < rhs.bounds.minX
+            }
+            return lhs.areaID.rawValue < rhs.areaID.rawValue
+        }
+
+        var plans: [AreaAlignmentPlan] = []
+        var nextAllowedMinY = orderedSnapshots[0].bounds.minY
+        for (index, snapshot) in orderedSnapshots.enumerated() {
+            let alignedMinY: Double
+            if index == 0 {
+                alignedMinY = snapshot.bounds.minY
+            } else {
+                alignedMinY = max(snapshot.bounds.minY, nextAllowedMinY)
+            }
+            let dx = alignedMinX - snapshot.bounds.minX
+            let dy = alignedMinY - snapshot.bounds.minY
+            let translatedBounds = snapshot.bounds.translated(dx: dx, dy: dy)
+            nextAllowedMinY = translatedBounds.maxY + Self.areaCollisionSpacing
+            plans.append(
+                AreaAlignmentPlan(
+                    nodeIDs: snapshot.nodeIDs,
+                    dx: dx,
+                    dy: dy
                 )
-                translatedNodeIDs.insert(subtreeNodeID)
-                didTranslateAnyNode = true
-            }
+            )
         }
-
-        return didTranslateAnyNode
+        return plans
     }
 
-    /// Resolves overlap among parent-rooted subtrees while preserving horizontal alignment.
-    /// - Parameters:
-    ///   - parentNodeIDs: Parent node identifiers to process.
-    ///   - memberNodeIDs: Area member node identifiers.
-    ///   - graph: Current graph snapshot used for subtree traversal.
-    ///   - nodesByID: Mutable node table.
-    /// - Returns: Parent node identifiers whose subtree moved on Y axis.
-    private func resolveParentSubtreeVerticalOverlaps(
-        parentNodeIDs: Set<CanvasNodeID>,
-        memberNodeIDs: Set<CanvasNodeID>,
-        graph: CanvasGraph,
-        nodesByID: inout [CanvasNodeID: CanvasNode]
-    ) -> Set<CanvasNodeID> {
-        let orderedParentNodeIDs = parentNodeIDs.sorted { lhs, rhs in
-            guard let lhsNode = nodesByID[lhs], let rhsNode = nodesByID[rhs] else {
-                return lhs.rawValue < rhs.rawValue
+    /// Collects bounds for all non-empty areas.
+    /// - Parameter graph: Current graph snapshot.
+    /// - Returns: Bounds snapshots for areas with at least one existing node.
+    private func areaBoundsSnapshots(in graph: CanvasGraph) -> [AreaBoundsSnapshot] {
+        graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue }).compactMap { areaID in
+            guard let area = graph.areasByID[areaID] else {
+                return nil
             }
-            if lhsNode.bounds.y == rhsNode.bounds.y {
-                return lhs.rawValue < rhs.rawValue
+            guard let bounds = areaBounds(nodeIDs: area.nodeIDs, nodesByID: graph.nodesByID) else {
+                return nil
             }
-            return lhsNode.bounds.y < rhsNode.bounds.y
+            return AreaBoundsSnapshot(areaID: area.id, nodeIDs: area.nodeIDs, bounds: bounds)
         }
-
-        var movedParentNodeIDs: Set<CanvasNodeID> = []
-        var placedSubtreeBounds: [CanvasRect] = []
-        var fixedNodeIDs: Set<CanvasNodeID> = []
-
-        for parentNodeID in orderedParentNodeIDs {
-            let subtreeNodeIDs = subtreeNodeIDs(
-                rootedAt: parentNodeID,
-                in: graph,
-                memberNodeIDs: memberNodeIDs
-            )
-            guard
-                let currentSubtreeBounds = subtreeBounds(
-                    for: subtreeNodeIDs,
-                    nodesByID: nodesByID
-                )
-            else {
-                continue
-            }
-
-            let requiredMinY = requiredSubtreeMinY(
-                for: currentSubtreeBounds,
-                against: placedSubtreeBounds,
-                minimumSpacing: Self.areaCollisionSpacing
-            )
-            let dy = requiredMinY - currentSubtreeBounds.minY
-            if dy > 0 {
-                if applyVerticalTranslation(
-                    to: subtreeNodeIDs,
-                    dy: dy,
-                    fixedNodeIDs: fixedNodeIDs,
-                    nodesByID: &nodesByID
-                ) {
-                    movedParentNodeIDs.insert(parentNodeID)
-                }
-            }
-
-            if let nextBounds = subtreeBounds(for: subtreeNodeIDs, nodesByID: nodesByID) {
-                placedSubtreeBounds.append(nextBounds)
-            }
-            fixedNodeIDs.formUnion(subtreeNodeIDs)
-        }
-
-        return movedParentNodeIDs
     }
 
-    /// Applies vertical translation to subtree nodes except already fixed nodes.
+    /// Computes enclosing bounds for a node set.
     /// - Parameters:
-    ///   - subtreeNodeIDs: Target subtree node identifiers.
-    ///   - dy: Vertical translation.
-    ///   - fixedNodeIDs: Node identifiers already finalized by earlier parents.
-    ///   - nodesByID: Mutable node table.
-    /// - Returns: `true` when at least one node moved.
-    private func applyVerticalTranslation(
-        to subtreeNodeIDs: Set<CanvasNodeID>,
-        dy: Double,
-        fixedNodeIDs: Set<CanvasNodeID>,
-        nodesByID: inout [CanvasNodeID: CanvasNode]
-    ) -> Bool {
-        var didMoveNode = false
-        for subtreeNodeID in subtreeNodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
-            guard !fixedNodeIDs.contains(subtreeNodeID) else {
-                continue
-            }
-            guard let node = nodesByID[subtreeNodeID] else {
-                continue
-            }
-            nodesByID[subtreeNodeID] = CanvasNode(
-                id: node.id,
-                kind: node.kind,
-                text: node.text,
-                attachments: node.attachments,
-                bounds: CanvasBounds(
-                    x: node.bounds.x,
-                    y: node.bounds.y + dy,
-                    width: node.bounds.width,
-                    height: node.bounds.height
-                ),
-                metadata: node.metadata,
-                markdownStyleEnabled: node.markdownStyleEnabled
-            )
-            didMoveNode = true
-        }
-
-        return didMoveNode
-    }
-
-    /// Computes subtree bounds from current nodes.
-    /// - Parameters:
-    ///   - nodeIDs: Target node identifiers.
+    ///   - nodeIDs: Node identifiers in one area.
     ///   - nodesByID: Node table.
-    /// - Returns: Bounds that enclose all target nodes.
-    private func subtreeBounds(
-        for nodeIDs: Set<CanvasNodeID>,
+    /// - Returns: Enclosing rectangle, or `nil` when no nodes exist.
+    private func areaBounds(
+        nodeIDs: Set<CanvasNodeID>,
         nodesByID: [CanvasNodeID: CanvasNode]
     ) -> CanvasRect? {
         let nodes = nodeIDs.compactMap { nodesByID[$0] }
@@ -256,14 +142,12 @@ extension ApplyCanvasCommandsUseCase {
         var minY = firstNode.bounds.y
         var maxX = firstNode.bounds.x + firstNode.bounds.width
         var maxY = firstNode.bounds.y + firstNode.bounds.height
-
         for node in nodes {
             minX = min(minX, node.bounds.x)
             minY = min(minY, node.bounds.y)
             maxX = max(maxX, node.bounds.x + node.bounds.width)
             maxY = max(maxY, node.bounds.y + node.bounds.height)
         }
-
         return CanvasRect(
             minX: minX,
             minY: minY,
@@ -271,86 +155,18 @@ extension ApplyCanvasCommandsUseCase {
             height: maxY - minY
         )
     }
-
-    /// Calculates required minimum Y to avoid collision with already placed subtrees.
-    /// - Parameters:
-    ///   - candidate: Candidate subtree bounds.
-    ///   - placedBounds: Bounds already fixed in order.
-    ///   - minimumSpacing: Required spacing between two subtrees.
-    /// - Returns: Minimum allowed top Y.
-    private func requiredSubtreeMinY(
-        for candidate: CanvasRect,
-        against placedBounds: [CanvasRect],
-        minimumSpacing: Double
-    ) -> Double {
-        var minY = candidate.minY
-        for placed in placedBounds {
-            let horizontalCollision =
-                candidate.minX < (placed.maxX + minimumSpacing)
-                && candidate.maxX > (placed.minX - minimumSpacing)
-            guard horizontalCollision else {
-                continue
-            }
-            minY = max(minY, placed.maxY + minimumSpacing)
-        }
-        return minY
-    }
 }
 
 extension ApplyCanvasCommandsUseCase {
-    /// Returns parent nodes inside one area (nodes without incoming parent-child edge from area members).
-    /// - Parameters:
-    ///   - area: Area that provides the node membership boundary.
-    ///   - graph: Current canvas graph.
-    /// - Returns: Parent node identifiers in the area.
-    private func parentNodeIDs(in area: CanvasArea, graph: CanvasGraph) -> Set<CanvasNodeID> {
-        let memberNodeIDs = area.nodeIDs
-        let childNodeIDs = Set(
-            graph.edgesByID.values
-                .filter {
-                    $0.relationType == .parentChild
-                        && memberNodeIDs.contains($0.fromNodeID)
-                        && memberNodeIDs.contains($0.toNodeID)
-                }
-                .map(\.toNodeID)
-        )
-        return memberNodeIDs.subtracting(childNodeIDs)
+    private struct AreaBoundsSnapshot {
+        let areaID: CanvasAreaID
+        let nodeIDs: Set<CanvasNodeID>
+        let bounds: CanvasRect
     }
 
-    /// Returns one root subtree node set within area members.
-    /// - Parameters:
-    ///   - rootNodeID: Root parent node identifier.
-    ///   - graph: Current canvas graph.
-    ///   - memberNodeIDs: Area member node identifiers.
-    /// - Returns: Root and descendants reachable by parent-child edges constrained in one area.
-    private func subtreeNodeIDs(
-        rootedAt rootNodeID: CanvasNodeID,
-        in graph: CanvasGraph,
-        memberNodeIDs: Set<CanvasNodeID>
-    ) -> Set<CanvasNodeID> {
-        var visited: Set<CanvasNodeID> = [rootNodeID]
-        var queue: [CanvasNodeID] = [rootNodeID]
-
-        while !queue.isEmpty {
-            let currentNodeID = queue.removeFirst()
-            for edge in graph.edgesByID.values {
-                guard edge.relationType == .parentChild else {
-                    continue
-                }
-                guard edge.fromNodeID == currentNodeID else {
-                    continue
-                }
-                guard memberNodeIDs.contains(edge.fromNodeID), memberNodeIDs.contains(edge.toNodeID) else {
-                    continue
-                }
-                guard !visited.contains(edge.toNodeID) else {
-                    continue
-                }
-                visited.insert(edge.toNodeID)
-                queue.append(edge.toNodeID)
-            }
-        }
-
-        return visited
+    private struct AreaAlignmentPlan {
+        let nodeIDs: Set<CanvasNodeID>
+        let dx: Double
+        let dy: Double
     }
 }
