@@ -170,6 +170,36 @@ func test_apply_setNodeText_inDiagramArea_keepsSquareNode() async throws {
     #expect(updatedNode.bounds.height == 220)
 }
 
+@Test("ApplyCanvasCommandsUseCase: setNodeText keeps diagram image node side length within attachment range")
+func test_apply_setNodeText_inDiagramAreaWithImage_preservesExpandedSquareSide() async throws {
+    let nodeID = CanvasNodeID(rawValue: "diagram-image-node")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: "before",
+                attachments: [makeImageAttachment(path: "/tmp/diagram-image.png")],
+                bounds: CanvasBounds(x: 0, y: 0, width: 300, height: 300)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let updated = try await sut.apply(
+        commands: [.setNodeText(nodeID: nodeID, text: "after", nodeHeight: 512)]
+    )
+    let updatedNode = try #require(updated.newState.nodesByID[nodeID])
+    #expect(updatedNode.bounds.width == 300)
+    #expect(updatedNode.bounds.height == 300)
+}
+
 @Test("ApplyCanvasCommandsUseCase: upsertNodeAttachment updates target node image attachment and height")
 func test_apply_upsertNodeAttachment_updatesNodeImage() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
@@ -192,6 +222,7 @@ func test_apply_upsertNodeAttachment_updatesNodeImage() async throws {
             .upsertNodeAttachment(
                 nodeID: nodeID,
                 attachment: makeImageAttachment(path: "/tmp/image-1.png"),
+                nodeWidth: 100,
                 nodeHeight: 84
             )
         ]
@@ -224,6 +255,7 @@ func test_apply_upsertNodeAttachment_replacesExistingImage() async throws {
             .upsertNodeAttachment(
                 nodeID: nodeID,
                 attachment: makeImageAttachment(path: "/tmp/new.jpeg"),
+                nodeWidth: 100,
                 nodeHeight: 90
             )
         ]
@@ -254,6 +286,7 @@ func test_apply_upsertNodeAttachment_nonFiniteHeight_fallsBackToCurrentHeight() 
             .upsertNodeAttachment(
                 nodeID: nodeID,
                 attachment: makeImageAttachment(path: "/tmp/image-2.webp"),
+                nodeWidth: 100,
                 nodeHeight: .nan
             )
         ]
@@ -266,12 +299,49 @@ func test_apply_upsertNodeAttachment_nonFiniteHeight_fallsBackToCurrentHeight() 
             .upsertNodeAttachment(
                 nodeID: nodeID,
                 attachment: makeImageAttachment(path: "/tmp/image-3.heic"),
+                nodeWidth: 100,
                 nodeHeight: .infinity
             )
         ]
     )
     #expect(infinityHeightResult.newState.nodesByID[nodeID]?.primaryImageAttachmentFilePath == "/tmp/image-3.heic")
     #expect(infinityHeightResult.newState.nodesByID[nodeID]?.bounds.height == 70)
+}
+
+@Test("ApplyCanvasCommandsUseCase: upsertNodeAttachment keeps diagram node square and clamps side by image range")
+func test_apply_upsertNodeAttachment_inDiagramArea_clampsNodeSide() async throws {
+    let nodeID = CanvasNodeID(rawValue: "diagram-node")
+    let areaID = CanvasAreaID(rawValue: "diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: "before",
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let updated = try await sut.apply(
+        commands: [
+            .upsertNodeAttachment(
+                nodeID: nodeID,
+                attachment: makeImageAttachment(path: "/tmp/diagram-image-large.png"),
+                nodeWidth: 999,
+                nodeHeight: 999
+            )
+        ]
+    )
+    let updatedNode = try #require(updated.newState.nodesByID[nodeID])
+    #expect(updatedNode.bounds.width == CanvasDefaultNodeDistance.diagramImageMaxSide)
+    #expect(updatedNode.bounds.height == CanvasDefaultNodeDistance.diagramImageMaxSide)
 }
 
 @Test("ApplyCanvasCommandsUseCase: addNode enables markdown styling by default")
