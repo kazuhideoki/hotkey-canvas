@@ -577,8 +577,5 @@
 - 2026-02-23: `deleteFocusedNode` を拡張し、複数選択時はフォーカス所属エリア内の選択ノードを削除対象として扱う仕様を追加（Tree は subtree まで、Diagram は選択ノードのみ）。
 - 2026-02-23: `moveNode` / `nudgeNode` を拡張し、フォーカスを含む同一エリア複数選択時は一括移動に対応。Tree では移動後に選択ノードを同一親配下の兄弟へ一本化し、Diagram ではフォーカス基準の移動量を選択ノード群へ同一平行移動として適用する仕様を追加。
 - 2026-02-23: `CanvasCommand.duplicateSelectionAsSibling` と `Command + D` を追加し、Tree エリアで「選択優先・未選択時はフォーカス」のサブツリー複製を sibling 追加として実行する仕様を導入した。Diagram エリアでは不許可とした。
-<<<<<<< HEAD
 - 2026-02-26: `CanvasCommandPaletteLabel` を追加し、コマンドパレット表示名を `Noun: Verb` へ統一。状態依存操作は `toggle` 表記を標準とし、`enable/disable/on/off` は検索トークンで補完する仕様へ更新。
-=======
 - 2026-02-26: 画像添付時の Diagram ノード寸法ルールを更新し、`upsertNodeAttachment` で `nodeWidth` を受け取って `220...330` の正方形を許可。画像なしは従来どおり `220` 正方形を維持し、`setNodeText` とパイプライン正規化でも同ルールを適用する仕様へ更新。
->>>>>>> main
