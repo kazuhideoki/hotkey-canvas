@@ -144,6 +144,15 @@ extension ApplyCanvasCommandsUseCase {
         var targetBounds = translateBounds(focusedNode.bounds, dx: deltaX, dy: deltaY)
 
         if let anchorNode {
+            targetBounds = clampDiagramTargetBoundsByAnchorDistance(
+                targetBounds,
+                anchorBounds: anchorNode.bounds,
+                direction: direction,
+                minimumAxisDistance: (
+                    horizontal: abs(deltaX),
+                    vertical: abs(deltaY)
+                )
+            )
             while boundsOverlap(targetBounds, anchorNode.bounds) {
                 targetBounds = translateBounds(targetBounds, dx: deltaX, dy: deltaY)
             }
@@ -171,6 +180,73 @@ extension ApplyCanvasCommandsUseCase {
             width: bounds.width,
             height: bounds.height
         )
+    }
+
+    private func clampDiagramTargetBoundsByAnchorDistance(
+        _ targetBounds: CanvasBounds,
+        anchorBounds: CanvasBounds,
+        direction: (dx: Int, dy: Int),
+        minimumAxisDistance: (horizontal: Double, vertical: Double)
+    ) -> CanvasBounds {
+        var clampedBounds = targetBounds
+        let anchorCenterX = anchorBounds.x + (anchorBounds.width / 2)
+        let anchorCenterY = anchorBounds.y + (anchorBounds.height / 2)
+
+        if direction.dx != 0,
+            minimumAxisDistance.horizontal > 0,
+            verticalRangesOverlap(clampedBounds, anchorBounds)
+        {
+            let targetCenterX = clampedBounds.x + (clampedBounds.width / 2)
+            let centerDeltaX = targetCenterX - anchorCenterX
+            if abs(centerDeltaX) < minimumAxisDistance.horizontal {
+                let side = axisSign(for: centerDeltaX, fallback: direction.dx)
+                let clampedCenterX = anchorCenterX + (Double(side) * minimumAxisDistance.horizontal)
+                clampedBounds = translateBounds(
+                    clampedBounds,
+                    dx: clampedCenterX - targetCenterX,
+                    dy: 0
+                )
+            }
+        }
+
+        if direction.dy != 0,
+            minimumAxisDistance.vertical > 0,
+            horizontalRangesOverlap(clampedBounds, anchorBounds)
+        {
+            let targetCenterY = clampedBounds.y + (clampedBounds.height / 2)
+            let centerDeltaY = targetCenterY - anchorCenterY
+            if abs(centerDeltaY) < minimumAxisDistance.vertical {
+                let side = axisSign(for: centerDeltaY, fallback: direction.dy)
+                let clampedCenterY = anchorCenterY + (Double(side) * minimumAxisDistance.vertical)
+                clampedBounds = translateBounds(
+                    clampedBounds,
+                    dx: 0,
+                    dy: clampedCenterY - targetCenterY
+                )
+            }
+        }
+
+        return clampedBounds
+    }
+
+    private func axisSign(for delta: Double, fallback: Int) -> Int {
+        if delta > 0 {
+            return 1
+        }
+        if delta < 0 {
+            return -1
+        }
+        return fallback >= 0 ? 1 : -1
+    }
+
+    private func horizontalRangesOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds) -> Bool {
+        lhs.x < rhs.x + rhs.width
+            && lhs.x + lhs.width > rhs.x
+    }
+
+    private func verticalRangesOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds) -> Bool {
+        lhs.y < rhs.y + rhs.height
+            && lhs.y + lhs.height > rhs.y
     }
 
     private func diagramUnitVector(for direction: CanvasNodeMoveDirection) -> (dx: Int, dy: Int) {
