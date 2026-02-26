@@ -110,13 +110,27 @@ public final class CanvasViewModel: ObservableObject {
         await apply(commands: [.setNodeText(nodeID: nodeID, text: text, nodeHeight: nodeHeight)])
     }
 
-    public func insertNodeImage(nodeID: CanvasNodeID, imagePath: String, nodeHeight: Double) async {
+    public func insertNodeImage(
+        nodeID: CanvasNodeID,
+        imagePath: String,
+        nodeWidth: Double,
+        nodeHeight: Double
+    ) async {
         let attachment = CanvasAttachment(
             id: CanvasAttachmentID(rawValue: "attachment-image-above-text"),
             kind: .image(filePath: imagePath),
             placement: .aboveText
         )
-        await apply(commands: [.upsertNodeAttachment(nodeID: nodeID, attachment: attachment, nodeHeight: nodeHeight)])
+        await apply(
+            commands: [
+                .upsertNodeAttachment(
+                    nodeID: nodeID,
+                    attachment: attachment,
+                    nodeWidth: nodeWidth,
+                    nodeHeight: nodeHeight
+                )
+            ]
+        )
     }
 
     public func consumePendingEditingNodeID() {

@@ -137,11 +137,12 @@ extension ApplyCanvasCommandsUseCase {
         switch command {
         case .setNodeText(let nodeID, let text, let nodeHeight):
             return try setNodeText(in: graph, nodeID: nodeID, text: text, nodeHeight: nodeHeight)
-        case .upsertNodeAttachment(let nodeID, let attachment, let nodeHeight):
+        case .upsertNodeAttachment(let nodeID, let attachment, let nodeWidth, let nodeHeight):
             return try upsertNodeAttachment(
                 in: graph,
                 nodeID: nodeID,
                 attachment: attachment,
+                nodeWidth: nodeWidth,
                 nodeHeight: nodeHeight
             )
         case .toggleFocusedNodeMarkdownStyle:
@@ -261,7 +262,7 @@ extension ApplyCanvasCommandsUseCase {
             return .failure(.focusedNodeNotFound)
         case .setNodeText(let nodeID, _, _):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
-        case .upsertNodeAttachment(let nodeID, _, _):
+        case .upsertNodeAttachment(let nodeID, _, _, _):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
         case .focusNode(let nodeID):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)

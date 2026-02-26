@@ -22,6 +22,24 @@ func test_measuredImageDisplayWidth_largeImage_clampsToContentWidth() {
     #expect(width == expectedContentWidth)
 }
 
+@Test("CanvasView image size: diagram image side keeps minimum for small image")
+func test_diagramImageNodeSideLength_smallImage_keepsMinimumDiagramSide() {
+    let imageSize = CGSize(width: 80, height: 40)
+
+    let side = CanvasView.diagramImageNodeSideLength(imageSize: imageSize, currentNodeWidth: 220)
+
+    #expect(side == 220)
+}
+
+@Test("CanvasView image size: diagram image side clamps to maximum for large image")
+func test_diagramImageNodeSideLength_largeImage_clampsToMaximum() {
+    let imageSize = CGSize(width: 1200, height: 800)
+
+    let side = CanvasView.diagramImageNodeSideLength(imageSize: imageSize, currentNodeWidth: 220)
+
+    #expect(side == 330)
+}
+
 @Test("CanvasView image height: image-only editing keeps base text container height")
 func test_imageAwareEditingNodeHeight_imageOnly_preservesMeasuredTextHeight() {
     let measuredTextHeight = 42.0

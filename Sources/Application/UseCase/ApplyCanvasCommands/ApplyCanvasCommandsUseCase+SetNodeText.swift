@@ -39,12 +39,9 @@ extension ApplyCanvasCommandsUseCase {
         let area = try CanvasAreaMembershipService.area(withID: areaID, in: graph).get()
         let normalizedBounds: CanvasBounds
         if area.editingMode == .diagram {
-            let squareSideLength = Self.newNodeWidth
-            normalizedBounds = CanvasBounds(
-                x: node.bounds.x,
-                y: node.bounds.y,
-                width: squareSideLength,
-                height: squareSideLength
+            normalizedBounds = Self.normalizedDiagramNodeBounds(
+                for: node,
+                proposedSide: node.bounds.width
             )
         } else {
             normalizedBounds = CanvasBounds(

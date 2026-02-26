@@ -17,7 +17,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case cutFocusedSubtree
     case pasteSubtreeAsChild
     case setNodeText(nodeID: CanvasNodeID, text: String, nodeHeight: Double)
-    case upsertNodeAttachment(nodeID: CanvasNodeID, attachment: CanvasAttachment, nodeHeight: Double)
+    case upsertNodeAttachment(nodeID: CanvasNodeID, attachment: CanvasAttachment, nodeWidth: Double, nodeHeight: Double)
     case toggleFocusedNodeMarkdownStyle
     case convertFocusedAreaMode(to: CanvasEditingMode)
     case createArea(id: CanvasAreaID, mode: CanvasEditingMode, nodeIDs: Set<CanvasNodeID>)
