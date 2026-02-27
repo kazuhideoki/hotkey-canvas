@@ -11,12 +11,14 @@
 ### 2.1 3層モデル
 
 - `KeyTrigger`: 物理キー入力と修飾キーの組み合わせ。
+- `ShortcutScope`: `primitive`（Tree/Diagram 操作プリミティブ）、`global`（cmd+k/cmd+z/cmd+= など）、`modal`（モーダル内操作）を先に判定する。
 - `Intent`: KeyTrigger が表す抽象意図。
-- `ContextAction`: Context（Tree/Diagram/Modal/Global）に依存する具体アクション。
+- `ContextAction`: Context（Tree/Diagram）に依存する具体アクション。
 
 設計ルール:
 
-- 解決順序は `KeyTrigger -> Intent -> ContextAction` とする。
+- 重要: `global` と `modal` を Scope 判定で分離しないと、実装時に `cmd+k`/`cmd+z`/`cmd+=` 系が `Intent` 経路に混線し、ルール整合が崩れる。
+- `KeyTrigger -> Intent -> ContextAction` は `primitive` スコープのみに適用する。
 - 同一 Intent は Context に応じて ContextAction を切り替える。
 - キー変更議論と機能意味議論を分離するため、Intent を先に固定する。
 - 修飾キー（`cmd/ctrl/opt/shift`）は `KeyTrigger -> Intent` 変換時のみ利用し、Intent 値には保持しない。
@@ -39,11 +41,12 @@
 
 - Domain:
   - `Intent` の語彙と意味定義を保持する。
-  - `Intent -> ContextAction` の解決契約を保持する。
+  - ContextAction の状態を持たない。
 - InterfaceAdapters:
   - `NSEvent` など入力デバイス依存の `KeyTrigger` 正規化を担う。
 - Application:
-  - 現在状態（focus/mode/modal）を使って Context を確定し、`ContextAction` を実行する。
+  - 現在状態（focus/mode）を使って Context を確定し、`ContextAction` を実行する。
+  - `global`/`modal` は専用経路として扱う。
 
 ### 2.4 キーマップ管理層の固定
 
@@ -123,6 +126,8 @@
 | `attach` | 添付情報を付与/更新する | 画像添付（Command Palette経由） | 画像添付（Command Palette経由） | ショートカット未割当 |
 | `switchTargetKind` | 操作対象（node/edge）を切替える | 未実装（connect 導線は関連機能） | 未実装（connect 導線は関連機能） | 未実装 |
 | `moveFocus` | フォーカス対象を移動する | `moveFocus` / `extendSelection` | `moveFocus` / `extendSelection` | 実装済み |
+| `moveNode` | ノードを移動する | `moveNode` | `moveNode` | 実装済み |
+| `nudgeNode` | ノードを最小単位で移動する | `nudgeNode` | `nudgeNode` | 実装済み |
 | `search` | 対象を検索しジャンプする | Search UI | Search UI | 実装済み |
 | `output` | 現在状態を出力する | 未定義 | 未定義 | 未実装 |
 | `transform` | 異種構造へ変換する（例: tree <-> diagram） | エリアモード変換コマンドは存在するが専用導線未整備 | エリアモード変換コマンドは存在するが専用導線未整備 | 導線未整備 |
@@ -154,7 +159,8 @@
 ### Phase 2: ルーティング境界の設計
 
 - `IntentResolver`（仮）と `ContextActionResolver`（仮）の責務を分離する設計を定義する。
-- KeyTrigger 追加時に Intent 層を経由しない実装を禁止する指針を明文化する。
+- `primitive` スコープの KeyTrigger 追加時にのみ、Intent 層を経由しない実装を禁止する。
+- `global`/`modal` は `KeyTrigger` 追加時の必須ルートとして別管理する。
 - `Intent Base Map` / `Context/Mode Override` / `User Override` の3層解決順を仕様化する。
 
 ### Phase 3: 未実装Intentの入口予約
