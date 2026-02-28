@@ -226,6 +226,8 @@ func test_onAppear_publishesNodeStylingIDs() async throws {
 
     #expect(viewModel.diagramNodeIDs == [diagramNodeID])
     #expect(viewModel.treeRootNodeIDs == [treeRootID])
+    #expect(viewModel.areaEditingModeByID[treeAreaID] == .tree)
+    #expect(viewModel.areaEditingModeByID[diagramAreaID] == .diagram)
 }
 
 @MainActor
