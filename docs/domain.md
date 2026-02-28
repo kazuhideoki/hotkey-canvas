@@ -79,13 +79,9 @@
   - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.attachments` はノード内添付、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
   - `CanvasAttachment`, `CanvasAttachmentID`, `CanvasAttachmentKind`, `CanvasAttachmentPlacement`
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`（`parentChild` エッジは `parentChildOrder` で兄弟順序を保持）
-<<<<<<< HEAD
-  - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`、画像添付時の Diagram ノード上限 `diagramImageMaxSide = 330`、Diagram ノード最小辺長 `diagramMinNodeSide = 110`、選択ノード拡縮ステップ `nodeScaleStepRatio = 0.1`）
-=======
   - `CanvasFocusedElement`（`.node` / `.edge` の操作対象）
   - `CanvasEdgeFocus`（`edgeID` と `originNodeID` を保持する edge フォーカス情報）
-  - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`、画像添付時の Diagram ノード上限 `diagramImageMaxSide = 330`）
->>>>>>> main
+  - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`、画像添付時の Diagram ノード上限 `diagramImageMaxSide = 330`、Diagram ノード最小辺長 `diagramMinNodeSide = 110`、選択ノード拡縮ステップ `nodeScaleStepRatio = 0.1`）
 - コマンド
   - `CanvasCommand`
   - `CanvasNodeMoveDirection`
