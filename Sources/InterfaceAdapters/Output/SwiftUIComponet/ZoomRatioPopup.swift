@@ -15,13 +15,8 @@ struct ZoomRatioPopup: View {
             .foregroundStyle(CanvasStylePalette.color(.label))
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        CanvasStylePalette.color(styleSheet.overlay.zoomPopupFillColor)
-                            .opacity(styleSheet.overlay.zoomPopupFillOpacity)
-                    )
-            )
+            .systemSurface(styleSheet.overlay.transientFeedbackSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(

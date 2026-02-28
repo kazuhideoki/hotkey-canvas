@@ -47,6 +47,11 @@ public enum CanvasStylePalette {
             lineWidth: 2.25
         ),
         overlay: CanvasOverlayStyle(
+            commandPaletteSurface: .panel,
+            searchPanelSurface: .search,
+            selectionPopupSurface: .popup,
+            connectBannerSurface: .banner,
+            transientFeedbackSurface: .transientFeedback,
             dimmedBackgroundOpacity: 0.12,
             popupBorderColor: .separator,
             popupSelectedRowColor: .accent,
@@ -61,6 +66,15 @@ public enum CanvasStylePalette {
             zoomPopupShadowOpacity: 0.1
         )
     )
+
+    static func surface(_ token: CanvasSystemSurfaceToken) -> AnyShapeStyle {
+        switch token {
+        case .panel, .search, .popup, .banner:
+            return AnyShapeStyle(.regularMaterial)
+        case .transientFeedback:
+            return AnyShapeStyle(.thinMaterial)
+        }
+    }
 
     static func color(_ token: CanvasStyleColorToken) -> Color {
         switch token {
