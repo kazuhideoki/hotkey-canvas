@@ -21,7 +21,7 @@ public struct DefaultKeymapContextActionResolver: KeymapContextActionResolver {
         case .attach:
             return .reportUnsupportedIntent(intent: primitiveIntent)
         case .switchTargetKind(let variant):
-            return resolveSwitchTargetKindContextAction(variant: variant, primitiveIntent: primitiveIntent)
+            return resolveSwitchTargetKindContextAction(variant: variant)
         case .moveFocus(let direction, let variant):
             return resolveMoveFocusContextAction(direction: direction, variant: variant)
         case .moveNode(let direction):
@@ -62,14 +62,13 @@ extension DefaultKeymapContextActionResolver {
     }
 
     private func resolveSwitchTargetKindContextAction(
-        variant: KeymapSwitchTargetKindIntentVariant,
-        primitiveIntent: KeymapPrimitiveIntent
+        variant: KeymapSwitchTargetKindIntentVariant
     ) -> KeymapContextAction {
         switch variant {
         case .edge:
-            return .beginConnectNodeSelection
+            return .switchTargetKind(variant: .edge)
         case .node:
-            return .reportUnsupportedIntent(intent: primitiveIntent)
+            return .switchTargetKind(variant: .node)
         }
     }
 

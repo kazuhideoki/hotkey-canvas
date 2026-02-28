@@ -4,6 +4,7 @@
 public enum KeymapGlobalAction: Equatable, Sendable {
     case openCommandPalette
     case openSearch
+    case beginConnectNodeSelection
     case undo
     case redo
     case zoomIn

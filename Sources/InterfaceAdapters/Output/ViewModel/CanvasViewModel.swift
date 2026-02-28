@@ -7,7 +7,9 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var nodes: [CanvasNode] = []
     @Published public private(set) var edges: [CanvasEdge] = []
     @Published public private(set) var focusedNodeID: CanvasNodeID?
+    @Published public private(set) var focusedEdgeID: CanvasEdgeID?
     @Published public private(set) var selectedNodeIDs: Set<CanvasNodeID> = []
+    @Published public private(set) var selectedEdgeIDs: Set<CanvasEdgeID> = []
     @Published public private(set) var collapsedRootNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var diagramNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var treeRootNodeIDs: Set<CanvasNodeID> = []
@@ -208,7 +210,14 @@ extension CanvasViewModel {
         nodes = sortedNodes(in: visibleGraph)
         edges = sortedEdges(in: visibleGraph)
         focusedNodeID = visibleGraph.focusedNodeID
+        focusedEdgeID =
+            if case .edge(let edgeFocus) = visibleGraph.focusedElement {
+                edgeFocus.edgeID
+            } else {
+                nil
+            }
         selectedNodeIDs = visibleGraph.selectedNodeIDs
+        selectedEdgeIDs = visibleGraph.selectedEdgeIDs
         collapsedRootNodeIDs = CanvasFoldedSubtreeVisibilityService.normalizedCollapsedRootNodeIDs(
             in: result.newState
         )

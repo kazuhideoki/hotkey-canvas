@@ -39,6 +39,7 @@ public struct CanvasHotkeyTranslator {
 }
 
 extension CanvasHotkeyTranslator {
+    private static let tabKeyCode: UInt16 = 48
     private static let enterKeyCode: UInt16 = 36
     private static let deleteKeyCode: UInt16 = 51
     private static let forwardDeleteKeyCode: UInt16 = 117
@@ -98,6 +99,8 @@ extension CanvasHotkeyTranslator {
 
     private func shortcutKey(from event: NSEvent) -> CanvasShortcutKey? {
         switch event.keyCode {
+        case Self.tabKeyCode:
+            return .tab
         case Self.enterKeyCode:
             return .enter
         case Self.deleteKeyCode:
@@ -126,7 +129,7 @@ extension CanvasHotkeyTranslator {
         switch key {
         case .arrowUp, .arrowDown, .arrowLeft, .arrowRight, .deleteBackward, .deleteForward:
             return true
-        case .enter, .character:
+        case .tab, .enter, .character:
             return false
         }
     }

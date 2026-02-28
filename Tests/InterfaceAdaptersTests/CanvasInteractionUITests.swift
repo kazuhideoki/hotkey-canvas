@@ -202,6 +202,8 @@ private func applyTranslatedEvent(
     switch route {
     case .global(let action):
         switch action {
+        case .beginConnectNodeSelection:
+            return
         case .undo:
             await viewModel.undo()
         case .redo:
@@ -217,7 +219,7 @@ private func applyTranslatedEvent(
             await viewModel.apply(commands: commands)
         case .presentAddNodeModeSelection:
             await viewModel.addNodeFromModeSelection(mode: .tree)
-        case .beginConnectNodeSelection, .reportUnsupportedIntent:
+        case .switchTargetKind, .reportUnsupportedIntent:
             return
         }
     case .modal:
