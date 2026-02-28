@@ -13,13 +13,13 @@ func test_resolve_primaryAdd_returnsAddSiblingBelow() {
     #expect(action == .apply(commands: [.addSiblingNode(position: .below)]))
 }
 
-@Test("DefaultKeymapContextActionResolver: edge target switch maps to begin-connect-node-selection")
-func test_resolve_switchTargetKindEdge_returnsBeginConnectNodeSelection() {
+@Test("DefaultKeymapContextActionResolver: edge target switch maps to switch-target-kind action")
+func test_resolve_switchTargetKindEdge_returnsSwitchTargetKindAction() {
     let sut = DefaultKeymapContextActionResolver()
 
     let action = sut.resolve(primitiveIntent: .switchTargetKind(variant: .edge))
 
-    #expect(action == .beginConnectNodeSelection)
+    #expect(action == .switchTargetKind(variant: .edge))
 }
 
 @Test("DefaultKeymapContextActionResolver: extend-selection focus intent keeps direction")

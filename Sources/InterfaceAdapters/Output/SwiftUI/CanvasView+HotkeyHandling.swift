@@ -67,6 +67,9 @@ extension CanvasView {
         case .openSearch:
             openSearch()
             return true
+        case .beginConnectNodeSelection:
+            presentConnectNodeSelectionIfPossible()
+            return true
         case .undo:
             Task {
                 await viewModel.undo()
@@ -94,12 +97,15 @@ extension CanvasView {
     private func handlePrimitiveContextAction(_ action: KeymapContextAction) -> Bool {
         switch action {
         case .apply(let commands):
+            if handleEdgeTargetCommands(commands: commands) {
+                return true
+            }
             Task {
                 await viewModel.apply(commands: commands)
             }
             return true
-        case .beginConnectNodeSelection:
-            presentConnectNodeSelectionIfPossible()
+        case .switchTargetKind(let variant):
+            switchOperationTarget(to: variant)
             return true
         case .presentAddNodeModeSelection:
             presentAddNodeModeSelectionPopup()

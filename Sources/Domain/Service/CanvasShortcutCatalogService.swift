@@ -475,9 +475,10 @@ extension CanvasShortcutCatalogService {
             modifiers.contains(.function) ? "fn" : nil,
         ].compactMap { $0 }
     }
-
     private static func keyLabel(for key: CanvasShortcutKey) -> String {
         switch key {
+        case .tab:
+            "⇥"
         case .enter:
             "↩"
         case .deleteBackward:
@@ -496,5 +497,4 @@ extension CanvasShortcutCatalogService {
             character.uppercased()
         }
     }
-
 }

@@ -13,6 +13,7 @@
 | `cmd+shift+z` / `cmd+y` | `global.redo` | Redo | なし |
 | `cmd+=` / `cmd+shift+=` / `cmd+shift+;` / `cmd+テンキー+` | `global.zoomIn` | Zoom In | なし |
 | `cmd+-` | `global.zoomOut` | Zoom Out | なし |
+| `cmd+l` | `global.beginConnectNodeSelection` | Connect Mode を開始 | Tree は実質 no-op / Diagram で有効 |
 | `ctrl+l` | `global.centerFocusedNode` | Focused Node を中央へ移動 | なし（フォーカス必須） |
 
 ## Primitive（EditMode差分）
@@ -33,7 +34,7 @@
 | `moveNode` | `cmd+arrow` | 構造移動（並び替え/indent/outdent） | 位置移動（diagram grid） | |
 | `nudgeNode` | `cmd+shift+arrow` | 実行経路はあるが no-op | 微小移動 | |
 | `toggleVisibility` | `opt+.` | subtree の fold/unfold 切替 | 非対応 | |
-| `switchTargetKind(.edge)` | `cmd+l` | 実質 no-op | Connect Mode 開始 | 接続確定は `enter`（モーダル） |
+| `switchTargetKind(.edge)` | `tab` | node/edge 対象を切替 | node/edge 対象を切替 | edge 対象中の `tab` は node へ戻す |
 
 ## 補足
 

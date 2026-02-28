@@ -265,6 +265,64 @@ func test_pipelineCoordinator_focusNormalization_resolvesInvalidFocus() {
     #expect(result.viewportIntent == nil)
 }
 
+@Test(
+    "CanvasCommandPipelineCoordinator: selection normalization updates edge selection when node selection is stable"
+)
+func test_pipelineCoordinator_selectionNormalization_updatesEdgeSelectionWithoutNodeSelectionChange() {
+    let nodeAID = CanvasNodeID(rawValue: "node-a")
+    let nodeBID = CanvasNodeID(rawValue: "node-b")
+    let edgeABID = CanvasEdgeID(rawValue: "edge-a-b")
+    let missingEdgeID = CanvasEdgeID(rawValue: "edge-missing")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeAID: CanvasNode(
+                id: nodeAID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 120)
+            ),
+            nodeBID: CanvasNode(
+                id: nodeBID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 320, y: 40, width: 220, height: 120)
+            ),
+        ],
+        edgesByID: [
+            edgeABID: CanvasEdge(
+                id: edgeABID,
+                fromNodeID: nodeAID,
+                toNodeID: nodeBID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: nodeAID,
+        focusedElement: .edge(CanvasEdgeFocus(edgeID: edgeABID, originNodeID: nodeAID)),
+        selectedNodeIDs: [nodeAID],
+        selectedEdgeIDs: [edgeABID, missingEdgeID]
+    )
+    let coordinator = CanvasCommandPipelineCoordinator()
+
+    let result = coordinator.run(
+        on: graph,
+        mutationResults: [
+            CanvasMutationResult(
+                graphBeforeMutation: graph,
+                graphAfterMutation: graph,
+                effects: CanvasMutationEffects(
+                    didMutateGraph: true,
+                    needsTreeLayout: false,
+                    needsAreaLayout: false,
+                    needsFocusNormalization: false
+                )
+            )
+        ]
+    )
+
+    #expect(result.graph.selectedNodeIDs == [nodeAID])
+    #expect(result.graph.selectedEdgeIDs == [edgeABID])
+}
+
 private func makePipelineParityBaseGraph(
     rootID: CanvasNodeID,
     firstChildID: CanvasNodeID,

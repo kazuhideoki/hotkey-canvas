@@ -100,3 +100,54 @@ func test_nextFocusedNodeID_returnsNil_whenGraphIsEmpty() {
 
     #expect(nextFocusedNodeID == nil)
 }
+
+@Test("CanvasFocusNavigationService: edge focus moves to nearest edge in requested direction")
+func test_nextFocusedEdgeID_movesToNearestDirectionalEdge() {
+    let nodeAID = CanvasNodeID(rawValue: "node-a")
+    let nodeBID = CanvasNodeID(rawValue: "node-b")
+    let nodeCID = CanvasNodeID(rawValue: "node-c")
+    let nodeDID = CanvasNodeID(rawValue: "node-d")
+    let edgeABID = CanvasEdgeID(rawValue: "edge-a-b")
+    let edgeCDID = CanvasEdgeID(rawValue: "edge-c-d")
+
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeAID: CanvasNode(
+                id: nodeAID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 80)
+            ),
+            nodeBID: CanvasNode(
+                id: nodeBID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 180, y: 0, width: 100, height: 80)
+            ),
+            nodeCID: CanvasNode(
+                id: nodeCID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 200, width: 100, height: 80)
+            ),
+            nodeDID: CanvasNode(
+                id: nodeDID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 180, y: 200, width: 100, height: 80)
+            ),
+        ],
+        edgesByID: [
+            edgeABID: CanvasEdge(id: edgeABID, fromNodeID: nodeAID, toNodeID: nodeBID, relationType: .normal),
+            edgeCDID: CanvasEdge(id: edgeCDID, fromNodeID: nodeCID, toNodeID: nodeDID, relationType: .normal),
+        ]
+    )
+
+    let nextFocusedEdgeID = CanvasFocusNavigationService.nextFocusedEdgeID(
+        in: graph,
+        from: edgeABID,
+        moving: .down
+    )
+
+    #expect(nextFocusedEdgeID == edgeCDID)
+}

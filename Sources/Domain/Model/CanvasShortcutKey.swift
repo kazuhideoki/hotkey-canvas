@@ -2,6 +2,7 @@
 // Responsibility: Model supported key variants for shortcut gestures.
 /// Key value used in a shortcut gesture.
 public enum CanvasShortcutKey: Equatable, Hashable, Sendable {
+    case tab
     case enter
     case deleteBackward
     case deleteForward

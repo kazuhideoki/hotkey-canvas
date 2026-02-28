@@ -6,6 +6,9 @@ public enum KeymapIntentResolver {
     /// - Parameter gesture: Canonical shortcut gesture from input adapter.
     /// - Returns: Route payload when gesture is supported.
     public static func resolveRoute(for gesture: CanvasShortcutGesture) -> KeymapResolvedRoute? {
+        if gesture == CanvasShortcutGesture(key: .tab, modifiers: []) {
+            return .primitive(intent: .switchTargetKind(variant: .edge))
+        }
         if let globalAction = globalAction(for: gesture) {
             return .global(action: globalAction)
         }
@@ -44,7 +47,7 @@ extension KeymapIntentResolver {
         case .apply(let commands):
             return globalAction(for: commands)
         case .beginConnectNodeSelection:
-            return nil
+            return .beginConnectNodeSelection
         }
     }
 
@@ -63,7 +66,7 @@ extension KeymapIntentResolver {
     private static func primitiveRoute(for action: CanvasShortcutAction) -> KeymapResolvedRoute? {
         switch action {
         case .beginConnectNodeSelection:
-            return .primitive(intent: .switchTargetKind(variant: .edge))
+            return nil
         case .apply(let commands):
             guard let intent = primitiveIntent(for: commands) else {
                 return nil
