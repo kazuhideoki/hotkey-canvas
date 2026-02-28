@@ -54,10 +54,25 @@ extension ApplyCanvasCommandsUseCase {
             ),
             in: graph
         ).get()
+        let nextSelectedNodeIDs = CanvasSelectionService.normalizedSelectedNodeIDs(
+            from: [toNodeID],
+            in: graphAfterMutation,
+            focusedNodeID: toNodeID
+        )
+        let nextGraph = CanvasGraph(
+            nodesByID: graphAfterMutation.nodesByID,
+            edgesByID: graphAfterMutation.edgesByID,
+            focusedNodeID: toNodeID,
+            focusedElement: .node(toNodeID),
+            selectedNodeIDs: nextSelectedNodeIDs,
+            selectedEdgeIDs: [],
+            collapsedRootNodeIDs: graphAfterMutation.collapsedRootNodeIDs,
+            areasByID: graphAfterMutation.areasByID
+        )
 
         return CanvasMutationResult(
             graphBeforeMutation: graph,
-            graphAfterMutation: graphAfterMutation,
+            graphAfterMutation: nextGraph,
             effects: CanvasMutationEffects(
                 didMutateGraph: true,
                 needsTreeLayout: false,

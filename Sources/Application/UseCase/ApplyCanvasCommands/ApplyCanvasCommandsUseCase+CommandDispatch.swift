@@ -119,6 +119,7 @@ extension ApplyCanvasCommandsUseCase {
             .extendSelection,
             .moveNode,
             .nudgeNode,
+            .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .copySelectionOrFocusedSubtree,

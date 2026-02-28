@@ -41,6 +41,8 @@ func test_apply_connectNodesInDiagramArea_createsNormalEdge() async throws {
     #expect(createdEdge.fromNodeID == sourceNodeID)
     #expect(createdEdge.toNodeID == targetNodeID)
     #expect(createdEdge.relationType == .normal)
+    #expect(result.newState.focusedNodeID == targetNodeID)
+    #expect(result.newState.focusedElement == .node(targetNodeID))
 }
 
 @Test("ApplyCanvasCommandsUseCase: connectNodes is no-op when the same edge already exists")
