@@ -8,22 +8,25 @@ public enum CanvasShortcutCatalogService {
     public static func resolveAction(for gesture: CanvasShortcutGesture) -> CanvasShortcutAction? {
         definitionsByGesture[gesture]
     }
-
     /// Returns command-palette visible shortcuts.
     /// - Returns: Shortcut entries visible to command palette UI.
     public static func commandPaletteDefinitions() -> [CanvasShortcutDefinition] {
         defaultDefinitionsStorage.filter(\.isVisibleInCommandPalette)
     }
-
     /// Returns command-palette visible shortcuts for a runtime context.
     /// - Parameter context: Runtime context used for conditional visibility filtering.
     /// - Returns: Shortcut entries visible to command palette UI.
     public static func commandPaletteDefinitions(
         context: CanvasCommandPaletteContext
     ) -> [CanvasShortcutDefinition] {
-        defaultDefinitionsStorage.filter { definition in
-            definition.isVisibleInCommandPalette
-                && commandPaletteVisibilityMatches(definition.commandPaletteVisibility, context: context)
+        defaultDefinitionsStorage.compactMap { definition in
+            guard
+                definition.isVisibleInCommandPalette,
+                commandPaletteVisibilityMatches(definition.commandPaletteVisibility, context: context)
+            else {
+                return nil
+            }
+            return commandPaletteDefinition(definition, for: context)
         }
     }
 }
@@ -34,7 +37,6 @@ extension CanvasShortcutCatalogService {
     private static let definitionsByGesture: [CanvasShortcutGesture: CanvasShortcutAction] = {
         Dictionary(uniqueKeysWithValues: defaultDefinitionsStorage.map { ($0.gesture, $0.action) })
     }()
-
     private static func makeDefaultDefinitions() -> [CanvasShortcutDefinition] {
         commandPaletteTriggerDefinitions()
             + nodeEditingDefinitions()
@@ -79,7 +81,6 @@ extension CanvasShortcutCatalogService {
     private static func nodeEditingDefinitions() -> [CanvasShortcutDefinition] {
         baseNodeCreationDefinitions() + baseNodeMutationDefinitions() + clipboardNodeEditingDefinitions()
     }
-
     private static func baseNodeCreationDefinitions() -> [CanvasShortcutDefinition] {
         [
             CanvasShortcutDefinition(
@@ -134,7 +135,7 @@ extension CanvasShortcutCatalogService {
         [
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "deleteFocusedNode"),
-                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "Node", verb: "Delete Focused"),
+                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "Node", verb: "Delete Selected"),
                 gesture: CanvasShortcutGesture(key: .deleteBackward, modifiers: []),
                 action: .apply(commands: [.deleteFocusedNode]),
                 shortcutLabel: shortcutLabel(
@@ -164,37 +165,37 @@ extension CanvasShortcutCatalogService {
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "copyFocusedSubtree"),
                 commandPaletteLabel: CanvasCommandPaletteLabel(
-                    noun: "Subtree",
-                    verb: "Copy Focused"
+                    noun: "Node",
+                    verb: "Copy Selected"
                 ),
                 gesture: CanvasShortcutGesture(key: .character("c"), modifiers: [.command]),
                 action: .apply(commands: [.copyFocusedSubtree]),
                 shortcutLabel: shortcutLabel(
                     for: CanvasShortcutGesture(key: .character("c"), modifiers: [.command])
                 ),
-                searchTokens: ["copy", "subtree"],
+                searchTokens: ["copy", "selected", "subtree", "node"],
                 commandPaletteVisibility: .requiresFocusedNode
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "cutFocusedSubtree"),
-                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "Subtree", verb: "Cut Focused"),
+                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "Node", verb: "Cut Selected"),
                 gesture: CanvasShortcutGesture(key: .character("x"), modifiers: [.command]),
                 action: .apply(commands: [.cutFocusedSubtree]),
                 shortcutLabel: shortcutLabel(
                     for: CanvasShortcutGesture(key: .character("x"), modifiers: [.command])
                 ),
-                searchTokens: ["cut", "subtree"],
+                searchTokens: ["cut", "selected", "subtree", "node"],
                 commandPaletteVisibility: .requiresFocusedNode
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "pasteSubtreeAsChild"),
-                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "Subtree", verb: "Paste As Child"),
+                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "Node", verb: "Paste"),
                 gesture: CanvasShortcutGesture(key: .character("v"), modifiers: [.command]),
                 action: .apply(commands: [.pasteSubtreeAsChild]),
                 shortcutLabel: shortcutLabel(
                     for: CanvasShortcutGesture(key: .character("v"), modifiers: [.command])
                 ),
-                searchTokens: ["paste", "subtree", "child"],
+                searchTokens: ["paste", "selected", "subtree", "child", "node"],
                 commandPaletteVisibility: .requiresFocusedNode
             ),
         ]
@@ -309,14 +310,15 @@ extension CanvasShortcutCatalogService {
             id: CanvasShortcutID(rawValue: "nudgeNode\(nodeDirectionIDSuffix(direction))"),
             commandPaletteLabel: CanvasCommandPaletteLabel(
                 noun: "Node",
-                verb: "Nudge \(nodeDirectionLabel(direction))"
+                verb: "Move \(nodeDirectionLabel(direction)) Slightly"
             ),
             gesture: CanvasShortcutGesture(key: key, modifiers: [.command, .shift]),
             action: .apply(commands: [.nudgeNode(direction)]),
             shortcutLabel: shortcutLabel(
                 for: CanvasShortcutGesture(key: key, modifiers: [.command, .shift])
             ),
-            commandPaletteVisibility: .requiresFocusedNode
+            searchTokens: ["move", "slightly", "nudge", "grid"],
+            commandPaletteVisibility: .requiresFocusedNodeAndMode([.diagram])
         )
     }
 
