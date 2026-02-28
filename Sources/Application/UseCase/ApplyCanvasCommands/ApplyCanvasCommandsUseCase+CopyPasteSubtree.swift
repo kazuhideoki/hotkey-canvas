@@ -96,7 +96,7 @@ extension ApplyCanvasCommandsUseCase {
             nodesByID: graphAfterMutation.nodesByID,
             edgesByID: graphAfterMutation.edgesByID,
             focusedNodeID: insertResult.primaryRootNodeID,
-            selectedNodeIDs: [insertResult.primaryRootNodeID],
+            selectedNodeIDs: insertResult.insertedNodeIDs,
             collapsedRootNodeIDs: nextCollapsedRootNodeIDs,
             areasByID: graphAfterMutation.areasByID
         )

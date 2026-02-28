@@ -55,7 +55,8 @@ extension CanvasView {
 
     private func defaultCommandPaletteItems() -> [CommandPaletteItem] {
         var items: [CommandPaletteItem] = []
-        for definition in CanvasShortcutCatalogService.commandPaletteDefinitions() {
+        let context = commandPaletteContext()
+        for definition in CanvasShortcutCatalogService.commandPaletteDefinitions(context: context) {
             guard definition.isVisibleInCommandPalette else {
                 continue
             }
@@ -77,19 +78,21 @@ extension CanvasView {
         if let markdownToggleItem = focusedNodeMarkdownToggleCommandPaletteItem() {
             items.append(markdownToggleItem)
         }
-        items.append(
-            CommandPaletteItem(
-                id: "insertImageFromFinder",
-                title: "Image: Insert From Finder",
-                shortcutLabel: "Finder",
-                searchText: Self.commandPaletteSearchText(
+        if viewModel.focusedNodeID != nil {
+            items.append(
+                CommandPaletteItem(
+                    id: "insertImageFromFinder",
                     title: "Image: Insert From Finder",
                     shortcutLabel: "Finder",
-                    searchTokens: ["insert", "image", "finder", "photo", "picture"]
-                ),
-                action: .insertImageFromFinder
+                    searchText: Self.commandPaletteSearchText(
+                        title: "Image: Insert From Finder",
+                        shortcutLabel: "Finder",
+                        searchTokens: ["insert", "image", "finder", "photo", "picture"]
+                    ),
+                    action: .insertImageFromFinder
+                )
             )
-        )
+        }
         if let alignParentNodesItem = alignParentNodesVerticallyCommandPaletteItem() {
             items.append(alignParentNodesItem)
         }
@@ -221,5 +224,29 @@ extension CanvasView {
             return []
         }
         return ["\(verb) \(noun)"]
+    }
+
+    private func commandPaletteContext() -> CanvasCommandPaletteContext {
+        CanvasCommandPaletteContext(
+            activeEditingMode: commandPaletteActiveEditingMode(),
+            hasFocusedNode: viewModel.focusedNodeID != nil
+        )
+    }
+
+    private func commandPaletteActiveEditingMode() -> CanvasEditingMode? {
+        if let focusedNodeID = viewModel.focusedNodeID {
+            if viewModel.diagramNodeIDs.contains(focusedNodeID) {
+                return .diagram
+            }
+            if viewModel.nodes.contains(where: { $0.id == focusedNodeID }) {
+                return .tree
+            }
+        }
+
+        let areaModes = Set(viewModel.areaEditingModeByID.values)
+        if areaModes.count == 1 {
+            return areaModes.first
+        }
+        return nil
     }
 }

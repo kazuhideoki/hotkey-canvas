@@ -12,6 +12,7 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var diagramNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var treeRootNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var areaIDByNodeID: [CanvasNodeID: CanvasAreaID] = [:]
+    @Published public private(set) var areaEditingModeByID: [CanvasAreaID: CanvasEditingMode] = [:]
     @Published public private(set) var pendingEditingNodeID: CanvasNodeID?
     @Published public private(set) var viewportIntent: CanvasViewportIntent?
     @Published public private(set) var canUndo: Bool = false
@@ -214,6 +215,7 @@ extension CanvasViewModel {
         diagramNodeIDs = nodePresentation.diagramNodeIDs
         treeRootNodeIDs = nodePresentation.treeRootNodeIDs
         areaIDByNodeID = areaIDMapping(in: result.newState)
+        areaEditingModeByID = areaEditingModeMapping(in: result.newState)
         viewportIntent = result.viewportIntent
         canUndo = result.canUndo
         canRedo = result.canRedo
@@ -249,6 +251,17 @@ extension CanvasViewModel {
             for nodeID in area.nodeIDs {
                 mapping[nodeID] = area.id
             }
+        }
+        return mapping
+    }
+
+    private func areaEditingModeMapping(in graph: CanvasGraph) -> [CanvasAreaID: CanvasEditingMode] {
+        var mapping: [CanvasAreaID: CanvasEditingMode] = [:]
+        for areaID in graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let area = graph.areasByID[areaID] else {
+                continue
+            }
+            mapping[area.id] = area.editingMode
         }
         return mapping
     }
