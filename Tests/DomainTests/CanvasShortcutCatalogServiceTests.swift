@@ -131,31 +131,31 @@ func test_resolveAction_commandShiftSemicolon_returnsZoomIn() {
     #expect(action == .zoomIn)
 }
 
-@Test("Shortcut catalog: command+c resolves copyFocusedSubtree")
+@Test("Shortcut catalog: command+c resolves copySelectionOrFocusedSubtree")
 func test_resolveAction_commandC_returnsCopyFocusedSubtree() {
     let gesture = CanvasShortcutGesture(key: .character("c"), modifiers: [.command])
 
     let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
 
-    #expect(action == .apply(commands: [.copyFocusedSubtree]))
+    #expect(action == .apply(commands: [.copySelectionOrFocusedSubtree]))
 }
 
-@Test("Shortcut catalog: command+x resolves cutFocusedSubtree")
+@Test("Shortcut catalog: command+x resolves cutSelectionOrFocusedSubtree")
 func test_resolveAction_commandX_returnsCutFocusedSubtree() {
     let gesture = CanvasShortcutGesture(key: .character("x"), modifiers: [.command])
 
     let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
 
-    #expect(action == .apply(commands: [.cutFocusedSubtree]))
+    #expect(action == .apply(commands: [.cutSelectionOrFocusedSubtree]))
 }
 
-@Test("Shortcut catalog: command+v resolves pasteSubtreeAsChild")
+@Test("Shortcut catalog: command+v resolves pasteClipboardAtFocusedNode")
 func test_resolveAction_commandV_returnsPasteSubtreeAsChild() {
     let gesture = CanvasShortcutGesture(key: .character("v"), modifiers: [.command])
 
     let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
 
-    #expect(action == .apply(commands: [.pasteSubtreeAsChild]))
+    #expect(action == .apply(commands: [.pasteClipboardAtFocusedNode]))
 }
 
 @Test("Shortcut catalog: command+d resolves duplicateSelectionAsSibling")
@@ -218,7 +218,7 @@ func test_commandPaletteDefinitions_withoutFocus_hidesFocusRequiredDefinitions()
     #expect(ids.contains("addNode"))
     #expect(ids.contains("undo"))
     #expect(!ids.contains("addChildNode"))
-    #expect(!ids.contains("deleteFocusedNode"))
+    #expect(!ids.contains("deleteSelectedOrFocusedNodes"))
     #expect(!ids.contains("centerFocusedNode"))
 }
 
@@ -229,10 +229,10 @@ func test_commandPaletteDefinitions_treeContext_rewritesClipboardLabels() {
     )
     let titleByID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0.title) })
 
-    #expect(titleByID["deleteFocusedNode"] == "Node: Delete Selected")
-    #expect(titleByID["copyFocusedSubtree"] == "Node: Copy Selected & Subtree")
-    #expect(titleByID["cutFocusedSubtree"] == "Node: Cut Selected & Subtree")
-    #expect(titleByID["pasteSubtreeAsChild"] == "Node: Paste As Child")
+    #expect(titleByID["deleteSelectedOrFocusedNodes"] == "Node: Delete Selected")
+    #expect(titleByID["copySelectionOrFocusedSubtree"] == "Node: Copy Selected & Subtree")
+    #expect(titleByID["cutSelectionOrFocusedSubtree"] == "Node: Cut Selected & Subtree")
+    #expect(titleByID["pasteClipboardAtFocusedNode"] == "Node: Paste As Child")
 }
 
 @Test("Shortcut catalog: diagram context rewrites copy cut paste and nudge labels")
@@ -242,9 +242,9 @@ func test_commandPaletteDefinitions_diagramContext_rewritesClipboardAndNudgeLabe
     )
     let titleByID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0.title) })
 
-    #expect(titleByID["deleteFocusedNode"] == "Node: Delete Selected")
-    #expect(titleByID["copyFocusedSubtree"] == "Node: Copy Selected")
-    #expect(titleByID["cutFocusedSubtree"] == "Node: Cut Selected")
-    #expect(titleByID["pasteSubtreeAsChild"] == "Node: Paste")
+    #expect(titleByID["deleteSelectedOrFocusedNodes"] == "Node: Delete Selected")
+    #expect(titleByID["copySelectionOrFocusedSubtree"] == "Node: Copy Selected")
+    #expect(titleByID["cutSelectionOrFocusedSubtree"] == "Node: Cut Selected")
+    #expect(titleByID["pasteClipboardAtFocusedNode"] == "Node: Paste")
     #expect(titleByID["nudgeNodeUp"] == "Node: Move Up Slightly")
 }

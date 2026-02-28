@@ -8,7 +8,7 @@ extension ApplyCanvasCommandsUseCase {
     /// Copies multiple selected nodes when available, otherwise copies the focused subtree.
     /// - Parameter graph: Current graph snapshot.
     /// - Returns: No-op mutation result while storing clipboard payload.
-    func copyFocusedSubtree(in graph: CanvasGraph) -> CanvasMutationResult {
+    func copySelectionOrFocusedSubtree(in graph: CanvasGraph) -> CanvasMutationResult {
         let selectedNodeIDs = multiSelectedNodeIDsInFocusedArea(in: graph)
         if selectedNodeIDs.count > 1 {
             treeClipboardState = .subtree(makeClipboardPayload(from: selectedNodeIDs, in: graph))
@@ -32,17 +32,17 @@ extension ApplyCanvasCommandsUseCase {
     /// - Parameter graph: Current graph snapshot.
     /// - Returns: Deletion mutation result after clipboard capture.
     /// - Throws: Propagates deletion failures.
-    func cutFocusedSubtree(in graph: CanvasGraph) throws -> CanvasMutationResult {
+    func cutSelectionOrFocusedSubtree(in graph: CanvasGraph) throws -> CanvasMutationResult {
         let selectedNodeIDs = multiSelectedNodeIDsInFocusedArea(in: graph)
         if selectedNodeIDs.count > 1 {
             treeClipboardState = .subtree(makeClipboardPayload(from: selectedNodeIDs, in: graph))
             return try deleteSelectedNodes(selectedNodeIDs, in: graph)
         }
 
-        _ = copyFocusedSubtree(in: graph)
+        _ = copySelectionOrFocusedSubtree(in: graph)
         let focusedAreaID = try CanvasAreaMembershipService.focusedAreaID(in: graph).get()
         let focusedArea = try CanvasAreaMembershipService.area(withID: focusedAreaID, in: graph).get()
-        return try deleteFocusedNode(
+        return try deleteSelectedOrFocusedNodes(
             in: graph,
             areaID: focusedAreaID,
             areaMode: focusedArea.editingMode
@@ -53,7 +53,7 @@ extension ApplyCanvasCommandsUseCase {
     /// - Parameter graph: Current graph snapshot.
     /// - Returns: Mutation result focused on the pasted root node.
     /// - Throws: Propagates graph and area mutation failures.
-    func pasteSubtreeAsChild(in graph: CanvasGraph) throws -> CanvasMutationResult {
+    func pasteClipboardAtFocusedNode(in graph: CanvasGraph) throws -> CanvasMutationResult {
         guard case .subtree(let payload) = treeClipboardState else {
             return noOpMutationResult(for: graph)
         }

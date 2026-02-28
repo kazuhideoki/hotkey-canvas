@@ -325,7 +325,7 @@ func test_resolve_commandC_returnsEditCopySubtreeIntent() throws {
 
     let route = sut.resolve(event)
 
-    #expect(route == .primitive(intent: .edit(variant: .copySubtree)))
+    #expect(route == .primitive(intent: .edit(variant: .copySelectionOrFocusedSubtree)))
 }
 
 @Test("CanvasHotkeyTranslator: Command+X resolves edit cut-subtree intent")
@@ -335,7 +335,7 @@ func test_resolve_commandX_returnsEditCutSubtreeIntent() throws {
 
     let route = sut.resolve(event)
 
-    #expect(route == .primitive(intent: .edit(variant: .cutSubtree)))
+    #expect(route == .primitive(intent: .edit(variant: .cutSelectionOrFocusedSubtree)))
 }
 
 @Test("CanvasHotkeyTranslator: Command+V resolves edit paste-subtree intent")
@@ -345,7 +345,7 @@ func test_resolve_commandV_returnsEditPasteSubtreeIntent() throws {
 
     let route = sut.resolve(event)
 
-    #expect(route == .primitive(intent: .edit(variant: .pasteSubtreeAsChild)))
+    #expect(route == .primitive(intent: .edit(variant: .pasteClipboardAtFocusedNode)))
 }
 
 private func makeKeyEvent(

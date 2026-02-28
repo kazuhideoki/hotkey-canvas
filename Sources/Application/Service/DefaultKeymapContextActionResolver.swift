@@ -13,7 +13,7 @@ public struct DefaultKeymapContextActionResolver: KeymapContextActionResolver {
         case .edit(let variant):
             return resolveEditContextAction(variant: variant)
         case .delete:
-            return .apply(commands: [.deleteFocusedNode])
+            return .apply(commands: [.deleteSelectedOrFocusedNodes])
         case .toggleVisibility:
             return .apply(commands: [.toggleFoldFocusedSubtree])
         case .duplicate:
@@ -50,14 +50,14 @@ extension DefaultKeymapContextActionResolver {
 
     private func resolveEditContextAction(variant: KeymapEditIntentVariant) -> KeymapContextAction {
         switch variant {
-        case .alignParentNodesVertically:
-            return .apply(commands: [.alignParentNodesVertically])
-        case .copySubtree:
-            return .apply(commands: [.copyFocusedSubtree])
-        case .cutSubtree:
-            return .apply(commands: [.cutFocusedSubtree])
-        case .pasteSubtreeAsChild:
-            return .apply(commands: [.pasteSubtreeAsChild])
+        case .alignAllAreasVertically:
+            return .apply(commands: [.alignAllAreasVertically])
+        case .copySelectionOrFocusedSubtree:
+            return .apply(commands: [.copySelectionOrFocusedSubtree])
+        case .cutSelectionOrFocusedSubtree:
+            return .apply(commands: [.cutSelectionOrFocusedSubtree])
+        case .pasteClipboardAtFocusedNode:
+            return .apply(commands: [.pasteClipboardAtFocusedNode])
         }
     }
 
