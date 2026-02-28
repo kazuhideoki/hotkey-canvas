@@ -3,6 +3,52 @@
 import Domain
 
 extension CanvasView {
+    struct EdgeTargetModelSyncState {
+        let targetKind: KeymapSwitchTargetKindIntentVariant
+        let focusedEdgeID: CanvasEdgeID?
+        let selectedEdgeIDs: Set<CanvasEdgeID>
+    }
+
+    static func edgeTargetStateSyncedWithModel(
+        currentTargetKind: KeymapSwitchTargetKindIntentVariant,
+        modelFocusedEdgeID: CanvasEdgeID?,
+        modelSelectedEdgeIDs: Set<CanvasEdgeID>
+    ) -> EdgeTargetModelSyncState {
+        guard let modelFocusedEdgeID else {
+            guard currentTargetKind == .edge else {
+                return EdgeTargetModelSyncState(
+                    targetKind: currentTargetKind,
+                    focusedEdgeID: nil,
+                    selectedEdgeIDs: []
+                )
+            }
+            return EdgeTargetModelSyncState(
+                targetKind: .node,
+                focusedEdgeID: nil,
+                selectedEdgeIDs: []
+            )
+        }
+        return EdgeTargetModelSyncState(
+            targetKind: .edge,
+            focusedEdgeID: modelFocusedEdgeID,
+            selectedEdgeIDs: modelSelectedEdgeIDs
+        )
+    }
+
+    func synchronizeEdgeTargetStateFromViewModel() {
+        let syncedState = Self.edgeTargetStateSyncedWithModel(
+            currentTargetKind: operationTargetKind,
+            modelFocusedEdgeID: viewModel.focusedEdgeID,
+            modelSelectedEdgeIDs: viewModel.selectedEdgeIDs
+        )
+        operationTargetKind = syncedState.targetKind
+        focusedEdgeID = syncedState.focusedEdgeID
+        selectedEdgeIDs = syncedState.selectedEdgeIDs
+        if operationTargetKind == .edge {
+            synchronizeEdgeTargetState()
+        }
+    }
+
     func switchOperationTarget(to variant: KeymapSwitchTargetKindIntentVariant) {
         switch variant {
         case .node:
@@ -27,8 +73,6 @@ extension CanvasView {
             }
             let edges = edgeCandidates(in: areaID)
             guard !edges.isEmpty else {
-                // cmd+l is an exception: when no edge can be focused, fallback to connect creation.
-                presentConnectNodeSelectionIfPossible()
                 return
             }
 
