@@ -21,7 +21,7 @@ func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async thro
         .moveNode(.down),
         .setNodeText(nodeID: firstChildID, text: "updated", nodeHeight: 88),
         .moveFocus(.down),
-        .deleteFocusedNode,
+        .deleteSelectedOrFocusedNodes,
     ]
 
     let pipelineResult = try await sut.runPipelineCommandSequence(
@@ -41,7 +41,7 @@ func test_pipelineMode_failsNoOpSequence_whenFocusIsUnresolved() async throws {
     let sut = ApplyCanvasCommandsUseCase(initialGraph: .empty.withDefaultTreeAreaIfMissing())
     let commands: [CanvasCommand] = [
         .moveFocus(.left),
-        .deleteFocusedNode,
+        .deleteSelectedOrFocusedNodes,
         .addSiblingNode(position: .above),
     ]
 
@@ -94,7 +94,7 @@ func test_pipelineMode_didAddNode_isFalseForTransientAdd() async throws {
     let sut = ApplyCanvasCommandsUseCase(initialGraph: .empty.withDefaultTreeAreaIfMissing())
 
     let result = try await sut.runPipelineCommandSequence(
-        commands: [.addNode, .deleteFocusedNode],
+        commands: [.addNode, .deleteSelectedOrFocusedNodes],
         from: .empty
     )
 

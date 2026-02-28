@@ -10,7 +10,7 @@ extension ApplyCanvasCommandsUseCase {
     ///   - areaMode: Editing mode for focused area.
     /// - Returns: Mutation result with deletion effects and optional area-layout seed.
     /// - Throws: Propagates node deletion failures from CRUD service.
-    func deleteFocusedNode(
+    func deleteSelectedOrFocusedNodes(
         in graph: CanvasGraph,
         areaID: CanvasAreaID,
         areaMode: CanvasEditingMode

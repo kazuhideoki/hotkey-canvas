@@ -93,8 +93,8 @@ extension CanvasView {
                 )
             )
         }
-        if let alignParentNodesItem = alignParentNodesVerticallyCommandPaletteItem() {
-            items.append(alignParentNodesItem)
+        if let alignAllAreasItem = alignAllAreasVerticallyCommandPaletteItem() {
+            items.append(alignAllAreasItem)
         }
         return items
     }
@@ -123,12 +123,12 @@ extension CanvasView {
         )
     }
 
-    private func alignParentNodesVerticallyCommandPaletteItem() -> CommandPaletteItem? {
+    private func alignAllAreasVerticallyCommandPaletteItem() -> CommandPaletteItem? {
         guard viewModel.focusedNodeID != nil else {
             return nil
         }
         return CommandPaletteItem(
-            id: "alignParentNodesVertically",
+            id: "alignAllAreasVertically",
             title: "Area: Align All Areas Vertically",
             shortcutLabel: "Focused Area",
             searchText: Self.commandPaletteSearchText(
@@ -136,7 +136,7 @@ extension CanvasView {
                 shortcutLabel: "Focused Area",
                 searchTokens: ["align", "all", "areas", "vertical", "left", "line", "tree", "diagram"]
             ),
-            action: .shortcut(.apply(commands: [.alignParentNodesVertically]))
+            action: .shortcut(.apply(commands: [.alignAllAreasVertically]))
         )
     }
 

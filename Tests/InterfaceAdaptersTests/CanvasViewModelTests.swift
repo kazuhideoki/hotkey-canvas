@@ -465,12 +465,13 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
+                .centerFocusedNode, .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree,
+                .pasteClipboardAtFocusedNode,
                 .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode,
                 .createArea,
-                .assignNodesToArea, .connectNodes, .alignParentNodesVertically:
+                .assignNodesToArea, .connectNodes, .alignAllAreasVertically:
                 continue
-            case .deleteFocusedNode:
+            case .deleteSelectedOrFocusedNodes:
                 continue
             }
         }
@@ -620,12 +621,13 @@ extension OverlappingFailureCanvasEditingInputPort {
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
+                .centerFocusedNode, .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree,
+                .pasteClipboardAtFocusedNode,
                 .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode,
                 .createArea,
-                .assignNodesToArea, .connectNodes, .alignParentNodesVertically:
+                .assignNodesToArea, .connectNodes, .alignAllAreasVertically:
                 continue
-            case .deleteFocusedNode:
+            case .deleteSelectedOrFocusedNodes:
                 continue
             }
         }
@@ -819,9 +821,10 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                 .extendSelection,
                 .moveNode, .nudgeNode,
                 .toggleFoldFocusedSubtree, .centerFocusedNode,
-                .deleteFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
+                .deleteSelectedOrFocusedNodes, .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree,
+                .pasteClipboardAtFocusedNode,
                 .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
-                .assignNodesToArea, .connectNodes, .alignParentNodesVertically:
+                .assignNodesToArea, .connectNodes, .alignAllAreasVertically:
                 continue
             }
         }
@@ -1053,10 +1056,11 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
+                .centerFocusedNode, .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree,
+                .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
-                .alignParentNodesVertically:
+                .deleteSelectedOrFocusedNodes, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
+                .alignAllAreasVertically:
                 continue
             }
         }
@@ -1157,10 +1161,11 @@ actor TreeModeSelectionFromDiagramCanvasEditingInputPort: CanvasEditingInputPort
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
+                .centerFocusedNode, .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree,
+                .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
-                .alignParentNodesVertically:
+                .deleteSelectedOrFocusedNodes, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
+                .alignAllAreasVertically:
                 continue
             }
         }
@@ -1260,10 +1265,11 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
+                .centerFocusedNode, .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree,
+                .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
-                .alignParentNodesVertically:
+                .deleteSelectedOrFocusedNodes, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
+                .alignAllAreasVertically:
                 continue
             }
         }
@@ -1341,10 +1347,11 @@ actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
+                .centerFocusedNode, .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree,
+                .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
-                .alignParentNodesVertically:
+                .deleteSelectedOrFocusedNodes, .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
+                .alignAllAreasVertically:
                 continue
             }
         }
@@ -1455,10 +1462,11 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
+                .centerFocusedNode, .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree,
+                .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
-                .alignParentNodesVertically:
+                .deleteSelectedOrFocusedNodes, .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
+                .alignAllAreasVertically:
                 continue
             }
         }
@@ -1509,10 +1517,11 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
+                .centerFocusedNode, .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree,
+                .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
-                .deleteFocusedNode, .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
-                .alignParentNodesVertically:
+                .deleteSelectedOrFocusedNodes, .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
+                .alignAllAreasVertically:
                 continue
             }
         }

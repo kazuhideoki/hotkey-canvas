@@ -45,8 +45,8 @@ extension ApplyCanvasCommandsUseCase {
                 to: graph,
                 resolvedAreaID: resolvedAreaID
             )
-        case .alignParentNodesVertically:
-            return alignParentNodesVertically(in: graph, areaID: resolvedAreaID)
+        case .alignAllAreasVertically:
+            return alignAllAreasVertically(in: graph, areaID: resolvedAreaID)
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
         case .focusNode(let nodeID):
@@ -69,18 +69,18 @@ extension ApplyCanvasCommandsUseCase {
             return toggleFoldFocusedSubtree(in: graph)
         case .centerFocusedNode:
             return noOpMutationResult(for: graph)
-        case .deleteFocusedNode:
-            return try deleteFocusedNode(
+        case .deleteSelectedOrFocusedNodes:
+            return try deleteSelectedOrFocusedNodes(
                 in: graph,
                 areaID: resolvedAreaID,
                 areaMode: resolvedAreaMode
             )
-        case .copyFocusedSubtree:
-            return copyFocusedSubtree(in: graph)
-        case .cutFocusedSubtree:
-            return try cutFocusedSubtree(in: graph)
-        case .pasteSubtreeAsChild:
-            return try pasteSubtreeAsChild(in: graph)
+        case .copySelectionOrFocusedSubtree:
+            return copySelectionOrFocusedSubtree(in: graph)
+        case .cutSelectionOrFocusedSubtree:
+            return try cutSelectionOrFocusedSubtree(in: graph)
+        case .pasteClipboardAtFocusedNode:
+            return try pasteClipboardAtFocusedNode(in: graph)
         case .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle:
             return try applyNodeContentCommand(command: command, to: graph)
         case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
@@ -108,7 +108,7 @@ extension ApplyCanvasCommandsUseCase {
                 fromNodeID: fromNodeID,
                 toNodeID: toNodeID
             )
-        case .alignParentNodesVertically,
+        case .alignAllAreasVertically,
             .moveFocus,
             .focusNode,
             .extendSelection,
@@ -116,10 +116,10 @@ extension ApplyCanvasCommandsUseCase {
             .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
-            .deleteFocusedNode,
-            .copyFocusedSubtree,
-            .cutFocusedSubtree,
-            .pasteSubtreeAsChild,
+            .deleteSelectedOrFocusedNodes,
+            .copySelectionOrFocusedSubtree,
+            .cutSelectionOrFocusedSubtree,
+            .pasteClipboardAtFocusedNode,
             .setNodeText,
             .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
@@ -152,7 +152,7 @@ extension ApplyCanvasCommandsUseCase {
             .addSiblingNode,
             .duplicateSelectionAsSibling,
             .connectNodes,
-            .alignParentNodesVertically,
+            .alignAllAreasVertically,
             .moveFocus,
             .focusNode,
             .extendSelection,
@@ -160,10 +160,10 @@ extension ApplyCanvasCommandsUseCase {
             .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
-            .deleteFocusedNode,
-            .copyFocusedSubtree,
-            .cutFocusedSubtree,
-            .pasteSubtreeAsChild,
+            .deleteSelectedOrFocusedNodes,
+            .copySelectionOrFocusedSubtree,
+            .cutSelectionOrFocusedSubtree,
+            .pasteClipboardAtFocusedNode,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
@@ -199,7 +199,7 @@ extension ApplyCanvasCommandsUseCase {
             .addSiblingNode,
             .duplicateSelectionAsSibling,
             .connectNodes,
-            .alignParentNodesVertically,
+            .alignAllAreasVertically,
             .moveFocus,
             .focusNode,
             .extendSelection,
@@ -207,10 +207,10 @@ extension ApplyCanvasCommandsUseCase {
             .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
-            .deleteFocusedNode,
-            .copyFocusedSubtree,
-            .cutFocusedSubtree,
-            .pasteSubtreeAsChild,
+            .deleteSelectedOrFocusedNodes,
+            .copySelectionOrFocusedSubtree,
+            .cutSelectionOrFocusedSubtree,
+            .pasteClipboardAtFocusedNode,
             .setNodeText,
             .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle:
@@ -271,17 +271,17 @@ extension ApplyCanvasCommandsUseCase {
         case .addChildNode,
             .addSiblingNode,
             .duplicateSelectionAsSibling,
-            .alignParentNodesVertically,
+            .alignAllAreasVertically,
             .moveFocus,
             .extendSelection,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
-            .deleteFocusedNode,
-            .copyFocusedSubtree,
-            .cutFocusedSubtree,
-            .pasteSubtreeAsChild,
+            .deleteSelectedOrFocusedNodes,
+            .copySelectionOrFocusedSubtree,
+            .cutSelectionOrFocusedSubtree,
+            .pasteClipboardAtFocusedNode,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,
