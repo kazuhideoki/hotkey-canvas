@@ -28,7 +28,9 @@ public struct DefaultKeymapContextActionResolver: KeymapContextActionResolver {
             return .apply(commands: [.moveNode(direction)])
         case .nudgeNode(let direction):
             return .apply(commands: [.nudgeNode(direction)])
-        case .transform, .output, .export, .import:
+        case .transform(let variant):
+            return resolveTransformContextAction(variant: variant, primitiveIntent: primitiveIntent)
+        case .output, .export, .import:
             return .reportUnsupportedIntent(intent: primitiveIntent)
         }
     }
@@ -81,6 +83,20 @@ extension DefaultKeymapContextActionResolver {
             return .apply(commands: [.moveFocus(direction)])
         case .extendSelection:
             return .apply(commands: [.extendSelection(direction)])
+        }
+    }
+
+    private func resolveTransformContextAction(
+        variant: KeymapTransformIntentVariant,
+        primitiveIntent: KeymapPrimitiveIntent
+    ) -> KeymapContextAction {
+        switch variant {
+        case .scaleSelectionUp:
+            return .apply(commands: [.scaleSelectedNodes(.up)])
+        case .scaleSelectionDown:
+            return .apply(commands: [.scaleSelectedNodes(.down)])
+        case .convertFocusedAreaMode:
+            return .reportUnsupportedIntent(intent: primitiveIntent)
         }
     }
 }

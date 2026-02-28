@@ -65,6 +65,7 @@ extension CanvasView {
         imageSize newImageSize: CGSize,
         isDiagramNode: Bool
     ) -> (width: Double, height: Double) {
+        let nodeContentScale = nodeContentScale(for: node)
         let replacementNodeWidth =
             if isDiagramNode {
                 Self.diagramImageNodeSideLength(
@@ -79,15 +80,23 @@ extension CanvasView {
             if let currentImagePath = primaryImagePath(in: node),
                 let currentImageSize = imageSize(atFilePath: currentImagePath)
             {
-                measuredImageDisplayHeight(imageSize: currentImageSize, nodeWidth: node.bounds.width)
+                measuredImageDisplayHeight(
+                    imageSize: currentImageSize,
+                    nodeWidth: node.bounds.width,
+                    nodeContentScale: nodeContentScale
+                )
             } else {
                 0
             }
-        let currentSpacing = currentImageHeight > 0 && hasText ? Double(nodeTextStyle.imageTextSpacing) : 0
+        let currentSpacing =
+            currentImageHeight > 0 && hasText
+            ? Double(nodeTextStyle.imageTextSpacing) * nodeContentScale
+            : 0
         let textOnlyHeight = Double(
             measuredNodeLayout(
                 text: node.text ?? "",
-                nodeWidth: node.bounds.width
+                nodeWidth: node.bounds.width,
+                nodeContentScale: nodeContentScale
             ).nodeHeight
         )
         let baseHeight = Self.replacementBaseNodeHeight(
@@ -100,9 +109,10 @@ extension CanvasView {
 
         let insertedImageHeight = measuredImageDisplayHeight(
             imageSize: newImageSize,
-            nodeWidth: replacementNodeWidth
+            nodeWidth: replacementNodeWidth,
+            nodeContentScale: nodeContentScale
         )
-        let insertedSpacing = hasText ? Double(nodeTextStyle.imageTextSpacing) : 0
+        let insertedSpacing = hasText ? Double(nodeTextStyle.imageTextSpacing) * nodeContentScale : 0
         let replacementNodeHeight = max(baseHeight + insertedImageHeight + insertedSpacing, 1)
         if isDiagramNode {
             return (width: replacementNodeWidth, height: replacementNodeWidth)
@@ -123,42 +133,63 @@ extension CanvasView {
         return max(currentNodeHeight - currentImageHeight - currentImageSpacing, 1)
     }
 
-    func measuredImageDisplayHeight(imageSize: CGSize, nodeWidth: Double) -> Double {
-        let displayWidth = measuredImageDisplayWidth(imageSize: imageSize, nodeWidth: nodeWidth)
+    func measuredImageDisplayHeight(
+        imageSize: CGSize,
+        nodeWidth: Double,
+        nodeContentScale: Double = 1
+    ) -> Double {
+        let displayWidth = measuredImageDisplayWidth(
+            imageSize: imageSize,
+            nodeWidth: nodeWidth,
+            nodeContentScale: nodeContentScale
+        )
         let scale = displayWidth / imageSize.width
         return max(Double(imageSize.height * scale), 1)
     }
 
-    func measuredImageDisplayWidth(imageSize: CGSize, nodeWidth: Double) -> Double {
+    func measuredImageDisplayWidth(
+        imageSize: CGSize,
+        nodeWidth: Double,
+        nodeContentScale: Double = 1
+    ) -> Double {
         Self.measuredImageDisplayWidth(
             imageSize: imageSize,
             nodeWidth: nodeWidth,
-            outerPadding: Double(nodeTextStyle.outerPadding)
-        )
-    }
-
-    static func measuredImageDisplayWidth(imageSize: CGSize, nodeWidth: Double) -> Double {
-        measuredImageDisplayWidth(
-            imageSize: imageSize,
-            nodeWidth: nodeWidth,
-            outerPadding: Double(NodeTextStyle.outerPadding)
+            outerPadding: Double(nodeTextStyle.outerPadding),
+            nodeContentScale: nodeContentScale
         )
     }
 
     static func measuredImageDisplayWidth(
         imageSize: CGSize,
         nodeWidth: Double,
-        outerPadding: Double
+        nodeContentScale: Double = 1
     ) -> Double {
-        let contentWidth = max(nodeWidth - (outerPadding * 2), 1)
-        return min(contentWidth, imageSize.width)
+        measuredImageDisplayWidth(
+            imageSize: imageSize,
+            nodeWidth: nodeWidth,
+            outerPadding: Double(NodeTextStyle.outerPadding),
+            nodeContentScale: nodeContentScale
+        )
+    }
+
+    static func measuredImageDisplayWidth(
+        imageSize: CGSize,
+        nodeWidth: Double,
+        outerPadding: Double,
+        nodeContentScale: Double = 1
+    ) -> Double {
+        let clampedContentScale = max(nodeContentScale, 0.0001)
+        let contentWidth = max(nodeWidth - ((outerPadding * clampedContentScale) * 2), 1)
+        let scaledImageWidth = imageSize.width * clampedContentScale
+        return max(min(contentWidth, scaledImageWidth), 1)
     }
 
     static func diagramImageNodeSideLength(
         imageSize: CGSize,
         currentNodeWidth: Double
     ) -> Double {
-        let minimumSide = CanvasDefaultNodeDistance.diagramNodeSide
+        let minimumSide = CanvasDefaultNodeDistance.diagramMinNodeSide
         let maximumSide = CanvasDefaultNodeDistance.diagramImageMaxSide
         let outerPadding = Double(NodeTextStyle.outerPadding)
         let maxContentWidth = max(maximumSide - (outerPadding * 2), 1)
@@ -171,13 +202,18 @@ extension CanvasView {
     func measuredNodeHeightForEditing(
         text: String,
         measuredTextHeight: Double,
-        node: CanvasNode
+        node: CanvasNode,
+        nodeContentScale: Double
     ) -> Double {
         guard primaryImagePath(in: node) != nil else {
             return measuredTextHeight
         }
         let hasText = text.isEmpty == false
-        let imageLayout = measuredImageLayoutForNode(node, hasText: hasText)
+        let imageLayout = measuredImageLayoutForNode(
+            node,
+            hasText: hasText,
+            nodeContentScale: nodeContentScale
+        )
         return Self.imageAwareEditingNodeHeight(
             measuredTextHeight: measuredTextHeight,
             imageHeight: imageLayout.height,
@@ -185,15 +221,23 @@ extension CanvasView {
         )
     }
 
-    func measuredImageLayoutForNode(_ node: CanvasNode, hasText: Bool) -> (height: Double, spacing: Double) {
+    func measuredImageLayoutForNode(
+        _ node: CanvasNode,
+        hasText: Bool,
+        nodeContentScale: Double
+    ) -> (height: Double, spacing: Double) {
         guard
             let imagePath = primaryImagePath(in: node),
             let imageSize = imageSize(atFilePath: imagePath)
         else {
             return (height: 0, spacing: 0)
         }
-        let height = measuredImageDisplayHeight(imageSize: imageSize, nodeWidth: node.bounds.width)
-        let spacing = hasText ? Double(nodeTextStyle.imageTextSpacing) : 0
+        let height = measuredImageDisplayHeight(
+            imageSize: imageSize,
+            nodeWidth: node.bounds.width,
+            nodeContentScale: nodeContentScale
+        )
+        let spacing = hasText ? Double(nodeTextStyle.imageTextSpacing) * nodeContentScale : 0
         return (height: height, spacing: spacing)
     }
 
@@ -208,19 +252,22 @@ extension CanvasView {
     @ViewBuilder
     func nonEditingNodeContent(node: CanvasNode, zoomScale: Double) -> some View {
         let contentAlignment = nodeTextContentAlignment(for: node.id)
+        let nodeContentScale = nodeContentScale(for: node)
         if let imagePath = primaryImagePath(in: node), let image = Self.nodeImageCache.image(atFilePath: imagePath) {
-            let scale = CGFloat(zoomScale)
-            let scaledPadding = nodeTextStyle.outerPadding * scale
-            let contentWidth = max((CGFloat(node.bounds.width) * scale) - (scaledPadding * 2), 1)
+            let viewportScale = CGFloat(zoomScale)
+            let typographyScale = viewportScale * CGFloat(nodeContentScale)
+            let scaledPadding = nodeTextStyle.outerPadding * typographyScale
+            let contentWidth = max((CGFloat(node.bounds.width) * viewportScale) - (scaledPadding * 2), 1)
             let hasText = (node.text ?? "").isEmpty == false
             let unscaledImageDisplayWidth = measuredImageDisplayWidth(
                 imageSize: image.size,
-                nodeWidth: node.bounds.width
+                nodeWidth: node.bounds.width,
+                nodeContentScale: nodeContentScale
             )
-            let imageDisplayWidth = max(CGFloat(unscaledImageDisplayWidth) * scale, 1)
+            let imageDisplayWidth = max(CGFloat(unscaledImageDisplayWidth) * viewportScale, 1)
             VStack(
                 alignment: contentAlignment.horizontalAlignment,
-                spacing: hasText ? nodeTextStyle.imageTextSpacing * scale : 0
+                spacing: hasText ? nodeTextStyle.imageTextSpacing * typographyScale : 0
             ) {
                 Image(nsImage: image)
                     .resizable()
@@ -230,12 +277,13 @@ extension CanvasView {
                         alignment: contentAlignment.frameAlignment
                     )
                     .clipShape(
-                        RoundedRectangle(cornerRadius: nodeTextStyle.imageCornerRadius * scale)
+                        RoundedRectangle(cornerRadius: nodeTextStyle.imageCornerRadius * typographyScale)
                     )
                 if hasText {
                     nonEditingNodeTextBody(
                         node: node,
                         zoomScale: zoomScale,
+                        nodeContentScale: nodeContentScale,
                         contentAlignment: contentAlignment
                     )
                 }
@@ -251,6 +299,7 @@ extension CanvasView {
     func nonEditingNodeTextBody(
         node: CanvasNode,
         zoomScale: Double,
+        nodeContentScale: Double,
         contentAlignment: NodeTextContentAlignment
     ) -> some View {
         let shouldRenderSearchHighlight = hasSearchMatches(in: node)
@@ -263,6 +312,7 @@ extension CanvasView {
                 text: text,
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale,
+                contentScale: nodeContentScale,
                 appliesOuterPadding: false,
                 style: nodeTextStyle,
                 contentAlignment: contentAlignment
@@ -272,6 +322,7 @@ extension CanvasView {
                 attributedText: highlightedNodeText(for: node),
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale,
+                nodeContentScale: nodeContentScale,
                 contentAlignment: contentAlignment
             )
         }
@@ -282,15 +333,22 @@ extension CanvasView {
         attributedText: AttributedString,
         nodeWidth: Double,
         zoomScale: Double,
+        nodeContentScale: Double,
         contentAlignment: NodeTextContentAlignment
     ) -> some View {
-        let scale = CGFloat(zoomScale)
+        let viewportScale = CGFloat(zoomScale)
+        let typographyScale = viewportScale * CGFloat(nodeContentScale)
         let contentWidth = max(
-            (CGFloat(nodeWidth) * scale) - (nodeTextStyle.outerPadding * scale * 2),
+            (CGFloat(nodeWidth) * viewportScale) - (nodeTextStyle.outerPadding * typographyScale * 2),
             1
         )
         Text(attributedText)
-            .font(.system(size: nodeTextStyle.fontSize * scale, weight: nodeTextStyle.displayFontWeight))
+            .font(
+                .system(
+                    size: nodeTextStyle.fontSize * typographyScale,
+                    weight: nodeTextStyle.displayFontWeight
+                )
+            )
             .lineLimit(nil)
             .multilineTextAlignment(contentAlignment.textAlignment)
             .frame(width: contentWidth, alignment: contentAlignment.frameAlignment)

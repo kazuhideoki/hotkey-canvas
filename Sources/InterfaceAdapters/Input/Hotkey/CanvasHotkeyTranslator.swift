@@ -14,6 +14,9 @@ public struct CanvasHotkeyTranslator {
         guard event.type == .keyDown else {
             return nil
         }
+        if let route = nodeScaleRouteByKeyCode(from: event) {
+            return route
+        }
         if let route = zoomRouteByKeyCode(from: event) {
             return route
         }
@@ -53,6 +56,26 @@ extension CanvasHotkeyTranslator {
     private static let semicolonKeyCode: UInt16 = 41
     private static let keypadPlusKeyCode: UInt16 = 69
 
+    private func nodeScaleRouteByKeyCode(from event: NSEvent) -> KeymapResolvedRoute? {
+        let flags = normalizedFlags(from: event)
+        let isCommandOptionOnly = hasExactNodeScaleModifiers(flags, requiresShift: false)
+        let isCommandOptionShiftOnly = hasExactNodeScaleModifiers(flags, requiresShift: true)
+
+        if event.keyCode == Self.minusKeyCode, isCommandOptionOnly {
+            return .primitive(intent: .transform(variant: .scaleSelectionDown))
+        }
+        if event.keyCode == Self.keypadPlusKeyCode, isCommandOptionOnly {
+            return .primitive(intent: .transform(variant: .scaleSelectionUp))
+        }
+        if event.keyCode == Self.equalsKeyCode, isCommandOptionOnly || isCommandOptionShiftOnly {
+            return .primitive(intent: .transform(variant: .scaleSelectionUp))
+        }
+        if event.keyCode == Self.semicolonKeyCode, isCommandOptionShiftOnly {
+            return .primitive(intent: .transform(variant: .scaleSelectionUp))
+        }
+        return nil
+    }
+
     private func zoomRouteByKeyCode(from event: NSEvent) -> KeymapResolvedRoute? {
         let flags = normalizedFlags(from: event)
         let isCommandOnly = hasExactZoomModifiers(flags, requiresShift: false)
@@ -87,6 +110,22 @@ extension CanvasHotkeyTranslator {
             return false
         }
         return !hasOption && !hasControl && !hasFunction
+    }
+
+    private func hasExactNodeScaleModifiers(_ flags: NSEvent.ModifierFlags, requiresShift: Bool) -> Bool {
+        let hasCommand = flags.contains(.command)
+        let hasShift = flags.contains(.shift)
+        let hasOption = flags.contains(.option)
+        let hasControl = flags.contains(.control)
+        let hasFunction = flags.contains(.function)
+
+        guard hasCommand, hasOption else {
+            return false
+        }
+        guard hasShift == requiresShift else {
+            return false
+        }
+        return !hasControl && !hasFunction
     }
 
     private func gesture(from event: NSEvent) -> CanvasShortcutGesture? {
