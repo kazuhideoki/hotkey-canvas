@@ -9,11 +9,11 @@ func test_apply_copyThenDelete_thenPasteAsChild_underNextFocusedSibling() async 
     let fixture = CopyThenPasteFixture.make()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
 
-    _ = try await sut.apply(commands: [.copyFocusedSubtree])
-    let deleteResult = try await sut.apply(commands: [.deleteFocusedNode])
+    _ = try await sut.apply(commands: [.copySelectionOrFocusedSubtree])
+    let deleteResult = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
     #expect(deleteResult.newState.focusedNodeID == fixture.targetID)
 
-    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
+    let pasteResult = try await sut.apply(commands: [.pasteClipboardAtFocusedNode])
 
     #expect(pasteResult.newState.nodesByID[fixture.sourceRootID] == nil)
     #expect(pasteResult.newState.nodesByID[fixture.sourceChildID] == nil)
@@ -48,13 +48,13 @@ func test_apply_cutThenPasteAsChild_underNextFocusedSibling() async throws {
     let fixture = CutThenPasteFixture.make()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
 
-    let cutResult = try await sut.apply(commands: [.cutFocusedSubtree])
+    let cutResult = try await sut.apply(commands: [.cutSelectionOrFocusedSubtree])
     #expect(cutResult.newState.nodesByID[fixture.sourceRootID] == nil)
     #expect(cutResult.newState.nodesByID[fixture.sourceChildID] == nil)
     #expect(cutResult.newState.focusedNodeID == fixture.targetID)
     #expect(cutResult.newState.collapsedRootNodeIDs.contains(fixture.targetID))
 
-    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
+    let pasteResult = try await sut.apply(commands: [.pasteClipboardAtFocusedNode])
     #expect(pasteResult.newState.nodesByID.count == 5)
     #expect(!pasteResult.newState.collapsedRootNodeIDs.contains(fixture.targetID))
 
@@ -96,8 +96,8 @@ func test_apply_treeArea_copyPasteMultipleSelection_pastesSelectedNodesAsChildre
     ).withDefaultTreeAreaIfMissing()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    _ = try await sut.apply(commands: [.copyFocusedSubtree])
-    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
+    _ = try await sut.apply(commands: [.copySelectionOrFocusedSubtree])
+    let pasteResult = try await sut.apply(commands: [.pasteClipboardAtFocusedNode])
 
     #expect(pasteResult.newState.nodesByID.count == 5)
     let insertedNodeIDs = Set(pasteResult.newState.nodesByID.keys).subtracting(graph.nodesByID.keys)
@@ -124,8 +124,8 @@ func test_apply_diagramArea_copyPasteMultipleSelection_preservesInternalEdges() 
     let graph = fixture.graph
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    _ = try await sut.apply(commands: [.copyFocusedSubtree])
-    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
+    _ = try await sut.apply(commands: [.copySelectionOrFocusedSubtree])
+    let pasteResult = try await sut.apply(commands: [.pasteClipboardAtFocusedNode])
 
     #expect(pasteResult.newState.nodesByID.count == 5)
     let insertedNodeIDs = Set(pasteResult.newState.nodesByID.keys).subtracting(graph.nodesByID.keys)
@@ -248,8 +248,8 @@ func test_apply_diagramArea_pastePreservesGroupFootprintAndRelativePositions() a
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    _ = try await sut.apply(commands: [.copyFocusedSubtree])
-    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
+    _ = try await sut.apply(commands: [.copySelectionOrFocusedSubtree])
+    let pasteResult = try await sut.apply(commands: [.pasteClipboardAtFocusedNode])
 
     let insertedNodeIDs = Set(pasteResult.newState.nodesByID.keys).subtracting(graph.nodesByID.keys)
     #expect(insertedNodeIDs.count == 2)
@@ -267,8 +267,8 @@ func test_apply_diagramArea_pastePreservesGroupFootprintAndRelativePositions() a
     #expect((pastedSourceA.bounds.y - pastedSourceB.bounds.y) == (sourceABounds.y - sourceBBounds.y))
 }
 
-@Test("ApplyCanvasCommandsUseCase: pasteSubtreeAsChild is no-op when clipboard is empty")
-func test_apply_pasteSubtreeAsChild_noOpWhenClipboardIsEmpty() async throws {
+@Test("ApplyCanvasCommandsUseCase: pasteClipboardAtFocusedNode is no-op when clipboard is empty")
+func test_apply_pasteClipboardAtFocusedNode_noOpWhenClipboardIsEmpty() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let graph = CanvasGraph(
         nodesByID: [
@@ -284,14 +284,16 @@ func test_apply_pasteSubtreeAsChild_noOpWhenClipboardIsEmpty() async throws {
     ).withDefaultTreeAreaIfMissing()
 
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
-    let result = try await sut.apply(commands: [.pasteSubtreeAsChild])
+    let result = try await sut.apply(commands: [.pasteClipboardAtFocusedNode])
 
     #expect(result.newState == graph)
     #expect(!result.canUndo)
 }
 
-@Test("ApplyCanvasCommandsUseCase: copyFocusedSubtree does not recurse infinitely on cyclic parent-child graph")
-func test_apply_copyFocusedSubtree_handlesParentChildCycle() async throws {
+@Test(
+    "ApplyCanvasCommandsUseCase: copySelectionOrFocusedSubtree does not recurse infinitely on cyclic parent-child graph"
+)
+func test_apply_copySelectionOrFocusedSubtree_handlesParentChildCycle() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
     let graph = CanvasGraph(
@@ -317,7 +319,7 @@ func test_apply_copyFocusedSubtree_handlesParentChildCycle() async throws {
     ).withDefaultTreeAreaIfMissing()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    let result = try await sut.apply(commands: [.copyFocusedSubtree])
+    let result = try await sut.apply(commands: [.copySelectionOrFocusedSubtree])
 
     #expect(result.newState == graph)
     #expect(!result.canUndo)

@@ -4,8 +4,8 @@ import Testing
 
 // Background: Deleting focused nodes drives destructive edit flows and subtree cleanup.
 // Responsibility: Verify focused deletion behavior, no-op guards, and subtree removal.
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode removes focused node")
-func test_apply_deleteFocusedNode_removesFocusedNode() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes removes focused node")
+func test_apply_deleteSelectedOrFocusedNodes_removesFocusedNode() async throws {
     let targetID = CanvasNodeID(rawValue: "target")
     let otherID = CanvasNodeID(rawValue: "other")
     let edgeID = CanvasEdgeID(rawValue: "edge")
@@ -37,7 +37,7 @@ func test_apply_deleteFocusedNode_removesFocusedNode() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
+    let result = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     #expect(result.newState.nodesByID[targetID] == nil)
     #expect(result.newState.nodesByID[otherID] != nil)
@@ -45,8 +45,8 @@ func test_apply_deleteFocusedNode_removesFocusedNode() async throws {
     #expect(result.newState.focusedNodeID == otherID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode fails when focus is nil")
-func test_apply_deleteFocusedNode_fails_whenFocusedNodeIDIsNil() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes fails when focus is nil")
+func test_apply_deleteSelectedOrFocusedNodes_fails_whenFocusedNodeIDIsNil() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
         nodesByID: [
@@ -63,15 +63,15 @@ func test_apply_deleteFocusedNode_fails_whenFocusedNodeIDIsNil() async throws {
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     do {
-        _ = try await sut.apply(commands: [.deleteFocusedNode])
+        _ = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
         Issue.record("Expected focusedNodeNotFound")
     } catch let error as CanvasAreaPolicyError {
         #expect(error == .focusedNodeNotFound)
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode fails when focused node is stale")
-func test_apply_deleteFocusedNode_fails_whenFocusedNodeIDIsStale() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes fails when focused node is stale")
+func test_apply_deleteSelectedOrFocusedNodes_fails_whenFocusedNodeIDIsStale() async throws {
     let existingNodeID = CanvasNodeID(rawValue: "node")
     let staleFocusedNodeID = CanvasNodeID(rawValue: "stale")
     let graph = CanvasGraph(
@@ -89,15 +89,15 @@ func test_apply_deleteFocusedNode_fails_whenFocusedNodeIDIsStale() async throws 
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
     do {
-        _ = try await sut.apply(commands: [.deleteFocusedNode])
+        _ = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
         Issue.record("Expected focusedNodeNotFound")
     } catch let error as CanvasAreaPolicyError {
         #expect(error == .focusedNodeNotFound)
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode removes focused subtree")
-func test_apply_deleteFocusedNode_removesFocusedSubtree() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes removes focused subtree")
+func test_apply_deleteSelectedOrFocusedNodes_removesFocusedSubtree() async throws {
     let fixture = SubtreeDeletionFixture.make()
     let graph = CanvasGraph(
         nodesByID: fixture.nodesByID,
@@ -106,7 +106,7 @@ func test_apply_deleteFocusedNode_removesFocusedSubtree() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
+    let result = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     #expect(result.newState.nodesByID[fixture.childID] == nil)
     #expect(result.newState.nodesByID[fixture.grandchildID] == nil)
@@ -117,8 +117,8 @@ func test_apply_deleteFocusedNode_removesFocusedSubtree() async throws {
     #expect(result.newState.edgesByID[fixture.edgeRootSiblingID] != nil)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode removes selected subtrees in tree area")
-func test_apply_deleteFocusedNode_removesSelectedSubtreesInTreeArea() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes removes selected subtrees in tree area")
+func test_apply_deleteSelectedOrFocusedNodes_removesSelectedSubtreesInTreeArea() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let focusedID = CanvasNodeID(rawValue: "focused")
     let focusedChildID = CanvasNodeID(rawValue: "focused-child")
@@ -133,7 +133,7 @@ func test_apply_deleteFocusedNode_removesSelectedSubtreesInTreeArea() async thro
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
+    let result = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     #expect(result.newState.nodesByID[rootID] != nil)
     #expect(result.newState.nodesByID[survivorID] != nil)
@@ -144,8 +144,8 @@ func test_apply_deleteFocusedNode_removesSelectedSubtreesInTreeArea() async thro
     #expect(result.newState.selectedNodeIDs == [survivorID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode removes selected nodes in diagram area")
-func test_apply_deleteFocusedNode_removesSelectedNodesInDiagramArea() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes removes selected nodes in diagram area")
+func test_apply_deleteSelectedOrFocusedNodes_removesSelectedNodesInDiagramArea() async throws {
     let leftID = CanvasNodeID(rawValue: "left")
     let focusedID = CanvasNodeID(rawValue: "focused")
     let rightID = CanvasNodeID(rawValue: "right")
@@ -194,7 +194,7 @@ func test_apply_deleteFocusedNode_removesSelectedNodesInDiagramArea() async thro
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
+    let result = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     #expect(result.newState.nodesByID[leftID] != nil)
     #expect(result.newState.nodesByID[focusedID] == nil)

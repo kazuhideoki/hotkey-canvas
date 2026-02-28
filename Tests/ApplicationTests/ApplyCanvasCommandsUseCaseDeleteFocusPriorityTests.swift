@@ -2,8 +2,8 @@ import Application
 import Domain
 import Testing
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode focuses sibling when sibling exists")
-func test_apply_deleteFocusedNode_focusesSibling_whenSiblingExists() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes focuses sibling when sibling exists")
+func test_apply_deleteSelectedOrFocusedNodes_focusesSibling_whenSiblingExists() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let upperSiblingID = CanvasNodeID(rawValue: "upper-sibling")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -60,14 +60,15 @@ func test_apply_deleteFocusedNode_focusesSibling_whenSiblingExists() async throw
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
+    let result = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     #expect(result.newState.nodesByID[focusedID] == nil)
     #expect(result.newState.focusedNodeID == upperSiblingID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode focuses lower sibling when upper sibling does not exist")
-func test_apply_deleteFocusedNode_focusesLowerSibling_whenUpperSiblingDoesNotExist() async throws {
+@Test(
+    "ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes focuses lower sibling when upper sibling does not exist")
+func test_apply_deleteSelectedOrFocusedNodes_focusesLowerSibling_whenUpperSiblingDoesNotExist() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let focusedID = CanvasNodeID(rawValue: "focused")
     let lowerSiblingID = CanvasNodeID(rawValue: "lower-sibling")
@@ -111,14 +112,14 @@ func test_apply_deleteFocusedNode_focusesLowerSibling_whenUpperSiblingDoesNotExi
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
+    let result = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     #expect(result.newState.nodesByID[focusedID] == nil)
     #expect(result.newState.focusedNodeID == lowerSiblingID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode focuses parent when no sibling exists")
-func test_apply_deleteFocusedNode_focusesParent_whenSiblingDoesNotExist() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes focuses parent when no sibling exists")
+func test_apply_deleteSelectedOrFocusedNodes_focusesParent_whenSiblingDoesNotExist() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let focusedID = CanvasNodeID(rawValue: "focused")
     let nearbyNodeID = CanvasNodeID(rawValue: "nearby")
@@ -156,14 +157,14 @@ func test_apply_deleteFocusedNode_focusesParent_whenSiblingDoesNotExist() async 
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
+    let result = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     #expect(result.newState.nodesByID[focusedID] == nil)
     #expect(result.newState.focusedNodeID == parentID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode focuses nearest node when parent does not exist")
-func test_apply_deleteFocusedNode_focusesNearestNode_whenParentDoesNotExist() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes focuses nearest node when parent does not exist")
+func test_apply_deleteSelectedOrFocusedNodes_focusesNearestNode_whenParentDoesNotExist() async throws {
     let focusedID = CanvasNodeID(rawValue: "focused")
     let nearestID = CanvasNodeID(rawValue: "nearest")
     let farID = CanvasNodeID(rawValue: "far")
@@ -194,14 +195,14 @@ func test_apply_deleteFocusedNode_focusesNearestNode_whenParentDoesNotExist() as
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
+    let result = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     #expect(result.newState.nodesByID[focusedID] == nil)
     #expect(result.newState.focusedNodeID == nearestID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode skips upper sibling when sibling is also deleted")
-func test_apply_deleteFocusedNode_skipsDeletedUpperSibling() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes skips upper sibling when sibling is also deleted")
+func test_apply_deleteSelectedOrFocusedNodes_skipsDeletedUpperSibling() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let focusedID = CanvasNodeID(rawValue: "focused")
     let upperSiblingID = CanvasNodeID(rawValue: "upper-sibling")
@@ -251,15 +252,15 @@ func test_apply_deleteFocusedNode_skipsDeletedUpperSibling() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
+    let result = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     #expect(result.newState.nodesByID[focusedID] == nil)
     #expect(result.newState.nodesByID[upperSiblingID] == nil)
     #expect(result.newState.focusedNodeID == parentID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteFocusedNode chooses deterministic parent in multi-parent graph")
-func test_apply_deleteFocusedNode_choosesDeterministicParent_whenMultiParent() async throws {
+@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes chooses deterministic parent in multi-parent graph")
+func test_apply_deleteSelectedOrFocusedNodes_choosesDeterministicParent_whenMultiParent() async throws {
     let parentAID = CanvasNodeID(rawValue: "parent-a")
     let parentBID = CanvasNodeID(rawValue: "parent-b")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -303,7 +304,7 @@ func test_apply_deleteFocusedNode_choosesDeterministicParent_whenMultiParent() a
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph.withDefaultTreeAreaIfMissing())
 
-    let result = try await sut.apply(commands: [.deleteFocusedNode])
+    let result = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     #expect(result.newState.nodesByID[focusedID] == nil)
     #expect(result.newState.focusedNodeID == parentAID)

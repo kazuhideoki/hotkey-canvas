@@ -4,7 +4,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case addSiblingNode(position: CanvasSiblingNodePosition)
     case duplicateSelectionAsSibling
     case connectNodes(fromNodeID: CanvasNodeID, toNodeID: CanvasNodeID)
-    case alignParentNodesVertically
+    case alignAllAreasVertically
     case moveFocus(CanvasFocusDirection)
     case focusNode(CanvasNodeID)
     case extendSelection(CanvasFocusDirection)
@@ -12,10 +12,10 @@ public enum CanvasCommand: Equatable, Sendable {
     case nudgeNode(CanvasNodeMoveDirection)
     case toggleFoldFocusedSubtree
     case centerFocusedNode
-    case deleteFocusedNode
-    case copyFocusedSubtree
-    case cutFocusedSubtree
-    case pasteSubtreeAsChild
+    case deleteSelectedOrFocusedNodes
+    case copySelectionOrFocusedSubtree
+    case cutSelectionOrFocusedSubtree
+    case pasteClipboardAtFocusedNode
     case setNodeText(nodeID: CanvasNodeID, text: String, nodeHeight: Double)
     case upsertNodeAttachment(nodeID: CanvasNodeID, attachment: CanvasAttachment, nodeWidth: Double, nodeHeight: Double)
     case toggleFocusedNodeMarkdownStyle

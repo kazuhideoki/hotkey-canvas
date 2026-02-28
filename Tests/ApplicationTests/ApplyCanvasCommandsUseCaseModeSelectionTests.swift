@@ -29,7 +29,7 @@ func test_addNodeFromModeSelection_worksAfterDeletingAllNodes() async throws {
     let firstNodeAreaMode = try #require(modeOfAreaContaining(nodeID: firstNodeID, in: firstAdd.newState))
     #expect(firstNodeAreaMode == .diagram)
 
-    _ = try await sut.apply(commands: [.deleteFocusedNode])
+    _ = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
     let deletedState = await sut.getCurrentResult()
     #expect(deletedState.newState.nodesByID.isEmpty)
 
@@ -45,7 +45,7 @@ func test_addNodeFromModeSelection_emptyGraphRespectsSelectedTreeMode() async th
     let sut = ApplyCanvasCommandsUseCase()
 
     _ = try await sut.addNodeFromModeSelection(mode: .diagram)
-    _ = try await sut.apply(commands: [.deleteFocusedNode])
+    _ = try await sut.apply(commands: [.deleteSelectedOrFocusedNodes])
 
     let applied = try await sut.addNodeFromModeSelection(mode: .tree)
     let focusedNodeID = try #require(applied.newState.focusedNodeID)

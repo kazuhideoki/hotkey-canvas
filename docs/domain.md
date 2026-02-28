@@ -36,9 +36,9 @@
 - `⌥.`: `toggleFoldFocusedSubtree`
 - `⌘⇧↑/↓/←/→`: `nudgeNode(.up/.down/.left/.right)`
 - `⇧↑/↓/←/→`: `extendSelection(.up/.down/.left/.right)`
-- `⌘C`: `copyFocusedSubtree`
-- `⌘X`: `cutFocusedSubtree`
-- `⌘V`: `pasteSubtreeAsChild`
+- `⌘C`: `copySelectionOrFocusedSubtree`
+- `⌘X`: `cutSelectionOrFocusedSubtree`
+- `⌘V`: `pasteClipboardAtFocusedNode`
 - `⌘D`: `duplicateSelectionAsSibling`
 - 利用先:
 - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)` / `shouldBeginConnectNodeSelection(_:)`）
@@ -86,12 +86,12 @@
   - `CanvasCommand.centerFocusedNode`
   - `CanvasCommand.toggleFoldFocusedSubtree`
   - `CanvasCommand.upsertNodeAttachment(nodeID:attachment:nodeWidth:nodeHeight:)`
-  - `CanvasCommand.copyFocusedSubtree`
-  - `CanvasCommand.cutFocusedSubtree`
-  - `CanvasCommand.pasteSubtreeAsChild`
+  - `CanvasCommand.copySelectionOrFocusedSubtree`
+  - `CanvasCommand.cutSelectionOrFocusedSubtree`
+  - `CanvasCommand.pasteClipboardAtFocusedNode`
   - `CanvasCommand.duplicateSelectionAsSibling`
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
-  - `CanvasCommand.alignParentNodesVertically`
+  - `CanvasCommand.alignAllAreasVertically`
   - `CanvasCommand.extendSelection`
   - `CanvasCommand.focusNode(CanvasNodeID)`
 - エラー
@@ -461,8 +461,8 @@
   - 標準ショートカット定義は実装内の静的配列で管理し、入力解決とコマンドパレット表示で共有する。
   - `CanvasCommandPaletteVisibility` により、mode/フォーカス条件を満たさない項目は表示しない（無効表示は行わない）。
   - `CanvasCommandPaletteLabel` は `Noun: Verb` 形式でタイトルを生成し、コマンド名の表記ゆれを防ぐ。
-  - `deleteFocusedNode` の表示名は mode 共通で `Node: Delete Selected` とする。
-  - `copyFocusedSubtree` / `cutFocusedSubtree` / `pasteSubtreeAsChild` は mode に応じて文言を切り替える（Tree は subtree を明示、Diagram は selected/paste を優先）。
+  - `deleteSelectedOrFocusedNodes` の表示名は mode 共通で `Node: Delete Selected` とする。
+  - `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` / `pasteClipboardAtFocusedNode` は mode に応じて文言を切り替える（Tree は subtree を明示、Diagram は selected/paste を優先）。
   - `cmd+shift+arrow`（`nudgeNode`）は実行経路を維持しつつ、コマンドパレット表示は Diagram mode のみとする。
   - 状態依存の ON/OFF 操作は原則 `toggle` 動詞で表記し、`enable/disable/on/off` は検索トークンで吸収する。
   - `Shift + 矢印` は `.extendSelection` に解決し、`moveFocus` と競合しない。
@@ -563,7 +563,7 @@
     - Diagram エリアで `moveNode` を適用した後は、同一エリア内ノード衝突も即時解消するために area layout を実行する。
     - Diagram エリアでは `nudgeNode` も `moveNode` と同じ位置解決ロジック（アンカー距離補正と重なり回避を含む）を使い、ステップのみ `moveNode` の 1/4 倍（`cmd+矢印 : cmd+shift+矢印 = 4:1`）で移動する。複数選択条件を満たす場合は `moveNode` と同様に選択ノード群を一括平行移動する。
     - Diagram エリアでは `nudgeNode` 適用後も `moveNode` と同様に area layout を実行し、同一エリア内のノード重なりを即時解消する。
-    - `alignParentNodesVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス有無で実行可否を判定しつつ、処理対象はキャンバス内の全エリアとする。各エリアの外接矩形を単位に、全エリアの最左 `x` へ揃え、`y` は上から順に重なりが解消される位置へ再配置する。ノード移動はエリア単位の一括平行移動で行い、各エリア内の相対配置は維持する。
+    - `alignAllAreasVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス有無で実行可否を判定しつつ、処理対象はキャンバス内の全エリアとする。各エリアの外接矩形を単位に、全エリアの最左 `x` へ揃え、`y` は上から順に重なりが解消される位置へ再配置する。ノード移動はエリア単位の一括平行移動で行い、各エリア内の相対配置は維持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
     - Diagram エリアでは `addNode` 実行時、フォーカスノードが存在する場合に `relationType = .normal` のエッジで新規ノードと接続する。
     - Diagram エリアで新規作成されるノードは、Tree ノード横幅（`220`）を一辺とする正方形で生成する。
@@ -575,11 +575,11 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ConnectNodes.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
-    - `deleteFocusedNode` は複数選択時にフォーカス所属エリア内の選択ノードを削除対象へ昇格する。Tree では各選択ノードの subtree まで削除し、Diagram では選択ノード自体のみ削除する。
+    - `deleteSelectedOrFocusedNodes` は複数選択時にフォーカス所属エリア内の選択ノードを削除対象へ昇格する。Tree では各選択ノードの subtree まで削除し、Diagram では選択ノード自体のみ削除する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
     - 追加/削除時の所属更新を行う。
-    - `copyFocusedSubtree` / `cutFocusedSubtree` は「同一フォーカスエリア内で複数選択が2件以上ある場合」に選択集合を対象として扱い、それ以外は従来どおりフォーカス部分木を対象とする。
-    - `pasteSubtreeAsChild` は Tree/Diagram の両モードで実行可能。Tree では貼り付けルート群をフォーカスノード配下に親子接続し、Diagram では内部エッジを保ったまま親子接続を追加せず同一エリアへ再構成する。貼り付け後の選択状態は、挿入された全ノード集合へ更新する。
+    - `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` は「同一フォーカスエリア内で複数選択が2件以上ある場合」に選択集合を対象として扱い、それ以外は従来どおりフォーカス部分木を対象とする。
+    - `pasteClipboardAtFocusedNode` は Tree/Diagram の両モードで実行可能。Tree では貼り付けルート群をフォーカスノード配下に親子接続し、Diagram では内部エッジを保ったまま親子接続を追加せず同一エリアへ再構成する。貼り付け後の選択状態は、挿入された全ノード集合へ更新する。
 - 主要テスト
   - `Tests/DomainTests/CanvasAreaMembershipServiceTests.swift`
   - `Tests/ApplicationTests/ApplyCanvasCommandsUseCaseAreaPolicyTests.swift`
@@ -644,14 +644,14 @@
 - 2026-02-21: Diagram mode Phase3 として `convertFocusedAreaMode(to:)` を追加し、フォーカス基準のモード変換（同一モード no-op）と `Shift + Enter` モード選択導線を実装。
 - 2026-02-22: `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を追加し、ノード上部画像の挿入/置換をドメイン編集コマンドとして扱う仕様を追記。
 - 2026-02-22: `CanvasNode` 初期化時の `imagePath` を必須化し、ノード再構築時に画像パスを明示伝播することで、画像データ欠落をコンパイル時に検出できるようにした。
-- 2026-02-22: Tree PhaseA として `copyFocusedSubtree` / `cutFocusedSubtree` / `pasteSubtreeAsChild` と `Command + C/X/V` を追加し、アプリ内コピー&ペーストを導入。
+- 2026-02-22: Tree PhaseA として `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` / `pasteClipboardAtFocusedNode` と `Command + C/X/V` を追加し、アプリ内コピー&ペーストを導入。
 - 2026-02-22: Diagram mode の編集導線を更新し、`addChildNode` を Diagram では `addNode` として解釈する仕様を追加。
 - 2026-02-22: Diagram mode の `addNode` を更新し、フォーカスノードが存在する場合は新規ノードを `normal` エッジで接続する仕様を追加。
 - 2026-02-22: Diagram mode のノード寸法ルールを更新し、Tree ノード横幅（`220`）を一辺とする正方形へ統一（`addNode` / `setNodeText` / エリアモード変換・再所属後の正規化を含む）。
 - 2026-02-22: `CanvasNode.markdownStyleEnabled` と `toggleFocusedNodeMarkdownStyle` コマンドを追加し、コマンドパレットからフォーカスノード単位で Markdown スタイル適用を切り替え可能にした。
 - 2026-02-22: `CanvasNodeMoveDirection` を8方向（斜め4方向を追加）へ拡張し、Diagram mode では `moveNode` を接続アンカー基準の8方向スロット移動に変更した。微調整移動は `nudgeNode`（`cmd+shift+矢印`）として分離した。
 - 2026-02-23: Diagram mode の `moveNode` を更新し、アンカー周囲の固定8スロット再配置ではなく、現在位置を基準にした連続グリッド移動へ変更。候補位置がアンカー矩形と重なる場合は同方向へ飛び越える仕様を追加した。
-- 2026-02-22: `alignParentNodesVertically` コマンドを追加し、Command Palette からフォーカスエリア内の親ノードを最左基準で縦一列に整列できるようにした（Tree/Diagram 両対応）。
+- 2026-02-22: `alignAllAreasVertically` コマンドを追加し、Command Palette からフォーカスエリア内の親ノードを最左基準で縦一列に整列できるようにした（Tree/Diagram 両対応）。
 - 2026-02-22: `CanvasDefaultNodeDistance` を更新し、Tree/Diagram の既定ノード間距離（Tree: 横 `32` / 縦 `24`、Diagram: 横 `220` / 縦 `220`）を Domain で一元管理する仕様へ更新。
 - 2026-02-22: 新規ウィンドウ起動時の初期ノード自動生成を廃止し、ノード未存在時は `Shift + Enter` と同一の Tree/Diagram モード選択導線から最初のノードを追加する仕様へ更新。
 - 2026-02-22: 全ノード削除後に複数空エリアが残る状態でも、`Shift + Enter` のモード選択追加が失敗しないように、ノード未存在時は選択モードに合うエリアを優先解決（なければ新規作成）する仕様へ更新。
@@ -660,13 +660,13 @@
 - 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
 - 2026-02-23: 画像専用の `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を廃止し、`CanvasAttachment` / `upsertNodeAttachment` に統合。ノード添付を将来拡張可能な複数要素として扱う仕様へ更新した。
 - 2026-02-23: 複数選択の導入として `CanvasGraph.selectedNodeIDs`、`CanvasCommand.extendSelection`、`CanvasSelectionService` を追加。`Shift + 矢印` による選択拡張、パイプラインでの selection 正規化、表示側での複数選択ハイライト連携を追記した。
-- 2026-02-23: `copyFocusedSubtree` / `cutFocusedSubtree` / `pasteSubtreeAsChild` を更新し、同一フォーカスエリア内の複数選択コピー&ペーストを Tree/Diagram の両モードで実行可能にした。Tree は貼り付け時に親子接続を追加し、Diagram は内部エッジのみを再構成する。
+- 2026-02-23: `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` / `pasteClipboardAtFocusedNode` を更新し、同一フォーカスエリア内の複数選択コピー&ペーストを Tree/Diagram の両モードで実行可能にした。Tree は貼り付け時に親子接続を追加し、Diagram は内部エッジのみを再構成する。
 - 2026-02-23: Diagram mode の `moveNode` / `nudgeNode` の位置解決ロジックを共通化し、`nudgeNode` の移動量を `moveNode` の 1/4（4:1 比率）へ統一。`nudgeNode` でも area layout による重なり解消を適用する仕様へ更新。
-- 2026-02-23: `deleteFocusedNode` を拡張し、複数選択時はフォーカス所属エリア内の選択ノードを削除対象として扱う仕様を追加（Tree は subtree まで、Diagram は選択ノードのみ）。
+- 2026-02-23: `deleteSelectedOrFocusedNodes` を拡張し、複数選択時はフォーカス所属エリア内の選択ノードを削除対象として扱う仕様を追加（Tree は subtree まで、Diagram は選択ノードのみ）。
 - 2026-02-23: `moveNode` / `nudgeNode` を拡張し、フォーカスを含む同一エリア複数選択時は一括移動に対応。Tree では移動後に選択ノードを同一親配下の兄弟へ一本化し、Diagram ではフォーカス基準の移動量を選択ノード群へ同一平行移動として適用する仕様を追加。
 - 2026-02-23: `CanvasCommand.duplicateSelectionAsSibling` と `Command + D` を追加し、Tree エリアで「選択優先・未選択時はフォーカス」のサブツリー複製を sibling 追加として実行する仕様を導入した。Diagram エリアでは不許可とした。
 - 2026-02-26: `CanvasCommandPaletteLabel` を追加し、コマンドパレット表示名を `Noun: Verb` へ統一。状態依存操作は `toggle` 表記を標準とし、`enable/disable/on/off` は検索トークンで補完する仕様へ更新。
 - 2026-02-26: 画像添付時の Diagram ノード寸法ルールを更新し、`upsertNodeAttachment` で `nodeWidth` を受け取って `220...330` の正方形を許可。画像なしは従来どおり `220` 正方形を維持し、`setNodeText` とパイプライン正規化でも同ルールを適用する仕様へ更新。
 - 2026-02-26: Diagram mode の `moveNode` / `nudgeNode` を更新し、アンカーと同じ行/列で移動先が近すぎる場合は移動方向の軸距離を最低1ステップへ補正して、左右/上下で見かけの間隔が偏らないようにした。補正後に重なる場合のみ追加ステップで回避する。
-- 2026-02-26: `alignParentNodesVertically` を更新し、フォーカス中エリア内の親サブツリー整列から、キャンバス内の全エリアを左詰め縦整列する挙動へ変更。整列時はエリア内ノードの相対配置を保持したまま、エリア単位で平行移動する仕様へ更新した。
-- 2026-02-28: `pasteSubtreeAsChild` を更新し、複数ノード貼り付け後の `selectedNodeIDs` を先頭ルート1件ではなく、挿入された全ノード集合へ更新する仕様に変更。
+- 2026-02-26: `alignAllAreasVertically` を更新し、フォーカス中エリア内の親サブツリー整列から、キャンバス内の全エリアを左詰め縦整列する挙動へ変更。整列時はエリア内ノードの相対配置を保持したまま、エリア単位で平行移動する仕様へ更新した。
+- 2026-02-28: `pasteClipboardAtFocusedNode` を更新し、複数ノード貼り付け後の `selectedNodeIDs` を先頭ルート1件ではなく、挿入された全ノード集合へ更新する仕様に変更。

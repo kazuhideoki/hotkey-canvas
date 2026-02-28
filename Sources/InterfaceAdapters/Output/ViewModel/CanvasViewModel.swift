@@ -177,12 +177,12 @@ extension CanvasViewModel {
         case .addNode, .addChildNode, .addSiblingNode:
             return true
         case .duplicateSelectionAsSibling,
-            .alignParentNodesVertically,
+            .alignAllAreasVertically,
             .connectNodes,
             .moveFocus, .focusNode, .extendSelection, .moveNode, .nudgeNode, .toggleFoldFocusedSubtree,
             .centerFocusedNode,
-            .deleteFocusedNode,
-            .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild,
+            .deleteSelectedOrFocusedNodes,
+            .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree, .pasteClipboardAtFocusedNode,
             .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
             .assignNodesToArea:
             return false

@@ -285,7 +285,7 @@ func test_apply_treeArea_nudgeNodeIsNoOp() async throws {
     #expect(result.newState == graph)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area allows copyFocusedSubtree command")
+@Test("ApplyCanvasCommandsUseCase: diagram area allows copySelectionOrFocusedSubtree command")
 func test_apply_diagramArea_allowsCopyFocusedSubtreeCommand() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -306,7 +306,7 @@ func test_apply_diagramArea_allowsCopyFocusedSubtreeCommand() async throws {
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    let result = try await sut.apply(commands: [.copyFocusedSubtree])
+    let result = try await sut.apply(commands: [.copySelectionOrFocusedSubtree])
     #expect(result.newState == graph)
 }
 
