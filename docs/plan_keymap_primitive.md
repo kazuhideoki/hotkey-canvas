@@ -77,7 +77,7 @@
 | `opt+enter` | `addSiblingNode(.above)` |
 | `cmd+enter` | `addChildNode` |
 | `shift+enter` | Add Node Mode 選択ポップアップを開く |
-| `delete` | `deleteFocusedNode` |
+| `delete` | `deleteSelectedOrFocusedNodes`（node対象）/ `deleteSelectedOrFocusedEdges`（edge対象） |
 | `cmd+d` | `duplicateSelectionAsSibling` |
 | `cmd+c` / `cmd+x` / `cmd+v` | copy/cut/paste subtree |
 | `arrow` | `moveFocus` |
@@ -120,11 +120,11 @@
 | --- | --- | --- | --- | --- |
 | `add` | 新規対象を追加する | sibling/child の追加 | mode選択経由の追加 + `cmd+enter` の `addChildNode` は `addNode` へ正規化 | 実装済み |
 | `edit` | 既存対象を編集する | テキスト編集開始/更新 | テキスト編集開始/更新 | 実装済み |
-| `delete` | 対象を削除する | subtree削除（条件により複数） | ノード削除（条件により複数） | 実装済み |
+| `delete` | 対象を削除する | subtree削除（条件により複数） | node対象はノード削除、edge対象はedge削除（focused edge含む複数選択は一括削除） | 実装済み |
 | `toggleVisibility` | 可視状態を切替える | fold/unfold | 非対応（明示エラー） | Treeのみ実装 |
 | `duplicate` | 対象を複製する | siblingとして複製 | 非対応（明示エラー） | Treeのみ実装 |
 | `attach` | 添付情報を付与/更新する | 画像添付（Command Palette経由） | 画像添付（Command Palette経由） | ショートカット未割当 |
-| `switchTargetKind` | 操作対象（node/edge）を切替える | 未実装（connect 導線は関連機能） | 未実装（connect 導線は関連機能） | 未実装 |
+| `switchTargetKind` | 操作対象（node/edge）を切替える | `tab` で node/edge を切替 | `tab` で node/edge を切替 | 実装済み |
 | `moveFocus` | フォーカス対象を移動する | `moveFocus` / `extendSelection` | `moveFocus` / `extendSelection` | 実装済み |
 | `moveNode` | ノードを移動する | `moveNode` | `moveNode` | 実装済み |
 | `nudgeNode` | ノードを最小単位で移動する | `nudgeNode` | `nudgeNode` | 実装済み |
@@ -226,3 +226,8 @@
 - `swift build`: pass
 - `./scripts/lint_and_format.sh`: pass
 - `swift test`: pass（372 tests, 0 failures）
+
+### 8.6 追補（2026-02-28）
+
+- edge 対象時の `delete` を `deleteSelectedOrFocusedEdges` へ接続し、focused edge を含む複数選択の一括削除に対応。
+- Command Palette に edge 対象時のみ `Edge: Delete Selected` を表示する仕様を追加。
