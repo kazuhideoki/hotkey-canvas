@@ -69,11 +69,12 @@ extension ApplyCanvasCommandsUseCase {
             return toggleFoldFocusedSubtree(in: graph)
         case .centerFocusedNode:
             return noOpMutationResult(for: graph)
-        case .deleteSelectedOrFocusedNodes:
-            return try deleteSelectedOrFocusedNodes(
+        case .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges:
+            return try applyDeleteCommand(
+                command: command,
                 in: graph,
-                areaID: resolvedAreaID,
-                areaMode: resolvedAreaMode
+                resolvedAreaID: resolvedAreaID,
+                resolvedAreaMode: resolvedAreaMode
             )
         case .copySelectionOrFocusedSubtree:
             return copySelectionOrFocusedSubtree(in: graph)
@@ -84,6 +85,51 @@ extension ApplyCanvasCommandsUseCase {
         case .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle:
             return try applyNodeContentCommand(command: command, to: graph)
         case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
+            return noOpMutationResult(for: graph)
+        }
+    }
+
+    private func applyDeleteCommand(
+        command: CanvasCommand,
+        in graph: CanvasGraph,
+        resolvedAreaID: CanvasAreaID,
+        resolvedAreaMode: CanvasEditingMode
+    ) throws -> CanvasMutationResult {
+        switch command {
+        case .deleteSelectedOrFocusedNodes:
+            return try deleteSelectedOrFocusedNodes(
+                in: graph,
+                areaID: resolvedAreaID,
+                areaMode: resolvedAreaMode
+            )
+        case .deleteSelectedOrFocusedEdges(let focusedEdge, let selectedEdgeIDs):
+            return try deleteSelectedOrFocusedEdges(
+                in: graph,
+                focusedEdge: focusedEdge,
+                selectedEdgeIDs: selectedEdgeIDs
+            )
+        case .addNode,
+            .addChildNode,
+            .addSiblingNode,
+            .duplicateSelectionAsSibling,
+            .connectNodes,
+            .alignAllAreasVertically,
+            .moveFocus,
+            .focusNode,
+            .extendSelection,
+            .moveNode,
+            .nudgeNode,
+            .toggleFoldFocusedSubtree,
+            .centerFocusedNode,
+            .copySelectionOrFocusedSubtree,
+            .cutSelectionOrFocusedSubtree,
+            .pasteClipboardAtFocusedNode,
+            .setNodeText,
+            .upsertNodeAttachment,
+            .toggleFocusedNodeMarkdownStyle,
+            .convertFocusedAreaMode,
+            .createArea,
+            .assignNodesToArea:
             return noOpMutationResult(for: graph)
         }
     }
@@ -117,6 +163,7 @@ extension ApplyCanvasCommandsUseCase {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteSelectedOrFocusedNodes,
+            .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree,
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
@@ -161,6 +208,7 @@ extension ApplyCanvasCommandsUseCase {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteSelectedOrFocusedNodes,
+            .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree,
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
@@ -208,6 +256,7 @@ extension ApplyCanvasCommandsUseCase {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteSelectedOrFocusedNodes,
+            .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree,
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
@@ -268,6 +317,8 @@ extension ApplyCanvasCommandsUseCase {
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
         case .connectNodes(let fromNodeID, _):
             return CanvasAreaMembershipService.areaID(containing: fromNodeID, in: graph)
+        case .deleteSelectedOrFocusedEdges(let focusedEdge, _):
+            return CanvasAreaMembershipService.areaID(containing: focusedEdge.originNodeID, in: graph)
         case .addChildNode,
             .addSiblingNode,
             .duplicateSelectionAsSibling,

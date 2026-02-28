@@ -6,6 +6,7 @@ import Foundation
 extension CanvasView {
     enum CommandPaletteAction: Equatable {
         case shortcut(CanvasShortcutAction)
+        case deleteSelectedOrFocusedEdges(CanvasCommand)
         case insertImageFromFinder
     }
 
@@ -78,6 +79,9 @@ extension CanvasView {
         if let markdownToggleItem = focusedNodeMarkdownToggleCommandPaletteItem() {
             items.append(markdownToggleItem)
         }
+        if let edgeDeletionItem = edgeDeletionCommandPaletteItem() {
+            items.append(edgeDeletionItem)
+        }
         if viewModel.focusedNodeID != nil {
             items.append(
                 CommandPaletteItem(
@@ -140,6 +144,24 @@ extension CanvasView {
         )
     }
 
+    private func edgeDeletionCommandPaletteItem() -> CommandPaletteItem? {
+        guard let command = edgeDeletionCommandFromCurrentState() else {
+            return nil
+        }
+        let title = "Edge: Delete Selected"
+        return CommandPaletteItem(
+            id: "deleteSelectedOrFocusedEdges",
+            title: title,
+            shortcutLabel: "⌫",
+            searchText: Self.commandPaletteSearchText(
+                title: title,
+                shortcutLabel: "⌫",
+                searchTokens: ["edge", "delete", "selected", "remove", "connection", "line"]
+            ),
+            action: .deleteSelectedOrFocusedEdges(command)
+        )
+    }
+
     func executeSelectedCommandIfNeeded() {
         let commandItems = filteredCommandPaletteItems()
         guard !commandItems.isEmpty else {
@@ -173,6 +195,10 @@ extension CanvasView {
                 presentConnectNodeSelectionIfPossible()
             case .openCommandPalette:
                 return
+            }
+        case .deleteSelectedOrFocusedEdges(let command):
+            Task {
+                await viewModel.apply(commands: [command])
             }
         case .insertImageFromFinder:
             insertImageFromFinder()
@@ -229,7 +255,7 @@ extension CanvasView {
     private func commandPaletteContext() -> CanvasCommandPaletteContext {
         CanvasCommandPaletteContext(
             activeEditingMode: commandPaletteActiveEditingMode(),
-            hasFocusedNode: viewModel.focusedNodeID != nil
+            hasFocusedNode: operationTargetKind == .node && viewModel.focusedNodeID != nil
         )
     }
 

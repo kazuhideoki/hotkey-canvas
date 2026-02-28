@@ -21,6 +21,7 @@ enum TreeAreaPolicyService {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteSelectedOrFocusedNodes,
+            .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree,
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
