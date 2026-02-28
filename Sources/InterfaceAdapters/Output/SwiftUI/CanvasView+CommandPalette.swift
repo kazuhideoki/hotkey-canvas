@@ -129,12 +129,12 @@ extension CanvasView {
         }
         return CommandPaletteItem(
             id: "alignParentNodesVertically",
-            title: "Node: Align Parents Vertically",
+            title: "Area: Align All Areas Vertically",
             shortcutLabel: "Focused Area",
             searchText: Self.commandPaletteSearchText(
-                title: "Node: Align Parents Vertically",
+                title: "Area: Align All Areas Vertically",
                 shortcutLabel: "Focused Area",
-                searchTokens: ["align", "parent", "nodes", "vertical", "left", "line", "tree", "diagram"]
+                searchTokens: ["align", "all", "areas", "vertical", "left", "line", "tree", "diagram"]
             ),
             action: .shortcut(.apply(commands: [.alignParentNodesVertically]))
         )

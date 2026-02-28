@@ -202,6 +202,10 @@ func test_commandPaletteDefinitions_treeContext_hidesDiagramOnlyDefinitions() {
     #expect(ids.contains("addSiblingNodeAbove"))
     #expect(ids.contains("addSiblingNodeBelow"))
     #expect(!ids.contains("beginConnectNodeSelection"))
+    #expect(!ids.contains("nudgeNodeUp"))
+    #expect(!ids.contains("nudgeNodeDown"))
+    #expect(!ids.contains("nudgeNodeLeft"))
+    #expect(!ids.contains("nudgeNodeRight"))
 }
 
 @Test("Shortcut catalog: no-focus context hides focus-required command palette definitions")
@@ -216,4 +220,31 @@ func test_commandPaletteDefinitions_withoutFocus_hidesFocusRequiredDefinitions()
     #expect(!ids.contains("addChildNode"))
     #expect(!ids.contains("deleteFocusedNode"))
     #expect(!ids.contains("centerFocusedNode"))
+}
+
+@Test("Shortcut catalog: tree context rewrites copy cut paste labels")
+func test_commandPaletteDefinitions_treeContext_rewritesClipboardLabels() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
+    )
+    let titleByID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0.title) })
+
+    #expect(titleByID["deleteFocusedNode"] == "Node: Delete Selected")
+    #expect(titleByID["copyFocusedSubtree"] == "Node: Copy Selected & Subtree")
+    #expect(titleByID["cutFocusedSubtree"] == "Node: Cut Selected & Subtree")
+    #expect(titleByID["pasteSubtreeAsChild"] == "Node: Paste As Child")
+}
+
+@Test("Shortcut catalog: diagram context rewrites copy cut paste and nudge labels")
+func test_commandPaletteDefinitions_diagramContext_rewritesClipboardAndNudgeLabels() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true)
+    )
+    let titleByID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0.title) })
+
+    #expect(titleByID["deleteFocusedNode"] == "Node: Delete Selected")
+    #expect(titleByID["copyFocusedSubtree"] == "Node: Copy Selected")
+    #expect(titleByID["cutFocusedSubtree"] == "Node: Cut Selected")
+    #expect(titleByID["pasteSubtreeAsChild"] == "Node: Paste")
+    #expect(titleByID["nudgeNodeUp"] == "Node: Move Up Slightly")
 }

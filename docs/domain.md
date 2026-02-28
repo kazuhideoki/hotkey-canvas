@@ -449,6 +449,7 @@
       - フォーカスノードがある場合: フォーカスノード所属エリアの mode
       - フォーカスなしでエリア mode が一意の場合: その mode
       - 上記以外: `nil`（mode 依存項目は非表示）
+    - mode が確定している場合、同一ショートカットでも文言を mode 別に上書きする（例: `copy/cut/paste`）。
 - 主要テスト
   - `Tests/DomainTests/CanvasShortcutCatalogServiceTests.swift`
   - `Tests/InterfaceAdaptersTests/CanvasHotkeyTranslatorTests.swift`
@@ -459,6 +460,9 @@
   - 標準ショートカット定義は実装内の静的配列で管理し、入力解決とコマンドパレット表示で共有する。
   - `CanvasCommandPaletteVisibility` により、mode/フォーカス条件を満たさない項目は表示しない（無効表示は行わない）。
   - `CanvasCommandPaletteLabel` は `Noun: Verb` 形式でタイトルを生成し、コマンド名の表記ゆれを防ぐ。
+  - `deleteFocusedNode` の表示名は mode 共通で `Node: Delete Selected` とする。
+  - `copyFocusedSubtree` / `cutFocusedSubtree` / `pasteSubtreeAsChild` は mode に応じて文言を切り替える（Tree は subtree を明示、Diagram は selected/paste を優先）。
+  - `cmd+shift+arrow`（`nudgeNode`）は実行経路を維持しつつ、コマンドパレット表示は Diagram mode のみとする。
   - 状態依存の ON/OFF 操作は原則 `toggle` 動詞で表記し、`enable/disable/on/off` は検索トークンで吸収する。
   - `Shift + 矢印` は `.extendSelection` に解決し、`moveFocus` と競合しない。
   - `primitive` へ新規キーを追加する場合、Intent 層を経由しない実装を禁止する。
