@@ -52,6 +52,17 @@
 - Intent 解決順は `User Override -> Context/Mode Override -> Intent Base Map` を仕様上の固定順とする。
 - `search`（`cmd+f`）は当面 `global` として扱う。
 
+### D5 追加仕様（Keymap Primitive Phase 3）
+
+- Input Adapter の公開経路は `CanvasHotkeyTranslator.resolve(_:) -> KeymapResolvedRoute?` に一本化した。
+- `KeymapIntentResolver` は既存ホットキーの現行セットを `global` または `primitive` として解決可能にした（`cmd+c/x/v` を含む）。
+- Primitive Intent には既存コマンドを損失なく再構成できるよう、以下の情報を追加した。
+  - `edit` の variant（copy/cut/paste/align）
+  - `moveFocus` の方向
+  - `moveNode` / `nudgeNode` の方向
+- `zoom` は既存挙動維持のため、`keyCode` 起点の互換解決（`cmd+shift+;`、テンキー `+` など）を維持する。
+- 未実装 Intent（`output` / `export` / `import` / 一部 `transform`）は `KeymapContextAction.reportUnsupportedIntent` へ解決し、実行時は no-op 契約とする。
+
 ## 4. 各ドメイン詳細
 
 ### D1. キャンバスグラフ編集ドメイン

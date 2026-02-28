@@ -80,6 +80,7 @@ extension KeymapIntentResolver {
         }
         let command = commands[0]
         return primitiveIntentFromNodeMutation(command)
+            ?? primitiveIntentFromEdit(command)
             ?? primitiveIntentFromNavigation(command)
             ?? primitiveIntentFromReservedRoute(command)
     }
@@ -100,8 +101,21 @@ extension KeymapIntentResolver {
             return .duplicate
         case .toggleFoldFocusedSubtree:
             return .toggleVisibility
+        default:
+            return nil
+        }
+    }
+
+    private static func primitiveIntentFromEdit(_ command: CanvasCommand) -> KeymapPrimitiveIntent? {
+        switch command {
         case .alignParentNodesVertically:
-            return .edit
+            return .edit(variant: .alignParentNodesVertically)
+        case .copyFocusedSubtree:
+            return .edit(variant: .copySubtree)
+        case .cutFocusedSubtree:
+            return .edit(variant: .cutSubtree)
+        case .pasteSubtreeAsChild:
+            return .edit(variant: .pasteSubtreeAsChild)
         default:
             return nil
         }
@@ -109,18 +123,18 @@ extension KeymapIntentResolver {
 
     private static func primitiveIntentFromNavigation(_ command: CanvasCommand) -> KeymapPrimitiveIntent? {
         switch command {
-        case .moveFocus:
-            return .moveFocus(variant: .single)
-        case .extendSelection:
-            return .moveFocus(variant: .extendSelection)
-        case .moveNode:
-            return .moveNode
-        case .nudgeNode:
-            return .nudgeNode
+        case .moveFocus(let direction):
+            return .moveFocus(direction: direction, variant: .single)
+        case .extendSelection(let direction):
+            return .moveFocus(direction: direction, variant: .extendSelection)
+        case .moveNode(let direction):
+            return .moveNode(direction: direction)
+        case .nudgeNode(let direction):
+            return .nudgeNode(direction: direction)
         case .connectNodes:
             return .switchTargetKind(variant: .edge)
         case .convertFocusedAreaMode:
-            return .transform
+            return .transform(variant: .convertFocusedAreaMode)
         default:
             return nil
         }
@@ -128,9 +142,9 @@ extension KeymapIntentResolver {
 
     private static func primitiveIntentFromReservedRoute(_ command: CanvasCommand) -> KeymapPrimitiveIntent? {
         switch command {
-        case .focusNode, .copyFocusedSubtree, .cutFocusedSubtree, .pasteSubtreeAsChild, .setNodeText,
-                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .centerFocusedNode, .createArea,
-                .assignNodesToArea:
+        case .focusNode, .setNodeText,
+            .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .centerFocusedNode, .createArea,
+            .assignNodesToArea:
             return nil
         default:
             return nil

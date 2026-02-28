@@ -1,6 +1,7 @@
 // Background: CanvasView key-event closure grows quickly as input modes increase.
 // Responsibility: Keep hotkey branching and connect-mode banner rendering outside the root view file.
 import AppKit
+import Application
 import Domain
 import SwiftUI
 
@@ -36,47 +37,75 @@ extension CanvasView {
         if isAddNodeModePopupPresented {
             return handleAddNodeModePopupHotkey(event)
         }
-        if hotkeyTranslator.shouldPresentAddNodeModeSelection(event) {
-            presentAddNodeModeSelectionPopup()
-            return true
-        }
-        if hotkeyTranslator.shouldBeginConnectNodeSelection(event) {
-            presentConnectNodeSelectionIfPossible()
-            return true
-        }
         if handleCompositeMoveHotkey(event) {
             return true
         }
-        if hotkeyTranslator.shouldOpenCommandPalette(event) {
-            openCommandPalette()
-            return true
-        }
-        if hotkeyTranslator.shouldOpenSearch(event) {
-            openSearch()
-            return true
-        }
-        if let zoomAction = hotkeyTranslator.zoomAction(event) {
-            applyZoom(action: zoomAction)
-            return true
-        }
-        if let historyAction = hotkeyTranslator.historyAction(event) {
-            Task {
-                switch historyAction {
-                case .undo:
-                    await viewModel.undo()
-                case .redo:
-                    await viewModel.redo()
-                }
-            }
-            return true
-        }
-        let commands = hotkeyTranslator.translate(event)
-        guard !commands.isEmpty else {
+
+        guard let route = hotkeyTranslator.resolve(event) else {
             let displayNodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
             return handleTypingInputStart(event, nodesByID: displayNodesByID)
         }
-        // Returning true tells the capture view to stop responder-chain propagation.
-        Task { await viewModel.apply(commands: commands) }
-        return true
+
+        switch route {
+        case .global(let action):
+            return handleGlobalRoute(action)
+        case .primitive(let intent):
+            let contextAction = keymapContextActionResolver.resolve(primitiveIntent: intent)
+            return handlePrimitiveContextAction(contextAction)
+        case .modal:
+            return true
+        }
+    }
+}
+
+extension CanvasView {
+    private func handleGlobalRoute(_ action: KeymapGlobalAction) -> Bool {
+        switch action {
+        case .openCommandPalette:
+            openCommandPalette()
+            return true
+        case .openSearch:
+            openSearch()
+            return true
+        case .undo:
+            Task {
+                await viewModel.undo()
+            }
+            return true
+        case .redo:
+            Task {
+                await viewModel.redo()
+            }
+            return true
+        case .zoomIn:
+            applyZoom(action: .zoomIn)
+            return true
+        case .zoomOut:
+            applyZoom(action: .zoomOut)
+            return true
+        case .centerFocusedNode:
+            Task {
+                await viewModel.apply(commands: [.centerFocusedNode])
+            }
+            return true
+        }
+    }
+
+    private func handlePrimitiveContextAction(_ action: KeymapContextAction) -> Bool {
+        switch action {
+        case .apply(let commands):
+            Task {
+                await viewModel.apply(commands: commands)
+            }
+            return true
+        case .beginConnectNodeSelection:
+            presentConnectNodeSelectionIfPossible()
+            return true
+        case .presentAddNodeModeSelection:
+            presentAddNodeModeSelectionPopup()
+            return true
+        case .reportUnsupportedIntent:
+            return true
+        }
     }
 }

@@ -1,78 +1,40 @@
-// Background: Input events must resolve against one canonical shortcut catalog shared with command palette.
-// Responsibility: Normalize AppKit key events and map them to domain shortcut actions.
+// Background: Input events must resolve against one canonical keymap route shared across UI behaviors.
+// Responsibility: Normalize AppKit key events and resolve them into scoped keymap routes.
 import AppKit
 import Domain
 
-public enum CanvasHistoryAction: Equatable, Sendable {
-    case undo
-    case redo
-}
-
-public enum CanvasZoomAction: Equatable, Sendable {
-    case zoomIn
-    case zoomOut
-}
-
+/// Translates one AppKit key event into a canonical keymap route.
 public struct CanvasHotkeyTranslator {
     public init() {}
 
-    public func historyAction(_ event: NSEvent) -> CanvasHistoryAction? {
-        switch action(for: event) {
-        case .undo:
-            return .undo
-        case .redo:
-            return .redo
-        case .apply, .zoomIn, .zoomOut, .beginConnectNodeSelection, .openCommandPalette, .none:
-            return nil
-        }
-    }
-
-    public func zoomAction(_ event: NSEvent) -> CanvasZoomAction? {
-        switch action(for: event) {
-        case .zoomIn:
-            return .zoomIn
-        case .zoomOut:
-            return .zoomOut
-        case .apply, .undo, .redo, .beginConnectNodeSelection, .openCommandPalette, .none:
-            return nil
-        }
-    }
-
-    // Command-palette trigger is treated as input-adapter concern:
-    // it decides UI mode switching only, not domain/application behavior.
-    public func shouldOpenCommandPalette(_ event: NSEvent) -> Bool {
-        action(for: event) == .openCommandPalette
-    }
-
-    /// Returns true when Command+F should open the inline canvas search field.
-    public func shouldOpenSearch(_ event: NSEvent) -> Bool {
+    /// Resolves one route from an incoming key event.
+    /// - Parameter event: AppKit key event.
+    /// - Returns: Scoped keymap route, or `nil` when the event is unrelated to keymap handling.
+    public func resolve(_ event: NSEvent) -> KeymapResolvedRoute? {
         guard event.type == .keyDown else {
-            return false
+            return nil
         }
-        let flags = normalizedFlags(from: event)
-        guard hasExactSearchModifiers(flags) else {
-            return false
+        if let route = zoomRouteByKeyCode(from: event) {
+            return route
         }
-        return event.charactersIgnoringModifiers?.lowercased() == "f"
-    }
-
-    /// Returns true when Shift+Enter should open mode selection instead of direct add-node apply.
-    public func shouldPresentAddNodeModeSelection(_ event: NSEvent) -> Bool {
-        action(for: event) == .apply(commands: [.addNode])
-    }
-
-    /// Returns true when command+l should open connect-node selection mode.
-    public func shouldBeginConnectNodeSelection(_ event: NSEvent) -> Bool {
-        action(for: event) == .beginConnectNodeSelection
-    }
-
-    public func translate(_ event: NSEvent) -> [CanvasCommand] {
-        switch action(for: event) {
-        case .apply(let commands):
-            return commands
-        case .undo, .redo, .zoomIn, .zoomOut, .beginConnectNodeSelection, .openCommandPalette, .none:
-            return []
+        guard let gesture = gesture(from: event) else {
+            return nil
         }
+        if let route = KeymapIntentResolver.resolveRoute(for: gesture) {
+            return route
+        }
+
+        guard gesture.modifiers.contains(.function), canIgnoreFunctionModifier(for: gesture.key) else {
+            return nil
+        }
+        var modifiersWithoutFunction = gesture.modifiers
+        modifiersWithoutFunction.remove(.function)
+
+        let normalizedGesture = CanvasShortcutGesture(
+            key: gesture.key,
+            modifiers: modifiersWithoutFunction
+        )
+        return KeymapIntentResolver.resolveRoute(for: normalizedGesture)
     }
 }
 
@@ -90,49 +52,22 @@ extension CanvasHotkeyTranslator {
     private static let semicolonKeyCode: UInt16 = 41
     private static let keypadPlusKeyCode: UInt16 = 69
 
-    private func action(for event: NSEvent) -> CanvasShortcutAction? {
-        guard event.type == .keyDown else {
-            return nil
-        }
-        if let zoomAction = zoomActionByKeyCode(from: event) {
-            return zoomAction
-        }
-        guard let gesture = gesture(from: event) else {
-            return nil
-        }
-        if let action = CanvasShortcutCatalogService.resolveAction(for: gesture) {
-            return action
-        }
-
-        guard gesture.modifiers.contains(.function), canIgnoreFunctionModifier(for: gesture.key) else {
-            return nil
-        }
-        var modifiersWithoutFunction = gesture.modifiers
-        modifiersWithoutFunction.remove(.function)
-
-        let normalizedGesture = CanvasShortcutGesture(
-            key: gesture.key,
-            modifiers: modifiersWithoutFunction
-        )
-        return CanvasShortcutCatalogService.resolveAction(for: normalizedGesture)
-    }
-
-    private func zoomActionByKeyCode(from event: NSEvent) -> CanvasShortcutAction? {
+    private func zoomRouteByKeyCode(from event: NSEvent) -> KeymapResolvedRoute? {
         let flags = normalizedFlags(from: event)
         let isCommandOnly = hasExactZoomModifiers(flags, requiresShift: false)
         let isCommandShiftOnly = hasExactZoomModifiers(flags, requiresShift: true)
 
         if event.keyCode == Self.minusKeyCode, isCommandOnly {
-            return .zoomOut
+            return .global(action: .zoomOut)
         }
         if event.keyCode == Self.keypadPlusKeyCode, isCommandOnly {
-            return .zoomIn
+            return .global(action: .zoomIn)
         }
         if event.keyCode == Self.equalsKeyCode, isCommandOnly || isCommandShiftOnly {
-            return .zoomIn
+            return .global(action: .zoomIn)
         }
         if event.keyCode == Self.semicolonKeyCode, isCommandShiftOnly {
-            return .zoomIn
+            return .global(action: .zoomIn)
         }
         return nil
     }
@@ -151,19 +86,6 @@ extension CanvasHotkeyTranslator {
             return false
         }
         return !hasOption && !hasControl && !hasFunction
-    }
-
-    private func hasExactSearchModifiers(_ flags: NSEvent.ModifierFlags) -> Bool {
-        let hasCommand = flags.contains(.command)
-        let hasShift = flags.contains(.shift)
-        let hasOption = flags.contains(.option)
-        let hasControl = flags.contains(.control)
-        let hasFunction = flags.contains(.function)
-
-        guard hasCommand else {
-            return false
-        }
-        return !hasShift && !hasOption && !hasControl && !hasFunction
     }
 
     private func gesture(from event: NSEvent) -> CanvasShortcutGesture? {

@@ -66,11 +66,29 @@ func test_resolveRoute_controlL_returnsGlobalCenterFocusedNode() {
     #expect(route == .global(action: .centerFocusedNode))
 }
 
-@Test("KeymapIntentResolver: command-c is unresolved in phase2 scaffold")
-func test_resolveRoute_commandC_returnsNil() {
+@Test("KeymapIntentResolver: command-c resolves primitive copy-subtree edit intent")
+func test_resolveRoute_commandC_returnsPrimitiveEditCopySubtree() {
     let gesture = CanvasShortcutGesture(key: .character("c"), modifiers: [.command])
 
     let route = KeymapIntentResolver.resolveRoute(for: gesture)
 
-    #expect(route == nil)
+    #expect(route == .primitive(intent: .edit(variant: .copySubtree)))
+}
+
+@Test("KeymapIntentResolver: command-down resolves primitive move-node down intent")
+func test_resolveRoute_commandDown_returnsPrimitiveMoveNodeDown() {
+    let gesture = CanvasShortcutGesture(key: .arrowDown, modifiers: [.command])
+
+    let route = KeymapIntentResolver.resolveRoute(for: gesture)
+
+    #expect(route == .primitive(intent: .moveNode(direction: .down)))
+}
+
+@Test("KeymapIntentResolver: shift-left resolves primitive extend-selection left intent")
+func test_resolveRoute_shiftLeft_returnsPrimitiveMoveFocusExtendSelectionLeft() {
+    let gesture = CanvasShortcutGesture(key: .arrowLeft, modifiers: [.shift])
+
+    let route = KeymapIntentResolver.resolveRoute(for: gesture)
+
+    #expect(route == .primitive(intent: .moveFocus(direction: .left, variant: .extendSelection)))
 }

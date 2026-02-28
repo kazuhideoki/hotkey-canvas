@@ -195,20 +195,32 @@ private func applyTranslatedEvent(
     translator: CanvasHotkeyTranslator,
     viewModel: CanvasViewModel
 ) async {
-    switch translator.historyAction(event) {
-    case .undo:
-        await viewModel.undo()
-        return
-    case .redo:
-        await viewModel.redo()
-        return
-    case .none:
-        break
-    }
-
-    let commands = translator.translate(event)
-    guard !commands.isEmpty else {
+    let resolver = DefaultKeymapContextActionResolver()
+    guard let route = translator.resolve(event) else {
         return
     }
-    await viewModel.apply(commands: commands)
+    switch route {
+    case .global(let action):
+        switch action {
+        case .undo:
+            await viewModel.undo()
+        case .redo:
+            await viewModel.redo()
+        case .centerFocusedNode:
+            await viewModel.apply(commands: [.centerFocusedNode])
+        case .openCommandPalette, .openSearch, .zoomIn, .zoomOut:
+            return
+        }
+    case .primitive(let intent):
+        switch resolver.resolve(primitiveIntent: intent) {
+        case .apply(let commands):
+            await viewModel.apply(commands: commands)
+        case .presentAddNodeModeSelection:
+            await viewModel.addNodeFromModeSelection(mode: .tree)
+        case .beginConnectNodeSelection, .reportUnsupportedIntent:
+            return
+        }
+    case .modal:
+        return
+    }
 }
