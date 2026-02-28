@@ -43,7 +43,7 @@ struct SelectionPopup: View {
             }
             .padding(16)
             .frame(width: 320)
-            .background(.regularMaterial)
+            .systemSurface(styleSheet.overlay.selectionPopupSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(CanvasStylePalette.color(styleSheet.overlay.popupBorderColor), lineWidth: 1)

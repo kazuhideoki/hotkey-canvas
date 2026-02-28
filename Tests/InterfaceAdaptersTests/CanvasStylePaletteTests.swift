@@ -17,6 +17,11 @@ func test_defaultStyleSheet_matchesCurrentNodeAndEdgeDefaults() {
 func test_defaultStyleSheet_matchesCurrentOverlayDefaults() {
     let styleSheet = CanvasStylePalette.defaultStyleSheet
 
+    #expect(styleSheet.overlay.commandPaletteSurface == .panel)
+    #expect(styleSheet.overlay.searchPanelSurface == .search)
+    #expect(styleSheet.overlay.selectionPopupSurface == .popup)
+    #expect(styleSheet.overlay.connectBannerSurface == .banner)
+    #expect(styleSheet.overlay.transientFeedbackSurface == .transientFeedback)
     #expect(styleSheet.overlay.dimmedBackgroundOpacity == 0.12)
     #expect(styleSheet.overlay.popupSelectedRowOpacity == 0.2)
     #expect(styleSheet.overlay.popupUnselectedRowOpacity == 0.35)
