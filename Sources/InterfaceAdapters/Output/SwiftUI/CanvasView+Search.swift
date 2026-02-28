@@ -230,7 +230,7 @@ extension CanvasView {
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
             .frame(width: 280)
-            .background(.regularMaterial)
+            .systemSurface(styleSheet.overlay.searchPanelSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(styleColor(.separator), lineWidth: 1)

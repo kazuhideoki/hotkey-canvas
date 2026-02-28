@@ -45,6 +45,15 @@ public enum CanvasStyleColorToken: String, Equatable, Sendable {
     case shadow
 }
 
+/// Semantic system-surface token used by adapters to resolve platform-native materials.
+public enum CanvasSystemSurfaceToken: String, Equatable, Sendable {
+    case panel
+    case search
+    case popup
+    case banner
+    case transientFeedback
+}
+
 /// Node text style values.
 public struct CanvasNodeTextStyle: Equatable, Sendable {
     public let fontSize: Double
@@ -167,6 +176,11 @@ public struct CanvasEdgeStyle: Equatable, Sendable {
 
 /// Overlay and popup style values.
 public struct CanvasOverlayStyle: Equatable, Sendable {
+    public let commandPaletteSurface: CanvasSystemSurfaceToken
+    public let searchPanelSurface: CanvasSystemSurfaceToken
+    public let selectionPopupSurface: CanvasSystemSurfaceToken
+    public let connectBannerSurface: CanvasSystemSurfaceToken
+    public let transientFeedbackSurface: CanvasSystemSurfaceToken
     public let dimmedBackgroundOpacity: Double
     public let popupBorderColor: CanvasStyleColorToken
     public let popupSelectedRowColor: CanvasStyleColorToken
@@ -182,6 +196,11 @@ public struct CanvasOverlayStyle: Equatable, Sendable {
 
     /// Creates overlay and popup style values.
     public init(
+        commandPaletteSurface: CanvasSystemSurfaceToken,
+        searchPanelSurface: CanvasSystemSurfaceToken,
+        selectionPopupSurface: CanvasSystemSurfaceToken,
+        connectBannerSurface: CanvasSystemSurfaceToken,
+        transientFeedbackSurface: CanvasSystemSurfaceToken,
         dimmedBackgroundOpacity: Double,
         popupBorderColor: CanvasStyleColorToken,
         popupSelectedRowColor: CanvasStyleColorToken,
@@ -195,6 +214,11 @@ public struct CanvasOverlayStyle: Equatable, Sendable {
         zoomPopupShadowColor: CanvasStyleColorToken,
         zoomPopupShadowOpacity: Double
     ) {
+        self.commandPaletteSurface = commandPaletteSurface
+        self.searchPanelSurface = searchPanelSurface
+        self.selectionPopupSurface = selectionPopupSurface
+        self.connectBannerSurface = connectBannerSurface
+        self.transientFeedbackSurface = transientFeedbackSurface
         self.dimmedBackgroundOpacity = dimmedBackgroundOpacity
         self.popupBorderColor = popupBorderColor
         self.popupSelectedRowColor = popupSelectedRowColor

@@ -185,7 +185,7 @@ public struct CanvasView: View {
                         }
                     }
                     .frame(width: 520)
-                    .background(.regularMaterial)
+                    .systemSurface(styleSheet.overlay.commandPaletteSurface)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(styleColor(.separator), lineWidth: 1)
