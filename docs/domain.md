@@ -20,7 +20,7 @@
 | D2 | フォーカス移動と複数選択 | `CanvasFocusDirection`, `CanvasFocusNavigationService`, `CanvasSelectionService` |
 | D3 | エリアレイアウト | `CanvasNodeArea`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService` |
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
-| D5 | ショートカットカタログ | `CanvasCommandPaletteLabel`, `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService` |
+| D5 | ショートカットカタログ | `CanvasCommandPaletteLabel`, `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService`, `KeymapShortcutScope`, `KeymapPrimitiveIntent`, `KeymapGlobalAction`, `KeymapResolvedRoute`, `KeymapIntentResolver` |
 | D6 | 折りたたみ可視性 | `CanvasFoldedSubtreeVisibilityService` |
 | D7 | エリアモード所属管理 | `CanvasAreaID`, `CanvasEditingMode`, `CanvasArea`, `CanvasAreaMembershipService`, `CanvasAreaPolicyError` |
 
@@ -43,6 +43,14 @@
 - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)` / `shouldBeginConnectNodeSelection(_:)`）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+CommandPalette.swift`（コマンドパレットからのズーム実行）
+
+### D5 追加仕様（Keymap Primitive Phase 1/2）
+
+- Scope は `primitive` / `global` / `modal` の 3 種を固定する。
+- `KeyTrigger -> Intent -> ContextAction` は `primitive` スコープでのみ適用する。
+- `global` と `modal` は Intent 解決経路に混在させず、専用ルートで扱う。
+- Intent 解決順は `User Override -> Context/Mode Override -> Intent Base Map` を仕様上の固定順とする。
+- `search`（`cmd+f`）は当面 `global` として扱う。
 
 ## 4. 各ドメイン詳細
 
@@ -350,10 +358,15 @@
 - モデル
   - `CanvasCommandPaletteLabel`
   - `CanvasShortcutDefinition`
+  - `KeymapShortcutScope`
+  - `KeymapPrimitiveIntent`
+  - `KeymapGlobalAction`
+  - `KeymapResolvedRoute`
 - アクション
-  - `CanvasShortcutAction`（`apply(commands:)` / `undo` / `redo` / `openCommandPalette`）
+  - `CanvasShortcutAction`（既存経路の互換維持用）
 - サービス
   - `CanvasShortcutCatalogService`
+  - `KeymapIntentResolver`
 
 #### サービス詳細
 
@@ -363,12 +376,58 @@
 | --- | --- |
 | `resolveAction(for:)` | `CanvasShortcutGesture` から実行アクションを解決する。 |
 | `commandPaletteDefinitions()` | コマンドパレットに表示すべきショートカット定義のみ返す。 |
+| `KeymapIntentResolver.resolveRoute(for:)` | `CanvasShortcutGesture` を `primitive/global/modal` のいずれかへ分類し、`primitive` のみ Intent を返す。 |
+
+#### Primitive Intent 語彙（Phase 1 固定）
+
+- `add`
+- `edit`
+- `delete`
+- `toggleVisibility`
+- `duplicate`
+- `attach`
+- `switchTargetKind`
+- `moveFocus`
+- `moveNode`
+- `nudgeNode`
+- `transform`
+- `output`
+- `export`
+- `import`
+
+補足:
+
+- Intent は修飾キーを保持しない。
+- 同一プリミティブ内の意味差分は Intent variant で扱う（例: `add` の追加位置差分）。
+
+#### KeyTrigger 対応表（primitive 対象のみ）
+
+| KeyTrigger | Primitive Intent |
+| --- | --- |
+| `enter` | `add(.primary)` |
+| `opt+enter` | `add(.alternate)` |
+| `cmd+enter` | `add(.hierarchical)` |
+| `shift+enter` | `add(.modeSelect)` |
+| `delete` | `delete` |
+| `cmd+d` | `duplicate` |
+| `arrow` | `moveFocus(.single)` |
+| `shift+arrow` | `moveFocus(.extendSelection)` |
+| `cmd+arrow` | `moveNode` |
+| `cmd+shift+arrow` | `nudgeNode` |
+| `opt+.` | `toggleVisibility` |
+| `cmd+l` | `switchTargetKind(.edge)` |
+
+補足:
+
+- `cmd+k`（palette）、`cmd+f`（search）、undo/redo、zoom は `global` 管理であり primitive Intent 対象外。
+- Add Node Mode Selection / Connect Node Selection / Command Palette 内キー操作は `modal` 管理であり primitive Intent 対象外。
 
 #### 利用状況（どこから使われるか）
 
 - 入力変換
   - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`
     - `NSEvent` を `CanvasShortcutGesture` に正規化し、`resolveAction(for:)` で解決する。
+    - `cmd+f` は現状 `CanvasShortcutCatalogService` ではなく専用判定で扱う（`global`）。
 - UI 表示
   - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`
     - `commandPaletteDefinitions()` の結果をコマンドパレット一覧表示に使用する。
@@ -383,6 +442,9 @@
   - `CanvasCommandPaletteLabel` は `Noun: Verb` 形式でタイトルを生成し、コマンド名の表記ゆれを防ぐ。
   - 状態依存の ON/OFF 操作は原則 `toggle` 動詞で表記し、`enable/disable/on/off` は検索トークンで吸収する。
   - `Shift + 矢印` は `.extendSelection` に解決し、`moveFocus` と競合しない。
+  - `primitive` へ新規キーを追加する場合、Intent 層を経由しない実装を禁止する。
+  - `global`/`modal` は Scope 判定で先に分離し、`primitive` Intent 解決経路へ混在させない。
+  - Keymap 3 層解決順は `User Override -> Context/Mode Override -> Intent Base Map` を維持する。
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 
@@ -522,16 +584,17 @@
 ## 5. ドメイン間の関係（依存・データ受け渡し）
 
 1. `CanvasHotkeyTranslator` がキーイベントを `CanvasShortcutGesture` に正規化する。
-2. `CanvasShortcutCatalogService.resolveAction(for:)` がジェスチャからアクションを解決する。
-3. `CanvasShortcutAction.apply(commands:)` の場合のみ `ApplyCanvasCommandsUseCase` がコマンドをディスパッチする。
-4. コマンド種別ごとに Domain サービスを利用する。
+2. `KeymapIntentResolver.resolveRoute(for:)` が Scope を分類する。
+3. `global` は専用経路（palette/search/history/zoom など）で処理する。
+4. `primitive` は Intent を経由して ContextAction に解決し、最終的に `CanvasCommand` をディスパッチする。
+5. コマンド種別ごとに Domain サービスを利用する。
    - 編集: `CanvasGraphCRUDService`
    - フォーカス: `CanvasFocusNavigationService`
    - ツリー再レイアウト: `CanvasTreeLayoutService`
    - エリア衝突解消: `CanvasAreaLayoutService`
    - 折りたたみ可視性: `CanvasFoldedSubtreeVisibilityService`
    - エリア所属/モード解決: `CanvasAreaMembershipService`
-5. 生成された `CanvasGraph` を `ApplyResult` 経由で ViewModel に返し、表示状態を更新する。
+6. 生成された `CanvasGraph` を `ApplyResult` 経由で ViewModel に返し、表示状態を更新する。
 
 共通契約:
 
@@ -568,6 +631,7 @@
 - 2026-02-22: `CanvasDefaultNodeDistance` を更新し、Tree/Diagram の既定ノード間距離（Tree: 横 `32` / 縦 `24`、Diagram: 横 `220` / 縦 `220`）を Domain で一元管理する仕様へ更新。
 - 2026-02-22: 新規ウィンドウ起動時の初期ノード自動生成を廃止し、ノード未存在時は `Shift + Enter` と同一の Tree/Diagram モード選択導線から最初のノードを追加する仕様へ更新。
 - 2026-02-22: 全ノード削除後に複数空エリアが残る状態でも、`Shift + Enter` のモード選択追加が失敗しないように、ノード未存在時は選択モードに合うエリアを優先解決（なければ新規作成）する仕様へ更新。
+- 2026-02-28: Keymap Primitive Phase 1/2 として `primitive/global/modal` 境界、primitive Intent 語彙、KeyTrigger 対応表、3層解決順をドメイン仕様へ追加し、`KeymapIntentResolver` を導入。
 - 2026-02-23: `Shift + Enter` モード選択追加の empty graph 分岐を修正し、選択モードと不一致な `defaultTree` の誤優先を禁止。あわせて空グラフで area を事前作成した場合でも、履歴の `graphBeforeMutation` は必ず元グラフを保持して undo 整合性を維持するよう更新。
 - 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
 - 2026-02-23: 画像専用の `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を廃止し、`CanvasAttachment` / `upsertNodeAttachment` に統合。ノード添付を将来拡張可能な複数要素として扱う仕様へ更新した。
