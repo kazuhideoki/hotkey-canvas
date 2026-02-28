@@ -24,7 +24,7 @@
 | `add(.alternate)` | `opt+enter` | 兄弟ノードを上に追加 | 非対応 | |
 | `add(.hierarchical)` | `cmd+enter` | 子ノード追加 | `addNode` に正規化して追加 | |
 | `add(.modeSelect)` | `shift+enter` | Add Node Mode 選択ポップアップを開く | Add Node Mode 選択ポップアップを開く | `t` / `d` / `enter` で確定 |
-| `delete` | `delete` | 選択/フォーカス対象を削除 | 選択/フォーカス対象を削除 | |
+| `delete` | `delete` | 選択/フォーカスノードを削除 | node対象: 選択/フォーカスノードを削除 / edge対象: 選択/フォーカスedgeを削除 | edge対象で focused edge を含む複数選択時は一括削除 |
 | `duplicate` | `cmd+d` | 兄弟として複製 | 非対応 | |
 | `edit.copySelectionOrFocusedSubtree` | `cmd+c` | 複数選択時は選択集合、単一/未選択時は focused subtree をコピー | 複数選択時は選択集合、単一/未選択時は focused subtree をコピー | |
 | `edit.cutSelectionOrFocusedSubtree` | `cmd+x` | 複数選択時は選択集合、単一/未選択時は focused subtree をカット | 複数選択時は選択集合、単一/未選択時は focused subtree をカット | |
@@ -39,6 +39,7 @@
 ## 補足
 
 - `modal`（Command Palette / Add Node Mode Selection / Connect Mode 内操作）は本表の対象外です。
+- Command Palette では edge 対象時に `Edge: Delete Selected` が表示され、`delete` と同じ削除規則（focused edge を含む複数選択は一括削除）が適用されます。
 - Add Node Mode Selection では `t` / `d` / `enter` に加えて、`↑` / `↓` で選択移動、`esc` でキャンセルが可能です。
 - Connect Mode では `↑` / `↓` / `←` / `→` で候補移動、`enter` で確定、`esc` でキャンセルが可能です。
 - 入力正規化として、`fn+arrow` と `fn+delete` は `fn` を無視して通常ショートカットとして解決されます。
