@@ -95,7 +95,7 @@ extension KeymapIntentResolver {
             return .add(variant: .alternate)
         case .addSiblingNode(position: .below):
             return .add(variant: .primary)
-        case .deleteFocusedNode:
+        case .deleteSelectedOrFocusedNodes:
             return .delete
         case .duplicateSelectionAsSibling:
             return .duplicate
@@ -108,14 +108,14 @@ extension KeymapIntentResolver {
 
     private static func primitiveIntentFromEdit(_ command: CanvasCommand) -> KeymapPrimitiveIntent? {
         switch command {
-        case .alignParentNodesVertically:
-            return .edit(variant: .alignParentNodesVertically)
-        case .copyFocusedSubtree:
-            return .edit(variant: .copySubtree)
-        case .cutFocusedSubtree:
-            return .edit(variant: .cutSubtree)
-        case .pasteSubtreeAsChild:
-            return .edit(variant: .pasteSubtreeAsChild)
+        case .alignAllAreasVertically:
+            return .edit(variant: .alignAllAreasVertically)
+        case .copySelectionOrFocusedSubtree:
+            return .edit(variant: .copySelectionOrFocusedSubtree)
+        case .cutSelectionOrFocusedSubtree:
+            return .edit(variant: .cutSelectionOrFocusedSubtree)
+        case .pasteClipboardAtFocusedNode:
+            return .edit(variant: .pasteClipboardAtFocusedNode)
         default:
             return nil
         }
