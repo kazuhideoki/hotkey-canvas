@@ -72,3 +72,41 @@ func test_normalizedSelectedNodeIDs_becomesEmptyWhenFocusedNodeIsNil() {
 
     #expect(normalized.isEmpty)
 }
+
+@Test("CanvasSelectionService: normalized edge selection keeps focused edge and drops missing edge")
+func test_normalizedSelectedEdgeIDs_keepsFocusedAndDropsMissing() {
+    let nodeAID = CanvasNodeID(rawValue: "node-a")
+    let nodeBID = CanvasNodeID(rawValue: "node-b")
+    let edgeABID = CanvasEdgeID(rawValue: "edge-a-b")
+    let missingEdgeID = CanvasEdgeID(rawValue: "missing-edge")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeAID: CanvasNode(
+                id: nodeAID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 120, height: 60)
+            ),
+            nodeBID: CanvasNode(
+                id: nodeBID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 220, y: 0, width: 120, height: 60)
+            ),
+        ],
+        edgesByID: [
+            edgeABID: CanvasEdge(
+                id: edgeABID,
+                fromNodeID: nodeAID,
+                toNodeID: nodeBID,
+                relationType: .normal
+            )
+        ],
+        focusedElement: .edge(CanvasEdgeFocus(edgeID: edgeABID, originNodeID: nodeAID)),
+        selectedEdgeIDs: [edgeABID, missingEdgeID]
+    )
+
+    let normalized = CanvasSelectionService.normalizedSelectedEdgeIDs(in: graph)
+
+    #expect(normalized == [edgeABID])
+}

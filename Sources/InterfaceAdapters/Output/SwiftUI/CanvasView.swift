@@ -31,6 +31,9 @@ public struct CanvasView: View {
     @State private var pendingEditingRequestID: UInt64 = 0
     @State var connectNodeSelectionSourceNodeID: CanvasNodeID?
     @State var connectNodeSelectionTargetNodeID: CanvasNodeID?
+    @State var operationTargetKind: KeymapSwitchTargetKindIntentVariant = .node
+    @State var focusedEdgeID: CanvasEdgeID?
+    @State var selectedEdgeIDs: Set<CanvasEdgeID> = []
     let hotkeyTranslator: CanvasHotkeyTranslator
     let keymapContextActionResolver: any KeymapContextActionResolver
     let styleSheet: CanvasStyleSheet
@@ -202,6 +205,22 @@ public struct CanvasView: View {
                             nodesByID: nodesByID,
                             branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
                         ) {
+                            let isFocusedEdge = focusedEdgeID == edge.id
+                            let isSelectedEdge = selectedEdgeIDs.contains(edge.id)
+                            let strokeColor: Color =
+                                if isFocusedEdge {
+                                    styleColor(.accent)
+                                } else if isSelectedEdge {
+                                    styleColor(.accent).opacity(0.6)
+                                } else {
+                                    styleColor(styleSheet.edge.strokeColor)
+                                }
+                            let strokeWidth: CGFloat =
+                                if isFocusedEdge || isSelectedEdge {
+                                    styleSheet.edge.lineWidth + 1
+                                } else {
+                                    styleSheet.edge.lineWidth
+                                }
                             path
                                 .applying(
                                     CanvasViewportTransform.affineTransform(
@@ -210,10 +229,7 @@ public struct CanvasView: View {
                                         effectiveOffset: cameraOffset
                                     )
                                 )
-                                .stroke(
-                                    styleColor(styleSheet.edge.strokeColor),
-                                    lineWidth: styleSheet.edge.lineWidth
-                                )
+                                .stroke(strokeColor, lineWidth: strokeWidth)
                         }
                     }
                     ForEach(displayNodes, id: \.id) { node in
@@ -368,18 +384,27 @@ public struct CanvasView: View {
             }
             .onAppear {
                 applyFocusVisibilityRule(viewportSize: viewportSize)
+                synchronizeEdgeTargetStateFromViewModel()
+                synchronizeEdgeTargetState()
             }
             .onChange(of: viewModel.focusedNodeID) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
                 synchronizeConnectNodeSelectionState()
+                synchronizeEdgeTargetState()
             }
             .onChange(of: viewModel.nodes) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
                 synchronizeConnectNodeSelectionState()
+                synchronizeEdgeTargetState()
             }
             .onChange(of: viewModel.areaIDByNodeID) { _ in
                 synchronizeConnectNodeSelectionState()
+                synchronizeEdgeTargetState()
             }
+            .onChange(of: viewModel.edges) { _ in synchronizeEdgeTargetState() }
+            .onChange(of: viewModel.focusedEdgeID) { _ in synchronizeEdgeTargetStateFromViewModel() }
+            .onChange(of: viewModel.selectedEdgeIDs) { _ in synchronizeEdgeTargetStateFromViewModel() }
+            .onChange(of: viewModel.diagramNodeIDs) { _ in synchronizeEdgeTargetState() }
             .onChange(of: editingContext) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
             }
@@ -450,12 +475,8 @@ public struct CanvasView: View {
                 viewModel.consumePendingEditingNodeID()
             }
         }
-        .onChange(of: commandPaletteQuery) { _ in
-            selectedCommandPaletteIndex = 0
-        }
-        .onChange(of: searchQuery) { _ in
-            onSearchQueryChange(displayNodes: displayNodes)
-        }
+        .onChange(of: commandPaletteQuery) { _ in selectedCommandPaletteIndex = 0 }
+        .onChange(of: searchQuery) { _ in onSearchQueryChange(displayNodes: displayNodes) }
         .onChange(of: isCommandPalettePresented) { isVisible in
             if !isVisible {
                 commandPaletteQuery = ""

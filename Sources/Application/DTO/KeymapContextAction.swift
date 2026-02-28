@@ -5,7 +5,7 @@ import Domain
 /// Context-dependent action derived from primitive intent.
 public enum KeymapContextAction: Equatable, Sendable {
     case apply(commands: [CanvasCommand])
-    case beginConnectNodeSelection
+    case switchTargetKind(variant: KeymapSwitchTargetKindIntentVariant)
     case presentAddNodeModeSelection
     case reportUnsupportedIntent(intent: KeymapPrimitiveIntent)
 }

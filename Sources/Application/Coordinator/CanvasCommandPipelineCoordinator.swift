@@ -120,7 +120,9 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            focusedElement: graph.focusedElement,
             selectedNodeIDs: graph.selectedNodeIDs,
+            selectedEdgeIDs: graph.selectedEdgeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -321,7 +323,9 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            focusedElement: graph.focusedElement,
             selectedNodeIDs: graph.selectedNodeIDs,
+            selectedEdgeIDs: graph.selectedEdgeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -384,7 +388,9 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            focusedElement: graph.focusedElement,
             selectedNodeIDs: graph.selectedNodeIDs,
+            selectedEdgeIDs: graph.selectedEdgeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -401,7 +407,9 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            focusedElement: graph.focusedElement,
             selectedNodeIDs: graph.selectedNodeIDs,
+            selectedEdgeIDs: graph.selectedEdgeIDs,
             collapsedRootNodeIDs: normalizedCollapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -417,7 +425,9 @@ extension CanvasCommandPipelineCoordinator {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: normalizedFocusedNodeID,
+            focusedElement: normalizedFocusedNodeID.map { .node($0) },
             selectedNodeIDs: graph.selectedNodeIDs,
+            selectedEdgeIDs: [],
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -426,14 +436,20 @@ extension CanvasCommandPipelineCoordinator {
     /// Ensures selected nodes stay visible/existing and always include the focused node.
     private func runSelectionNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {
         let normalizedSelectedNodeIDs = CanvasSelectionService.normalizedSelectedNodeIDs(in: graph)
-        guard normalizedSelectedNodeIDs != graph.selectedNodeIDs else {
+        let normalizedSelectedEdgeIDs = CanvasSelectionService.normalizedSelectedEdgeIDs(in: graph)
+        guard
+            normalizedSelectedNodeIDs != graph.selectedNodeIDs
+                || normalizedSelectedEdgeIDs != graph.selectedEdgeIDs
+        else {
             return graph
         }
         return CanvasGraph(
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: graph.focusedNodeID,
+            focusedElement: graph.focusedElement,
             selectedNodeIDs: normalizedSelectedNodeIDs,
+            selectedEdgeIDs: normalizedSelectedEdgeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )

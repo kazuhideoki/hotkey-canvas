@@ -32,4 +32,41 @@ public enum CanvasSelectionService {
             focusedNodeID: graph.focusedNodeID
         )
     }
+
+    /// Normalizes selected edge identifiers against graph existence and focused-edge invariant.
+    /// - Parameters:
+    ///   - edgeIDs: Candidate selected edge identifiers.
+    ///   - graph: Source graph snapshot.
+    ///   - focusedEdgeID: Focused edge to keep selected when existing.
+    /// - Returns: Canonical selected edge identifiers.
+    public static func normalizedSelectedEdgeIDs(
+        from edgeIDs: Set<CanvasEdgeID>,
+        in graph: CanvasGraph,
+        focusedEdgeID: CanvasEdgeID?
+    ) -> Set<CanvasEdgeID> {
+        let existingEdgeIDs = Set(graph.edgesByID.keys)
+        guard let focusedEdgeID, existingEdgeIDs.contains(focusedEdgeID) else {
+            return []
+        }
+        var normalized = edgeIDs.intersection(existingEdgeIDs)
+        normalized.insert(focusedEdgeID)
+        return normalized
+    }
+
+    /// Normalizes the graph-owned selected edge identifiers.
+    /// - Parameter graph: Source graph snapshot.
+    /// - Returns: Canonical selected edge identifiers for the graph.
+    public static func normalizedSelectedEdgeIDs(in graph: CanvasGraph) -> Set<CanvasEdgeID> {
+        let focusedEdgeID: CanvasEdgeID? =
+            if case .edge(let focus) = graph.focusedElement {
+                focus.edgeID
+            } else {
+                nil
+            }
+        return normalizedSelectedEdgeIDs(
+            from: graph.selectedEdgeIDs,
+            in: graph,
+            focusedEdgeID: focusedEdgeID
+        )
+    }
 }
