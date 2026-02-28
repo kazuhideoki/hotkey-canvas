@@ -384,6 +384,8 @@ public struct CanvasView: View {
             }
             .onAppear {
                 applyFocusVisibilityRule(viewportSize: viewportSize)
+                synchronizeEdgeTargetStateFromViewModel()
+                synchronizeEdgeTargetState()
             }
             .onChange(of: viewModel.focusedNodeID) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
@@ -399,9 +401,10 @@ public struct CanvasView: View {
                 synchronizeConnectNodeSelectionState()
                 synchronizeEdgeTargetState()
             }
-            .onChange(of: viewModel.edges) { _ in
-                synchronizeEdgeTargetState()
-            }
+            .onChange(of: viewModel.edges) { _ in synchronizeEdgeTargetState() }
+            .onChange(of: viewModel.focusedEdgeID) { _ in synchronizeEdgeTargetStateFromViewModel() }
+            .onChange(of: viewModel.selectedEdgeIDs) { _ in synchronizeEdgeTargetStateFromViewModel() }
+            .onChange(of: viewModel.diagramNodeIDs) { _ in synchronizeEdgeTargetState() }
             .onChange(of: editingContext) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
             }
@@ -469,12 +472,8 @@ public struct CanvasView: View {
                 viewModel.consumePendingEditingNodeID()
             }
         }
-        .onChange(of: commandPaletteQuery) { _ in
-            selectedCommandPaletteIndex = 0
-        }
-        .onChange(of: searchQuery) { _ in
-            onSearchQueryChange(displayNodes: displayNodes)
-        }
+        .onChange(of: commandPaletteQuery) { _ in selectedCommandPaletteIndex = 0 }
+        .onChange(of: searchQuery) { _ in onSearchQueryChange(displayNodes: displayNodes) }
         .onChange(of: isCommandPalettePresented) { isVisible in
             if !isVisible {
                 commandPaletteQuery = ""

@@ -418,7 +418,11 @@ extension CanvasCommandPipelineCoordinator {
     /// Ensures selected nodes stay visible/existing and always include the focused node.
     private func runSelectionNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {
         let normalizedSelectedNodeIDs = CanvasSelectionService.normalizedSelectedNodeIDs(in: graph)
-        guard normalizedSelectedNodeIDs != graph.selectedNodeIDs else {
+        let normalizedSelectedEdgeIDs = CanvasSelectionService.normalizedSelectedEdgeIDs(in: graph)
+        guard
+            normalizedSelectedNodeIDs != graph.selectedNodeIDs
+                || normalizedSelectedEdgeIDs != graph.selectedEdgeIDs
+        else {
             return graph
         }
         return CanvasGraph(
@@ -427,7 +431,7 @@ extension CanvasCommandPipelineCoordinator {
             focusedNodeID: graph.focusedNodeID,
             focusedElement: graph.focusedElement,
             selectedNodeIDs: normalizedSelectedNodeIDs,
-            selectedEdgeIDs: CanvasSelectionService.normalizedSelectedEdgeIDs(in: graph),
+            selectedEdgeIDs: normalizedSelectedEdgeIDs,
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
