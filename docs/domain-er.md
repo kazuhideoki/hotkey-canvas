@@ -18,17 +18,24 @@ erDiagram
     CanvasGraph ||--o{ CanvasNode : "nodesByID"
     CanvasGraph ||--o{ CanvasEdge : "edgesByID"
     CanvasGraph ||--o{ CanvasArea : "areasByID"
+    CanvasGraph ||--o| CanvasFocusedElement : "focusedElement"
 
     CanvasNode ||--o{ CanvasAttachment : "attachments"
 
     CanvasNode ||--o{ CanvasEdge : "fromNodeID"
     CanvasNode ||--o{ CanvasEdge : "toNodeID"
+    CanvasNode ||--o| CanvasFocusedElement : "node payload"
+    CanvasEdge ||--o| CanvasEdgeFocus : "edgeID"
+    CanvasNode ||--o| CanvasEdgeFocus : "originNodeID"
+    CanvasFocusedElement ||--o| CanvasEdgeFocus : "edge payload"
 
     CanvasArea ||--o{ CanvasNode : "nodeIDs"
 
     CanvasGraph {
         CanvasNodeID focusedNodeID "0..1"
+        CanvasFocusedElement focusedElement "0..1"
         Set_CanvasNodeID selectedNodeIDs
+        Set_CanvasEdgeID selectedEdgeIDs
         Set_CanvasNodeID collapsedRootNodeIDs
     }
 
@@ -54,6 +61,15 @@ erDiagram
         int parentChildOrder "optional"
     }
 
+    CanvasFocusedElement {
+        enum kind "node|edge"
+    }
+
+    CanvasEdgeFocus {
+        CanvasEdgeID edgeID FK
+        CanvasNodeID originNodeID FK
+    }
+
     CanvasArea {
         CanvasAreaID id PK
         CanvasEditingMode editingMode
@@ -66,6 +82,8 @@ erDiagram
   ドメイン不変条件として「各 `CanvasNode` はちょうど1つの `CanvasArea` に所属」する。
 - `CanvasEdge` は `fromNodeID` と `toNodeID` で `CanvasNode` を参照する有向辺。
 - `collapsedRootNodeIDs` は「可視性計算の入力集合」で、ノード実体は `CanvasNode` 側に存在する。
+- `focusedElement` は `node` または `edge` を保持し、`edge` の場合は `CanvasEdgeFocus`（`edgeID` と `originNodeID`）を保持する。
+- `selectedEdgeIDs` は edge 対象時の複数選択集合で、正規化時に `focused edge` を必ず含む。
 
 ## 4. ショートカット解決 ER
 
