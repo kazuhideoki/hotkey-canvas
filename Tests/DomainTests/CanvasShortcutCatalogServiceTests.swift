@@ -175,3 +175,45 @@ func test_resolveAction_shiftLeft_returnsExtendSelection() {
 
     #expect(action == .apply(commands: [.extendSelection(.left)]))
 }
+
+@Test("Shortcut catalog: diagram context hides tree-only command palette definitions")
+func test_commandPaletteDefinitions_diagramContext_hidesTreeOnlyDefinitions() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true)
+    )
+    let ids = Set(definitions.map(\.id.rawValue))
+
+    #expect(!ids.contains("addChildNode"))
+    #expect(!ids.contains("addSiblingNodeAbove"))
+    #expect(!ids.contains("addSiblingNodeBelow"))
+    #expect(!ids.contains("duplicateSelectionAsSibling"))
+    #expect(!ids.contains("toggleFoldFocusedSubtree"))
+    #expect(ids.contains("beginConnectNodeSelection"))
+}
+
+@Test("Shortcut catalog: tree context hides diagram-only command palette definitions")
+func test_commandPaletteDefinitions_treeContext_hidesDiagramOnlyDefinitions() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
+    )
+    let ids = Set(definitions.map(\.id.rawValue))
+
+    #expect(ids.contains("addChildNode"))
+    #expect(ids.contains("addSiblingNodeAbove"))
+    #expect(ids.contains("addSiblingNodeBelow"))
+    #expect(!ids.contains("beginConnectNodeSelection"))
+}
+
+@Test("Shortcut catalog: no-focus context hides focus-required command palette definitions")
+func test_commandPaletteDefinitions_withoutFocus_hidesFocusRequiredDefinitions() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: false)
+    )
+    let ids = Set(definitions.map(\.id.rawValue))
+
+    #expect(ids.contains("addNode"))
+    #expect(ids.contains("undo"))
+    #expect(!ids.contains("addChildNode"))
+    #expect(!ids.contains("deleteFocusedNode"))
+    #expect(!ids.contains("centerFocusedNode"))
+}

@@ -368,6 +368,8 @@
   - `CanvasShortcutGesture`
 - モデル
   - `CanvasCommandPaletteLabel`
+  - `CanvasCommandPaletteContext`
+  - `CanvasCommandPaletteVisibility`
   - `CanvasShortcutDefinition`
   - `KeymapShortcutScope`
   - `KeymapPrimitiveIntent`
@@ -387,6 +389,7 @@
 | --- | --- |
 | `resolveAction(for:)` | `CanvasShortcutGesture` から実行アクションを解決する。 |
 | `commandPaletteDefinitions()` | コマンドパレットに表示すべきショートカット定義のみ返す。 |
+| `commandPaletteDefinitions(context:)` | フォーカス有無・編集モードを使って、実行不能な項目を非表示にした定義のみ返す。 |
 | `KeymapIntentResolver.resolveRoute(for:)` | `CanvasShortcutGesture` を `primitive/global/modal` のいずれかへ分類し、`primitive` のみ Intent を返す。 |
 
 #### Primitive Intent 語彙（Phase 1 固定）
@@ -441,7 +444,11 @@
     - `cmd+f` は現状 `CanvasShortcutCatalogService` ではなく専用判定で扱う（`global`）。
 - UI 表示
   - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`
-    - `commandPaletteDefinitions()` の結果をコマンドパレット一覧表示に使用する。
+    - `commandPaletteDefinitions(context:)` の結果をコマンドパレット一覧表示に使用する。
+    - `CanvasCommandPaletteContext.activeEditingMode` は以下の順で決定する。
+      - フォーカスノードがある場合: フォーカスノード所属エリアの mode
+      - フォーカスなしでエリア mode が一意の場合: その mode
+      - 上記以外: `nil`（mode 依存項目は非表示）
 - 主要テスト
   - `Tests/DomainTests/CanvasShortcutCatalogServiceTests.swift`
   - `Tests/InterfaceAdaptersTests/CanvasHotkeyTranslatorTests.swift`
@@ -450,6 +457,7 @@
 
 - 不変条件
   - 標準ショートカット定義は実装内の静的配列で管理し、入力解決とコマンドパレット表示で共有する。
+  - `CanvasCommandPaletteVisibility` により、mode/フォーカス条件を満たさない項目は表示しない（無効表示は行わない）。
   - `CanvasCommandPaletteLabel` は `Noun: Verb` 形式でタイトルを生成し、コマンド名の表記ゆれを防ぐ。
   - 状態依存の ON/OFF 操作は原則 `toggle` 動詞で表記し、`enable/disable/on/off` は検索トークンで吸収する。
   - `Shift + 矢印` は `.extendSelection` に解決し、`moveFocus` と競合しない。
@@ -566,7 +574,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
     - 追加/削除時の所属更新を行う。
     - `copyFocusedSubtree` / `cutFocusedSubtree` は「同一フォーカスエリア内で複数選択が2件以上ある場合」に選択集合を対象として扱い、それ以外は従来どおりフォーカス部分木を対象とする。
-    - `pasteSubtreeAsChild` は Tree/Diagram の両モードで実行可能。Tree では貼り付けルート群をフォーカスノード配下に親子接続し、Diagram では内部エッジを保ったまま親子接続を追加せず同一エリアへ再構成する。
+    - `pasteSubtreeAsChild` は Tree/Diagram の両モードで実行可能。Tree では貼り付けルート群をフォーカスノード配下に親子接続し、Diagram では内部エッジを保ったまま親子接続を追加せず同一エリアへ再構成する。貼り付け後の選択状態は、挿入された全ノード集合へ更新する。
 - 主要テスト
   - `Tests/DomainTests/CanvasAreaMembershipServiceTests.swift`
   - `Tests/ApplicationTests/ApplyCanvasCommandsUseCaseAreaPolicyTests.swift`
@@ -656,3 +664,4 @@
 - 2026-02-26: 画像添付時の Diagram ノード寸法ルールを更新し、`upsertNodeAttachment` で `nodeWidth` を受け取って `220...330` の正方形を許可。画像なしは従来どおり `220` 正方形を維持し、`setNodeText` とパイプライン正規化でも同ルールを適用する仕様へ更新。
 - 2026-02-26: Diagram mode の `moveNode` / `nudgeNode` を更新し、アンカーと同じ行/列で移動先が近すぎる場合は移動方向の軸距離を最低1ステップへ補正して、左右/上下で見かけの間隔が偏らないようにした。補正後に重なる場合のみ追加ステップで回避する。
 - 2026-02-26: `alignParentNodesVertically` を更新し、フォーカス中エリア内の親サブツリー整列から、キャンバス内の全エリアを左詰め縦整列する挙動へ変更。整列時はエリア内ノードの相対配置を保持したまま、エリア単位で平行移動する仕様へ更新した。
+- 2026-02-28: `pasteSubtreeAsChild` を更新し、複数ノード貼り付け後の `selectedNodeIDs` を先頭ルート1件ではなく、挿入された全ノード集合へ更新する仕様に変更。
