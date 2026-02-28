@@ -178,3 +178,33 @@
 - Tree/Diagram で意味が変わる操作を「同一Intent・別ContextAction」として一貫表現できる。
 - 未実装機能でも、将来追加時の入口（Intent/Palette/エラー契約）が先に定義されている。
 - キーマップ変更機能を追加する際、個別モード直結ではなく `Intent` 中心の3層解決を崩さない。
+
+## 8. 作業記録（2026-02-28）
+
+### 8.1 Phase 1 実施内容（完了）
+
+- `docs/domain.md` に以下を追記し、意図辞書と境界仕様を固定した。
+  - `primitive/global/modal` の Scope 分離ルール
+  - Primitive Intent 語彙
+  - KeyTrigger -> Primitive Intent 対応表（操作プリミティブ限定）
+  - 3層解決順（`User Override -> Context/Mode Override -> Intent Base Map`）
+- `cmd+f`（search）は当面 `global` として運用する方針を明記した。
+
+### 8.2 Phase 2 実施内容（完了）
+
+- 最小型スキャフォールドを追加した（挙動変更なし）。
+  - `Sources/Domain/Model/KeymapShortcutScope.swift`
+  - `Sources/Domain/Model/KeymapPrimitiveIntent.swift`
+  - `Sources/Domain/Model/KeymapGlobalAction.swift`
+  - `Sources/Domain/Model/KeymapResolvedRoute.swift`
+  - `Sources/Domain/Service/KeymapIntentResolver.swift`
+  - `Sources/Application/DTO/KeymapContextAction.swift`
+  - `Sources/Application/Port/Input/KeymapContextActionResolver.swift`
+- `KeymapIntentResolver` の追加により、Scope 分類と Primitive Intent 解決の入口を定義した。
+- 既存の `CanvasHotkeyTranslator` の実配線は変更していない（Phase 3 以降で置換予定）。
+
+### 8.3 テスト・検証
+
+- `./scripts/lint_and_format.sh`: pass
+- `swift test`: pass（374 tests, 0 failures）
+- `swift build`: pass
