@@ -351,7 +351,7 @@
   - Tree: `didMutateGraph && needsTreeLayout`
   - Area: `didMutateGraph && needsAreaLayout`
   - Focus: `didMutateGraph && needsFocusNormalization`
-  - Viewport Intent: `centerFocusedNode` コマンド時は `resetManualPanOffset`
+  - Viewport Intent: 現状パイプラインステージでは自動生成しない。`centerFocusedNode` コマンド時のみ `ApplyCanvasCommandsUseCase.apply` が `resetManualPanOffset` を付与する。
 - 境界責務
   - Domain は純粋状態変換のみを担当する。
   - Application はステージ実行順と `CanvasViewportIntent` 生成を担当する。
@@ -390,7 +390,7 @@
 | `resolveAction(for:)` | `CanvasShortcutGesture` から実行アクションを解決する。 |
 | `commandPaletteDefinitions()` | コマンドパレットに表示すべきショートカット定義のみ返す。 |
 | `commandPaletteDefinitions(context:)` | フォーカス有無・編集モードを使って、実行不能な項目を非表示にした定義のみ返す。 |
-| `KeymapIntentResolver.resolveRoute(for:)` | `CanvasShortcutGesture` を `primitive/global/modal` のいずれかへ分類し、`primitive` のみ Intent を返す。 |
+| `KeymapIntentResolver.resolveRoute(for:)` | `CanvasShortcutGesture` を `primitive/global` の経路へ分類し、`primitive` のみ Intent を返す（非対応は `nil`）。`modal` は View の状態管理で扱う。 |
 
 #### Primitive Intent 語彙（Phase 1 固定）
 
@@ -604,12 +604,12 @@
   - `unsupportedCommandInMode(mode:command:)`
   - `crossAreaEdgeForbidden(CanvasEdgeID)`
 
-## 5. ドメイン間の関係（依存・データ受け渡し）
+## 6. ドメイン間の関係（依存・データ受け渡し）
 
 1. `CanvasHotkeyTranslator` がキーイベントを `CanvasShortcutGesture` に正規化する。
-2. `KeymapIntentResolver.resolveRoute(for:)` が Scope を分類する。
+2. `KeymapIntentResolver.resolveRoute(for:)` が `primitive/global` 経路を分類する（非対応は `nil`）。
 3. `global` は専用経路（palette/search/history/zoom など）で処理する。
-4. `primitive` は Intent を経由して ContextAction に解決し、最終的に `CanvasCommand` をディスパッチする。
+4. `primitive` は Intent を経由して ContextAction に解決し、最終的に `CanvasCommand` をディスパッチする。`modal` は Add Node Mode Selection / Connect Node Selection などの View 状態で処理する。
 5. コマンド種別ごとに Domain サービスを利用する。
    - 編集: `CanvasGraphCRUDService`
    - フォーカス: `CanvasFocusNavigationService`
@@ -625,7 +625,7 @@
 - `CanvasGraph` は Application と InterfaceAdapters 間の共通スナップショットとして扱う。
 - Domain サービスは `throw` せず、失敗はドメイン固有エラーの `Result` で返す。
 
-## 6. 変更履歴
+## 7. 変更履歴
 
 - 2026-02-15: 初版作成。
 - 2026-02-15: `CanvasTreeLayoutService` を追加し、親子ツリー再配置の利用箇所と不変条件を追記。
@@ -634,7 +634,7 @@
 - 2026-02-15: `moveNode(.left)` の挙動を変更し、トップレベルノードの子からルート親方向への昇格を抑止するガードを追加。
 - 2026-02-16: `CanvasShortcutCatalogService` とショートカット関連モデルを追加し、ホットキー解決とコマンドパレット一覧の情報源をドメインで統一。
 - 2026-02-16: Domain サービスの失敗表現を `throw` から `Result<..., 各DomainError>` に統一し、Application 側は `.get()` で既存 `throws` 契約を維持。
-- 2026-02-18: Viewport Intent の運用を更新し、Application から `.resetManualPanOffset` を生成しない仕様へ変更（初期中央化/画面外補正は `CanvasView` の表示ルールで実施）。
+- 2026-02-18: Viewport Intent の運用を更新し、フォーカス変化による自動 `.resetManualPanOffset` 生成を廃止（初期中央化/画面外補正は `CanvasView` の表示ルールで実施）。
 - 2026-02-18: `ctrl+l` の `centerFocusedNode` コマンドを追加し、`apply` フローで `resetManualPanOffset` を返却することで、現在フォーカスノードを画面中央へ再配置する。
 - 2026-02-18: 未使用だった Domain 公開 API（`CanvasGraphCRUDService.readNode/readEdge/updateEdge`、`CanvasShortcutCatalogService.defaultDefinitions/validate`、`CanvasShortcutCatalogError`）を削除。
 - 2026-02-19: `toggleFoldFocusedSubtree` コマンドと `Option + .` ショートカットを追加し、`CanvasFoldedSubtreeVisibilityService` で折りたたみ可視性の計算を Domain に集約。
