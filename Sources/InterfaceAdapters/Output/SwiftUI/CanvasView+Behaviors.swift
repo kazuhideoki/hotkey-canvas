@@ -298,7 +298,12 @@ extension CanvasView {
             return false
         }
 
-        let measuredLayout = measuredNodeLayout(text: context.text, nodeWidth: node.bounds.width)
+        let contentScale = nodeContentScale(for: node)
+        let measuredLayout = measuredNodeLayout(
+            text: context.text,
+            nodeWidth: node.bounds.width,
+            nodeContentScale: contentScale
+        )
         let editingHeight =
             if isDiagramNode(context.nodeID) {
                 node.bounds.height
@@ -306,7 +311,8 @@ extension CanvasView {
                 measuredNodeHeightForEditing(
                     text: context.text,
                     measuredTextHeight: Double(measuredLayout.nodeHeight),
-                    node: node
+                    node: node,
+                    nodeContentScale: contentScale
                 )
             }
         editingContext = NodeEditingContext(
@@ -360,10 +366,12 @@ extension CanvasView {
         guard let node = viewModel.nodes.first(where: { $0.id == nodeID }) else {
             return
         }
+        let contentScale = nodeContentScale(for: node)
         let roundedHeight = measuredNodeHeightForEditing(
             text: context.text,
             measuredTextHeight: roundedTextHeight,
-            node: node
+            node: node,
+            nodeContentScale: contentScale
         )
         guard roundedHeight.isFinite, roundedHeight > 0 else {
             return
@@ -375,8 +383,15 @@ extension CanvasView {
         editingContext = context
     }
 
-    func measuredNodeLayout(text: String, nodeWidth: Double) -> NodeTextLayoutMetrics {
-        let measurer = NodeTextHeightMeasurer(style: nodeTextStyle)
+    func measuredNodeLayout(
+        text: String,
+        nodeWidth: Double,
+        nodeContentScale: Double = 1
+    ) -> NodeTextLayoutMetrics {
+        let measurer = NodeTextHeightMeasurer(
+            style: nodeTextStyle,
+            contentScale: max(CGFloat(nodeContentScale), 0.0001)
+        )
         return measurer.measureLayout(text: text, nodeWidth: CGFloat(nodeWidth))
     }
 
@@ -390,11 +405,13 @@ extension CanvasView {
         zoomScale: Double,
         contentAlignment: NodeTextContentAlignment
     ) -> some View {
+        let contentScale = nodeContentScale(for: node)
         if editingContext?.nodeID == node.id {
             NodeTextEditor(
                 text: editingTextBinding(for: node.id),
                 nodeWidth: CGFloat(node.bounds.width),
                 zoomScale: zoomScale,
+                contentScale: contentScale,
                 style: nodeTextStyle,
                 contentAlignment: contentAlignment,
                 selectAllOnFirstFocus: false,
@@ -410,7 +427,7 @@ extension CanvasView {
                     cancelNodeEditing()
                 }
             )
-            .padding(nodeTextStyle.editorContainerPadding * CGFloat(zoomScale))
+            .padding(nodeTextStyle.editorContainerPadding * CGFloat(zoomScale) * CGFloat(contentScale))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: contentAlignment.frameAlignment)
         } else {
             nonEditingNodeContent(
@@ -431,7 +448,9 @@ extension CanvasView {
     @ViewBuilder
     func nonEditingNodeText(node: CanvasNode, zoomScale: Double) -> some View {
         let text = node.text ?? ""
-        let scale = CGFloat(zoomScale)
+        let viewportScale = CGFloat(zoomScale)
+        let contentScale = nodeContentScale(for: node)
+        let typographyScale = viewportScale * CGFloat(contentScale)
         let contentAlignment = nodeTextContentAlignment(for: node.id)
         let shouldRenderSearchHighlight = hasSearchMatches(in: node)
         if node.markdownStyleEnabled && !shouldRenderSearchHighlight {
@@ -439,14 +458,20 @@ extension CanvasView {
                 text: text,
                 nodeWidth: node.bounds.width,
                 zoomScale: zoomScale,
+                contentScale: contentScale,
                 style: nodeTextStyle,
                 contentAlignment: contentAlignment
             )
         } else {
-            let scaledPadding = nodeTextStyle.outerPadding * scale
-            let textWidth = max((CGFloat(node.bounds.width) * scale) - (scaledPadding * 2), 1)
+            let scaledPadding = nodeTextStyle.outerPadding * typographyScale
+            let textWidth = max((CGFloat(node.bounds.width) * viewportScale) - (scaledPadding * 2), 1)
             Text(highlightedNodeText(for: node))
-                .font(.system(size: nodeTextStyle.fontSize * scale, weight: nodeTextStyle.displayFontWeight))
+                .font(
+                    .system(
+                        size: nodeTextStyle.fontSize * typographyScale,
+                        weight: nodeTextStyle.displayFontWeight
+                    )
+                )
                 .lineLimit(nil)
                 .multilineTextAlignment(contentAlignment.textAlignment)
                 .frame(width: textWidth, alignment: contentAlignment.frameAlignment)
@@ -455,6 +480,7 @@ extension CanvasView {
                 .padding(scaledPadding)
         }
     }
+
 }
 
 /// Inline-editing state for a single node.

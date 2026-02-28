@@ -14,6 +14,7 @@ struct NodeTextEditor: NSViewRepresentable {
     @Binding var text: String
     let nodeWidth: CGFloat
     let zoomScale: Double
+    let contentScale: Double
     let style: NodeTextStyle
     let contentAlignment: NodeTextContentAlignment
     let selectAllOnFirstFocus: Bool
@@ -31,6 +32,7 @@ struct NodeTextEditor: NSViewRepresentable {
         configureTextViewAppearance(
             textView,
             zoomScale: zoomScale,
+            contentScale: contentScale,
             contentAlignment: contentAlignment,
             style: style
         )
@@ -43,11 +45,14 @@ struct NodeTextEditor: NSViewRepresentable {
         }
         context.coordinator.nodeWidth = nodeWidth
         context.coordinator.zoomScale = zoomScale
+        context.coordinator.contentScale = contentScale
+        context.coordinator.updateMeasurer(style: style, contentScale: contentScale)
         nsView.onCommit = onCommit
         nsView.onCancel = onCancel
         configureTextViewAppearance(
             nsView,
             zoomScale: zoomScale,
+            contentScale: contentScale,
             contentAlignment: contentAlignment,
             style: style
         )
@@ -64,6 +69,7 @@ struct NodeTextEditor: NSViewRepresentable {
             text: $text,
             nodeWidth: nodeWidth,
             zoomScale: zoomScale,
+            contentScale: contentScale,
             selectAllOnFirstFocus: selectAllOnFirstFocus,
             initialCursorPlacement: initialCursorPlacement,
             initialTypingEvent: initialTypingEvent,
@@ -78,13 +84,13 @@ extension NodeTextEditor {
         var text: Binding<String>
         var nodeWidth: CGFloat
         var zoomScale: Double
+        var contentScale: Double
         let selectAllOnFirstFocus: Bool
         let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
         var pendingTypingEvent: NSEvent?
         var lastReplayedTypingEventTimestamp: TimeInterval = -1
         let onLayoutMetricsChange: (NodeTextLayoutMetrics) -> Void
-        // future work: Rebuild this measurer when runtime style updates are supported during active editing.
-        let nodeTextHeightMeasurer: NodeTextHeightMeasurer
+        var nodeTextHeightMeasurer: NodeTextHeightMeasurer
         var hasFocusedEditor: Bool = false
         /// Monotonic token used to cancel stale focus retries from older update cycles.
         var focusRequestID: UInt64 = 0
@@ -93,6 +99,7 @@ extension NodeTextEditor {
             text: Binding<String>,
             nodeWidth: CGFloat,
             zoomScale: Double,
+            contentScale: Double,
             selectAllOnFirstFocus: Bool,
             initialCursorPlacement: NodeTextEditorInitialCursorPlacement,
             initialTypingEvent: NSEvent?,
@@ -102,11 +109,15 @@ extension NodeTextEditor {
             self.text = text
             self.nodeWidth = nodeWidth
             self.zoomScale = zoomScale
+            self.contentScale = contentScale
             self.selectAllOnFirstFocus = selectAllOnFirstFocus
             self.initialCursorPlacement = initialCursorPlacement
             self.pendingTypingEvent = initialTypingEvent
             self.onLayoutMetricsChange = onLayoutMetricsChange
-            nodeTextHeightMeasurer = NodeTextHeightMeasurer(style: style)
+            nodeTextHeightMeasurer = NodeTextHeightMeasurer(
+                style: style,
+                contentScale: max(CGFloat(contentScale), 0.0001)
+            )
         }
 
         func textDidChange(_ notification: Notification) {
@@ -124,19 +135,27 @@ extension NodeTextEditor {
             )
             onLayoutMetricsChange(metrics)
         }
+
+        func updateMeasurer(style: NodeTextStyle, contentScale: Double) {
+            nodeTextHeightMeasurer = NodeTextHeightMeasurer(
+                style: style,
+                contentScale: max(CGFloat(contentScale), 0.0001)
+            )
+        }
     }
 
     private func configureTextViewAppearance(
         _ textView: NodeTextEditorTextView,
         zoomScale: Double,
+        contentScale: Double,
         contentAlignment: NodeTextContentAlignment,
         style: NodeTextStyle
     ) {
-        let clampedZoomScale = max(CGFloat(zoomScale), 0.0001)
+        let clampedScale = max(CGFloat(zoomScale * contentScale), 0.0001)
         textView.drawsBackground = false
         textView.backgroundColor = .clear
         textView.font = .systemFont(
-            ofSize: style.fontSize * clampedZoomScale,
+            ofSize: style.fontSize * clampedScale,
             weight: style.fontWeight
         )
         textView.textColor = .labelColor
@@ -144,7 +163,7 @@ extension NodeTextEditor {
         textView.isRichText = false
         textView.isHorizontallyResizable = false
         textView.isVerticallyResizable = contentAlignment == .topLeading
-        textView.baseTextContainerInset = style.textContainerInset * clampedZoomScale
+        textView.baseTextContainerInset = style.textContainerInset * clampedScale
         textView.nodeTextContentAlignment = contentAlignment
         textView.textContainer?.lineFragmentPadding = 0
         textView.textContainer?.widthTracksTextView = false

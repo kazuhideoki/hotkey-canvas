@@ -66,6 +66,15 @@ func test_resolveAction_commandMinus_returnsZoomOut() {
     #expect(action == .zoomOut)
 }
 
+@Test("Shortcut catalog: command-option-minus resolves scale selected nodes down")
+func test_resolveAction_commandOptionMinus_returnsScaleSelectedNodesDown() {
+    let gesture = CanvasShortcutGesture(key: .character("-"), modifiers: [.command, .option])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .apply(commands: [.scaleSelectedNodes(.down)]))
+}
+
 @Test("Shortcut catalog: command palette definitions exclude open palette trigger")
 func test_commandPaletteDefinitions_excludeOpenPaletteAction() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions()
@@ -120,6 +129,15 @@ func test_resolveAction_commandPlus_returnsZoomIn() {
     let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
 
     #expect(action == .zoomIn)
+}
+
+@Test("Shortcut catalog: command-option-plus resolves scale selected nodes up")
+func test_resolveAction_commandOptionPlus_returnsScaleSelectedNodesUp() {
+    let gesture = CanvasShortcutGesture(key: .character("+"), modifiers: [.command, .option])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .apply(commands: [.scaleSelectedNodes(.up)]))
 }
 
 @Test("Shortcut catalog: command-shift-semicolon resolves zoom in")

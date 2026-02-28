@@ -134,6 +134,13 @@ extension KeymapIntentResolver {
             return .moveNode(direction: direction)
         case .nudgeNode(let direction):
             return .nudgeNode(direction: direction)
+        case .scaleSelectedNodes(let direction):
+            switch direction {
+            case .up:
+                return .transform(variant: .scaleSelectionUp)
+            case .down:
+                return .transform(variant: .scaleSelectionDown)
+            }
         case .connectNodes:
             return .switchTargetKind(variant: .edge)
         case .convertFocusedAreaMode:

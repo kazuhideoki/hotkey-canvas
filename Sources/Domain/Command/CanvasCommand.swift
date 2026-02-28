@@ -10,6 +10,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case extendSelection(CanvasFocusDirection)
     case moveNode(CanvasNodeMoveDirection)
     case nudgeNode(CanvasNodeMoveDirection)
+    case scaleSelectedNodes(CanvasNodeScaleDirection)
     case toggleFoldFocusedSubtree
     case centerFocusedNode
     case deleteSelectedOrFocusedNodes
@@ -52,4 +53,10 @@ public enum CanvasNodeMoveDirection: Equatable, Sendable {
     case upRight
     case downLeft
     case downRight
+}
+
+/// Direction used to scale selected nodes.
+public enum CanvasNodeScaleDirection: Equatable, Sendable {
+    case up
+    case down
 }

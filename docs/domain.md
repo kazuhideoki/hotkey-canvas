@@ -32,6 +32,8 @@
 - `⌘+`（`⌘⇧=` / `⌘⇧;` / `⌘+` 記号入力）: `zoomIn`
 - `⌘=`: `zoomIn`
 - `⌘-`: `zoomOut`
+- `⌘⌥+`（`⌘⌥=` / `⌘⌥⇧=` / `⌘⌥⇧;` / テンキー `+`）: `scaleSelectedNodes(.up)`
+- `⌘⌥-`: `scaleSelectedNodes(.down)`
 - `⌘L`: `beginConnectNodeSelection`
 - `⌥.`: `toggleFoldFocusedSubtree`
 - `⌘⇧↑/↓/←/→`: `nudgeNode(.up/.down/.left/.right)`
@@ -41,7 +43,7 @@
 - `⌘V`: `pasteClipboardAtFocusedNode`
 - `⌘D`: `duplicateSelectionAsSibling`
 - 利用先:
-- `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomAction(_:)` / `shouldBeginConnectNodeSelection(_:)`）
+- `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（`zoomRouteByKeyCode(from:)` / `nodeScaleRouteByKeyCode(from:)`）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`（キー入力時の段階ズーム適用）
 - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+CommandPalette.swift`（コマンドパレットからのズーム実行）
 
@@ -61,8 +63,9 @@
   - `edit` の variant（copy/cut/paste/align）
   - `moveFocus` の方向
   - `moveNode` / `nudgeNode` の方向
+- `transform` のうち `scaleSelectionUp` / `scaleSelectionDown` は実装済みとし、`CanvasCommand.scaleSelectedNodes(.up/.down)` へ解決する。
 - `zoom` は既存挙動維持のため、`keyCode` 起点の互換解決（`cmd+shift+;`、テンキー `+` など）を維持する。
-- 未実装 Intent（`output` / `export` / `import` / 一部 `transform`）は `KeymapContextAction.reportUnsupportedIntent` へ解決し、実行時は no-op 契約とする。
+- 未実装 Intent（`output` / `export` / `import` / `transform.convertFocusedAreaMode`）は `KeymapContextAction.reportUnsupportedIntent` へ解決し、実行時は no-op 契約とする。
 
 ## 4. 各ドメイン詳細
 
@@ -78,11 +81,13 @@
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`（`parentChild` エッジは `parentChildOrder` で兄弟順序を保持）
   - `CanvasFocusedElement`（`.node` / `.edge` の操作対象）
   - `CanvasEdgeFocus`（`edgeID` と `originNodeID` を保持する edge フォーカス情報）
-  - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`、画像添付時の Diagram ノード上限 `diagramImageMaxSide = 330`）
+  - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`、画像添付時の Diagram ノード上限 `diagramImageMaxSide = 330`、Diagram ノード最小辺長 `diagramMinNodeSide = 110`、選択ノード拡縮ステップ `nodeScaleStepRatio = 0.1`）
 - コマンド
   - `CanvasCommand`
   - `CanvasNodeMoveDirection`
+  - `CanvasNodeScaleDirection`
   - `CanvasCommand.nudgeNode`
+  - `CanvasCommand.scaleSelectedNodes`
   - `CanvasCommand.connectNodes(fromNodeID:toNodeID:)`
   - `CanvasSiblingNodePosition`
   - `CanvasCommand.centerFocusedNode`
@@ -579,14 +584,17 @@
     - Diagram エリアで `moveNode` を適用した後は、同一エリア内ノード衝突も即時解消するために area layout を実行する。
     - Diagram エリアでは `nudgeNode` も `moveNode` と同じ位置解決ロジック（アンカー距離補正と重なり回避を含む）を使い、ステップのみ `moveNode` の 1/4 倍（`cmd+矢印 : cmd+shift+矢印 = 4:1`）で移動する。複数選択条件を満たす場合は `moveNode` と同様に選択ノード群を一括平行移動する。
     - Diagram エリアでは `nudgeNode` 適用後も `moveNode` と同様に area layout を実行し、同一エリア内のノード重なりを即時解消する。
+    - `scaleSelectedNodes` はフォーカスではなく `selectedNodeIDs` を対象に実行する。Tree では基準長（幅 `220` / 高さ `41`）に対する `10%` を1ステップとして加減算し、最小値を基準長の `50%` に制限する。Diagram では正方形を維持したまま辺長を `220 * 10%` ずつ加減算し、`110...330` の範囲へ正規化する。
     - `alignAllAreasVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス有無で実行可否を判定しつつ、処理対象はキャンバス内の全エリアとする。各エリアの外接矩形を単位に、全エリアの最左 `x` へ揃え、`y` は上から順に重なりが解消される位置へ再配置する。ノード移動はエリア単位の一括平行移動で行い、各エリア内の相対配置は維持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
     - Diagram エリアでは `addNode` 実行時、フォーカスノードが存在する場合に `relationType = .normal` のエッジで新規ノードと接続する。
     - Diagram エリアで新規作成されるノードは、Tree ノード横幅（`220`）を一辺とする正方形で生成する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetNodeText.swift`
-    - Diagram エリアでは `setNodeText` 実行時に入力高さを採用せず、ノード寸法を正方形へ正規化する。画像添付なしは `220` 固定、画像添付ありは `220...330` の範囲で現在辺長を維持する。
+    - Diagram エリアでは `setNodeText` 実行時に入力高さを採用せず、ノード寸法を正方形へ正規化する。辺長は `110...330` の範囲で現在辺長を維持する。
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ScaleSelectedNodes.swift`
+    - `scaleSelectedNodes` 実行時に、選択ノード群をモード別ルール（Tree: 幅/高さを比率ステップ、Diagram: 正方形辺長を比率ステップ）で一括更新する。
   - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
-    - グラフ変更後に Diagram エリア所属ノードの寸法を正方形へ正規化し、`convertFocusedAreaMode` / `createArea` / `assignNodesToArea` 経由でも形状不変条件を維持する（画像添付なし: `220`、画像添付あり: `220...330`）。
+    - グラフ変更後に Diagram エリア所属ノードの寸法を正方形へ正規化する。既存 Diagram ノードは `110...330` を維持し、`convertFocusedAreaMode` / `createArea` / `assignNodesToArea` で Diagram へ新規所属したノードは辺長 `220` へ初期化する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ConnectNodes.swift`
@@ -691,3 +699,4 @@
 - 2026-02-26: Diagram mode の `moveNode` / `nudgeNode` を更新し、アンカーと同じ行/列で移動先が近すぎる場合は移動方向の軸距離を最低1ステップへ補正して、左右/上下で見かけの間隔が偏らないようにした。補正後に重なる場合のみ追加ステップで回避する。
 - 2026-02-26: `alignAllAreasVertically` を更新し、フォーカス中エリア内の親サブツリー整列から、キャンバス内の全エリアを左詰め縦整列する挙動へ変更。整列時はエリア内ノードの相対配置を保持したまま、エリア単位で平行移動する仕様へ更新した。
 - 2026-02-28: `pasteClipboardAtFocusedNode` を更新し、複数ノード貼り付け後の `selectedNodeIDs` を先頭ルート1件ではなく、挿入された全ノード集合へ更新する仕様に変更。
+- 2026-02-28: `CanvasCommand.scaleSelectedNodes` と `CanvasNodeScaleDirection` を追加し、`⌘⌥+` / `⌘⌥-`（互換キーコードを含む）で選択ノードの拡大縮小を実行可能にした。拡縮量は基準長に対する比率（`nodeScaleStepRatio = 0.1`）で一元管理し、Diagram ノードは `110...330` の正方形へ正規化する仕様へ更新した。

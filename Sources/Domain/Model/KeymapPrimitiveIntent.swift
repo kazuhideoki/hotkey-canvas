@@ -31,6 +31,8 @@ public enum KeymapSwitchTargetKindIntentVariant: Equatable, Sendable {
 /// Intent variant for transform-like primitive actions.
 public enum KeymapTransformIntentVariant: Equatable, Sendable {
     case convertFocusedAreaMode
+    case scaleSelectionUp
+    case scaleSelectionDown
 }
 
 /// Primitive intent resolved from shortcut input.
