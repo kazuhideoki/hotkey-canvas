@@ -368,6 +368,8 @@
   - `CanvasShortcutGesture`
 - モデル
   - `CanvasCommandPaletteLabel`
+  - `CanvasCommandPaletteContext`
+  - `CanvasCommandPaletteVisibility`
   - `CanvasShortcutDefinition`
   - `KeymapShortcutScope`
   - `KeymapPrimitiveIntent`
@@ -387,6 +389,7 @@
 | --- | --- |
 | `resolveAction(for:)` | `CanvasShortcutGesture` から実行アクションを解決する。 |
 | `commandPaletteDefinitions()` | コマンドパレットに表示すべきショートカット定義のみ返す。 |
+| `commandPaletteDefinitions(context:)` | フォーカス有無・編集モードを使って、実行不能な項目を非表示にした定義のみ返す。 |
 | `KeymapIntentResolver.resolveRoute(for:)` | `CanvasShortcutGesture` を `primitive/global/modal` のいずれかへ分類し、`primitive` のみ Intent を返す。 |
 
 #### Primitive Intent 語彙（Phase 1 固定）
@@ -441,7 +444,11 @@
     - `cmd+f` は現状 `CanvasShortcutCatalogService` ではなく専用判定で扱う（`global`）。
 - UI 表示
   - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView.swift`
-    - `commandPaletteDefinitions()` の結果をコマンドパレット一覧表示に使用する。
+    - `commandPaletteDefinitions(context:)` の結果をコマンドパレット一覧表示に使用する。
+    - `CanvasCommandPaletteContext.activeEditingMode` は以下の順で決定する。
+      - フォーカスノードがある場合: フォーカスノード所属エリアの mode
+      - フォーカスなしでエリア mode が一意の場合: その mode
+      - 上記以外: `nil`（mode 依存項目は非表示）
 - 主要テスト
   - `Tests/DomainTests/CanvasShortcutCatalogServiceTests.swift`
   - `Tests/InterfaceAdaptersTests/CanvasHotkeyTranslatorTests.swift`
@@ -450,6 +457,7 @@
 
 - 不変条件
   - 標準ショートカット定義は実装内の静的配列で管理し、入力解決とコマンドパレット表示で共有する。
+  - `CanvasCommandPaletteVisibility` により、mode/フォーカス条件を満たさない項目は表示しない（無効表示は行わない）。
   - `CanvasCommandPaletteLabel` は `Noun: Verb` 形式でタイトルを生成し、コマンド名の表記ゆれを防ぐ。
   - 状態依存の ON/OFF 操作は原則 `toggle` 動詞で表記し、`enable/disable/on/off` は検索トークンで吸収する。
   - `Shift + 矢印` は `.extendSelection` に解決し、`moveFocus` と競合しない。

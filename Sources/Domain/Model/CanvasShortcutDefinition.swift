@@ -16,6 +16,8 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
     public let searchTokens: [String]
     /// Whether this definition should be shown in command palette list.
     public let isVisibleInCommandPalette: Bool
+    /// Runtime visibility policy for command palette filtering.
+    public let commandPaletteVisibility: CanvasCommandPaletteVisibility
 
     /// Creates a shortcut catalog entry.
     /// - Parameters:
@@ -26,6 +28,7 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
     ///   - shortcutLabel: UI-facing shortcut hint text.
     ///   - searchTokens: Additional search keywords.
     ///   - isVisibleInCommandPalette: Visibility flag for command palette listing.
+    ///   - commandPaletteVisibility: Runtime visibility policy for command palette filtering.
     public init(
         id: CanvasShortcutID,
         commandPaletteLabel: CanvasCommandPaletteLabel,
@@ -33,7 +36,8 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
         action: CanvasShortcutAction,
         shortcutLabel: String,
         searchTokens: [String] = [],
-        isVisibleInCommandPalette: Bool = true
+        isVisibleInCommandPalette: Bool = true,
+        commandPaletteVisibility: CanvasCommandPaletteVisibility = .always
     ) {
         self.id = id
         self.commandPaletteLabel = commandPaletteLabel
@@ -42,6 +46,7 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
         self.shortcutLabel = shortcutLabel
         self.searchTokens = searchTokens
         self.isVisibleInCommandPalette = isVisibleInCommandPalette
+        self.commandPaletteVisibility = commandPaletteVisibility
     }
 
     /// Display title rendered in Noun: Verb format.
