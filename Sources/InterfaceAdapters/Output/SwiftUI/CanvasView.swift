@@ -32,6 +32,7 @@ public struct CanvasView: View {
     @State var connectNodeSelectionSourceNodeID: CanvasNodeID?
     @State var connectNodeSelectionTargetNodeID: CanvasNodeID?
     let hotkeyTranslator: CanvasHotkeyTranslator
+    let keymapContextActionResolver: any KeymapContextActionResolver
     let styleSheet: CanvasStyleSheet
     private let onDisappearHandler: () -> Void
     let addNodeModeSelectionHotkeyResolver = AddNodeModeSelectionHotkeyResolver()
@@ -43,11 +44,13 @@ public struct CanvasView: View {
     public init(
         viewModel: CanvasViewModel,
         hotkeyTranslator: CanvasHotkeyTranslator = CanvasHotkeyTranslator(),
+        keymapContextActionResolver: any KeymapContextActionResolver = DefaultKeymapContextActionResolver(),
         styleSheet: CanvasStyleSheet = CanvasStylePalette.defaultStyleSheet,
         onDisappear: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.hotkeyTranslator = hotkeyTranslator
+        self.keymapContextActionResolver = keymapContextActionResolver
         self.styleSheet = styleSheet
         onDisappearHandler = onDisappear
     }

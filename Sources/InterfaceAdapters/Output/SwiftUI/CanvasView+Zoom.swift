@@ -3,6 +3,12 @@
 import Foundation
 import SwiftUI
 
+/// Zoom direction used by canvas zoom-step handling.
+enum CanvasZoomAction: Equatable {
+    case zoomIn
+    case zoomOut
+}
+
 extension CanvasView {
     static let zoomScales: [Double] = [4.0, 3.0, 2.0, 1.5, 1.25, 1.0, 0.75, 0.5, 0.25]
     static let zoomRatioPopupDurationNanoseconds: UInt64 = 850_000_000

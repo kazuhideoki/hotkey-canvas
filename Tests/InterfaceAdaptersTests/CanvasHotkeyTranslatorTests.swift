@@ -1,934 +1,371 @@
-// swiftlint:disable file_length
 import AppKit
 import Domain
 import InterfaceAdapters
 import Testing
 
-@Test("CanvasHotkeyTranslator: Shift+Enter maps to addNode")
-func test_translate_shiftEnter_returnsAddNode() throws {
+@Test("CanvasHotkeyTranslator: Shift+Enter resolves mode-select add intent")
+func test_resolve_shiftEnter_returnsAddModeSelectIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "\r",
-            charactersIgnoringModifiers: "\r",
-            isARepeat: false,
-            keyCode: 36
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 36, characters: "\r", charactersIgnoringModifiers: "\r", modifiers: [.shift])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.addNode])
+    #expect(route == .primitive(intent: .add(variant: .modeSelect)))
 }
 
-@Test("CanvasHotkeyTranslator: Shift+Enter opens add-node mode selection")
-func test_shouldPresentAddNodeModeSelection_shiftEnter_returnsTrue() throws {
+@Test("CanvasHotkeyTranslator: Enter resolves add-sibling-below intent")
+func test_resolve_enter_returnsAddSiblingBelowIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "\r",
-            charactersIgnoringModifiers: "\r",
-            isARepeat: false,
-            keyCode: 36
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 36, characters: "\r", charactersIgnoringModifiers: "\r")
 
-    #expect(sut.shouldPresentAddNodeModeSelection(event))
+    let route = sut.resolve(event)
+
+    #expect(route == .primitive(intent: .add(variant: .primary)))
 }
 
-@Test("CanvasHotkeyTranslator: Enter without Shift maps to addSiblingNode command")
-func test_translate_enterWithoutShift_returnsAddSiblingNode() throws {
+@Test("CanvasHotkeyTranslator: Option+Enter resolves add-sibling-above intent")
+func test_resolve_optionEnter_returnsAddSiblingAboveIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "\r",
-            charactersIgnoringModifiers: "\r",
-            isARepeat: false,
-            keyCode: 36
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 36, characters: "\r", charactersIgnoringModifiers: "\r", modifiers: [.option])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.addSiblingNode(position: .below)])
+    #expect(route == .primitive(intent: .add(variant: .alternate)))
 }
 
-@Test("CanvasHotkeyTranslator: Option+Enter maps to addSiblingNode above command")
-func test_translate_optionEnter_returnsAddSiblingNodeAbove() throws {
+@Test("CanvasHotkeyTranslator: Command+Enter resolves add-child intent")
+func test_resolve_commandEnter_returnsAddChildIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.option],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "\r",
-            charactersIgnoringModifiers: "\r",
-            isARepeat: false,
-            keyCode: 36
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 36, characters: "\r", charactersIgnoringModifiers: "\r", modifiers: [.command])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.addSiblingNode(position: .above)])
+    #expect(route == .primitive(intent: .add(variant: .hierarchical)))
 }
 
-@Test("CanvasHotkeyTranslator: Fn+Enter maps to no command")
-func test_translate_functionEnter_returnsEmpty() throws {
+@Test("CanvasHotkeyTranslator: Fn+Enter resolves nil")
+func test_resolve_functionEnter_returnsNil() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.function],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "\r",
-            charactersIgnoringModifiers: "\r",
-            isARepeat: false,
-            keyCode: 36
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 36, characters: "\r", charactersIgnoringModifiers: "\r", modifiers: [.function])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands.isEmpty)
+    #expect(route == nil)
 }
 
-@Test("CanvasHotkeyTranslator: Command+Enter maps to addChildNode")
-func test_translate_commandEnter_returnsAddChildNode() throws {
+@Test("CanvasHotkeyTranslator: Control+L resolves center-focused-node global action")
+func test_resolve_controlL_returnsGlobalCenterFocusedNode() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "\r",
-            charactersIgnoringModifiers: "\r",
-            isARepeat: false,
-            keyCode: 36
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 37, characters: "l", charactersIgnoringModifiers: "l", modifiers: [.control])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.addChildNode])
+    #expect(route == .global(action: .centerFocusedNode))
 }
 
-@Test("CanvasHotkeyTranslator: Control+L maps to centerFocusedNode")
-func test_translate_controlL_returnsCenterFocusedNode() throws {
+@Test("CanvasHotkeyTranslator: Command+L resolves switch-target-kind edge intent")
+func test_resolve_commandL_returnsSwitchTargetKindEdgeIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.control],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "l",
-            charactersIgnoringModifiers: "l",
-            isARepeat: false,
-            keyCode: 37
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 37, characters: "l", charactersIgnoringModifiers: "l", modifiers: [.command])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.centerFocusedNode])
+    #expect(route == .primitive(intent: .switchTargetKind(variant: .edge)))
 }
 
-@Test("CanvasHotkeyTranslator: Command+L opens connect-node selection mode")
-func test_shouldBeginConnectNodeSelection_commandL_returnsTrue() throws {
+@Test("CanvasHotkeyTranslator: Option+Period resolves toggle-visibility intent")
+func test_resolve_optionPeriod_returnsToggleVisibilityIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "l",
-            charactersIgnoringModifiers: "l",
-            isARepeat: false,
-            keyCode: 37
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 47, characters: "≥", charactersIgnoringModifiers: ".", modifiers: [.option])
 
-    #expect(sut.shouldBeginConnectNodeSelection(event))
+    let route = sut.resolve(event)
+
+    #expect(route == .primitive(intent: .toggleVisibility))
 }
 
-@Test("CanvasHotkeyTranslator: Command+L does not emit canvas command directly")
-func test_translate_commandL_returnsEmpty() throws {
+@Test("CanvasHotkeyTranslator: Up arrow resolves move-focus up intent")
+func test_resolve_upArrow_returnsMoveFocusUpIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "l",
-            charactersIgnoringModifiers: "l",
-            isARepeat: false,
-            keyCode: 37
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 126, characters: "↑", charactersIgnoringModifiers: "↑")
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands.isEmpty)
+    #expect(route == .primitive(intent: .moveFocus(direction: .up, variant: .single)))
 }
 
-@Test("CanvasHotkeyTranslator: Option+Period maps to toggleFoldFocusedSubtree")
-func test_translate_optionPeriod_returnsToggleFoldFocusedSubtree() throws {
+@Test("CanvasHotkeyTranslator: Command+Down resolves move-node down intent")
+func test_resolve_commandDownArrow_returnsMoveNodeDownIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.option],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "≥",
-            charactersIgnoringModifiers: ".",
-            isARepeat: false,
-            keyCode: 47
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 125, characters: "↓", charactersIgnoringModifiers: "↓", modifiers: [.command])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.toggleFoldFocusedSubtree])
+    #expect(route == .primitive(intent: .moveNode(direction: .down)))
 }
 
-@Test("CanvasHotkeyTranslator: Up arrow maps to moveFocus up")
-func test_translate_upArrow_returnsMoveFocusUp() throws {
+@Test("CanvasHotkeyTranslator: Command+Shift+Right resolves nudge-node right intent")
+func test_resolve_commandShiftRightArrow_returnsNudgeNodeRightIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "↑",
-            charactersIgnoringModifiers: "↑",
-            isARepeat: false,
-            keyCode: 126
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 124, characters: "→", charactersIgnoringModifiers: "→", modifiers: [.command, .shift])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.moveFocus(.up)])
+    #expect(route == .primitive(intent: .nudgeNode(direction: .right)))
 }
 
-@Test("CanvasHotkeyTranslator: Command+Down maps to moveNode down")
-func test_translate_commandDownArrow_returnsMoveNodeDown() throws {
+@Test("CanvasHotkeyTranslator: Shift+Arrow resolves extend-selection intent")
+func test_resolve_shiftArrow_returnsExtendSelectionIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "↓",
-            charactersIgnoringModifiers: "↓",
-            isARepeat: false,
-            keyCode: 125
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 123, characters: "←", charactersIgnoringModifiers: "←", modifiers: [.shift])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.moveNode(.down)])
+    #expect(route == .primitive(intent: .moveFocus(direction: .left, variant: .extendSelection)))
 }
 
-@Test("CanvasHotkeyTranslator: Command+D maps to duplicateSelectionAsSibling")
-func test_translate_commandD_returnsDuplicateSelectionAsSibling() throws {
+@Test("CanvasHotkeyTranslator: Arrow with Function flag still resolves move-focus intent")
+func test_resolve_functionArrow_returnsMoveFocusIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "d",
-            charactersIgnoringModifiers: "d",
-            isARepeat: false,
-            keyCode: 2
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 124, characters: "→", charactersIgnoringModifiers: "→", modifiers: [.function])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.duplicateSelectionAsSibling])
+    #expect(route == .primitive(intent: .moveFocus(direction: .right, variant: .single)))
 }
 
-@Test("CanvasHotkeyTranslator: Command+Shift+Right maps to nudgeNode right")
-func test_translate_commandShiftRightArrow_returnsNudgeNodeRight() throws {
+@Test("CanvasHotkeyTranslator: Delete resolves delete intent")
+func test_resolve_delete_returnsDeleteIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "→",
-            charactersIgnoringModifiers: "→",
-            isARepeat: false,
-            keyCode: 124
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 51, characters: "\u{8}", charactersIgnoringModifiers: "\u{8}")
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.nudgeNode(.right)])
+    #expect(route == .primitive(intent: .delete))
 }
 
-@Test("CanvasHotkeyTranslator: Arrow with Shift maps to extendSelection")
-func test_translate_shiftArrow_returnsExtendSelection() throws {
+@Test("CanvasHotkeyTranslator: Forward delete with Function resolves delete intent")
+func test_resolve_forwardDeleteWithFunction_returnsDeleteIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "←",
-            charactersIgnoringModifiers: "←",
-            isARepeat: false,
-            keyCode: 123
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 117, characters: "\u{7F}", charactersIgnoringModifiers: "\u{7F}", modifiers: [.function])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.extendSelection(.left)])
+    #expect(route == .primitive(intent: .delete))
 }
 
-@Test("CanvasHotkeyTranslator: Arrow with Function flag still maps to moveFocus")
-func test_translate_functionArrow_returnsMoveFocus() throws {
+@Test("CanvasHotkeyTranslator: Delete with Shift resolves nil")
+func test_resolve_shiftDelete_returnsNil() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.function],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "→",
-            charactersIgnoringModifiers: "→",
-            isARepeat: false,
-            keyCode: 124
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 51, characters: "\u{8}", charactersIgnoringModifiers: "\u{8}", modifiers: [.shift])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.moveFocus(.right)])
+    #expect(route == nil)
 }
 
-@Test("CanvasHotkeyTranslator: Delete maps to deleteFocusedNode")
-func test_translate_delete_returnsDeleteFocusedNode() throws {
+@Test("CanvasHotkeyTranslator: Command+Z resolves undo global action")
+func test_resolve_commandZ_returnsUndoGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "\u{8}",
-            charactersIgnoringModifiers: "\u{8}",
-            isARepeat: false,
-            keyCode: 51
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 6, characters: "z", charactersIgnoringModifiers: "z", modifiers: [.command])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.deleteFocusedNode])
+    #expect(route == .global(action: .undo))
 }
 
-@Test("CanvasHotkeyTranslator: Forward delete with Function maps to deleteFocusedNode")
-func test_translate_forwardDeleteWithFunction_returnsDeleteFocusedNode() throws {
+@Test("CanvasHotkeyTranslator: Shift+Command+Z resolves redo global action")
+func test_resolve_shiftCommandZ_returnsRedoGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.function],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "\u{7F}",
-            charactersIgnoringModifiers: "\u{7F}",
-            isARepeat: false,
-            keyCode: 117
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 6, characters: "Z", charactersIgnoringModifiers: "z", modifiers: [.command, .shift])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands == [.deleteFocusedNode])
+    #expect(route == .global(action: .redo))
 }
 
-@Test("CanvasHotkeyTranslator: Delete with Shift maps to no command")
-func test_translate_shiftDelete_returnsEmpty() throws {
+@Test("CanvasHotkeyTranslator: Command+Y resolves redo global action")
+func test_resolve_commandY_returnsRedoGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "\u{8}",
-            charactersIgnoringModifiers: "\u{8}",
-            isARepeat: false,
-            keyCode: 51
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 16, characters: "y", charactersIgnoringModifiers: "y", modifiers: [.command])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands.isEmpty)
+    #expect(route == .global(action: .redo))
 }
 
-@Test("CanvasHotkeyTranslator: Command+Z maps to undo history action")
-func test_historyAction_commandZ_returnsUndo() throws {
+@Test("CanvasHotkeyTranslator: Command+K resolves command-palette global action")
+func test_resolve_commandK_returnsOpenCommandPaletteGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "z",
-            charactersIgnoringModifiers: "z",
-            isARepeat: false,
-            keyCode: 6
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 40, characters: "k", charactersIgnoringModifiers: "k", modifiers: [.command])
 
-    let action = sut.historyAction(event)
+    let route = sut.resolve(event)
 
-    #expect(action == .undo)
+    #expect(route == .global(action: .openCommandPalette))
 }
 
-@Test("CanvasHotkeyTranslator: Shift+Command+Z maps to redo history action")
-func test_historyAction_shiftCommandZ_returnsRedo() throws {
+@Test("CanvasHotkeyTranslator: Command+Shift+P resolves command-palette global action")
+func test_resolve_commandShiftP_returnsOpenCommandPaletteGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "Z",
-            charactersIgnoringModifiers: "z",
-            isARepeat: false,
-            keyCode: 6
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 35, characters: "P", charactersIgnoringModifiers: "p", modifiers: [.command, .shift])
 
-    let action = sut.historyAction(event)
+    let route = sut.resolve(event)
 
-    #expect(action == .redo)
+    #expect(route == .global(action: .openCommandPalette))
 }
 
-@Test("CanvasHotkeyTranslator: Command+Y maps to redo history action")
-func test_historyAction_commandY_returnsRedo() throws {
+@Test("CanvasHotkeyTranslator: Command+Function+K resolves nil")
+func test_resolve_commandFunctionK_returnsNil() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "y",
-            charactersIgnoringModifiers: "y",
-            isARepeat: false,
-            keyCode: 16
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 40, characters: "k", charactersIgnoringModifiers: "k", modifiers: [.command, .function])
 
-    let action = sut.historyAction(event)
+    let route = sut.resolve(event)
 
-    #expect(action == .redo)
+    #expect(route == nil)
 }
 
-@Test("CanvasHotkeyTranslator: Command+Z uses character matching regardless of key code")
-func test_historyAction_commandZ_usesCharacterMatching() throws {
+@Test("CanvasHotkeyTranslator: Command+F resolves search global action")
+func test_resolve_commandF_returnsOpenSearchGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "z",
-            charactersIgnoringModifiers: "z",
-            isARepeat: false,
-            keyCode: 1
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 3, characters: "f", charactersIgnoringModifiers: "f", modifiers: [.command])
 
-    let action = sut.historyAction(event)
+    let route = sut.resolve(event)
 
-    #expect(action == .undo)
+    #expect(route == .global(action: .openSearch))
 }
 
-@Test("CanvasHotkeyTranslator: Command+K opens command palette")
-func test_shouldOpenCommandPalette_commandK_returnsTrue() throws {
+@Test("CanvasHotkeyTranslator: Command+Shift+F resolves nil")
+func test_resolve_commandShiftF_returnsNil() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "k",
-            charactersIgnoringModifiers: "k",
-            isARepeat: false,
-            keyCode: 40
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 3, characters: "F", charactersIgnoringModifiers: "f", modifiers: [.command, .shift])
 
-    #expect(sut.shouldOpenCommandPalette(event))
+    let route = sut.resolve(event)
+
+    #expect(route == nil)
 }
 
-@Test("CanvasHotkeyTranslator: Command+Shift+P opens command palette")
-func test_shouldOpenCommandPalette_commandShiftP_returnsTrue() throws {
+@Test("CanvasHotkeyTranslator: Command+F with Caps Lock resolves search global action")
+func test_resolve_commandFWithCapsLock_returnsOpenSearchGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "P",
-            charactersIgnoringModifiers: "p",
-            isARepeat: false,
-            keyCode: 35
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 3, characters: "f", charactersIgnoringModifiers: "f", modifiers: [.command, .capsLock])
 
-    #expect(sut.shouldOpenCommandPalette(event))
+    let route = sut.resolve(event)
+
+    #expect(route == .global(action: .openSearch))
 }
 
-@Test("CanvasHotkeyTranslator: Command+Function+K does not open command palette")
-func test_shouldOpenCommandPalette_commandFunctionK_returnsFalse() throws {
+@Test("CanvasHotkeyTranslator: Command+Shift+= resolves zoom-in global action")
+func test_resolve_commandShiftEquals_returnsZoomInGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .function],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "k",
-            charactersIgnoringModifiers: "k",
-            isARepeat: false,
-            keyCode: 40
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 24, characters: "+", charactersIgnoringModifiers: "=", modifiers: [.command, .shift])
 
-    #expect(!sut.shouldOpenCommandPalette(event))
+    let route = sut.resolve(event)
+
+    #expect(route == .global(action: .zoomIn))
 }
 
-@Test("CanvasHotkeyTranslator: Command+F opens search field")
-func test_shouldOpenSearch_commandF_returnsTrue() throws {
+@Test("CanvasHotkeyTranslator: Command+- resolves zoom-out global action")
+func test_resolve_commandMinus_returnsZoomOutGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "f",
-            charactersIgnoringModifiers: "f",
-            isARepeat: false,
-            keyCode: 3
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 27, characters: "-", charactersIgnoringModifiers: "-", modifiers: [.command])
 
-    #expect(sut.shouldOpenSearch(event))
+    let route = sut.resolve(event)
+
+    #expect(route == .global(action: .zoomOut))
 }
 
-@Test("CanvasHotkeyTranslator: Command+Shift+F does not open search field")
-func test_shouldOpenSearch_commandShiftF_returnsFalse() throws {
+@Test("CanvasHotkeyTranslator: Command+Shift+semicolon resolves zoom-in global action")
+func test_resolve_commandShiftSemicolon_returnsZoomInGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "F",
-            charactersIgnoringModifiers: "f",
-            isARepeat: false,
-            keyCode: 3
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 41, characters: "+", charactersIgnoringModifiers: ";", modifiers: [.command, .shift])
 
-    #expect(!sut.shouldOpenSearch(event))
+    let route = sut.resolve(event)
+
+    #expect(route == .global(action: .zoomIn))
 }
 
-@Test("CanvasHotkeyTranslator: Command+F with Caps Lock opens search field")
-func test_shouldOpenSearch_commandFWithCapsLock_returnsTrue() throws {
+@Test("CanvasHotkeyTranslator: Command+Shift+equals keycode resolves zoom-in global action")
+func test_resolve_commandShiftEqualsKeyCode_returnsZoomInGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .capsLock],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "f",
-            charactersIgnoringModifiers: "f",
-            isARepeat: false,
-            keyCode: 3
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 24, characters: "=", charactersIgnoringModifiers: "=", modifiers: [.command, .shift])
 
-    #expect(sut.shouldOpenSearch(event))
+    let route = sut.resolve(event)
+
+    #expect(route == .global(action: .zoomIn))
 }
 
-@Test("CanvasHotkeyTranslator: Command+Shift+= maps to zoomIn action")
-func test_zoomAction_commandShiftEquals_returnsZoomIn() throws {
+@Test("CanvasHotkeyTranslator: Command+Option+- resolves nil")
+func test_resolve_commandOptionMinus_returnsNil() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "+",
-            charactersIgnoringModifiers: "=",
-            isARepeat: false,
-            keyCode: 24
-        )
-    )
+    let event = try makeKeyEvent(
+        keyCode: 27, characters: "-", charactersIgnoringModifiers: "-", modifiers: [.command, .option])
 
-    let action = sut.zoomAction(event)
+    let route = sut.resolve(event)
 
-    #expect(action == .zoomIn)
+    #expect(route == nil)
 }
 
-@Test("CanvasHotkeyTranslator: Command+- maps to zoomOut action")
-func test_zoomAction_commandMinus_returnsZoomOut() throws {
+@Test("CanvasHotkeyTranslator: Command+C resolves edit copy-subtree intent")
+func test_resolve_commandC_returnsEditCopySubtreeIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "-",
-            charactersIgnoringModifiers: "-",
-            isARepeat: false,
-            keyCode: 27
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 8, characters: "c", charactersIgnoringModifiers: "c", modifiers: [.command])
 
-    let action = sut.zoomAction(event)
+    let route = sut.resolve(event)
 
-    #expect(action == .zoomOut)
+    #expect(route == .primitive(intent: .edit(variant: .copySubtree)))
 }
 
-@Test("CanvasHotkeyTranslator: Command+- does not emit canvas command")
-func test_translate_commandMinus_returnsNoCanvasCommand() throws {
+@Test("CanvasHotkeyTranslator: Command+X resolves edit cut-subtree intent")
+func test_resolve_commandX_returnsEditCutSubtreeIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "-",
-            charactersIgnoringModifiers: "-",
-            isARepeat: false,
-            keyCode: 27
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 7, characters: "x", charactersIgnoringModifiers: "x", modifiers: [.command])
 
-    let commands = sut.translate(event)
+    let route = sut.resolve(event)
 
-    #expect(commands.isEmpty)
+    #expect(route == .primitive(intent: .edit(variant: .cutSubtree)))
 }
 
-@Test("CanvasHotkeyTranslator: Command+Shift+semicolon maps to zoomIn action")
-func test_zoomAction_commandShiftSemicolon_returnsZoomIn() throws {
+@Test("CanvasHotkeyTranslator: Command+V resolves edit paste-subtree intent")
+func test_resolve_commandV_returnsEditPasteSubtreeIntent() throws {
     let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "+",
-            charactersIgnoringModifiers: ";",
-            isARepeat: false,
-            keyCode: 41
-        )
-    )
+    let event = try makeKeyEvent(keyCode: 9, characters: "v", charactersIgnoringModifiers: "v", modifiers: [.command])
 
-    let action = sut.zoomAction(event)
+    let route = sut.resolve(event)
 
-    #expect(action == .zoomIn)
+    #expect(route == .primitive(intent: .edit(variant: .pasteSubtreeAsChild)))
 }
 
-@Test(
-    "CanvasHotkeyTranslator: Command+Shift+equals keycode maps to zoomIn despite character normalization"
-)
-func test_zoomAction_commandShiftEqualsKeyCode_returnsZoomIn() throws {
-    let sut = CanvasHotkeyTranslator()
-    let event = try #require(
+private func makeKeyEvent(
+    keyCode: UInt16,
+    characters: String,
+    charactersIgnoringModifiers: String,
+    modifiers: NSEvent.ModifierFlags = []
+) throws -> NSEvent {
+    try #require(
         NSEvent.keyEvent(
             with: .keyDown,
             location: .zero,
-            modifierFlags: [.command, .shift],
+            modifierFlags: modifiers,
             timestamp: 0,
             windowNumber: 0,
             context: nil,
-            characters: "=",
-            charactersIgnoringModifiers: "=",
+            characters: characters,
+            charactersIgnoringModifiers: charactersIgnoringModifiers,
             isARepeat: false,
-            keyCode: 24
+            keyCode: keyCode
         )
     )
-
-    let action = sut.zoomAction(event)
-
-    #expect(action == .zoomIn)
-}
-
-@Test("CanvasHotkeyTranslator: Command+minus keycode maps to zoomOut action")
-func test_zoomAction_commandMinusKeyCode_returnsZoomOut() throws {
-    let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "-",
-            charactersIgnoringModifiers: "-",
-            isARepeat: false,
-            keyCode: 27
-        )
-    )
-
-    let action = sut.zoomAction(event)
-
-    #expect(action == .zoomOut)
-}
-
-@Test("CanvasHotkeyTranslator: Command+Option+- does not map to zoom action")
-func test_zoomAction_commandOptionMinus_returnsNil() throws {
-    let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .option],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "-",
-            charactersIgnoringModifiers: "-",
-            isARepeat: false,
-            keyCode: 27
-        )
-    )
-
-    let action = sut.zoomAction(event)
-
-    #expect(action == nil)
-}
-
-@Test("CanvasHotkeyTranslator: Command+C maps to copyFocusedSubtree")
-func test_translate_commandC_returnsCopyFocusedSubtree() throws {
-    let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "c",
-            charactersIgnoringModifiers: "c",
-            isARepeat: false,
-            keyCode: 8
-        )
-    )
-
-    let commands = sut.translate(event)
-
-    #expect(commands == [.copyFocusedSubtree])
-}
-
-@Test("CanvasHotkeyTranslator: Command+X maps to cutFocusedSubtree")
-func test_translate_commandX_returnsCutFocusedSubtree() throws {
-    let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "x",
-            charactersIgnoringModifiers: "x",
-            isARepeat: false,
-            keyCode: 7
-        )
-    )
-
-    let commands = sut.translate(event)
-
-    #expect(commands == [.cutFocusedSubtree])
-}
-
-@Test("CanvasHotkeyTranslator: Command+V maps to pasteSubtreeAsChild")
-func test_translate_commandV_returnsPasteSubtreeAsChild() throws {
-    let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "v",
-            charactersIgnoringModifiers: "v",
-            isARepeat: false,
-            keyCode: 9
-        )
-    )
-
-    let commands = sut.translate(event)
-
-    #expect(commands == [.pasteSubtreeAsChild])
-}
-
-@Test("CanvasHotkeyTranslator: Command+Shift+- does not map to zoom action")
-func test_zoomAction_commandShiftMinus_returnsNil() throws {
-    let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "_",
-            charactersIgnoringModifiers: "-",
-            isARepeat: false,
-            keyCode: 27
-        )
-    )
-
-    let action = sut.zoomAction(event)
-
-    #expect(action == nil)
-}
-
-@Test("CanvasHotkeyTranslator: Command+Control+Shift+= does not map to zoom action")
-func test_zoomAction_commandControlShiftEquals_returnsNil() throws {
-    let sut = CanvasHotkeyTranslator()
-    let event = try #require(
-        NSEvent.keyEvent(
-            with: .keyDown,
-            location: .zero,
-            modifierFlags: [.command, .control, .shift],
-            timestamp: 0,
-            windowNumber: 0,
-            context: nil,
-            characters: "+",
-            charactersIgnoringModifiers: "=",
-            isARepeat: false,
-            keyCode: 24
-        )
-    )
-
-    let action = sut.zoomAction(event)
-
-    #expect(action == nil)
 }

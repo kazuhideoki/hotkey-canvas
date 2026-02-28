@@ -208,3 +208,21 @@
 - `./scripts/lint_and_format.sh`: pass
 - `swift test`: pass（374 tests, 0 failures）
 - `swift build`: pass
+
+### 8.4 Phase 3 実施内容（完了）
+
+- 既存挙動を変更せず、新設計経路へ配線を置換した。
+  - `CanvasHotkeyTranslator` の公開APIを `resolve(_:)` に一本化。
+  - `CanvasView+HotkeyHandling` は `KeymapResolvedRoute` と `KeymapContextActionResolver` 経由で実行。
+- `KeymapIntentResolver` を拡張し、既存ホットキーを新ルートで全解決可能にした。
+  - `cmd+c/x/v` を `primitive` の `edit` variant として解決。
+  - 矢印系の方向情報（`moveFocus/moveNode/nudgeNode`）を Intent へ保持。
+- Application に `DefaultKeymapContextActionResolver` を追加し、Primitive Intent を既存コマンドへ再構成する境界を実装した。
+- 未実装 Intent は `reportUnsupportedIntent` 経由で no-op 契約とした（新規挙動追加なし）。
+- Command Palette の表示項目は増やしていない（未実装IntentのUI追加なし）。
+
+### 8.5 Phase 3 検証結果
+
+- `swift build`: pass
+- `./scripts/lint_and_format.sh`: pass
+- `swift test`: pass（372 tests, 0 failures）
