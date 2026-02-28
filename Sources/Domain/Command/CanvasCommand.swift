@@ -13,6 +13,10 @@ public enum CanvasCommand: Equatable, Sendable {
     case toggleFoldFocusedSubtree
     case centerFocusedNode
     case deleteSelectedOrFocusedNodes
+    case deleteSelectedOrFocusedEdges(
+        focusedEdge: CanvasEdgeFocus,
+        selectedEdgeIDs: Set<CanvasEdgeID>
+    )
     case copySelectionOrFocusedSubtree
     case cutSelectionOrFocusedSubtree
     case pasteClipboardAtFocusedNode

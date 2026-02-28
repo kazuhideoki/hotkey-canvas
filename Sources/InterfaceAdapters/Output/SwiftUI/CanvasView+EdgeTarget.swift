@@ -138,6 +138,14 @@ extension CanvasView {
         case .extendSelection(let direction):
             moveEdgeFocus(direction: direction, extendsSelection: true)
             return true
+        case .deleteSelectedOrFocusedNodes:
+            guard let deletionCommand = edgeDeletionCommandFromCurrentState() else {
+                return true
+            }
+            Task {
+                await viewModel.apply(commands: [deletionCommand])
+            }
+            return true
         default:
             return true
         }
@@ -189,5 +197,33 @@ extension CanvasView {
                 }
                 return lhs.id.rawValue < rhs.id.rawValue
             }
+    }
+
+    func edgeDeletionCommandFromCurrentState() -> CanvasCommand? {
+        guard operationTargetKind == .edge else {
+            return nil
+        }
+        guard
+            let focusedNodeID = viewModel.focusedNodeID,
+            let focusedEdgeID
+        else {
+            return nil
+        }
+        return Self.edgeDeletionCommand(
+            focusedNodeID: focusedNodeID,
+            focusedEdgeID: focusedEdgeID,
+            selectedEdgeIDs: selectedEdgeIDs
+        )
+    }
+
+    static func edgeDeletionCommand(
+        focusedNodeID: CanvasNodeID,
+        focusedEdgeID: CanvasEdgeID,
+        selectedEdgeIDs: Set<CanvasEdgeID>
+    ) -> CanvasCommand {
+        .deleteSelectedOrFocusedEdges(
+            focusedEdge: CanvasEdgeFocus(edgeID: focusedEdgeID, originNodeID: focusedNodeID),
+            selectedEdgeIDs: selectedEdgeIDs
+        )
     }
 }

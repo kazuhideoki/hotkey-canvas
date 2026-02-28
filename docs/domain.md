@@ -91,6 +91,7 @@
   - `CanvasCommand.copySelectionOrFocusedSubtree`
   - `CanvasCommand.cutSelectionOrFocusedSubtree`
   - `CanvasCommand.pasteClipboardAtFocusedNode`
+  - `CanvasCommand.deleteSelectedOrFocusedEdges(focusedEdge:selectedEdgeIDs:)`
   - `CanvasCommand.duplicateSelectionAsSibling`
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
   - `CanvasCommand.alignAllAreasVertically`
@@ -121,6 +122,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddSiblingNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ConnectNodes.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteSelectedOrFocusedEdges.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DuplicateSelectionAsSibling.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
@@ -475,6 +477,7 @@
   - `CanvasCommandPaletteVisibility` により、mode/フォーカス条件を満たさない項目は表示しない（無効表示は行わない）。
   - `CanvasCommandPaletteLabel` は `Noun: Verb` 形式でタイトルを生成し、コマンド名の表記ゆれを防ぐ。
   - `deleteSelectedOrFocusedNodes` の表示名は mode 共通で `Node: Delete Selected` とする。
+  - edge ターゲット中の削除は `Edge: Delete Selected` を表示し、`deleteSelectedOrFocusedEdges` へ解決する。
   - `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` / `pasteClipboardAtFocusedNode` は mode に応じて文言を切り替える（Tree は subtree を明示、Diagram は selected/paste を優先）。
   - `cmd+shift+arrow`（`nudgeNode`）は実行経路を維持しつつ、コマンドパレット表示は Diagram mode のみとする。
   - 状態依存の ON/OFF 操作は原則 `toggle` 動詞で表記し、`enable/disable/on/off` は検索トークンで吸収する。
@@ -589,6 +592,8 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ConnectNodes.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
     - `deleteSelectedOrFocusedNodes` は複数選択時にフォーカス所属エリア内の選択ノードを削除対象へ昇格する。Tree では各選択ノードの subtree まで削除し、Diagram では選択ノード自体のみ削除する。
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteSelectedOrFocusedEdges.swift`
+    - `deleteSelectedOrFocusedEdges` は focused edge を必ず削除対象に含める。選択集合に focused edge が含まれ、かつ2件以上選択されている場合は選択 edge を一括削除する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
     - 追加/削除時の所属更新を行う。
     - `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` は「同一フォーカスエリア内で複数選択が2件以上ある場合」に選択集合を対象として扱い、それ以外は従来どおりフォーカス部分木を対象とする。
@@ -671,6 +676,7 @@
 - 2026-02-28: Keymap Primitive Phase 1/2 として `primitive/global/modal` 境界、primitive Intent 語彙、KeyTrigger 対応表、3層解決順をドメイン仕様へ追加し、`KeymapIntentResolver` を導入。
 - 2026-02-28: edge 操作基盤として `CanvasFocusedElement` / `CanvasEdgeFocus` / `CanvasGraph.selectedEdgeIDs` を追加し、`CanvasFocusNavigationService.nextFocusedEdgeID` と `CanvasSelectionService` の edge 正規化を導入した。
 - 2026-02-28: キーマップを更新し、`cmd+l` を Connect Node Selection（global）へ復帰、`tab` を `switchTargetKind(.edge)`（primitive）へ再割り当てした。
+- 2026-02-28: `CanvasCommand.deleteSelectedOrFocusedEdges` を追加し、edge ターゲット中の delete/Command Palette から複数選択 edge の一括削除に対応した。
 - 2026-02-23: `Shift + Enter` モード選択追加の empty graph 分岐を修正し、選択モードと不一致な `defaultTree` の誤優先を禁止。あわせて空グラフで area を事前作成した場合でも、履歴の `graphBeforeMutation` は必ず元グラフを保持して undo 整合性を維持するよう更新。
 - 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
 - 2026-02-23: 画像専用の `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を廃止し、`CanvasAttachment` / `upsertNodeAttachment` に統合。ノード添付を将来拡張可能な複数要素として扱う仕様へ更新した。

@@ -45,3 +45,24 @@ func test_edgeTargetStateSyncedWithModel_keepsNodeModeWhenModelHasNoEdgeFocus() 
     #expect(state.focusedEdgeID == nil)
     #expect(state.selectedEdgeIDs.isEmpty)
 }
+
+@Test("CanvasView edge target sync: edge deletion command keeps current selected set")
+func test_edgeDeletionCommand_keepsCurrentSelectedSet() {
+    let focusedNodeID = CanvasNodeID(rawValue: "node-focused")
+    let focusedEdgeID = CanvasEdgeID(rawValue: "edge-focused")
+    let selectedEdgeID = CanvasEdgeID(rawValue: "edge-selected")
+
+    let command = CanvasView.edgeDeletionCommand(
+        focusedNodeID: focusedNodeID,
+        focusedEdgeID: focusedEdgeID,
+        selectedEdgeIDs: [focusedEdgeID, selectedEdgeID]
+    )
+
+    guard case .deleteSelectedOrFocusedEdges(let focusedEdge, let selectedEdgeIDs) = command else {
+        Issue.record("Expected deleteSelectedOrFocusedEdges command")
+        return
+    }
+    #expect(focusedEdge.edgeID == focusedEdgeID)
+    #expect(focusedEdge.originNodeID == focusedNodeID)
+    #expect(selectedEdgeIDs == [focusedEdgeID, selectedEdgeID])
+}

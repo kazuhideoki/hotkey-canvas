@@ -18,6 +18,7 @@ enum DiagramAreaPolicyService {
             .nudgeNode,
             .centerFocusedNode,
             .deleteSelectedOrFocusedNodes,
+            .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree,
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
