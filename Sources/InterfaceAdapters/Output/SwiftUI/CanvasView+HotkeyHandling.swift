@@ -18,7 +18,7 @@ extension CanvasView {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(.regularMaterial)
+            .systemSurface(styleSheet.overlay.connectBannerSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
