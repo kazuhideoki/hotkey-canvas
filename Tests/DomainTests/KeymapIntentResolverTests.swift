@@ -84,6 +84,15 @@ func test_resolveRoute_commandDown_returnsPrimitiveMoveNodeDown() {
     #expect(route == .primitive(intent: .moveNode(direction: .down)))
 }
 
+@Test("KeymapIntentResolver: command-option-minus resolves primitive scale-selection-down transform intent")
+func test_resolveRoute_commandOptionMinus_returnsPrimitiveScaleSelectionDown() {
+    let gesture = CanvasShortcutGesture(key: .character("-"), modifiers: [.command, .option])
+
+    let route = KeymapIntentResolver.resolveRoute(for: gesture)
+
+    #expect(route == .primitive(intent: .transform(variant: .scaleSelectionDown)))
+}
+
 @Test("KeymapIntentResolver: shift-left resolves primitive extend-selection left intent")
 func test_resolveRoute_shiftLeft_returnsPrimitiveMoveFocusExtendSelectionLeft() {
     let gesture = CanvasShortcutGesture(key: .arrowLeft, modifiers: [.shift])

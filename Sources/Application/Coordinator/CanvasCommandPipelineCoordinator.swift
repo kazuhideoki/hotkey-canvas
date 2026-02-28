@@ -67,7 +67,10 @@ extension CanvasCommandPipelineCoordinator {
             )
         }
         if effects.didMutateGraph {
-            graph = runDiagramSquareNormalizationStage(on: graph)
+            graph = runDiagramSquareNormalizationStage(
+                on: graph,
+                graphBeforeMutation: graphBeforeMutation
+            )
         }
         if effects.didMutateGraph {
             graph = runCollapsedRootNormalizationStage(on: graph)
@@ -325,9 +328,17 @@ extension CanvasCommandPipelineCoordinator {
     }
 
     /// Enforces diagram-node shape invariant as a square with attachment-aware size limits.
-    private func runDiagramSquareNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {
+    private func runDiagramSquareNormalizationStage(
+        on graph: CanvasGraph,
+        graphBeforeMutation: CanvasGraph
+    ) -> CanvasGraph {
         let diagramNodeIDs = Set(
             graph.areasByID.values
+                .filter { $0.editingMode == .diagram }
+                .flatMap(\.nodeIDs)
+        )
+        let diagramNodeIDsBeforeMutation = Set(
+            graphBeforeMutation.areasByID.values
                 .filter { $0.editingMode == .diagram }
                 .flatMap(\.nodeIDs)
         )
@@ -341,9 +352,16 @@ extension CanvasCommandPipelineCoordinator {
             guard let node = nodesByID[nodeID] else {
                 continue
             }
+            let nodeExistedBeforeMutation = graphBeforeMutation.nodesByID[nodeID] != nil
+            let proposedSide =
+                if diagramNodeIDsBeforeMutation.contains(nodeID) || nodeExistedBeforeMutation == false {
+                    node.bounds.width
+                } else {
+                    CanvasDefaultNodeDistance.diagramNodeSide
+                }
             let normalizedBounds = ApplyCanvasCommandsUseCase.normalizedDiagramNodeBounds(
                 for: node,
-                proposedSide: node.bounds.width
+                proposedSide: proposedSide
             )
             if node.bounds == normalizedBounds {
                 continue

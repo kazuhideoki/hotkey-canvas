@@ -406,14 +406,17 @@ public struct CanvasView: View {
                         return
                     }
                     if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
+                        let contentScale = nodeContentScale(for: node)
                         let measuredLayout = measuredNodeLayout(
                             text: node.text ?? "",
-                            nodeWidth: node.bounds.width
+                            nodeWidth: node.bounds.width,
+                            nodeContentScale: contentScale
                         )
                         let measuredHeight = measuredNodeHeightForEditing(
                             text: node.text ?? "",
                             measuredTextHeight: Double(measuredLayout.nodeHeight),
-                            node: node
+                            node: node,
+                            nodeContentScale: contentScale
                         )
                         editingContext = NodeEditingContext(
                             nodeID: nodeID,

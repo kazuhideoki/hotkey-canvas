@@ -19,15 +19,17 @@ struct NodeTextHeightMeasurer {
     private let maximumNodeHeight: CGFloat
 
     init(
-        style: NodeTextStyle
+        style: NodeTextStyle,
+        contentScale: CGFloat = 1
     ) {
+        let clampedContentScale = max(contentScale, 0.0001)
         self.init(
-            font: .systemFont(ofSize: style.fontSize, weight: style.fontWeight),
-            outerHorizontalPadding: style.editorContainerPadding,
-            outerVerticalPadding: style.editorContainerPadding,
+            font: .systemFont(ofSize: style.fontSize * clampedContentScale, weight: style.fontWeight),
+            outerHorizontalPadding: style.editorContainerPadding * clampedContentScale,
+            outerVerticalPadding: style.editorContainerPadding * clampedContentScale,
             textContainerInset: NSSize(
-                width: style.textContainerInset,
-                height: style.textContainerInset
+                width: style.textContainerInset * clampedContentScale,
+                height: style.textContainerInset * clampedContentScale
             )
         )
     }

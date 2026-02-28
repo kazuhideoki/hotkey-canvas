@@ -22,6 +22,19 @@ func test_measuredImageDisplayWidth_largeImage_clampsToContentWidth() {
     #expect(width == expectedContentWidth)
 }
 
+@Test("CanvasView image size: measured display width upscales small image by node content scale")
+func test_measuredImageDisplayWidth_smallImage_withContentScale_upscales() {
+    let imageSize = CGSize(width: 80, height: 40)
+
+    let width = CanvasView.measuredImageDisplayWidth(
+        imageSize: imageSize,
+        nodeWidth: 220,
+        nodeContentScale: 2
+    )
+
+    #expect(width == 160)
+}
+
 @Test("CanvasView image size: diagram image side keeps minimum for small image")
 func test_diagramImageNodeSideLength_smallImage_keepsMinimumDiagramSide() {
     let imageSize = CGSize(width: 80, height: 40)
@@ -29,6 +42,19 @@ func test_diagramImageNodeSideLength_smallImage_keepsMinimumDiagramSide() {
     let side = CanvasView.diagramImageNodeSideLength(imageSize: imageSize, currentNodeWidth: 220)
 
     #expect(side == 220)
+}
+
+@Test("CanvasView image size: diagram image side keeps shrunk node width on image replacement")
+func test_diagramImageNodeSideLength_smallImage_preservesShrunkDiagramNodeWidth() {
+    let imageSize = CGSize(width: 80, height: 40)
+    let shrunkNodeWidth = 132.0
+
+    let side = CanvasView.diagramImageNodeSideLength(
+        imageSize: imageSize,
+        currentNodeWidth: shrunkNodeWidth
+    )
+
+    #expect(side == shrunkNodeWidth)
 }
 
 @Test("CanvasView image size: diagram image side clamps to maximum for large image")

@@ -62,3 +62,15 @@ func test_measure_manyLines_exceedsLegacyCap() {
 
     #expect(height > 320)
 }
+
+@Test("NodeTextHeightMeasurer: content scale increases measured height for same text")
+func test_measure_contentScale_increasesMeasuredHeight() {
+    let base = NodeTextHeightMeasurer()
+    let scaled = NodeTextHeightMeasurer(style: .defaultStyle, contentScale: 1.5)
+    let text = "scaled text"
+
+    let baseHeight = base.measure(text: text, nodeWidth: 220)
+    let scaledHeight = scaled.measure(text: text, nodeWidth: 220)
+
+    #expect(scaledHeight > baseHeight)
+}

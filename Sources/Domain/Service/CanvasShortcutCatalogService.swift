@@ -264,7 +264,7 @@ extension CanvasShortcutCatalogService {
     }
 
     private static func nodeNavigationDefinitions() -> [CanvasShortcutDefinition] {
-        nodeMoveDefinitions() + nodeNudgeDefinitions()
+        nodeMoveDefinitions() + nodeNudgeDefinitions() + nodeScaleDefinitions()
     }
 
     private static func nodeMoveDefinitions() -> [CanvasShortcutDefinition] {

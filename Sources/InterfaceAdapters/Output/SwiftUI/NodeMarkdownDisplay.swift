@@ -8,6 +8,7 @@ struct NodeMarkdownDisplay: View {
     let text: String
     let nodeWidth: Double
     let zoomScale: Double
+    let contentScale: Double
     let appliesOuterPadding: Bool
     let style: NodeTextStyle
     let contentAlignment: NodeTextContentAlignment
@@ -16,6 +17,7 @@ struct NodeMarkdownDisplay: View {
         text: String,
         nodeWidth: Double,
         zoomScale: Double,
+        contentScale: Double = 1,
         appliesOuterPadding: Bool = true,
         style: NodeTextStyle = .defaultStyle,
         contentAlignment: NodeTextContentAlignment = .topLeading
@@ -23,6 +25,7 @@ struct NodeMarkdownDisplay: View {
         self.text = text
         self.nodeWidth = nodeWidth
         self.zoomScale = zoomScale
+        self.contentScale = contentScale
         self.appliesOuterPadding = appliesOuterPadding
         self.style = style
         self.contentAlignment = contentAlignment
@@ -33,13 +36,15 @@ struct NodeMarkdownDisplay: View {
     }
 
     var body: some View {
-        let scale = CGFloat(zoomScale)
-        let contentInset = style.outerPadding * scale
-        let contentWidth = max((CGFloat(nodeWidth) * scale) - (contentInset * 2), 1)
+        let viewportScale = CGFloat(zoomScale)
+        let contentScale = max(CGFloat(self.contentScale), 0.0001)
+        let typographyScale = viewportScale * contentScale
+        let contentInset = style.outerPadding * typographyScale
+        let contentWidth = max((CGFloat(nodeWidth) * viewportScale) - (contentInset * 2), 1)
 
-        VStack(alignment: contentAlignment.horizontalAlignment, spacing: style.markdownBlockSpacing * scale) {
+        VStack(alignment: contentAlignment.horizontalAlignment, spacing: style.markdownBlockSpacing * typographyScale) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
-                blockView(block, scale: scale)
+                blockView(block, scale: typographyScale)
             }
         }
         .frame(width: contentWidth, alignment: contentAlignment.frameAlignment)

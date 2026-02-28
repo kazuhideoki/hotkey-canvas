@@ -81,7 +81,7 @@ extension ApplyCanvasCommandsUseCase {
             return try cutSelectionOrFocusedSubtree(in: graph)
         case .pasteClipboardAtFocusedNode:
             return try pasteClipboardAtFocusedNode(in: graph)
-        case .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle:
+        case .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .scaleSelectedNodes:
             return try applyNodeContentCommand(command: command, to: graph)
         case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return noOpMutationResult(for: graph)
@@ -114,6 +114,7 @@ extension ApplyCanvasCommandsUseCase {
             .extendSelection,
             .moveNode,
             .nudgeNode,
+            .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteSelectedOrFocusedNodes,
@@ -147,6 +148,11 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .toggleFocusedNodeMarkdownStyle:
             return try toggleFocusedNodeMarkdownStyle(in: graph)
+        case .scaleSelectedNodes(let direction):
+            return try scaleSelectedNodes(
+                in: graph,
+                direction: direction
+            )
         case .addNode,
             .addChildNode,
             .addSiblingNode,
@@ -205,6 +211,7 @@ extension ApplyCanvasCommandsUseCase {
             .extendSelection,
             .moveNode,
             .nudgeNode,
+            .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteSelectedOrFocusedNodes,
@@ -276,6 +283,7 @@ extension ApplyCanvasCommandsUseCase {
             .extendSelection,
             .moveNode,
             .nudgeNode,
+            .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .deleteSelectedOrFocusedNodes,

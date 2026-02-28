@@ -2,6 +2,12 @@
 // Responsibility: Define default horizontal/vertical distances used by tree and diagram operations.
 /// Default distance definitions shared across canvas editing modes.
 public enum CanvasDefaultNodeDistance {
+    /// Default node width for text nodes in tree mode.
+    public static let treeNodeWidth: Double = 220
+
+    /// Default node height for text nodes in tree mode.
+    public static let treeNodeHeight: Double = 41
+
     /// Default horizontal distance between connected nodes in tree mode.
     public static let treeHorizontal: Double = 32
 
@@ -13,6 +19,18 @@ public enum CanvasDefaultNodeDistance {
 
     /// Maximum square side length allowed for diagram nodes with image attachments.
     public static let diagramImageMaxSide: Double = diagramNodeSide * 1.5
+
+    /// Minimum square side length allowed for diagram nodes.
+    public static let diagramMinNodeSide: Double = diagramNodeSide * 0.5
+
+    /// One-step ratio used for node scaling.
+    public static let nodeScaleStepRatio: Double = 0.1
+
+    /// Minimum width ratio used when scaling tree nodes.
+    public static let treeNodeMinimumWidthRatio: Double = 0.5
+
+    /// Minimum height ratio used when scaling tree nodes.
+    public static let treeNodeMinimumHeightRatio: Double = 0.5
 
     /// Default horizontal distance between diagram nodes.
     public static let diagramHorizontal: Double = diagramNodeSide
