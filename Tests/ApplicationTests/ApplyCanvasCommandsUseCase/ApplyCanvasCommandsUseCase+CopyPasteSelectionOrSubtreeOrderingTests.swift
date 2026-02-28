@@ -9,8 +9,8 @@ func test_apply_treeArea_pasteAppendsChildrenAfterExistingSiblings() async throw
     let fixture = makeCopyPasteAppendOrderingFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
 
-    _ = try await sut.apply(commands: [.copyFocusedSubtree])
-    let pasteResult = try await sut.apply(commands: [.pasteSubtreeAsChild])
+    _ = try await sut.apply(commands: [.copySelectionOrFocusedSubtree])
+    let pasteResult = try await sut.apply(commands: [.pasteClipboardAtFocusedNode])
 
     let childTexts = pasteResult.newState.edgesByID.values
         .filter { $0.relationType == .parentChild && $0.fromNodeID == fixture.targetID }

@@ -72,7 +72,7 @@ func test_resolveRoute_commandC_returnsPrimitiveEditCopySubtree() {
 
     let route = KeymapIntentResolver.resolveRoute(for: gesture)
 
-    #expect(route == .primitive(intent: .edit(variant: .copySubtree)))
+    #expect(route == .primitive(intent: .edit(variant: .copySelectionOrFocusedSubtree)))
 }
 
 @Test("KeymapIntentResolver: command-down resolves primitive move-node down intent")

@@ -4,12 +4,12 @@ import Testing
 
 // Background: Command palette provides one command to vertically align area blocks.
 // Responsibility: Verify cross-area left alignment while preserving intra-area node layout.
-@Test("ApplyCanvasCommandsUseCase: alignParentNodesVertically aligns all areas to one left column")
-func test_apply_alignParentNodesVertically_alignsAllAreasToOneLeftColumn() async throws {
+@Test("ApplyCanvasCommandsUseCase: alignAllAreasVertically aligns all areas to one left column")
+func test_apply_alignAllAreasVertically_alignsAllAreasToOneLeftColumn() async throws {
     let fixture = makeMultiAreaFixtureGraph()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture)
 
-    let result = try await sut.apply(commands: [.alignParentNodesVertically])
+    let result = try await sut.apply(commands: [.alignAllAreasVertically])
 
     let leftRoot = try #require(result.newState.nodesByID[CanvasNodeID(rawValue: "left-root")])
     let leftChild = try #require(result.newState.nodesByID[CanvasNodeID(rawValue: "left-child")])
@@ -24,12 +24,12 @@ func test_apply_alignParentNodesVertically_alignsAllAreasToOneLeftColumn() async
     #expect(rightChild.bounds.y == 252)
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignParentNodesVertically keeps relative positions inside each area")
-func test_apply_alignParentNodesVertically_preservesRelativePositionsInsideEachArea() async throws {
+@Test("ApplyCanvasCommandsUseCase: alignAllAreasVertically keeps relative positions inside each area")
+func test_apply_alignAllAreasVertically_preservesRelativePositionsInsideEachArea() async throws {
     let fixture = makeMultiAreaFixtureGraph()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture)
 
-    let result = try await sut.apply(commands: [.alignParentNodesVertically])
+    let result = try await sut.apply(commands: [.alignAllAreasVertically])
     let before = fixture.nodesByID
     let after = result.newState.nodesByID
 
@@ -47,8 +47,8 @@ func test_apply_alignParentNodesVertically_preservesRelativePositionsInsideEachA
     )
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignParentNodesVertically is no-op when only one area exists")
-func test_apply_alignParentNodesVertically_isNoOpWhenOnlyOneAreaExists() async throws {
+@Test("ApplyCanvasCommandsUseCase: alignAllAreasVertically is no-op when only one area exists")
+func test_apply_alignAllAreasVertically_isNoOpWhenOnlyOneAreaExists() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
     let areaID = CanvasAreaID.defaultTree
@@ -82,7 +82,7 @@ func test_apply_alignParentNodesVertically_isNoOpWhenOnlyOneAreaExists() async t
     )
     let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
 
-    let result = try await sut.apply(commands: [.alignParentNodesVertically])
+    let result = try await sut.apply(commands: [.alignAllAreasVertically])
 
     #expect(result.newState == graph)
 }
