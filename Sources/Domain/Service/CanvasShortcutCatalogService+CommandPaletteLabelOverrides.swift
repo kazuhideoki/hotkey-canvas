@@ -27,22 +27,22 @@ extension CanvasShortcutCatalogService {
         switch context.activeEditingMode {
         case .tree:
             switch shortcutID.rawValue {
-            case "copyFocusedSubtree":
+            case "copySelectionOrFocusedSubtree":
                 return CanvasCommandPaletteLabel(noun: "Node", verb: "Copy Selected & Subtree")
-            case "cutFocusedSubtree":
+            case "cutSelectionOrFocusedSubtree":
                 return CanvasCommandPaletteLabel(noun: "Node", verb: "Cut Selected & Subtree")
-            case "pasteSubtreeAsChild":
+            case "pasteClipboardAtFocusedNode":
                 return CanvasCommandPaletteLabel(noun: "Node", verb: "Paste As Child")
             default:
                 return nil
             }
         case .diagram:
             switch shortcutID.rawValue {
-            case "copyFocusedSubtree":
+            case "copySelectionOrFocusedSubtree":
                 return CanvasCommandPaletteLabel(noun: "Node", verb: "Copy Selected")
-            case "cutFocusedSubtree":
+            case "cutSelectionOrFocusedSubtree":
                 return CanvasCommandPaletteLabel(noun: "Node", verb: "Cut Selected")
-            case "pasteSubtreeAsChild":
+            case "pasteClipboardAtFocusedNode":
                 return CanvasCommandPaletteLabel(noun: "Node", verb: "Paste")
             default:
                 return nil

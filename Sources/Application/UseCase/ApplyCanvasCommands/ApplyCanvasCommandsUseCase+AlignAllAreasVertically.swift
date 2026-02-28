@@ -8,7 +8,7 @@ extension ApplyCanvasCommandsUseCase {
     ///   - graph: Current graph snapshot.
     ///   - areaID: Focused area identifier resolved by command dispatch. The command still applies to all areas.
     /// - Returns: Mutation result with translated area blocks, or no-op when nothing moves.
-    func alignParentNodesVertically(
+    func alignAllAreasVertically(
         in graph: CanvasGraph,
         areaID _: CanvasAreaID
     ) -> CanvasMutationResult {
