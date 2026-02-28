@@ -48,9 +48,18 @@ func test_resolveRoute_commandZ_returnsGlobalUndo() {
     #expect(route == .global(action: .undo))
 }
 
-@Test("KeymapIntentResolver: command-l resolves primitive switch-target-kind edge intent")
-func test_resolveRoute_commandL_returnsPrimitiveSwitchTargetKindEdge() {
+@Test("KeymapIntentResolver: command-l resolves global begin-connect action")
+func test_resolveRoute_commandL_returnsGlobalBeginConnectNodeSelection() {
     let gesture = CanvasShortcutGesture(key: .character("l"), modifiers: [.command])
+
+    let route = KeymapIntentResolver.resolveRoute(for: gesture)
+
+    #expect(route == .global(action: .beginConnectNodeSelection))
+}
+
+@Test("KeymapIntentResolver: tab resolves primitive switch-target-kind edge intent")
+func test_resolveRoute_tab_returnsPrimitiveSwitchTargetKindEdge() {
+    let gesture = CanvasShortcutGesture(key: .tab, modifiers: [])
 
     let route = KeymapIntentResolver.resolveRoute(for: gesture)
 

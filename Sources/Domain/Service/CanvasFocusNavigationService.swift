@@ -38,6 +38,48 @@ public enum CanvasFocusNavigationService {
 
         return nextCandidate?.node.id ?? currentNode.id
     }
+
+    /// Resolves the next focused edge identifier for directional movement.
+    /// - Parameters:
+    ///   - graph: Source graph snapshot.
+    ///   - currentEdgeID: Current focused edge identifier.
+    ///   - direction: Requested focus movement direction.
+    /// - Returns: Next focused edge identifier, or `nil` when the edge set is empty.
+    public static func nextFocusedEdgeID(
+        in graph: CanvasGraph,
+        from currentEdgeID: CanvasEdgeID?,
+        moving direction: CanvasFocusDirection
+    ) -> CanvasEdgeID? {
+        let sortedEdges = sortedEdges(in: graph)
+        guard !sortedEdges.isEmpty else {
+            return nil
+        }
+
+        let fallbackEdge = sortedEdges[0]
+        let currentEdge = currentEdgeID.flatMap { graph.edgesByID[$0] } ?? fallbackEdge
+
+        let directionalCandidates =
+            sortedEdges
+            .filter { $0.id != currentEdge.id }
+            .compactMap { edge in
+                makeEdgeCandidate(
+                    to: edge,
+                    from: currentEdge,
+                    direction: direction,
+                    in: graph
+                )
+            }
+
+        guard !directionalCandidates.isEmpty else {
+            return currentEdge.id
+        }
+
+        let preferredCandidates = directionalCandidates.filter(isPreferredEdgeCandidate)
+        let candidatePool = preferredCandidates.isEmpty ? directionalCandidates : preferredCandidates
+        let nextCandidate = candidatePool.min(by: isBetterEdgeCandidate)
+
+        return nextCandidate?.edge.id ?? currentEdge.id
+    }
 }
 
 extension CanvasFocusNavigationService {
@@ -162,6 +204,81 @@ extension CanvasFocusNavigationService {
             y: node.bounds.y + (node.bounds.height / 2)
         )
     }
+
+    fileprivate static func sortedEdges(in graph: CanvasGraph) -> [CanvasEdge] {
+        graph.edgesByID.values.sorted { lhs, rhs in
+            if lhs.fromNodeID.rawValue != rhs.fromNodeID.rawValue {
+                return lhs.fromNodeID.rawValue < rhs.fromNodeID.rawValue
+            }
+            if lhs.toNodeID.rawValue != rhs.toNodeID.rawValue {
+                return lhs.toNodeID.rawValue < rhs.toNodeID.rawValue
+            }
+            return lhs.id.rawValue < rhs.id.rawValue
+        }
+    }
+
+    fileprivate static func edgeCenter(for edge: CanvasEdge, in graph: CanvasGraph) -> (x: Double, y: Double)? {
+        guard
+            let fromNode = graph.nodesByID[edge.fromNodeID],
+            let toNode = graph.nodesByID[edge.toNodeID]
+        else {
+            return nil
+        }
+        let fromCenter = nodeCenter(for: fromNode)
+        let toCenter = nodeCenter(for: toNode)
+        return (
+            x: (fromCenter.x + toCenter.x) / 2,
+            y: (fromCenter.y + toCenter.y) / 2
+        )
+    }
+
+    fileprivate static func makeEdgeCandidate(
+        to edge: CanvasEdge,
+        from currentEdge: CanvasEdge,
+        direction: CanvasFocusDirection,
+        in graph: CanvasGraph
+    ) -> EdgeFocusCandidate? {
+        guard
+            let currentCenter = edgeCenter(for: currentEdge, in: graph),
+            let targetCenter = edgeCenter(for: edge, in: graph)
+        else {
+            return nil
+        }
+        let deltaX = targetCenter.x - currentCenter.x
+        let deltaY = targetCenter.y - currentCenter.y
+        let components = directionComponents(deltaX: deltaX, deltaY: deltaY, direction: direction)
+        guard components.mainAxisDistance > 0 else {
+            return nil
+        }
+        let score = calculateScore(
+            mainAxisDistance: components.mainAxisDistance,
+            crossAxisDistance: components.crossAxisDistance
+        )
+        return EdgeFocusCandidate(
+            edge: edge,
+            mainAxisDistance: components.mainAxisDistance,
+            crossAxisDistance: components.crossAxisDistance,
+            squaredDistance: (deltaX * deltaX) + (deltaY * deltaY),
+            score: score
+        )
+    }
+
+    fileprivate static func isPreferredEdgeCandidate(_ candidate: EdgeFocusCandidate) -> Bool {
+        candidate.crossAxisDistance <= (candidate.mainAxisDistance * preferredCrossAxisRatio)
+    }
+
+    fileprivate static func isBetterEdgeCandidate(_ lhs: EdgeFocusCandidate, _ rhs: EdgeFocusCandidate) -> Bool {
+        if lhs.score != rhs.score {
+            return lhs.score < rhs.score
+        }
+        if lhs.squaredDistance != rhs.squaredDistance {
+            return lhs.squaredDistance < rhs.squaredDistance
+        }
+        if lhs.crossAxisDistance != rhs.crossAxisDistance {
+            return lhs.crossAxisDistance < rhs.crossAxisDistance
+        }
+        return lhs.edge.id.rawValue < rhs.edge.id.rawValue
+    }
 }
 
 /// Direction-specific distance components used in candidate scoring.
@@ -173,6 +290,15 @@ private struct DirectionComponents {
 /// Immutable value used for ordering directional focus candidates.
 private struct FocusCandidate {
     let node: CanvasNode
+    let mainAxisDistance: Double
+    let crossAxisDistance: Double
+    let squaredDistance: Double
+    let score: Double
+}
+
+/// Immutable value used for ordering directional edge-focus candidates.
+private struct EdgeFocusCandidate {
+    let edge: CanvasEdge
     let mainAxisDistance: Double
     let crossAxisDistance: Double
     let squaredDistance: Double

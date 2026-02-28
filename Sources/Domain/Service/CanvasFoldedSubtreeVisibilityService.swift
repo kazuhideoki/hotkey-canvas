@@ -73,25 +73,35 @@ public enum CanvasFoldedSubtreeVisibilityService {
         let visibleEdgesByID = graph.edgesByID.filter { _, edge in
             visibleNodeIDs.contains(edge.fromNodeID) && visibleNodeIDs.contains(edge.toNodeID)
         }
-        let visibleFocusedNodeID: CanvasNodeID? =
-            if let focusedNodeID = graph.focusedNodeID, visibleNodeIDs.contains(focusedNodeID) {
-                focusedNodeID
-            } else {
-                nil
-            }
+        let visibleFocusedNodeID = visibleFocusedNodeID(in: graph, visibleNodeIDs: visibleNodeIDs)
+        let visibleFocusedElement = visibleFocusedElement(
+            in: graph,
+            visibleNodeIDs: visibleNodeIDs,
+            visibleEdgesByID: visibleEdgesByID,
+            visibleFocusedNodeID: visibleFocusedNodeID
+        )
         let normalizedCollapsedRootNodeIDs = normalizedCollapsedRootNodeIDs(in: graph)
             .intersection(visibleNodeIDs)
-        let visibleSelectedNodeIDs = CanvasSelectionService.normalizedSelectedNodeIDs(
-            from: graph.selectedNodeIDs.intersection(visibleNodeIDs),
+        let visibleSelectedNodeIDs = visibleSelectedNodeIDs(
             in: graph,
-            focusedNodeID: visibleFocusedNodeID
+            visibleNodeIDs: visibleNodeIDs,
+            visibleFocusedNodeID: visibleFocusedNodeID
+        )
+        let visibleSelectedEdgeIDs = visibleSelectedEdgeIDs(
+            in: graph,
+            visibleNodesByID: visibleNodesByID,
+            visibleEdgesByID: visibleEdgesByID,
+            visibleFocusedNodeID: visibleFocusedNodeID,
+            visibleFocusedElement: visibleFocusedElement
         )
 
         return CanvasGraph(
             nodesByID: visibleNodesByID,
             edgesByID: visibleEdgesByID,
             focusedNodeID: visibleFocusedNodeID,
+            focusedElement: visibleFocusedElement,
             selectedNodeIDs: visibleSelectedNodeIDs,
+            selectedEdgeIDs: visibleSelectedEdgeIDs,
             collapsedRootNodeIDs: normalizedCollapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
@@ -99,6 +109,80 @@ public enum CanvasFoldedSubtreeVisibilityService {
 }
 
 extension CanvasFoldedSubtreeVisibilityService {
+    fileprivate static func visibleFocusedNodeID(
+        in graph: CanvasGraph,
+        visibleNodeIDs: Set<CanvasNodeID>
+    ) -> CanvasNodeID? {
+        if let focusedNodeID = graph.focusedNodeID, visibleNodeIDs.contains(focusedNodeID) {
+            return focusedNodeID
+        }
+        return nil
+    }
+
+    fileprivate static func visibleFocusedElement(
+        in graph: CanvasGraph,
+        visibleNodeIDs: Set<CanvasNodeID>,
+        visibleEdgesByID: [CanvasEdgeID: CanvasEdge],
+        visibleFocusedNodeID: CanvasNodeID?
+    ) -> CanvasFocusedElement? {
+        if let focusedElement = graph.focusedElement {
+            switch focusedElement {
+            case .node(let nodeID):
+                return visibleNodeIDs.contains(nodeID) ? focusedElement : nil
+            case .edge(let edgeFocus):
+                if visibleEdgesByID[edgeFocus.edgeID] != nil {
+                    return focusedElement
+                }
+                if let visibleFocusedNodeID {
+                    return .node(visibleFocusedNodeID)
+                }
+                return nil
+            }
+        }
+        if let visibleFocusedNodeID {
+            return .node(visibleFocusedNodeID)
+        }
+        return nil
+    }
+
+    fileprivate static func visibleSelectedNodeIDs(
+        in graph: CanvasGraph,
+        visibleNodeIDs: Set<CanvasNodeID>,
+        visibleFocusedNodeID: CanvasNodeID?
+    ) -> Set<CanvasNodeID> {
+        CanvasSelectionService.normalizedSelectedNodeIDs(
+            from: graph.selectedNodeIDs.intersection(visibleNodeIDs),
+            in: graph,
+            focusedNodeID: visibleFocusedNodeID
+        )
+    }
+
+    fileprivate static func visibleSelectedEdgeIDs(
+        in graph: CanvasGraph,
+        visibleNodesByID: [CanvasNodeID: CanvasNode],
+        visibleEdgesByID: [CanvasEdgeID: CanvasEdge],
+        visibleFocusedNodeID: CanvasNodeID?,
+        visibleFocusedElement: CanvasFocusedElement?
+    ) -> Set<CanvasEdgeID> {
+        let visibilityGraph = CanvasGraph(
+            nodesByID: visibleNodesByID,
+            edgesByID: visibleEdgesByID,
+            focusedNodeID: visibleFocusedNodeID,
+            focusedElement: visibleFocusedElement
+        )
+        let focusedEdgeID: CanvasEdgeID? =
+            if case .edge(let focus) = visibleFocusedElement {
+                focus.edgeID
+            } else {
+                nil
+            }
+        return CanvasSelectionService.normalizedSelectedEdgeIDs(
+            from: graph.selectedEdgeIDs.intersection(Set(visibleEdgesByID.keys)),
+            in: visibilityGraph,
+            focusedEdgeID: focusedEdgeID
+        )
+    }
+
     /// Builds deterministic parent-to-children adjacency for parent-child edges.
     /// - Parameter graph: Source graph snapshot.
     /// - Returns: Child identifiers keyed by parent identifier.

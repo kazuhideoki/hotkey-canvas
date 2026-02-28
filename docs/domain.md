@@ -17,7 +17,7 @@
 
 | ID | ドメイン名 | 主な型/サービス |
 | --- | --- | --- |
-| D1 | キャンバスグラフ編集 | `CanvasGraph`, `CanvasNode`, `CanvasEdge`, `CanvasCommand`, `CanvasDefaultNodeDistance`, `CanvasGraphCRUDService`, `CanvasGraphError` |
+| D1 | キャンバスグラフ編集 | `CanvasGraph`, `CanvasFocusedElement`, `CanvasEdgeFocus`, `CanvasNode`, `CanvasEdge`, `CanvasCommand`, `CanvasDefaultNodeDistance`, `CanvasGraphCRUDService`, `CanvasGraphError` |
 | D2 | フォーカス移動と複数選択 | `CanvasFocusDirection`, `CanvasFocusNavigationService`, `CanvasSelectionService` |
 | D3 | エリアレイアウト | `CanvasNodeArea`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService` |
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
@@ -76,6 +76,8 @@
   - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.attachments` はノード内添付、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
   - `CanvasAttachment`, `CanvasAttachmentID`, `CanvasAttachmentKind`, `CanvasAttachmentPlacement`
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`（`parentChild` エッジは `parentChildOrder` で兄弟順序を保持）
+  - `CanvasFocusedElement`（`.node` / `.edge` の操作対象）
+  - `CanvasEdgeFocus`（`edgeID` と `originNodeID` を保持する edge フォーカス情報）
   - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`、画像添付時の Diagram ノード上限 `diagramImageMaxSide = 330`）
 - コマンド
   - `CanvasCommand`
@@ -148,6 +150,8 @@
   - エッジの `fromNodeID` / `toNodeID` はグラフ内に存在する必要がある。
   - `parentChildOrder` は `parentChild` エッジの兄弟順序を表す任意値で、未設定時は座標順フォールバックで決定する。
   - ノード/エッジの ID 重複は許容しない。
+  - `CanvasGraph.focusedElement` は操作対象の種類を保持する。未指定時は `focusedNodeID` から `.node` を導出する。
+  - `CanvasGraph.selectedEdgeIDs` は `focusedElement == .edge` のときにのみ意味を持ち、正規化時に `focused edge` を必ず含む。
 - エラー（`CanvasGraphError`）
   - `invalidNodeID`
   - `invalidEdgeID`
@@ -180,6 +184,7 @@
 | メソッド | 責務 |
 | --- | --- |
 | `nextFocusedNodeID(in:moving:)` | 現在フォーカス位置と移動方向から、次にフォーカスすべき `CanvasNodeID` を決定する。 |
+| `nextFocusedEdgeID(in:from:moving:)` | 現在フォーカス edge と移動方向から、次にフォーカスすべき `CanvasEdgeID` を決定する。 |
 
 選択ロジックの要点:
 
@@ -194,6 +199,8 @@
 | --- | --- |
 | `normalizedSelectedNodeIDs(from:in:focusedNodeID:)` | 可視ノード以外を除外し、フォーカスノードを必ず選択集合へ含める。 |
 | `normalizedSelectedNodeIDs(in:)` | `CanvasGraph` 内の `selectedNodeIDs` を正規化する。 |
+| `normalizedSelectedEdgeIDs(from:in:focusedEdgeID:)` | 既存 edge 以外を除外し、フォーカス edge を必ず選択集合へ含める。 |
+| `normalizedSelectedEdgeIDs(in:)` | `CanvasGraph` 内の `selectedEdgeIDs` を正規化する。 |
 
 #### 利用状況（どこから使われるか）
 
@@ -222,6 +229,8 @@
   - 候補が無いときは現在フォーカスを返す（空グラフを除く）。
   - `selectedNodeIDs` は可視ノードかつ既存ノードのみを保持する。
   - `focusedNodeID != nil` のとき、`selectedNodeIDs` は必ず `focusedNodeID` を含む。
+  - `selectedEdgeIDs` は既存 edge のみを保持する。
+  - `focusedElement == .edge` のとき、`selectedEdgeIDs` は必ず `focused edge` を含む。
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 
@@ -430,11 +439,15 @@
 | `cmd+arrow` | `moveNode` |
 | `cmd+shift+arrow` | `nudgeNode` |
 | `opt+.` | `toggleVisibility` |
-| `cmd+l` | `switchTargetKind(.edge)` |
+| `tab` | `switchTargetKind(.edge)` |
+
+注記:
+- `switchTargetKind(.edge)` の実行は InterfaceAdapters 側で `node/edge` 対象切替として扱う。
+- 対象切替キーは `tab` を使用する。
 
 補足:
 
-- `cmd+k`（palette）、`cmd+f`（search）、undo/redo、zoom は `global` 管理であり primitive Intent 対象外。
+- `cmd+k`（palette）、`cmd+f`（search）、`cmd+l`（connect）、undo/redo、zoom は `global` 管理であり primitive Intent 対象外。
 - Add Node Mode Selection / Connect Node Selection / Command Palette 内キー操作は `modal` 管理であり primitive Intent 対象外。
 
 #### 利用状況（どこから使われるか）
@@ -656,6 +669,8 @@
 - 2026-02-22: 新規ウィンドウ起動時の初期ノード自動生成を廃止し、ノード未存在時は `Shift + Enter` と同一の Tree/Diagram モード選択導線から最初のノードを追加する仕様へ更新。
 - 2026-02-22: 全ノード削除後に複数空エリアが残る状態でも、`Shift + Enter` のモード選択追加が失敗しないように、ノード未存在時は選択モードに合うエリアを優先解決（なければ新規作成）する仕様へ更新。
 - 2026-02-28: Keymap Primitive Phase 1/2 として `primitive/global/modal` 境界、primitive Intent 語彙、KeyTrigger 対応表、3層解決順をドメイン仕様へ追加し、`KeymapIntentResolver` を導入。
+- 2026-02-28: edge 操作基盤として `CanvasFocusedElement` / `CanvasEdgeFocus` / `CanvasGraph.selectedEdgeIDs` を追加し、`CanvasFocusNavigationService.nextFocusedEdgeID` と `CanvasSelectionService` の edge 正規化を導入した。
+- 2026-02-28: キーマップを更新し、`cmd+l` を Connect Node Selection（global）へ復帰、`tab` を `switchTargetKind(.edge)`（primitive）へ再割り当てした。
 - 2026-02-23: `Shift + Enter` モード選択追加の empty graph 分岐を修正し、選択モードと不一致な `defaultTree` の誤優先を禁止。あわせて空グラフで area を事前作成した場合でも、履歴の `graphBeforeMutation` は必ず元グラフを保持して undo 整合性を維持するよう更新。
 - 2026-02-23: `CanvasCommand.connectNodes` と `Command + L`（`beginConnectNodeSelection`）を追加し、Diagram エリアで既存ノード同士を接続できる操作導線を実装した。
 - 2026-02-23: 画像専用の `CanvasNode.imagePath` と `CanvasCommand.setNodeImage` を廃止し、`CanvasAttachment` / `upsertNodeAttachment` に統合。ノード添付を将来拡張可能な複数要素として扱う仕様へ更新した。

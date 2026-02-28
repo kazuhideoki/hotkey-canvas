@@ -65,10 +65,20 @@ func test_resolve_controlL_returnsGlobalCenterFocusedNode() throws {
     #expect(route == .global(action: .centerFocusedNode))
 }
 
-@Test("CanvasHotkeyTranslator: Command+L resolves switch-target-kind edge intent")
-func test_resolve_commandL_returnsSwitchTargetKindEdgeIntent() throws {
+@Test("CanvasHotkeyTranslator: Command+L resolves begin-connect global action")
+func test_resolve_commandL_returnsBeginConnectGlobalAction() throws {
     let sut = CanvasHotkeyTranslator()
     let event = try makeKeyEvent(keyCode: 37, characters: "l", charactersIgnoringModifiers: "l", modifiers: [.command])
+
+    let route = sut.resolve(event)
+
+    #expect(route == .global(action: .beginConnectNodeSelection))
+}
+
+@Test("CanvasHotkeyTranslator: Tab resolves switch-target-kind edge intent")
+func test_resolve_tab_returnsSwitchTargetKindEdgeIntent() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try makeKeyEvent(keyCode: 48, characters: "\t", charactersIgnoringModifiers: "\t")
 
     let route = sut.resolve(event)
 
