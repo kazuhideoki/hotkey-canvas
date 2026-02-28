@@ -16,6 +16,7 @@ enum DiagramAreaPolicyService {
             .extendSelection,
             .moveNode,
             .nudgeNode,
+            .scaleSelectedNodes,
             .centerFocusedNode,
             .deleteSelectedOrFocusedNodes,
             .copySelectionOrFocusedSubtree,

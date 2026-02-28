@@ -6,19 +6,12 @@ extension ApplyCanvasCommandsUseCase {
     /// Normalizes diagram node side length by attachment-aware bounds.
     /// - Parameters:
     ///   - proposedSide: Candidate side length.
-    ///   - hasImageAttachment: Whether node has at least one image attachment.
     /// - Returns: Clamped square side length for diagram nodes.
     static func normalizedDiagramNodeSideLength(
-        proposedSide: Double,
-        hasImageAttachment: Bool
+        proposedSide: Double
     ) -> Double {
-        let minimum = CanvasDefaultNodeDistance.diagramNodeSide
-        let maximum =
-            if hasImageAttachment {
-                CanvasDefaultNodeDistance.diagramImageMaxSide
-            } else {
-                CanvasDefaultNodeDistance.diagramNodeSide
-            }
+        let minimum = CanvasDefaultNodeDistance.diagramMinNodeSide
+        let maximum = CanvasDefaultNodeDistance.diagramImageMaxSide
         let finiteProposedSide =
             if proposedSide.isFinite {
                 proposedSide
@@ -38,8 +31,7 @@ extension ApplyCanvasCommandsUseCase {
         proposedSide: Double
     ) -> CanvasBounds {
         let normalizedSide = normalizedDiagramNodeSideLength(
-            proposedSide: proposedSide,
-            hasImageAttachment: node.primaryImageAttachmentFilePath != nil
+            proposedSide: proposedSide
         )
         return CanvasBounds(
             x: node.bounds.x,

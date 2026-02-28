@@ -2,6 +2,11 @@ import Application
 import Domain
 import Testing
 
+private func expectNodeSizeEqual(_ actual: CanvasNode, _ expected: CanvasBounds) {
+    #expect(actual.bounds.width == expected.width)
+    #expect(actual.bounds.height == expected.height)
+}
+
 // Background: Tree copy/cut/paste in phase A uses in-memory clipboard and reconstructs subtree with new IDs.
 // Responsibility: Verify copy/cut/paste semantics, clipboard no-op behavior, and collapsed-parent expansion.
 @Test("ApplyCanvasCommandsUseCase: copy focused subtree survives delete and pastes under next focused sibling")
@@ -209,8 +214,8 @@ func test_apply_diagramArea_pastePreservesGroupFootprintAndRelativePositions() a
     let sourceAID = CanvasNodeID(rawValue: "source-a")
     let sourceBID = CanvasNodeID(rawValue: "source-b")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
-    let sourceABounds = CanvasBounds(x: 880, y: 480, width: 220, height: 220)
-    let sourceBBounds = CanvasBounds(x: 440, y: 40, width: 220, height: 220)
+    let sourceABounds = CanvasBounds(x: 880, y: 480, width: 300, height: 300)
+    let sourceBBounds = CanvasBounds(x: 440, y: 40, width: 260, height: 260)
     let graph = CanvasGraph(
         nodesByID: [
             focusedTargetID: CanvasNode(
@@ -265,6 +270,8 @@ func test_apply_diagramArea_pastePreservesGroupFootprintAndRelativePositions() a
     #expect(pastedMinX == 40)
     #expect((pastedSourceA.bounds.x - pastedSourceB.bounds.x) == (sourceABounds.x - sourceBBounds.x))
     #expect((pastedSourceA.bounds.y - pastedSourceB.bounds.y) == (sourceABounds.y - sourceBBounds.y))
+    expectNodeSizeEqual(pastedSourceA, sourceABounds)
+    expectNodeSizeEqual(pastedSourceB, sourceBBounds)
 }
 
 @Test("ApplyCanvasCommandsUseCase: pasteClipboardAtFocusedNode is no-op when clipboard is empty")

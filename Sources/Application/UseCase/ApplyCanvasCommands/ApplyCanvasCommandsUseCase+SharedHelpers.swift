@@ -4,8 +4,8 @@ import Foundation
 // Background: Multiple canvas command handlers reuse placement and edge-construction helpers.
 // Responsibility: Provide shared node/edge creation and placement routines.
 extension ApplyCanvasCommandsUseCase {
-    static let newNodeWidth: Double = 220
-    static let newNodeHeight: Double = 41
+    static let newNodeWidth: Double = CanvasDefaultNodeDistance.treeNodeWidth
+    static let newNodeHeight: Double = CanvasDefaultNodeDistance.treeNodeHeight
     static let defaultNewNodeX: Double = 48
     static let defaultNewNodeY: Double = 48
     static let newNodeVerticalSpacing: Double = CanvasDefaultNodeDistance.treeVertical

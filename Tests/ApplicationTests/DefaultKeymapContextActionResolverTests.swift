@@ -31,6 +31,15 @@ func test_resolve_moveFocusExtendSelection_returnsExtendSelectionCommand() {
     #expect(action == .apply(commands: [.extendSelection(.up)]))
 }
 
+@Test("DefaultKeymapContextActionResolver: scale-selection-up transform maps to scale-selected-nodes command")
+func test_resolve_transformScaleSelectionUp_returnsScaleSelectedNodesUp() {
+    let sut = DefaultKeymapContextActionResolver()
+
+    let action = sut.resolve(primitiveIntent: .transform(variant: .scaleSelectionUp))
+
+    #expect(action == .apply(commands: [.scaleSelectedNodes(.up)]))
+}
+
 @Test("DefaultKeymapContextActionResolver: output intent returns unsupported contract")
 func test_resolve_output_returnsReportUnsupportedIntent() {
     let sut = DefaultKeymapContextActionResolver()

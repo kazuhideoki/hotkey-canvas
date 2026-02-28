@@ -307,15 +307,26 @@ func test_resolve_commandShiftEqualsKeyCode_returnsZoomInGlobalAction() throws {
     #expect(route == .global(action: .zoomIn))
 }
 
-@Test("CanvasHotkeyTranslator: Command+Option+- resolves nil")
-func test_resolve_commandOptionMinus_returnsNil() throws {
+@Test("CanvasHotkeyTranslator: Command+Option+- resolves scale-selection-down intent")
+func test_resolve_commandOptionMinus_returnsScaleSelectionDownIntent() throws {
     let sut = CanvasHotkeyTranslator()
     let event = try makeKeyEvent(
         keyCode: 27, characters: "-", charactersIgnoringModifiers: "-", modifiers: [.command, .option])
 
     let route = sut.resolve(event)
 
-    #expect(route == nil)
+    #expect(route == .primitive(intent: .transform(variant: .scaleSelectionDown)))
+}
+
+@Test("CanvasHotkeyTranslator: Command+Option+Shift+= resolves scale-selection-up intent")
+func test_resolve_commandOptionShiftEquals_returnsScaleSelectionUpIntent() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try makeKeyEvent(
+        keyCode: 24, characters: "+", charactersIgnoringModifiers: "=", modifiers: [.command, .option, .shift])
+
+    let route = sut.resolve(event)
+
+    #expect(route == .primitive(intent: .transform(variant: .scaleSelectionUp)))
 }
 
 @Test("CanvasHotkeyTranslator: Command+C resolves edit copy-subtree intent")
