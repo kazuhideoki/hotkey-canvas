@@ -102,6 +102,7 @@ func test_apply_treeArea_copyPasteMultipleSelection_pastesSelectedNodesAsChildre
     #expect(pasteResult.newState.nodesByID.count == 5)
     let insertedNodeIDs = Set(pasteResult.newState.nodesByID.keys).subtracting(graph.nodesByID.keys)
     #expect(insertedNodeIDs.count == 2)
+    #expect(pasteResult.newState.selectedNodeIDs == insertedNodeIDs)
     let insertedTexts = insertedNodeIDs.compactMap { pasteResult.newState.nodesByID[$0]?.text }
     #expect(Set(insertedTexts) == Set(["source-a", "source-b"]))
     let focusedNode = try #require(
@@ -129,6 +130,7 @@ func test_apply_diagramArea_copyPasteMultipleSelection_preservesInternalEdges() 
     #expect(pasteResult.newState.nodesByID.count == 5)
     let insertedNodeIDs = Set(pasteResult.newState.nodesByID.keys).subtracting(graph.nodesByID.keys)
     #expect(insertedNodeIDs.count == 2)
+    #expect(pasteResult.newState.selectedNodeIDs == insertedNodeIDs)
 
     let insertedNormalEdges = pasteResult.newState.edgesByID.values.filter {
         $0.relationType == .normal
