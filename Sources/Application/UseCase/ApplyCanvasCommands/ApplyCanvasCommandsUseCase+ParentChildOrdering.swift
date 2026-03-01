@@ -158,6 +158,7 @@ extension ApplyCanvasCommandsUseCase {
             fromNodeID: edge.fromNodeID,
             toNodeID: edge.toNodeID,
             relationType: edge.relationType,
+            directionality: edge.directionality,
             parentChildOrder: parentChildOrder,
             label: edge.label,
             metadata: edge.metadata

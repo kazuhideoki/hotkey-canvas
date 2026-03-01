@@ -32,6 +32,7 @@ extension ApplyCanvasCommandsUseCase {
         }
     }
 
+    // swiftlint:disable cyclomatic_complexity
     private func applyGraphEditingCommand(
         command: CanvasCommand,
         to graph: CanvasGraph,
@@ -69,6 +70,12 @@ extension ApplyCanvasCommandsUseCase {
             return toggleFoldFocusedSubtree(in: graph)
         case .centerFocusedNode:
             return noOpMutationResult(for: graph)
+        case .cycleFocusedEdgeDirectionality(let focusedEdge, let selectedEdgeIDs):
+            return cycleFocusedEdgeDirectionality(
+                in: graph,
+                focusedEdge: focusedEdge,
+                selectedEdgeIDs: selectedEdgeIDs
+            )
         case .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges:
             return try applyDeleteCommand(
                 command: command,
@@ -88,6 +95,7 @@ extension ApplyCanvasCommandsUseCase {
             return noOpMutationResult(for: graph)
         }
     }
+    // swiftlint:enable cyclomatic_complexity
 
     private func applyDeleteCommand(
         command: CanvasCommand,
@@ -108,6 +116,8 @@ extension ApplyCanvasCommandsUseCase {
                 focusedEdge: focusedEdge,
                 selectedEdgeIDs: selectedEdgeIDs
             )
+        case .cycleFocusedEdgeDirectionality:
+            return noOpMutationResult(for: graph)
         case .addNode,
             .addChildNode,
             .addSiblingNode,
@@ -127,7 +137,6 @@ extension ApplyCanvasCommandsUseCase {
             .pasteClipboardAtFocusedNode,
             .setNodeText,
             .upsertNodeAttachment,
-            .scaleSelectedNodes,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,
@@ -165,6 +174,7 @@ extension ApplyCanvasCommandsUseCase {
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
+            .cycleFocusedEdgeDirectionality,
             .deleteSelectedOrFocusedNodes,
             .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree,
@@ -215,6 +225,7 @@ extension ApplyCanvasCommandsUseCase {
             .nudgeNode,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
+            .cycleFocusedEdgeDirectionality,
             .deleteSelectedOrFocusedNodes,
             .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree,
@@ -264,6 +275,7 @@ extension ApplyCanvasCommandsUseCase {
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
+            .cycleFocusedEdgeDirectionality,
             .deleteSelectedOrFocusedNodes,
             .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree,
@@ -327,6 +339,8 @@ extension ApplyCanvasCommandsUseCase {
         case .connectNodes(let fromNodeID, _):
             return CanvasAreaMembershipService.areaID(containing: fromNodeID, in: graph)
         case .deleteSelectedOrFocusedEdges(let focusedEdge, _):
+            return CanvasAreaMembershipService.areaID(containing: focusedEdge.originNodeID, in: graph)
+        case .cycleFocusedEdgeDirectionality(let focusedEdge, _):
             return CanvasAreaMembershipService.areaID(containing: focusedEdge.originNodeID, in: graph)
         case .addChildNode,
             .addSiblingNode,
