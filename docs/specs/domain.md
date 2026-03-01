@@ -592,6 +592,7 @@
     - Diagram エリアでは `duplicateSelectionAsSibling` を不許可とする（`unsupportedCommandInMode`）。
     - Diagram エリアでは `connectNodes` を許可し、同一エリア内の既存ノード同士を `normal` エッジで接続する（自己接続・跨ぎ接続は no-op、同一ノード間の重複接続は許可）。接続成功時はフォーカスと選択を接続先ノードへ移す。
     - Tree エリアでは `moveNode` 実行時、フォーカスが選択集合に含まれ同一エリアで2件以上選択されている場合、選択ノード群をフォーカス移動先の親配下へ兄弟として再配置する。複数の親にまたがる選択でも移動後は同一親へ一本化し、選択内の親子関係はフラット化する。`up` / `down` は選択中の兄弟ノードを飛ばして非選択兄弟と入れ替え、複数選択を1ブロックとして並び替える。
+    - Tree エリアでは top-level root（親を持たないノード）に対する `moveNode` は no-op とし、他エリアノードとの並び替えや親子再接続を発生させない。
     - Diagram エリアでは `moveNode` を8方向移動として扱う。接続アンカーがある場合はアンカー基準でステップ距離（`CanvasDefaultNodeDistance` 横 `220`・縦 `220`）を決定し、移動先がアンカーと同じ行/列でステップ距離未満になるときは移動方向の軸距離を最低1ステップに補正する。補正後も重なる場合のみ、同方向に追加ステップして重なりを回避する。接続アンカーがない場合でも、フォーカスノード自身の寸法を基準に同じグリッド間隔で移動できる。複数選択条件（フォーカスを含む同一エリア2件以上）を満たす場合は、フォーカスで解決した移動量を選択ノード群へ同一の平行移動として適用する。
     - Diagram エリアで `moveNode` を適用した後は、同一エリア内ノード衝突も即時解消するために area layout を実行する。
     - Diagram エリアでは `nudgeNode` も `moveNode` と同じ位置解決ロジック（アンカー距離補正と重なり回避を含む）を使い、ステップのみ `moveNode` の 1/4 倍（`cmd+矢印 : cmd+shift+矢印 = 4:1`）で移動する。複数選択条件を満たす場合は `moveNode` と同様に選択ノード群を一括平行移動する。
@@ -717,3 +718,5 @@
 - 2026-03-01: Diagram エリアの `connectNodes` を更新し、同一ノード間の `normal` エッジ重複接続を許可した。重複エッジは表示時にレーン分離で描画し、edge フォーカス移動では同一点エッジ群を方向キーで巡回できる仕様へ更新した。
 - 2026-03-01: `CanvasFocusNavigationService.nextFocusedEdgeID` を更新し、重複 edge の巡回を方向候補探索より優先するよう変更。巡回対象は「同一 endpoint ペア（無向・relationType 一致）」に限定し、中心座標一致のみの無関係 edge への遷移を禁止した。
 - 2026-03-01: `CanvasEdgeDirectionality`（`none/fromTo/toFrom`）と `CanvasCommand.cycleFocusedEdgeDirectionality` を追加し、edge ターゲット中の `cmd+;` / Command Palette から矢印方向を循環切替できるよう更新。表示側は `directionality` に応じてエッジ先端へ矢印を描画する仕様に変更した。あわせて directionality 切替時の `selectedEdgeIDs` 受け渡しを追加し、edge ターゲットの複数選択が潰れないよう修正した。
+- 2026-03-01: Tree エリアの `moveNode` を更新し、top-level root への移動コマンドは常に no-op として扱うよう変更。Diagram エリア共存時でも root が他エリアノードへ再接続されない仕様へ修正した。
+- 2026-03-01: Tree エリアの `moveNode` を補正し、multi-selection の `up/down` 経路でも top-level root への移動を no-op とした。単一選択経路と同じ制約で一貫するよう更新した。
