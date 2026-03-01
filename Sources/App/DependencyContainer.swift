@@ -26,4 +26,9 @@ struct DependencyContainer {
     func closeCanvasSession(id: CanvasSessionID) -> Bool {
         canvasSessionStore.closeSession(id: id)
     }
+
+    /// Returns latest apply results for every active session.
+    func debugStateResultsBySessionID() async -> [CanvasSessionID: ApplyResult] {
+        await canvasSessionStore.currentResultsBySessionID()
+    }
 }

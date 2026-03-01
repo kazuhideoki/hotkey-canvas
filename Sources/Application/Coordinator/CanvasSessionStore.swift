@@ -49,6 +49,25 @@ public final class CanvasSessionStore {
         inputPortBySessionID[sessionID]
     }
 
+    /// Returns active session identifiers in deterministic order for debug tooling.
+    /// - Returns: Active session identifiers sorted by raw value.
+    public func activeSessionIDs() -> [CanvasSessionID] {
+        inputPortBySessionID.keys.sorted { $0.rawValue < $1.rawValue }
+    }
+
+    /// Returns current apply results for all active sessions.
+    /// - Returns: Dictionary keyed by session identifier with latest in-memory result.
+    public func currentResultsBySessionID() async -> [CanvasSessionID: ApplyResult] {
+        var resultsBySessionID: [CanvasSessionID: ApplyResult] = [:]
+        for sessionID in activeSessionIDs() {
+            guard let inputPort = inputPortBySessionID[sessionID] else {
+                continue
+            }
+            resultsBySessionID[sessionID] = await inputPort.getCurrentResult()
+        }
+        return resultsBySessionID
+    }
+
     /// Closes one session and removes it from store ownership.
     /// - Parameter id: Session identifier.
     /// - Returns: `true` when the session existed and was removed.
