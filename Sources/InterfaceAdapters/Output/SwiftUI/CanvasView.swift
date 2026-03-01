@@ -414,14 +414,21 @@ public struct CanvasView: View {
                 synchronizeEdgeTargetState()
             }
             .onChange(of: viewModel.areaIDByNodeID) { _ in
+                applyFocusVisibilityRule(viewportSize: viewportSize)
                 synchronizeConnectNodeSelectionState()
                 synchronizeEdgeTargetState()
             }
             .onChange(of: viewModel.edges) { _ in synchronizeEdgeTargetState() }
             .onChange(of: viewModel.focusedEdgeID) { _ in synchronizeEdgeTargetStateFromViewModel() }
-            .onChange(of: viewModel.focusedAreaID) { _ in synchronizeEdgeTargetStateFromViewModel() }
+            .onChange(of: viewModel.focusedAreaID) { _ in
+                applyFocusVisibilityRule(viewportSize: viewportSize)
+                synchronizeEdgeTargetStateFromViewModel()
+            }
             .onChange(of: viewModel.selectedEdgeIDs) { _ in synchronizeEdgeTargetStateFromViewModel() }
             .onChange(of: viewModel.diagramNodeIDs) { _ in synchronizeEdgeTargetState() }
+            .onChange(of: operationTargetKind) { _ in
+                applyFocusVisibilityRule(viewportSize: viewportSize)
+            }
             .onChange(of: editingContext) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
             }
@@ -429,7 +436,10 @@ public struct CanvasView: View {
                 applyFocusVisibilityRule(viewportSize: viewportSize)
             }
             .onChange(of: zoomScale) { _ in
-                applyFocusVisibilityRule(viewportSize: viewportSize)
+                applyFocusVisibilityRule(
+                    viewportSize: viewportSize,
+                    allowZoomOutToFitFocusedShape: false
+                )
             }
         }
         .onReceive(viewModel.$pendingEditingNodeID) { pendingNodeID in

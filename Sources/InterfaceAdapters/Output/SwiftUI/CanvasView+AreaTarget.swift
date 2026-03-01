@@ -4,6 +4,8 @@ import Domain
 import SwiftUI
 
 extension CanvasView {
+    static let areaFocusOutlinePadding: Double = 18
+
     func areaFocusOverlay(
         displayNodes: [CanvasNode],
         viewportSize: CGSize,
@@ -27,7 +29,7 @@ extension CanvasView {
             )
         else { return AnyView(EmptyView()) }
 
-        let areaPath = areaOutlinePath(outline: outline, padding: 18)
+        let areaPath = areaOutlinePath(outline: outline, padding: Self.areaFocusOutlinePadding)
             .applying(
                 CanvasViewportTransform.affineTransform(
                     viewportSize: viewportSize,

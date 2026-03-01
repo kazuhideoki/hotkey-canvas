@@ -89,4 +89,39 @@ enum CanvasViewportPanPolicy {
 
         return CGSize(width: dx, height: dy)
     }
+
+    /// Computes a zoom scale that can contain the focused shape in the viewport.
+    /// - Parameters:
+    ///   - focusRect: Focused shape frame in canvas/world coordinates.
+    ///   - viewportSize: Current viewport size.
+    ///   - currentZoomScale: Current viewport zoom scale.
+    ///   - minimumZoomScale: Lower bound used to avoid shrinking below supported zoom range.
+    /// - Returns: A zoom scale that is less than or equal to the current scale and fits the focus when possible.
+    static func zoomScaleToFit(
+        focusRect: CGRect,
+        viewportSize: CGSize,
+        currentZoomScale: Double,
+        minimumZoomScale: Double
+    ) -> Double {
+        guard
+            focusRect.width > 0,
+            focusRect.height > 0,
+            viewportSize.width > 0,
+            viewportSize.height > 0,
+            currentZoomScale.isFinite,
+            currentZoomScale > 0
+        else {
+            return currentZoomScale
+        }
+
+        let widthFitScale = viewportSize.width / focusRect.width
+        let heightFitScale = viewportSize.height / focusRect.height
+        let fitScale = min(widthFitScale, heightFitScale)
+
+        guard fitScale.isFinite, fitScale > 0 else {
+            return currentZoomScale
+        }
+
+        return min(currentZoomScale, max(fitScale, minimumZoomScale))
+    }
 }
