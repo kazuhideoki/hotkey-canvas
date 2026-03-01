@@ -146,6 +146,9 @@ extension ApplyCanvasCommandsUseCase {
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
+        guard !isTopLevelParent(focusedNodeID, in: focusedGraph) else {
+            return graph
+        }
         switch direction {
         case .up:
             return try moveNodeVertically(in: focusedGraph, offset: -1)
@@ -166,30 +169,16 @@ extension ApplyCanvasCommandsUseCase {
         targetNodeIDs: [CanvasNodeID],
         direction: CanvasNodeMoveDirection
     ) throws -> CanvasGraph {
-        let targetNodeIDSet = Set(targetNodeIDs)
-        let focusedMovedGraph: CanvasGraph
-        switch direction {
-        case .up:
-            focusedMovedGraph = try moveNodeVerticallyInMultiSelection(
-                in: graph,
-                focusedNodeID: focusedNodeID,
-                offset: -1,
-                targetNodeIDs: targetNodeIDSet
-            )
-        case .down:
-            focusedMovedGraph = try moveNodeVerticallyInMultiSelection(
-                in: graph,
-                focusedNodeID: focusedNodeID,
-                offset: 1,
-                targetNodeIDs: targetNodeIDSet
-            )
-        case .left, .right, .upLeft, .upRight, .downLeft, .downRight:
-            focusedMovedGraph = try moveSingleTreeNode(
-                in: graph,
-                focusedNodeID: focusedNodeID,
-                direction: direction
-            )
+        guard !isTopLevelParent(focusedNodeID, in: graph) else {
+            return graph
         }
+        let targetNodeIDSet = Set(targetNodeIDs)
+        let focusedMovedGraph = try moveTreeNodesAsSiblingsFocusedGraph(
+            in: graph,
+            focusedNodeID: focusedNodeID,
+            direction: direction,
+            targetNodeIDSet: targetNodeIDSet
+        )
         guard focusedMovedGraph != graph else {
             return graph
         }
@@ -228,6 +217,36 @@ extension ApplyCanvasCommandsUseCase {
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
             areasByID: graph.areasByID
         )
+    }
+
+    private func moveTreeNodesAsSiblingsFocusedGraph(
+        in graph: CanvasGraph,
+        focusedNodeID: CanvasNodeID,
+        direction: CanvasNodeMoveDirection,
+        targetNodeIDSet: Set<CanvasNodeID>
+    ) throws -> CanvasGraph {
+        switch direction {
+        case .up:
+            return try moveNodeVerticallyInMultiSelection(
+                in: graph,
+                focusedNodeID: focusedNodeID,
+                offset: -1,
+                targetNodeIDs: targetNodeIDSet
+            )
+        case .down:
+            return try moveNodeVerticallyInMultiSelection(
+                in: graph,
+                focusedNodeID: focusedNodeID,
+                offset: 1,
+                targetNodeIDs: targetNodeIDSet
+            )
+        case .left, .right, .upLeft, .upRight, .downLeft, .downRight:
+            return try moveSingleTreeNode(
+                in: graph,
+                focusedNodeID: focusedNodeID,
+                direction: direction
+            )
+        }
     }
 
     private func moveNodeVertically(in graph: CanvasGraph, offset: Int) throws -> CanvasGraph {
