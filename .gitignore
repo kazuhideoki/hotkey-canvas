@@ -2,3 +2,4 @@
 AGENTS.override.md
 .build
 .DS_Store
+.tmp
