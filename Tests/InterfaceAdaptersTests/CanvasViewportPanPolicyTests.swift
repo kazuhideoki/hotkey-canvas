@@ -72,3 +72,39 @@ func test_overflowCompensation_returnsMinimalOverflowAmount() {
     #expect(compensation.width == -80)
     #expect(compensation.height == 20)
 }
+
+@Test("CanvasViewportPanPolicy: zoomScaleToFit shrinks scale to keep focused shape in viewport")
+func test_zoomScaleToFit_shrinksScale_whenFocusedShapeIsLargerThanViewport() {
+    let scale = CanvasViewportPanPolicy.zoomScaleToFit(
+        focusRect: CGRect(x: 0, y: 0, width: 1_600, height: 900),
+        viewportSize: CGSize(width: 800, height: 600),
+        currentZoomScale: 1.0,
+        minimumZoomScale: 0.25
+    )
+
+    #expect(scale == 0.5)
+}
+
+@Test("CanvasViewportPanPolicy: zoomScaleToFit keeps current scale when focused shape already fits")
+func test_zoomScaleToFit_keepsCurrentScale_whenFocusedShapeFits() {
+    let scale = CanvasViewportPanPolicy.zoomScaleToFit(
+        focusRect: CGRect(x: 0, y: 0, width: 300, height: 200),
+        viewportSize: CGSize(width: 800, height: 600),
+        currentZoomScale: 1.0,
+        minimumZoomScale: 0.25
+    )
+
+    #expect(scale == 1.0)
+}
+
+@Test("CanvasViewportPanPolicy: zoomScaleToFit respects minimum zoom scale")
+func test_zoomScaleToFit_respectsMinimumScale() {
+    let scale = CanvasViewportPanPolicy.zoomScaleToFit(
+        focusRect: CGRect(x: 0, y: 0, width: 8_000, height: 6_000),
+        viewportSize: CGSize(width: 800, height: 600),
+        currentZoomScale: 1.0,
+        minimumZoomScale: 0.25
+    )
+
+    #expect(scale == 0.25)
+}
