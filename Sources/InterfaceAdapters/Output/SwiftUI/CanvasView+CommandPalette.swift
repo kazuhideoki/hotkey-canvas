@@ -4,6 +4,9 @@ import Domain
 import Foundation
 
 extension CanvasView {
+    static let commandPaletteRecentPinnedCount = 5
+    static let commandPaletteRecentHistoryLimit = 50
+
     enum CommandPaletteAction: Equatable {
         case shortcut(CanvasShortcutAction)
         case deleteSelectedOrFocusedEdges(CanvasCommand)
@@ -45,12 +48,17 @@ extension CanvasView {
             .sorted { lhs, rhs in
                 lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
             }
+        let prioritizedItems = Self.commandPaletteItemsPrioritizingRecent(
+            orderedItems,
+            recentItemIDs: commandPaletteRecentItemIDs,
+            maxPinnedCount: Self.commandPaletteRecentPinnedCount
+        )
 
         guard !commandPaletteQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return orderedItems
+            return prioritizedItems
         }
 
-        return orderedItems.filter { item in
+        return prioritizedItems.filter { item in
             matchesCommandPaletteQuery(item.searchText, commandPaletteQuery)
         }
     }
@@ -229,6 +237,7 @@ extension CanvasView {
         case .insertImageFromFinder:
             insertImageFromFinder()
         }
+        markCommandPaletteItemAsRecentlyUsed(itemID: item.id)
         closeCommandPalette()
     }
 
@@ -276,6 +285,39 @@ extension CanvasView {
             return []
         }
         return ["\(verb) \(noun)"]
+    }
+
+    static func commandPaletteItemsPrioritizingRecent(
+        _ items: [CommandPaletteItem],
+        recentItemIDs: [String],
+        maxPinnedCount: Int
+    ) -> [CommandPaletteItem] {
+        let pinnedIDs = Array(recentItemIDs.prefix(maxPinnedCount))
+        guard !pinnedIDs.isEmpty else {
+            return items
+        }
+
+        let pinnedIndexByID = Dictionary(
+            uniqueKeysWithValues: pinnedIDs.enumerated().map { ($0.element, $0.offset) }
+        )
+        let pinnedItems =
+            items
+            .filter { pinnedIndexByID[$0.id] != nil }
+            .sorted { lhs, rhs in
+                (pinnedIndexByID[lhs.id] ?? Int.max) < (pinnedIndexByID[rhs.id] ?? Int.max)
+            }
+        let remainingItems = items.filter { pinnedIndexByID[$0.id] == nil }
+        return pinnedItems + remainingItems
+    }
+
+    private func markCommandPaletteItemAsRecentlyUsed(itemID: String) {
+        commandPaletteRecentItemIDs.removeAll { $0 == itemID }
+        commandPaletteRecentItemIDs.insert(itemID, at: 0)
+        if commandPaletteRecentItemIDs.count > Self.commandPaletteRecentHistoryLimit {
+            commandPaletteRecentItemIDs = Array(
+                commandPaletteRecentItemIDs.prefix(Self.commandPaletteRecentHistoryLimit)
+            )
+        }
     }
 
     private func commandPaletteContext() -> CanvasCommandPaletteContext {

@@ -16,6 +16,7 @@ public struct CanvasView: View {
     @State var commandPaletteQuery: String = ""
     @State var isCommandPalettePresented = false
     @State var selectedCommandPaletteIndex: Int = 0
+    @State var commandPaletteRecentItemIDs: [String] = []
     @State var searchQuery: String = ""
     @State var isSearchPresented = false
     @State var searchFocusedMatch: CanvasSearchMatch?
@@ -86,6 +87,9 @@ public struct CanvasView: View {
             )
             let laneOffsetByEdgeID = CanvasEdgeRouting.laneOffsetByEdgeID(edges: viewModel.edges)
             let commandPaletteItems = filteredCommandPaletteItems()
+            let recentCommandPaletteItemIDs = Set(
+                commandPaletteRecentItemIDs.prefix(Self.commandPaletteRecentPinnedCount)
+            )
             ZStack(alignment: .topLeading) {
                 styleColor(.textBackground)
                     .ignoresSafeArea()
@@ -133,6 +137,11 @@ public struct CanvasView: View {
                                 VStack(spacing: 0) {
                                     ForEach(Array(commandPaletteItems.enumerated()), id: \.element.id) { index, item in
                                         HStack {
+                                            if recentCommandPaletteItemIDs.contains(item.id) {
+                                                Image(systemName: "clock.arrow.circlepath")
+                                                    .font(.system(size: 12, weight: .semibold))
+                                                    .foregroundStyle(.secondary)
+                                            }
                                             Text(item.title)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                             Text(item.shortcutLabel)
