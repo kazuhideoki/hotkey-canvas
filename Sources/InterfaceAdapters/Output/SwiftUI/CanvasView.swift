@@ -23,6 +23,9 @@ public struct CanvasView: View {
     @State var searchQuery: String = ""
     @State var isSearchPresented = false
     @State var searchFocusedMatch: CanvasSearchMatch?
+    @State var searchQueryHistory: [String] = []
+    @State var searchQueryHistoryCursor: Int?
+    @State var searchQueryDraftBeforeHistoryNavigation: String = ""
     @State var isAddNodeModePopupPresented = false
     @State var selectedAddNodeMode: CanvasEditingMode = .tree
     @State var hasInitializedCameraAnchor = false

@@ -85,6 +85,11 @@ extension CanvasView {
             guard definition.isVisibleInCommandPalette else {
                 continue
             }
+            if operationTargetKind == .area,
+                Self.isCommandPaletteShortcutHiddenInAreaTarget(definition.action)
+            {
+                continue
+            }
             let searchText = Self.commandPaletteSearchText(
                 title: definition.title,
                 shortcutLabel: definition.shortcutLabel,
@@ -100,7 +105,9 @@ extension CanvasView {
                 )
             )
         }
-        if let markdownToggleItem = focusedNodeMarkdownToggleCommandPaletteItem() {
+        if operationTargetKind != .area,
+            let markdownToggleItem = focusedNodeMarkdownToggleCommandPaletteItem()
+        {
             items.append(markdownToggleItem)
         }
         if let edgeDeletionItem = edgeDeletionCommandPaletteItem() {
@@ -109,7 +116,7 @@ extension CanvasView {
         if let edgeDirectionalityItem = edgeDirectionalityCommandPaletteItem() {
             items.append(edgeDirectionalityItem)
         }
-        if viewModel.focusedNodeID != nil {
+        if operationTargetKind != .area, viewModel.focusedNodeID != nil {
             items.append(
                 CommandPaletteItem(
                     id: "insertImageFromFinder",
@@ -128,6 +135,24 @@ extension CanvasView {
             items.append(alignAllAreasItem)
         }
         return items
+    }
+
+    static func isCommandPaletteShortcutHiddenInAreaTarget(_ action: CanvasShortcutAction) -> Bool {
+        switch action {
+        case .apply(let commands):
+            return commands.contains { command in
+                switch command {
+                case .centerFocusedNode:
+                    return true
+                default:
+                    return blocksCommandInAreaTarget(command)
+                }
+            }
+        case .beginConnectNodeSelection:
+            return true
+        case .undo, .redo, .zoomIn, .zoomOut, .openCommandPalette:
+            return false
+        }
     }
 
     private func focusedNodeMarkdownToggleCommandPaletteItem() -> CommandPaletteItem? {

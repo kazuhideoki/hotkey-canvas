@@ -7,6 +7,9 @@ struct CanvasSearchTextField: NSViewRepresentable {
     @Binding var text: String
     let onSubmitForward: () -> Void
     let onSubmitBackward: () -> Void
+    let onMoveHistoryOlder: () -> Void
+    let onMoveHistoryNewer: () -> Void
+    let onTextEdited: () -> Void
     let onCancel: () -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -14,6 +17,9 @@ struct CanvasSearchTextField: NSViewRepresentable {
             text: $text,
             onSubmitForward: onSubmitForward,
             onSubmitBackward: onSubmitBackward,
+            onMoveHistoryOlder: onMoveHistoryOlder,
+            onMoveHistoryNewer: onMoveHistoryNewer,
+            onTextEdited: onTextEdited,
             onCancel: onCancel
         )
     }
@@ -42,6 +48,9 @@ struct CanvasSearchTextField: NSViewRepresentable {
         context.coordinator.updateHandlers(
             onSubmitForward: onSubmitForward,
             onSubmitBackward: onSubmitBackward,
+            onMoveHistoryOlder: onMoveHistoryOlder,
+            onMoveHistoryNewer: onMoveHistoryNewer,
+            onTextEdited: onTextEdited,
             onCancel: onCancel
         )
     }
@@ -52,27 +61,42 @@ extension CanvasSearchTextField {
         private let text: Binding<String>
         private var onSubmitForward: () -> Void
         private var onSubmitBackward: () -> Void
+        private var onMoveHistoryOlder: () -> Void
+        private var onMoveHistoryNewer: () -> Void
+        private var onTextEdited: () -> Void
         private var onCancel: () -> Void
 
         init(
             text: Binding<String>,
             onSubmitForward: @escaping () -> Void,
             onSubmitBackward: @escaping () -> Void,
+            onMoveHistoryOlder: @escaping () -> Void,
+            onMoveHistoryNewer: @escaping () -> Void,
+            onTextEdited: @escaping () -> Void,
             onCancel: @escaping () -> Void
         ) {
             self.text = text
             self.onSubmitForward = onSubmitForward
             self.onSubmitBackward = onSubmitBackward
+            self.onMoveHistoryOlder = onMoveHistoryOlder
+            self.onMoveHistoryNewer = onMoveHistoryNewer
+            self.onTextEdited = onTextEdited
             self.onCancel = onCancel
         }
 
         func updateHandlers(
             onSubmitForward: @escaping () -> Void,
             onSubmitBackward: @escaping () -> Void,
+            onMoveHistoryOlder: @escaping () -> Void,
+            onMoveHistoryNewer: @escaping () -> Void,
+            onTextEdited: @escaping () -> Void,
             onCancel: @escaping () -> Void
         ) {
             self.onSubmitForward = onSubmitForward
             self.onSubmitBackward = onSubmitBackward
+            self.onMoveHistoryOlder = onMoveHistoryOlder
+            self.onMoveHistoryNewer = onMoveHistoryNewer
+            self.onTextEdited = onTextEdited
             self.onCancel = onCancel
         }
 
@@ -81,6 +105,7 @@ extension CanvasSearchTextField {
                 return
             }
             text.wrappedValue = textField.stringValue
+            onTextEdited()
         }
 
         func control(
@@ -105,6 +130,18 @@ extension CanvasSearchTextField {
                 return true
             case #selector(NSResponder.cancelOperation(_:)):
                 onCancel()
+                return true
+            case #selector(NSResponder.moveUp(_:)):
+                guard textView.hasMarkedText() == false else {
+                    return false
+                }
+                onMoveHistoryOlder()
+                return true
+            case #selector(NSResponder.moveDown(_:)):
+                guard textView.hasMarkedText() == false else {
+                    return false
+                }
+                onMoveHistoryNewer()
                 return true
             default:
                 return false
