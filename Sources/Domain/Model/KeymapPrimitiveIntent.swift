@@ -46,6 +46,7 @@ public enum KeymapPrimitiveIntent: Equatable, Sendable {
     case duplicate
     case attach
     case switchTargetKind(variant: KeymapSwitchTargetKindIntentVariant)
+    case cycleFocusedEdgeDirectionality
     case moveFocus(direction: CanvasFocusDirection, variant: KeymapMoveFocusIntentVariant)
     case moveNode(direction: CanvasNodeMoveDirection)
     case nudgeNode(direction: CanvasNodeMoveDirection)

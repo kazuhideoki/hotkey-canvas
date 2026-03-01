@@ -217,6 +217,8 @@ private func applyTranslatedEvent(
         switch resolver.resolve(primitiveIntent: intent) {
         case .apply(let commands):
             await viewModel.apply(commands: commands)
+        case .cycleFocusedEdgeDirectionality:
+            return
         case .presentAddNodeModeSelection:
             await viewModel.addNodeFromModeSelection(mode: .tree)
         case .switchTargetKind, .reportUnsupportedIntent:

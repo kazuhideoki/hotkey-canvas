@@ -5,7 +5,7 @@
 - `Sources/Domain/` の責務をドメイン単位で整理し、実装時の判断基準を明確にする。
 - Domain の構造、サービス責務、利用状況、不変条件をまとめ、変更時の影響範囲を追跡しやすくする。
 - Domain テストと Application/InterfaceAdapters の利用実態を対応づけ、仕様と実装のずれを防ぐ。
-- ドメイン構造の関係図は `docs/domain-er.md` を参照する。
+- ドメイン構造の関係図は `docs/specs/domain-er.md` を参照する。
 
 ## 2. 対象範囲
 
@@ -78,8 +78,13 @@
 - エンティティ/値オブジェクト
   - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.attachments` はノード内添付、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
   - `CanvasAttachment`, `CanvasAttachmentID`, `CanvasAttachmentKind`, `CanvasAttachmentPlacement`
+<<<<<<< HEAD:docs/domain.md
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`（`parentChild` エッジは `parentChildOrder` で兄弟順序を保持）
   - `CanvasFocusedElement`（`.node` / `.edge` / `.area` の操作対象）
+=======
+  - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`, `CanvasEdgeDirectionality`（`parentChild` エッジは `parentChildOrder` で兄弟順序を保持、`directionality` は `none/fromTo/toFrom` で矢印表示方向を保持）
+  - `CanvasFocusedElement`（`.node` / `.edge` の操作対象）
+>>>>>>> main:docs/specs/domain.md
   - `CanvasEdgeFocus`（`edgeID` と `originNodeID` を保持する edge フォーカス情報）
   - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`、画像添付時の Diagram ノード上限 `diagramImageMaxSide = 330`、Diagram ノード最小辺長 `diagramMinNodeSide = 110`、選択ノード拡縮ステップ `nodeScaleStepRatio = 0.1`）
 - コマンド
@@ -97,6 +102,7 @@
   - `CanvasCommand.cutSelectionOrFocusedSubtree`
   - `CanvasCommand.pasteClipboardAtFocusedNode`
   - `CanvasCommand.deleteSelectedOrFocusedEdges(focusedEdge:selectedEdgeIDs:)`
+  - `CanvasCommand.cycleFocusedEdgeDirectionality(focusedEdge:selectedEdgeIDs:)`
   - `CanvasCommand.duplicateSelectionAsSibling`
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
   - `CanvasCommand.alignAllAreasVertically`
@@ -129,6 +135,7 @@
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ConnectNodes.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteFocusedNode.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteSelectedOrFocusedEdges.swift`
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CycleFocusedEdgeDirectionality.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DuplicateSelectionAsSibling.swift`
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveNode.swift`
@@ -450,11 +457,17 @@
 | `cmd+arrow` | `moveNode` |
 | `cmd+shift+arrow` | `nudgeNode` |
 | `opt+.` | `toggleVisibility` |
+<<<<<<< HEAD:docs/domain.md
 | `tab` | `switchTargetKind(.cycle)` |
+=======
+| `tab` | `switchTargetKind(.edge)` |
+| `cmd+;` | `cycleFocusedEdgeDirectionality` |
+>>>>>>> main:docs/specs/domain.md
 
 注記:
 - `switchTargetKind(.cycle)` の実行は InterfaceAdapters 側で `node -> edge -> area -> node` 対象切替として扱う（利用不可対象はスキップ）。
 - 対象切替キーは `tab` を使用する。
+- `cycleFocusedEdgeDirectionality` は edge ターゲット中のみ有効で、対象 edge の矢印状態を `none -> fromTo -> toFrom -> none` で巡回する。
 
 補足:
 
@@ -490,6 +503,7 @@
   - `CanvasCommandPaletteLabel` は `Noun: Verb` 形式でタイトルを生成し、コマンド名の表記ゆれを防ぐ。
   - `deleteSelectedOrFocusedNodes` の表示名は mode 共通で `Node: Delete Selected` とする。
   - edge ターゲット中の削除は `Edge: Delete Selected` を表示し、`deleteSelectedOrFocusedEdges` へ解決する。
+  - edge ターゲット中の方向切替は `Edge: Cycle Directionality` を表示し、`cycleFocusedEdgeDirectionality` へ解決する。
   - `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` / `pasteClipboardAtFocusedNode` は mode に応じて文言を切り替える（Tree は subtree を明示、Diagram は selected/paste を優先）。
   - `cmd+shift+arrow`（`nudgeNode`）は実行経路を維持しつつ、コマンドパレット表示は Diagram mode のみとする。
   - 状態依存の ON/OFF 操作は原則 `toggle` 動詞で表記し、`enable/disable/on/off` は検索トークンで吸収する。
@@ -589,6 +603,7 @@
     - Diagram エリアでは `duplicateSelectionAsSibling` を不許可とする（`unsupportedCommandInMode`）。
     - Diagram エリアでは `connectNodes` を許可し、同一エリア内の既存ノード同士を `normal` エッジで接続する（自己接続・跨ぎ接続は no-op、同一ノード間の重複接続は許可）。接続成功時はフォーカスと選択を接続先ノードへ移す。
     - Tree エリアでは `moveNode` 実行時、フォーカスが選択集合に含まれ同一エリアで2件以上選択されている場合、選択ノード群をフォーカス移動先の親配下へ兄弟として再配置する。複数の親にまたがる選択でも移動後は同一親へ一本化し、選択内の親子関係はフラット化する。`up` / `down` は選択中の兄弟ノードを飛ばして非選択兄弟と入れ替え、複数選択を1ブロックとして並び替える。
+    - Tree エリアでは top-level root（親を持たないノード）に対する `moveNode` は no-op とし、他エリアノードとの並び替えや親子再接続を発生させない。
     - Diagram エリアでは `moveNode` を8方向移動として扱う。接続アンカーがある場合はアンカー基準でステップ距離（`CanvasDefaultNodeDistance` 横 `220`・縦 `220`）を決定し、移動先がアンカーと同じ行/列でステップ距離未満になるときは移動方向の軸距離を最低1ステップに補正する。補正後も重なる場合のみ、同方向に追加ステップして重なりを回避する。接続アンカーがない場合でも、フォーカスノード自身の寸法を基準に同じグリッド間隔で移動できる。複数選択条件（フォーカスを含む同一エリア2件以上）を満たす場合は、フォーカスで解決した移動量を選択ノード群へ同一の平行移動として適用する。
     - Diagram エリアで `moveNode` を適用した後は、同一エリア内ノード衝突も即時解消するために area layout を実行する。
     - Diagram エリアでは `nudgeNode` も `moveNode` と同じ位置解決ロジック（アンカー距離補正と重なり回避を含む）を使い、ステップのみ `moveNode` の 1/4 倍（`cmd+矢印 : cmd+shift+矢印 = 4:1`）で移動する。複数選択条件を満たす場合は `moveNode` と同様に選択ノード群を一括平行移動する。
@@ -611,6 +626,8 @@
     - `deleteSelectedOrFocusedNodes` は複数選択時にフォーカス所属エリア内の選択ノードを削除対象へ昇格する。Tree では各選択ノードの subtree まで削除し、Diagram では選択ノード自体のみ削除する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+DeleteSelectedOrFocusedEdges.swift`
     - `deleteSelectedOrFocusedEdges` は focused edge を必ず削除対象に含める。選択集合に focused edge が含まれ、かつ2件以上選択されている場合は選択 edge を一括削除する。
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CycleFocusedEdgeDirectionality.swift`
+    - `cycleFocusedEdgeDirectionality` は focused edge の `directionality` を `none -> fromTo -> toFrom -> none` で循環更新する。`selectedEdgeIDs` はコマンド入力を優先して正規化し、edge ターゲットの複数選択を維持する。focused edge が不在の場合は no-op とする。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
     - 追加/削除時の所属更新を行う。
     - `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` は「同一フォーカスエリア内で複数選択が2件以上ある場合」に選択集合を対象として扱い、それ以外は従来どおりフォーカス部分木を対象とする。
@@ -711,4 +728,10 @@
 - 2026-02-28: `CanvasCommand.scaleSelectedNodes` と `CanvasNodeScaleDirection` を追加し、`⌘⌥+` / `⌘⌥-`（互換キーコードを含む）で選択ノードの拡大縮小を実行可能にした。拡縮量は基準長に対する比率（`nodeScaleStepRatio = 0.1`）で一元管理し、Diagram ノードは `110...330` の正方形へ正規化する仕様へ更新した。
 - 2026-03-01: Diagram エリアの `connectNodes` を更新し、同一ノード間の `normal` エッジ重複接続を許可した。重複エッジは表示時にレーン分離で描画し、edge フォーカス移動では同一点エッジ群を方向キーで巡回できる仕様へ更新した。
 - 2026-03-01: `CanvasFocusNavigationService.nextFocusedEdgeID` を更新し、重複 edge の巡回を方向候補探索より優先するよう変更。巡回対象は「同一 endpoint ペア（無向・relationType 一致）」に限定し、中心座標一致のみの無関係 edge への遷移を禁止した。
+<<<<<<< HEAD:docs/domain.md
 - 2026-03-01: `CanvasFocusedElement` に `area` を追加し、`CanvasCommand.focusArea` と `switchTargetKind(.cycle)` を導入。`tab` で `node -> edge -> area -> node` を巡回し、area 対象時はエリア外周（凸包）をフォーカス表示する仕様へ更新した。
+=======
+- 2026-03-01: `CanvasEdgeDirectionality`（`none/fromTo/toFrom`）と `CanvasCommand.cycleFocusedEdgeDirectionality` を追加し、edge ターゲット中の `cmd+;` / Command Palette から矢印方向を循環切替できるよう更新。表示側は `directionality` に応じてエッジ先端へ矢印を描画する仕様に変更した。あわせて directionality 切替時の `selectedEdgeIDs` 受け渡しを追加し、edge ターゲットの複数選択が潰れないよう修正した。
+- 2026-03-01: Tree エリアの `moveNode` を更新し、top-level root への移動コマンドは常に no-op として扱うよう変更。Diagram エリア共存時でも root が他エリアノードへ再接続されない仕様へ修正した。
+- 2026-03-01: Tree エリアの `moveNode` を補正し、multi-selection の `up/down` 経路でも top-level root への移動を no-op とした。単一選択経路と同じ制約で一貫するよう更新した。
+>>>>>>> main:docs/specs/domain.md

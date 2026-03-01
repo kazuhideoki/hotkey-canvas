@@ -107,6 +107,9 @@ extension CanvasView {
         case .switchTargetKind(let variant):
             switchOperationTarget(to: variant)
             return true
+        case .cycleFocusedEdgeDirectionality:
+            cycleFocusedEdgeDirectionalityIfPossible()
+            return true
         case .presentAddNodeModeSelection:
             presentAddNodeModeSelectionPopup()
             return true
