@@ -60,6 +60,9 @@ extension CanvasView {
 
 extension CanvasView {
     private func handleGlobalRoute(_ action: KeymapGlobalAction) -> Bool {
+        if operationTargetKind == .area, Self.blocksGlobalActionInAreaTarget(action) {
+            return true
+        }
         switch action {
         case .openCommandPalette:
             openCommandPalette()
@@ -95,6 +98,9 @@ extension CanvasView {
     }
 
     private func handlePrimitiveContextAction(_ action: KeymapContextAction) -> Bool {
+        if operationTargetKind == .area, Self.blocksPrimitiveContextActionInAreaTarget(action) {
+            return true
+        }
         switch action {
         case .apply(let commands):
             if handleEdgeTargetCommands(commands: commands) {
@@ -115,6 +121,60 @@ extension CanvasView {
             return true
         case .reportUnsupportedIntent:
             return true
+        }
+    }
+
+    static func blocksGlobalActionInAreaTarget(_ action: KeymapGlobalAction) -> Bool {
+        switch action {
+        case .beginConnectNodeSelection, .centerFocusedNode:
+            return true
+        case .openCommandPalette, .openSearch, .undo, .redo, .zoomIn, .zoomOut:
+            return false
+        }
+    }
+
+    static func blocksPrimitiveContextActionInAreaTarget(_ action: KeymapContextAction) -> Bool {
+        switch action {
+        case .apply(let commands):
+            return commands.contains(where: blocksCommandInAreaTarget)
+        case .cycleFocusedEdgeDirectionality, .presentAddNodeModeSelection:
+            return true
+        case .switchTargetKind, .reportUnsupportedIntent:
+            return false
+        }
+    }
+
+    static func blocksCommandInAreaTarget(_ command: CanvasCommand) -> Bool {
+        switch command {
+        case .addNode,
+            .addChildNode,
+            .addSiblingNode,
+            .duplicateSelectionAsSibling,
+            .connectNodes,
+            .extendSelection,
+            .moveNode,
+            .nudgeNode,
+            .scaleSelectedNodes,
+            .toggleFoldFocusedSubtree,
+            .deleteSelectedOrFocusedNodes,
+            .deleteSelectedOrFocusedEdges,
+            .cycleFocusedEdgeDirectionality,
+            .copySelectionOrFocusedSubtree,
+            .cutSelectionOrFocusedSubtree,
+            .pasteClipboardAtFocusedNode:
+            return true
+        case .alignAllAreasVertically,
+            .moveFocus,
+            .focusNode,
+            .focusArea,
+            .centerFocusedNode,
+            .setNodeText,
+            .upsertNodeAttachment,
+            .toggleFocusedNodeMarkdownStyle,
+            .convertFocusedAreaMode,
+            .createArea,
+            .assignNodesToArea:
+            return false
         }
     }
 }

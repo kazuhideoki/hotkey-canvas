@@ -65,3 +65,34 @@ func test_apply_focusNode_normalizesSelectionWhenFocusAlreadyMatches() async thr
     #expect(result.newState.focusedNodeID == nodeBID)
     #expect(result.newState.selectedNodeIDs == [nodeBID])
 }
+
+@Test("ApplyCanvasCommandsUseCase: focusNode clears area focus even when focused node already matches")
+func test_apply_focusNode_clearsAreaFocusWhenFocusedNodeAlreadyMatches() async throws {
+    let nodeID = CanvasNodeID(rawValue: "node")
+    let areaID = CanvasAreaID(rawValue: "area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        focusedElement: .area(areaID),
+        selectedNodeIDs: [nodeID],
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [nodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let commands: [CanvasCommand] = [.focusNode(nodeID)]
+    let result = try await sut.apply(commands: commands)
+
+    #expect(result.newState.focusedNodeID == nodeID)
+    #expect(result.newState.focusedElement == .node(nodeID))
+    #expect(result.newState.selectedNodeIDs == [nodeID])
+}

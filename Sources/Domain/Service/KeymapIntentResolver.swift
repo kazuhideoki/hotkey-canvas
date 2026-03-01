@@ -7,7 +7,7 @@ public enum KeymapIntentResolver {
     /// - Returns: Route payload when gesture is supported.
     public static func resolveRoute(for gesture: CanvasShortcutGesture) -> KeymapResolvedRoute? {
         if gesture == CanvasShortcutGesture(key: .tab, modifiers: []) {
-            return .primitive(intent: .switchTargetKind(variant: .edge))
+            return .primitive(intent: .switchTargetKind(variant: .cycle))
         }
         if gesture == CanvasShortcutGesture(key: .character(";"), modifiers: [.command]) {
             return .primitive(intent: .cycleFocusedEdgeDirectionality)

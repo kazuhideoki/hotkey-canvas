@@ -12,26 +12,35 @@ extension CanvasView {
     static func edgeTargetStateSyncedWithModel(
         currentTargetKind: KeymapSwitchTargetKindIntentVariant,
         modelFocusedEdgeID: CanvasEdgeID?,
+        modelFocusedAreaID: CanvasAreaID?,
         modelSelectedEdgeIDs: Set<CanvasEdgeID>
     ) -> EdgeTargetModelSyncState {
-        guard let modelFocusedEdgeID else {
-            guard currentTargetKind == .edge else {
-                return EdgeTargetModelSyncState(
-                    targetKind: currentTargetKind,
-                    focusedEdgeID: nil,
-                    selectedEdgeIDs: []
-                )
-            }
+        if let modelFocusedEdgeID {
             return EdgeTargetModelSyncState(
-                targetKind: .node,
+                targetKind: .edge,
+                focusedEdgeID: modelFocusedEdgeID,
+                selectedEdgeIDs: modelSelectedEdgeIDs
+            )
+        }
+        if modelFocusedAreaID != nil {
+            return EdgeTargetModelSyncState(
+                targetKind: .area,
+                focusedEdgeID: nil,
+                selectedEdgeIDs: []
+            )
+        }
+
+        guard currentTargetKind == .edge || currentTargetKind == .area else {
+            return EdgeTargetModelSyncState(
+                targetKind: currentTargetKind,
                 focusedEdgeID: nil,
                 selectedEdgeIDs: []
             )
         }
         return EdgeTargetModelSyncState(
-            targetKind: .edge,
-            focusedEdgeID: modelFocusedEdgeID,
-            selectedEdgeIDs: modelSelectedEdgeIDs
+            targetKind: .node,
+            focusedEdgeID: nil,
+            selectedEdgeIDs: []
         )
     }
 
@@ -39,6 +48,7 @@ extension CanvasView {
         let syncedState = Self.edgeTargetStateSyncedWithModel(
             currentTargetKind: operationTargetKind,
             modelFocusedEdgeID: viewModel.focusedEdgeID,
+            modelFocusedAreaID: viewModel.focusedAreaID,
             modelSelectedEdgeIDs: viewModel.selectedEdgeIDs
         )
         operationTargetKind = syncedState.targetKind
@@ -51,10 +61,27 @@ extension CanvasView {
 
     func switchOperationTarget(to variant: KeymapSwitchTargetKindIntentVariant) {
         switch variant {
+        case .cycle:
+            switchOperationTarget(to: nextTargetKindForCycle())
+        case .area:
+            guard let areaID = currentFocusedAreaID() else {
+                return
+            }
+            operationTargetKind = .area
+            focusedEdgeID = nil
+            selectedEdgeIDs = []
+            Task {
+                await viewModel.apply(commands: [.focusArea(areaID)])
+            }
         case .node:
             operationTargetKind = .node
             focusedEdgeID = nil
             selectedEdgeIDs = []
+            if let focusedNodeID = viewModel.focusedNodeID {
+                Task {
+                    await viewModel.apply(commands: [.focusNode(focusedNodeID)])
+                }
+            }
         case .edge:
             if operationTargetKind == .edge {
                 operationTargetKind = .node
@@ -82,6 +109,60 @@ extension CanvasView {
             operationTargetKind = .edge
             focusedEdgeID = initialFocusedEdgeID
             selectedEdgeIDs = [initialFocusedEdgeID]
+        }
+    }
+
+    private func nextTargetKindForCycle() -> KeymapSwitchTargetKindIntentVariant {
+        switch operationTargetKind {
+        case .node:
+            if canSwitchToEdgeTarget() {
+                return .edge
+            }
+            if currentFocusedAreaID() != nil {
+                return .area
+            }
+            return .node
+        case .edge:
+            if currentFocusedAreaID() != nil {
+                return .area
+            }
+            return .node
+        case .area:
+            return .node
+        case .cycle:
+            return .node
+        }
+    }
+
+    private func canSwitchToEdgeTarget() -> Bool {
+        guard let focusedNodeID = viewModel.focusedNodeID else {
+            return false
+        }
+        guard viewModel.diagramNodeIDs.contains(focusedNodeID) else {
+            return false
+        }
+        guard let areaID = viewModel.areaIDByNodeID[focusedNodeID] else {
+            return false
+        }
+        return !edgeCandidates(in: areaID).isEmpty
+    }
+
+    private func currentFocusedAreaID() -> CanvasAreaID? {
+        if let focusedAreaID = viewModel.focusedAreaID, graphAreaHasVisibleNode(focusedAreaID) {
+            return focusedAreaID
+        }
+        guard let focusedNodeID = viewModel.focusedNodeID else {
+            return nil
+        }
+        guard let areaID = viewModel.areaIDByNodeID[focusedNodeID] else {
+            return nil
+        }
+        return graphAreaHasVisibleNode(areaID) ? areaID : nil
+    }
+
+    private func graphAreaHasVisibleNode(_ areaID: CanvasAreaID) -> Bool {
+        viewModel.nodes.contains { node in
+            viewModel.areaIDByNodeID[node.id] == areaID
         }
     }
 

@@ -87,6 +87,63 @@ func test_focusedAreaID_failsWhenFocusedNodeIsUnassigned() throws {
     }
 }
 
+@Test("CanvasAreaMembershipService: focusedAreaID prefers focused area element")
+func test_focusedAreaID_prefersFocusedAreaElement() throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let areaIDFromFocus = CanvasAreaID(rawValue: "focused-area")
+    let areaIDFromNode = CanvasAreaID(rawValue: "node-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID,
+        focusedElement: .area(areaIDFromFocus),
+        areasByID: [
+            areaIDFromFocus: CanvasArea(id: areaIDFromFocus, nodeIDs: [], editingMode: .diagram),
+            areaIDFromNode: CanvasArea(id: areaIDFromNode, nodeIDs: [focusedNodeID], editingMode: .tree),
+        ]
+    )
+
+    let result = try CanvasAreaMembershipService.focusedAreaID(in: graph).get()
+
+    #expect(result == areaIDFromFocus)
+}
+
+@Test("CanvasAreaMembershipService: focusedAreaID fails when focused area element is missing")
+func test_focusedAreaID_failsWhenFocusedAreaElementIsMissing() throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let missingAreaID = CanvasAreaID(rawValue: "missing-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID,
+        focusedElement: .area(missingAreaID),
+        areasByID: [
+            .defaultTree: CanvasArea(id: .defaultTree, nodeIDs: [focusedNodeID], editingMode: .tree)
+        ]
+    )
+
+    do {
+        try CanvasAreaMembershipService.focusedAreaID(in: graph).get()
+        Issue.record("Expected areaNotFound")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .areaNotFound(missingAreaID))
+    }
+}
+
 @Test("CanvasAreaMembershipService: createArea reassigns initial members from existing areas")
 func test_createArea_reassignsInitialMembersFromExistingAreas() throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
