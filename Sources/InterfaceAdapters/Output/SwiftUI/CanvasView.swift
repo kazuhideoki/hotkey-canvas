@@ -41,9 +41,7 @@ public struct CanvasView: View {
     let addNodeModeSelectionHotkeyResolver = AddNodeModeSelectionHotkeyResolver()
     let connectNodeSelectionHotkeyResolver = ConnectNodeSelectionHotkeyResolver()
     let editingStartResolver = NodeEditingStartResolver()
-    var nodeTextStyle: NodeTextStyle {
-        NodeTextStyle(styleSheet: styleSheet)
-    }
+    var nodeTextStyle: NodeTextStyle { NodeTextStyle(styleSheet: styleSheet) }
     public init(
         viewModel: CanvasViewModel,
         hotkeyTranslator: CanvasHotkeyTranslator = CanvasHotkeyTranslator(),
@@ -57,7 +55,6 @@ public struct CanvasView: View {
         self.styleSheet = styleSheet
         onDisappearHandler = onDisappear
     }
-
     func styleColor(_ token: CanvasStyleColorToken) -> Color {
         CanvasStylePalette.color(token)
     }
@@ -87,6 +84,7 @@ public struct CanvasView: View {
                 edges: viewModel.edges,
                 nodesByID: nodesByID
             )
+            let laneOffsetByEdgeID = CanvasEdgeRouting.laneOffsetByEdgeID(edges: viewModel.edges)
             let commandPaletteItems = filteredCommandPaletteItems()
             ZStack(alignment: .topLeading) {
                 styleColor(.textBackground)
@@ -203,7 +201,8 @@ public struct CanvasView: View {
                         if let path = CanvasEdgeRouting.path(
                             for: edge,
                             nodesByID: nodesByID,
-                            branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
+                            branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                            laneOffsetByEdgeID: laneOffsetByEdgeID
                         ) {
                             let isFocusedEdge = focusedEdgeID == edge.id
                             let isSelectedEdge = selectedEdgeIDs.contains(edge.id)

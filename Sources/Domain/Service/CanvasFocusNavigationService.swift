@@ -58,6 +58,14 @@ public enum CanvasFocusNavigationService {
         let fallbackEdge = sortedEdges[0]
         let currentEdge = currentEdgeID.flatMap { graph.edgesByID[$0] } ?? fallbackEdge
 
+        if let duplicateEdgeID = nextCoincidentEdgeID(
+            for: currentEdge.id,
+            in: sortedEdges,
+            moving: direction
+        ) {
+            return duplicateEdgeID
+        }
+
         let directionalCandidates =
             sortedEdges
             .filter { $0.id != currentEdge.id }
@@ -232,6 +240,61 @@ extension CanvasFocusNavigationService {
         )
     }
 
+    fileprivate static func nextCoincidentEdgeID(
+        for currentEdgeID: CanvasEdgeID,
+        in sortedEdges: [CanvasEdge],
+        moving direction: CanvasFocusDirection
+    ) -> CanvasEdgeID? {
+        guard let currentEdge = sortedEdges.first(where: { $0.id == currentEdgeID }) else {
+            return nil
+        }
+        let currentBundleKey = coincidentEdgeBundleKey(for: currentEdge)
+
+        let coincidentEdges = sortedEdges.filter { edge in
+            coincidentEdgeBundleKey(for: edge) == currentBundleKey
+        }
+        guard coincidentEdges.count > 1 else {
+            return nil
+        }
+        guard let currentIndex = coincidentEdges.firstIndex(where: { $0.id == currentEdgeID }) else {
+            return nil
+        }
+
+        let offset = direction == .up || direction == .left ? -1 : 1
+        let nextIndex = (currentIndex + offset + coincidentEdges.count) % coincidentEdges.count
+        return coincidentEdges[nextIndex].id
+    }
+
+    /// Builds an undirected endpoint key used to group duplicated edges.
+    /// - Parameter edge: Source edge.
+    /// - Returns: Bundle key that treats opposite directions as the same pair.
+    fileprivate static func coincidentEdgeBundleKey(for edge: CanvasEdge) -> CoincidentEdgeBundleKey {
+        let (firstNodeID, secondNodeID) = normalizedEndpointPair(
+            lhs: edge.fromNodeID,
+            rhs: edge.toNodeID
+        )
+        return CoincidentEdgeBundleKey(
+            firstNodeID: firstNodeID,
+            secondNodeID: secondNodeID,
+            relationType: edge.relationType
+        )
+    }
+
+    /// Normalizes endpoint order so `(A, B)` and `(B, A)` share the same key.
+    /// - Parameters:
+    ///   - lhs: First endpoint.
+    ///   - rhs: Second endpoint.
+    /// - Returns: Ordered endpoint pair.
+    fileprivate static func normalizedEndpointPair(
+        lhs: CanvasNodeID,
+        rhs: CanvasNodeID
+    ) -> (CanvasNodeID, CanvasNodeID) {
+        if lhs.rawValue <= rhs.rawValue {
+            return (lhs, rhs)
+        }
+        return (rhs, lhs)
+    }
+
     fileprivate static func makeEdgeCandidate(
         to edge: CanvasEdge,
         from currentEdge: CanvasEdge,
@@ -303,4 +366,11 @@ private struct EdgeFocusCandidate {
     let crossAxisDistance: Double
     let squaredDistance: Double
     let score: Double
+}
+
+/// Undirected endpoint pair key used to group duplicated edges for local focus cycling.
+private struct CoincidentEdgeBundleKey: Hashable {
+    let firstNodeID: CanvasNodeID
+    let secondNodeID: CanvasNodeID
+    let relationType: CanvasEdgeRelationType
 }

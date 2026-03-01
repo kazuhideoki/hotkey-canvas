@@ -45,8 +45,8 @@ func test_apply_connectNodesInDiagramArea_createsNormalEdge() async throws {
     #expect(result.newState.focusedElement == .node(targetNodeID))
 }
 
-@Test("ApplyCanvasCommandsUseCase: connectNodes is no-op when the same edge already exists")
-func test_apply_connectNodes_whenNormalEdgeAlreadyExists_isNoOp() async throws {
+@Test("ApplyCanvasCommandsUseCase: connectNodes allows multiple normal edges between same nodes")
+func test_apply_connectNodes_whenNormalEdgeAlreadyExists_createsAdditionalEdge() async throws {
     let sourceNodeID = CanvasNodeID(rawValue: "source")
     let targetNodeID = CanvasNodeID(rawValue: "target")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -85,7 +85,13 @@ func test_apply_connectNodes_whenNormalEdgeAlreadyExists_isNoOp() async throws {
         commands: [.connectNodes(fromNodeID: sourceNodeID, toNodeID: targetNodeID)]
     )
 
-    #expect(result.newState == graph)
+    #expect(result.newState.edgesByID.count == 2)
+    let matchedEdges = result.newState.edgesByID.values.filter { edge in
+        edge.fromNodeID == sourceNodeID
+            && edge.toNodeID == targetNodeID
+            && edge.relationType == .normal
+    }
+    #expect(matchedEdges.count == 2)
 }
 
 @Test("ApplyCanvasCommandsUseCase: tree area rejects connectNodes command")
