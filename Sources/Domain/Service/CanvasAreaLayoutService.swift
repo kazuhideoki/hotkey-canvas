@@ -67,6 +67,38 @@ public enum CanvasAreaLayoutService {
         return areas.sorted { $0.id.rawValue < $1.id.rawValue }
     }
 
+    /// Builds one area outline from explicit node membership.
+    /// - Parameters:
+    ///   - nodeIDs: Node identifiers included in the target area.
+    ///   - graph: Source graph snapshot.
+    ///   - shapeKind: Shape strategy used when constructing area outline.
+    /// - Returns: Area outline, or `nil` when no member node exists in graph.
+    public static func makeAreaOutline(
+        nodeIDs: Set<CanvasNodeID>,
+        in graph: CanvasGraph,
+        shapeKind: CanvasAreaShapeKind = .rectangle
+    ) -> CanvasNodeArea? {
+        let existingNodeIDs = nodeIDs.filter { graph.nodesByID[$0] != nil }
+        guard !existingNodeIDs.isEmpty else {
+            return nil
+        }
+        guard let representativeNodeID = existingNodeIDs.min(by: { $0.rawValue < $1.rawValue }) else {
+            return nil
+        }
+        let bounds = makeBounds(for: existingNodeIDs, in: graph)
+        let shape = makeShape(
+            for: existingNodeIDs,
+            in: graph,
+            shapeKind: shapeKind
+        )
+        return CanvasNodeArea(
+            id: representativeNodeID,
+            nodeIDs: existingNodeIDs,
+            bounds: bounds,
+            shape: shape
+        )
+    }
+
     /// Resolves area overlaps by moving areas on one of four cardinal directions.
     /// - Parameters:
     ///   - areas: Areas to resolve.

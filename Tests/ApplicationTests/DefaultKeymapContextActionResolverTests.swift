@@ -22,6 +22,24 @@ func test_resolve_switchTargetKindEdge_returnsSwitchTargetKindAction() {
     #expect(action == .switchTargetKind(variant: .edge))
 }
 
+@Test("DefaultKeymapContextActionResolver: cycle target switch maps to switch-target-kind action")
+func test_resolve_switchTargetKindCycle_returnsSwitchTargetKindAction() {
+    let sut = DefaultKeymapContextActionResolver()
+
+    let action = sut.resolve(primitiveIntent: .switchTargetKind(variant: .cycle))
+
+    #expect(action == .switchTargetKind(variant: .cycle))
+}
+
+@Test("DefaultKeymapContextActionResolver: area target switch maps to switch-target-kind action")
+func test_resolve_switchTargetKindArea_returnsSwitchTargetKindAction() {
+    let sut = DefaultKeymapContextActionResolver()
+
+    let action = sut.resolve(primitiveIntent: .switchTargetKind(variant: .area))
+
+    #expect(action == .switchTargetKind(variant: .area))
+}
+
 @Test("DefaultKeymapContextActionResolver: extend-selection focus intent keeps direction")
 func test_resolve_moveFocusExtendSelection_returnsExtendSelectionCommand() {
     let sut = DefaultKeymapContextActionResolver()

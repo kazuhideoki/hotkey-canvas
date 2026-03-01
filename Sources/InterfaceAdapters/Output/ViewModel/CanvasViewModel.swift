@@ -8,6 +8,7 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var edges: [CanvasEdge] = []
     @Published public private(set) var focusedNodeID: CanvasNodeID?
     @Published public private(set) var focusedEdgeID: CanvasEdgeID?
+    @Published public private(set) var focusedAreaID: CanvasAreaID?
     @Published public private(set) var selectedNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var selectedEdgeIDs: Set<CanvasEdgeID> = []
     @Published public private(set) var collapsedRootNodeIDs: Set<CanvasNodeID> = []
@@ -181,7 +182,7 @@ extension CanvasViewModel {
         case .duplicateSelectionAsSibling,
             .alignAllAreasVertically,
             .connectNodes,
-            .moveFocus, .focusNode, .extendSelection, .moveNode, .nudgeNode, .scaleSelectedNodes,
+            .moveFocus, .focusNode, .focusArea, .extendSelection, .moveNode, .nudgeNode, .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .cycleFocusedEdgeDirectionality,
@@ -216,6 +217,12 @@ extension CanvasViewModel {
         focusedEdgeID =
             if case .edge(let edgeFocus) = visibleGraph.focusedElement {
                 edgeFocus.edgeID
+            } else {
+                nil
+            }
+        focusedAreaID =
+            if case .area(let areaID) = visibleGraph.focusedElement {
+                areaID
             } else {
                 nil
             }

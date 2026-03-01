@@ -62,23 +62,6 @@ public enum CanvasAreaMembershipService {
         return .success(areaID)
     }
 
-    /// Resolves focused node area identifier.
-    /// - Parameter graph: Graph snapshot.
-    /// - Returns: Area identifier that owns the current focused node.
-    public static func focusedAreaID(in graph: CanvasGraph) -> Result<CanvasAreaID, CanvasAreaPolicyError> {
-        guard let focusedNodeID = graph.focusedNodeID, graph.nodesByID[focusedNodeID] != nil else {
-            return .failure(.focusedNodeNotFound)
-        }
-        return areaID(containing: focusedNodeID, in: graph).mapError { error in
-            switch error {
-            case .nodeWithoutArea:
-                return .focusedNodeNotAssignedToArea(focusedNodeID)
-            default:
-                return error
-            }
-        }
-    }
-
     /// Resolves area by identifier.
     /// - Parameters:
     ///   - areaID: Area identifier.

@@ -75,14 +75,14 @@ func test_resolve_commandL_returnsBeginConnectGlobalAction() throws {
     #expect(route == .global(action: .beginConnectNodeSelection))
 }
 
-@Test("CanvasHotkeyTranslator: Tab resolves switch-target-kind edge intent")
-func test_resolve_tab_returnsSwitchTargetKindEdgeIntent() throws {
+@Test("CanvasHotkeyTranslator: Tab resolves switch-target-kind cycle intent")
+func test_resolve_tab_returnsSwitchTargetKindCycleIntent() throws {
     let sut = CanvasHotkeyTranslator()
     let event = try makeKeyEvent(keyCode: 48, characters: "\t", charactersIgnoringModifiers: "\t")
 
     let route = sut.resolve(event)
 
-    #expect(route == .primitive(intent: .switchTargetKind(variant: .edge)))
+    #expect(route == .primitive(intent: .switchTargetKind(variant: .cycle)))
 }
 
 @Test("CanvasHotkeyTranslator: Command+Semicolon resolves cycle-edge-directionality intent")

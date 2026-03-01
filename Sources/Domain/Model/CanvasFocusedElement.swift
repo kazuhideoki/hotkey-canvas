@@ -21,4 +21,5 @@ public struct CanvasEdgeFocus: Equatable, Sendable {
 public enum CanvasFocusedElement: Equatable, Sendable {
     case node(CanvasNodeID)
     case edge(CanvasEdgeFocus)
+    case area(CanvasAreaID)
 }

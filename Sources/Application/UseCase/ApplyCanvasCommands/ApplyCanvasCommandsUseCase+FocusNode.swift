@@ -18,9 +18,12 @@ extension ApplyCanvasCommandsUseCase {
             in: graph,
             focusedNodeID: nodeID
         )
+        let nextFocusedElement: CanvasFocusedElement = .node(nodeID)
         guard
             graph.focusedNodeID != nodeID
+                || graph.focusedElement != nextFocusedElement
                 || graph.selectedNodeIDs != nextSelectedNodeIDs
+                || !graph.selectedEdgeIDs.isEmpty
         else {
             return noOpMutationResult(for: graph)
         }
@@ -29,7 +32,7 @@ extension ApplyCanvasCommandsUseCase {
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
             focusedNodeID: nodeID,
-            focusedElement: .node(nodeID),
+            focusedElement: nextFocusedElement,
             selectedNodeIDs: nextSelectedNodeIDs,
             selectedEdgeIDs: [],
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,

@@ -247,3 +247,120 @@ func test_apply_extendSelection_includesFocusedNode_whenSelectionIsEmpty() async
     #expect(result.newState.focusedNodeID == rightID)
     #expect(result.newState.selectedNodeIDs == [centerID, rightID])
 }
+
+@Test("ApplyCanvasCommandsUseCase: moveFocus in area mode jumps to adjacent area and keeps area focus")
+func test_apply_moveFocus_areaMode_movesAreaFocusAndAnchor() async throws {
+    let leftNodeID = CanvasNodeID(rawValue: "left")
+    let rightNodeID = CanvasNodeID(rawValue: "right")
+    let selectedEdgeID = CanvasEdgeID(rawValue: "selected-edge")
+    let leftAreaID = CanvasAreaID(rawValue: "left-area")
+    let rightAreaID = CanvasAreaID(rawValue: "right-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            leftNodeID: CanvasNode(
+                id: leftNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 120, height: 80)
+            ),
+            rightNodeID: CanvasNode(
+                id: rightNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 420, y: 0, width: 120, height: 80)
+            ),
+        ],
+        edgesByID: [
+            selectedEdgeID: CanvasEdge(
+                id: selectedEdgeID,
+                fromNodeID: leftNodeID,
+                toNodeID: rightNodeID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: leftNodeID,
+        focusedElement: .area(leftAreaID),
+        selectedNodeIDs: [leftNodeID],
+        selectedEdgeIDs: [selectedEdgeID],
+        areasByID: [
+            leftAreaID: CanvasArea(id: leftAreaID, nodeIDs: [leftNodeID], editingMode: .diagram),
+            rightAreaID: CanvasArea(id: rightAreaID, nodeIDs: [rightNodeID], editingMode: .diagram),
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let commands: [CanvasCommand] = [.moveFocus(.right)]
+    let result = try await sut.apply(commands: commands)
+
+    #expect(result.newState.focusedElement == .area(rightAreaID))
+    #expect(result.newState.focusedNodeID == rightNodeID)
+    #expect(result.newState.selectedNodeIDs == [rightNodeID])
+    #expect(result.newState.selectedEdgeIDs.isEmpty)
+}
+
+@Test("ApplyCanvasCommandsUseCase: moveFocus in area mode is no-op when no directional area exists")
+func test_apply_moveFocus_areaMode_noOpWhenNoDirectionalArea() async throws {
+    let singleNodeID = CanvasNodeID(rawValue: "single")
+    let singleAreaID = CanvasAreaID(rawValue: "single-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            singleNodeID: CanvasNode(
+                id: singleNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 100, y: 100, width: 100, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: singleNodeID,
+        focusedElement: .area(singleAreaID),
+        selectedNodeIDs: [singleNodeID],
+        areasByID: [
+            singleAreaID: CanvasArea(id: singleAreaID, nodeIDs: [singleNodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let commands: [CanvasCommand] = [.moveFocus(.left)]
+    let result = try await sut.apply(commands: commands)
+
+    #expect(result.newState == graph)
+    #expect(!result.canUndo)
+}
+
+@Test("ApplyCanvasCommandsUseCase: moveFocus in area mode does not re-anchor when no directional area exists")
+func test_apply_moveFocus_areaMode_doesNotReanchorWithinSameAreaWithoutDirectionalCandidate() async throws {
+    let anchorNodeID = CanvasNodeID(rawValue: "anchor")
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let areaID = CanvasAreaID(rawValue: "area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            anchorNodeID: CanvasNode(
+                id: anchorNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 100, height: 80)
+            ),
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 220, y: 220, width: 100, height: 80)
+            ),
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID,
+        focusedElement: .area(areaID),
+        selectedNodeIDs: [focusedNodeID],
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [anchorNodeID, focusedNodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let commands: [CanvasCommand] = [.moveFocus(.left)]
+    let result = try await sut.apply(commands: commands)
+
+    #expect(result.newState == graph)
+    #expect(!result.canUndo)
+}
