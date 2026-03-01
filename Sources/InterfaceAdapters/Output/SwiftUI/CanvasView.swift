@@ -9,8 +9,7 @@ import SwiftUI
 // swiftlint:disable type_body_length
 /// SwiftUI canvas that displays graph nodes and handles keyboard-first editing interactions.
 public struct CanvasView: View {
-    static let minimumCanvasWidth: Double = 900
-    static let minimumCanvasHeight: Double = 600
+    static let minimumCanvasSize = CGSize(width: 900, height: 600)
     @StateObject var viewModel: CanvasViewModel
     @State var editingContext: NodeEditingContext?
     @State var commandPaletteQuery: String = ""
@@ -27,7 +26,6 @@ public struct CanvasView: View {
     @State var zoomScale: Double = 1.0
     @State var zoomRatioPopupText: String?
     @State var zoomRatioPopupRequestID: UInt64 = 0
-    /// Monotonic token used to ignore stale async editing-start tasks.
     @State private var pendingEditingRequestID: UInt64 = 0
     @State var connectNodeSelectionSourceNodeID: CanvasNodeID?
     @State var connectNodeSelectionTargetNodeID: CanvasNodeID?
@@ -55,16 +53,14 @@ public struct CanvasView: View {
         self.styleSheet = styleSheet
         onDisappearHandler = onDisappear
     }
-    func styleColor(_ token: CanvasStyleColorToken) -> Color {
-        CanvasStylePalette.color(token)
-    }
+    func styleColor(_ token: CanvasStyleColorToken) -> Color { CanvasStylePalette.color(token) }
     public var body: some View {
         let displayNodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
         let nodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
         return GeometryReader { geometryProxy in
             let viewportSize = CGSize(
-                width: max(geometryProxy.size.width, Self.minimumCanvasWidth),
-                height: max(geometryProxy.size.height, Self.minimumCanvasHeight)
+                width: max(geometryProxy.size.width, Self.minimumCanvasSize.width),
+                height: max(geometryProxy.size.height, Self.minimumCanvasSize.height)
             )
             let autoCenterOffset = cameraOffset(viewportSize: viewportSize)
             let scaledAutoCenterOffset = CGSize(
@@ -197,6 +193,8 @@ public struct CanvasView: View {
                     .zIndex(10)
                 }
                 ZStack(alignment: .topLeading) {
+                    areaFocusOverlay(
+                        displayNodes: displayNodes, viewportSize: viewportSize, effectiveOffset: cameraOffset)
                     ForEach(viewModel.edges, id: \.id) { edge in
                         if let path = CanvasEdgeRouting.path(
                             for: edge,
@@ -370,8 +368,8 @@ public struct CanvasView: View {
                 .allowsHitTesting(false)
             }
             .frame(
-                minWidth: Self.minimumCanvasWidth,
-                minHeight: Self.minimumCanvasHeight,
+                minWidth: Self.minimumCanvasSize.width,
+                minHeight: Self.minimumCanvasSize.height,
                 alignment: .topLeading
             )
             .task {
@@ -402,6 +400,7 @@ public struct CanvasView: View {
             }
             .onChange(of: viewModel.edges) { _ in synchronizeEdgeTargetState() }
             .onChange(of: viewModel.focusedEdgeID) { _ in synchronizeEdgeTargetStateFromViewModel() }
+            .onChange(of: viewModel.focusedAreaID) { _ in synchronizeEdgeTargetStateFromViewModel() }
             .onChange(of: viewModel.selectedEdgeIDs) { _ in synchronizeEdgeTargetStateFromViewModel() }
             .onChange(of: viewModel.diagramNodeIDs) { _ in synchronizeEdgeTargetState() }
             .onChange(of: editingContext) { _ in

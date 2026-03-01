@@ -15,6 +15,7 @@ enum TreeAreaPolicyService {
             .alignAllAreasVertically,
             .moveFocus,
             .focusNode,
+            .focusArea,
             .extendSelection,
             .moveNode,
             .nudgeNode,

@@ -57,13 +57,13 @@ func test_resolveRoute_commandL_returnsGlobalBeginConnectNodeSelection() {
     #expect(route == .global(action: .beginConnectNodeSelection))
 }
 
-@Test("KeymapIntentResolver: tab resolves primitive switch-target-kind edge intent")
-func test_resolveRoute_tab_returnsPrimitiveSwitchTargetKindEdge() {
+@Test("KeymapIntentResolver: tab resolves primitive switch-target-kind cycle intent")
+func test_resolveRoute_tab_returnsPrimitiveSwitchTargetKindCycle() {
     let gesture = CanvasShortcutGesture(key: .tab, modifiers: [])
 
     let route = KeymapIntentResolver.resolveRoute(for: gesture)
 
-    #expect(route == .primitive(intent: .switchTargetKind(variant: .edge)))
+    #expect(route == .primitive(intent: .switchTargetKind(variant: .cycle)))
 }
 
 @Test("KeymapIntentResolver: control-l resolves global center-focused-node action")

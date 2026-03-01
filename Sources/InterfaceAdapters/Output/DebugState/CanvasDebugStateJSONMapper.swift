@@ -142,6 +142,7 @@ extension CanvasDebugStateJSONMapper {
         let nodeID: String?
         let edgeID: String?
         let edgeOriginNodeID: String?
+        let areaID: String?
 
         static func make(from focusedElement: CanvasFocusedElement?) -> FocusedElementPayload? {
             guard let focusedElement else {
@@ -153,14 +154,24 @@ extension CanvasDebugStateJSONMapper {
                     kind: "node",
                     nodeID: nodeID.rawValue,
                     edgeID: nil,
-                    edgeOriginNodeID: nil
+                    edgeOriginNodeID: nil,
+                    areaID: nil
                 )
             case .edge(let edgeFocus):
                 return FocusedElementPayload(
                     kind: "edge",
                     nodeID: nil,
                     edgeID: edgeFocus.edgeID.rawValue,
-                    edgeOriginNodeID: edgeFocus.originNodeID.rawValue
+                    edgeOriginNodeID: edgeFocus.originNodeID.rawValue,
+                    areaID: nil
+                )
+            case .area(let areaID):
+                return FocusedElementPayload(
+                    kind: "area",
+                    nodeID: nil,
+                    edgeID: nil,
+                    edgeOriginNodeID: nil,
+                    areaID: areaID.rawValue
                 )
             }
         }

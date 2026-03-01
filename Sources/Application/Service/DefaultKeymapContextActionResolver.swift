@@ -67,10 +67,14 @@ extension DefaultKeymapContextActionResolver {
         variant: KeymapSwitchTargetKindIntentVariant
     ) -> KeymapContextAction {
         switch variant {
+        case .cycle:
+            return .switchTargetKind(variant: .cycle)
         case .edge:
             return .switchTargetKind(variant: .edge)
         case .node:
             return .switchTargetKind(variant: .node)
+        case .area:
+            return .switchTargetKind(variant: .area)
         }
     }
 

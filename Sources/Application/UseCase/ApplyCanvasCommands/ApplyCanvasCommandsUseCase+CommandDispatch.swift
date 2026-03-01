@@ -38,6 +38,10 @@ extension ApplyCanvasCommandsUseCase {
         resolvedAreaID: CanvasAreaID,
         resolvedAreaMode: CanvasEditingMode
     ) throws -> CanvasMutationResult {
+        if let focusCommandResult = applyFocusCommand(command: command, to: graph) {
+            return focusCommandResult
+        }
+
         switch command {
         case .addNode, .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .connectNodes:
             return try applyNodeStructureCommand(
@@ -47,12 +51,6 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .alignAllAreasVertically:
             return alignAllAreasVertically(in: graph, areaID: resolvedAreaID)
-        case .moveFocus(let direction):
-            return moveFocus(in: graph, direction: direction)
-        case .focusNode(let nodeID):
-            return focusNode(in: graph, nodeID: nodeID)
-        case .extendSelection(let direction):
-            return extendSelection(in: graph, direction: direction)
         case .moveNode(let direction):
             return try moveNode(
                 in: graph,
@@ -86,6 +84,26 @@ extension ApplyCanvasCommandsUseCase {
             return try applyNodeContentCommand(command: command, to: graph)
         case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return noOpMutationResult(for: graph)
+        case .moveFocus, .focusNode, .focusArea, .extendSelection:
+            return noOpMutationResult(for: graph)
+        }
+    }
+
+    private func applyFocusCommand(
+        command: CanvasCommand,
+        to graph: CanvasGraph
+    ) -> CanvasMutationResult? {
+        switch command {
+        case .moveFocus(let direction):
+            return moveFocus(in: graph, direction: direction)
+        case .focusNode(let nodeID):
+            return focusNode(in: graph, nodeID: nodeID)
+        case .focusArea(let areaID):
+            return focusArea(in: graph, areaID: areaID)
+        case .extendSelection(let direction):
+            return extendSelection(in: graph, direction: direction)
+        default:
+            return nil
         }
     }
 
@@ -116,6 +134,7 @@ extension ApplyCanvasCommandsUseCase {
             .alignAllAreasVertically,
             .moveFocus,
             .focusNode,
+            .focusArea,
             .extendSelection,
             .moveNode,
             .nudgeNode,
@@ -127,7 +146,6 @@ extension ApplyCanvasCommandsUseCase {
             .pasteClipboardAtFocusedNode,
             .setNodeText,
             .upsertNodeAttachment,
-            .scaleSelectedNodes,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,
@@ -159,6 +177,7 @@ extension ApplyCanvasCommandsUseCase {
         case .alignAllAreasVertically,
             .moveFocus,
             .focusNode,
+            .focusArea,
             .extendSelection,
             .moveNode,
             .nudgeNode,
@@ -210,6 +229,7 @@ extension ApplyCanvasCommandsUseCase {
             .alignAllAreasVertically,
             .moveFocus,
             .focusNode,
+            .focusArea,
             .extendSelection,
             .moveNode,
             .nudgeNode,
@@ -258,6 +278,7 @@ extension ApplyCanvasCommandsUseCase {
             .alignAllAreasVertically,
             .moveFocus,
             .focusNode,
+            .focusArea,
             .extendSelection,
             .moveNode,
             .nudgeNode,
@@ -324,6 +345,11 @@ extension ApplyCanvasCommandsUseCase {
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
         case .focusNode(let nodeID):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
+        case .focusArea(let areaID):
+            if graph.areasByID[areaID] != nil {
+                return .success(areaID)
+            }
+            return .failure(.areaNotFound(areaID))
         case .connectNodes(let fromNodeID, _):
             return CanvasAreaMembershipService.areaID(containing: fromNodeID, in: graph)
         case .deleteSelectedOrFocusedEdges(let focusedEdge, _):

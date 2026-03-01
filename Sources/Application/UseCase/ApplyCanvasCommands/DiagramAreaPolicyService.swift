@@ -13,6 +13,7 @@ enum DiagramAreaPolicyService {
             .alignAllAreasVertically,
             .moveFocus,
             .focusNode,
+            .focusArea,
             .extendSelection,
             .moveNode,
             .nudgeNode,
