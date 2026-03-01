@@ -18,6 +18,10 @@ public enum CanvasCommand: Equatable, Sendable {
         focusedEdge: CanvasEdgeFocus,
         selectedEdgeIDs: Set<CanvasEdgeID>
     )
+    case cycleFocusedEdgeDirectionality(
+        focusedEdge: CanvasEdgeFocus,
+        selectedEdgeIDs: Set<CanvasEdgeID>
+    )
     case copySelectionOrFocusedSubtree
     case cutSelectionOrFocusedSubtree
     case pasteClipboardAtFocusedNode

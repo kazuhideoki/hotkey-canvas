@@ -22,6 +22,8 @@ public struct DefaultKeymapContextActionResolver: KeymapContextActionResolver {
             return .reportUnsupportedIntent(intent: primitiveIntent)
         case .switchTargetKind(let variant):
             return resolveSwitchTargetKindContextAction(variant: variant)
+        case .cycleFocusedEdgeDirectionality:
+            return .cycleFocusedEdgeDirectionality
         case .moveFocus(let direction, let variant):
             return resolveMoveFocusContextAction(direction: direction, variant: variant)
         case .moveNode(let direction):

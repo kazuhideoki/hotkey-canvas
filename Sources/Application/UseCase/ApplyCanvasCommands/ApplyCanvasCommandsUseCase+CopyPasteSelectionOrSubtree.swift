@@ -166,6 +166,7 @@ extension ApplyCanvasCommandsUseCase {
                     fromSourceReferenceID: edge.fromNodeID.rawValue,
                     toSourceReferenceID: edge.toNodeID.rawValue,
                     relationType: edge.relationType,
+                    directionality: edge.directionality,
                     parentChildOrder: edge.parentChildOrder
                 )
             }
@@ -364,6 +365,9 @@ extension ApplyCanvasCommandsUseCase {
             if $0.parentChildOrder != $1.parentChildOrder {
                 return ($0.parentChildOrder ?? Int.max) < ($1.parentChildOrder ?? Int.max)
             }
+            if $0.directionality.rawValue != $1.directionality.rawValue {
+                return $0.directionality.rawValue < $1.directionality.rawValue
+            }
             return $0.relationType.rawValue < $1.relationType.rawValue
         }
         for edgePayload in sortedEdgePayloads {
@@ -378,6 +382,7 @@ extension ApplyCanvasCommandsUseCase {
                 fromNodeID: fromNodeID,
                 toNodeID: toNodeID,
                 relationType: edgePayload.relationType,
+                directionality: edgePayload.directionality,
                 parentChildOrder: edgePayload.parentChildOrder
             )
             graph = try CanvasGraphCRUDService.createEdge(newEdge, in: graph).get()

@@ -85,6 +85,16 @@ func test_resolve_tab_returnsSwitchTargetKindEdgeIntent() throws {
     #expect(route == .primitive(intent: .switchTargetKind(variant: .edge)))
 }
 
+@Test("CanvasHotkeyTranslator: Command+Semicolon resolves cycle-edge-directionality intent")
+func test_resolve_commandSemicolon_returnsCycleEdgeDirectionalityIntent() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try makeKeyEvent(keyCode: 41, characters: ";", charactersIgnoringModifiers: ";", modifiers: [.command])
+
+    let route = sut.resolve(event)
+
+    #expect(route == .primitive(intent: .cycleFocusedEdgeDirectionality))
+}
+
 @Test("CanvasHotkeyTranslator: Option+Period resolves toggle-visibility intent")
 func test_resolve_optionPeriod_returnsToggleVisibilityIntent() throws {
     let sut = CanvasHotkeyTranslator()

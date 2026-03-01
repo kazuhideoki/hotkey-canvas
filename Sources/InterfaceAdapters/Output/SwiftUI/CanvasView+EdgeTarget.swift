@@ -146,8 +146,20 @@ extension CanvasView {
                 await viewModel.apply(commands: [deletionCommand])
             }
             return true
+        case .cycleFocusedEdgeDirectionality:
+            cycleFocusedEdgeDirectionalityIfPossible()
+            return true
         default:
             return true
+        }
+    }
+
+    func cycleFocusedEdgeDirectionalityIfPossible() {
+        guard let command = edgeDirectionalityCycleCommandFromCurrentState() else {
+            return
+        }
+        Task {
+            await viewModel.apply(commands: [command])
         }
     }
 
@@ -223,6 +235,37 @@ extension CanvasView {
     ) -> CanvasCommand {
         .deleteSelectedOrFocusedEdges(
             focusedEdge: CanvasEdgeFocus(edgeID: focusedEdgeID, originNodeID: focusedNodeID),
+            selectedEdgeIDs: selectedEdgeIDs
+        )
+    }
+
+    func edgeDirectionalityCycleCommandFromCurrentState() -> CanvasCommand? {
+        guard operationTargetKind == .edge else {
+            return nil
+        }
+        guard
+            let focusedNodeID = viewModel.focusedNodeID,
+            let focusedEdgeID
+        else {
+            return nil
+        }
+        return Self.edgeDirectionalityCycleCommand(
+            focusedNodeID: focusedNodeID,
+            focusedEdgeID: focusedEdgeID,
+            selectedEdgeIDs: selectedEdgeIDs
+        )
+    }
+
+    static func edgeDirectionalityCycleCommand(
+        focusedNodeID: CanvasNodeID,
+        focusedEdgeID: CanvasEdgeID,
+        selectedEdgeIDs: Set<CanvasEdgeID>
+    ) -> CanvasCommand {
+        .cycleFocusedEdgeDirectionality(
+            focusedEdge: CanvasEdgeFocus(
+                edgeID: focusedEdgeID,
+                originNodeID: focusedNodeID
+            ),
             selectedEdgeIDs: selectedEdgeIDs
         )
     }
