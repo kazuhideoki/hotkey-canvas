@@ -93,11 +93,15 @@ enum CanvasSearchNavigator {
 }
 
 extension CanvasView {
+    static let searchQueryHistoryLimit = 50
+
     func openSearch() {
         isCommandPalettePresented = false
         dismissConnectNodeSelection()
         isAddNodeModePopupPresented = false
         isSearchPresented = true
+        searchQueryHistoryCursor = nil
+        searchQueryDraftBeforeHistoryNavigation = searchQuery
     }
 
     func closeSearch(displayNodes: [CanvasNode]) {
@@ -105,6 +109,8 @@ extension CanvasView {
         isSearchPresented = false
         searchQuery = ""
         searchFocusedMatch = nil
+        searchQueryHistoryCursor = nil
+        searchQueryDraftBeforeHistoryNavigation = ""
 
         guard
             let nodeIDToFocus,
@@ -118,6 +124,14 @@ extension CanvasView {
     }
 
     func moveSearchFocus(direction: CanvasSearchDirection, displayNodes: [CanvasNode]) {
+        searchQueryHistory = CanvasSearchQueryHistoryNavigator.record(
+            query: searchQuery,
+            history: searchQueryHistory,
+            limit: Self.searchQueryHistoryLimit
+        )
+        searchQueryHistoryCursor = nil
+        searchQueryDraftBeforeHistoryNavigation = searchQuery
+
         let matches = CanvasSearchNavigator.matches(query: searchQuery, nodes: displayNodes)
         guard
             let nextMatch = CanvasSearchNavigator.nextMatch(
@@ -151,6 +165,28 @@ extension CanvasView {
             self.searchFocusedMatch = nil
             return
         }
+    }
+
+    func moveSearchQueryHistory(direction: CanvasSearchQueryHistoryDirection) {
+        let result = CanvasSearchQueryHistoryNavigator.navigate(
+            query: searchQuery,
+            history: searchQueryHistory,
+            cursor: searchQueryHistoryCursor,
+            draft: searchQueryDraftBeforeHistoryNavigation,
+            direction: direction
+        )
+        searchQuery = result.query
+        searchQueryHistoryCursor = result.cursor
+        searchQueryDraftBeforeHistoryNavigation = result.draft
+    }
+
+    func onSearchQueryEditedByUser() {
+        let result = CanvasSearchQueryHistoryNavigator.userEditedQuery(
+            currentQuery: searchQuery,
+            cursor: searchQueryHistoryCursor
+        )
+        searchQueryHistoryCursor = result.cursor
+        searchQueryDraftBeforeHistoryNavigation = result.draft
     }
 
     func highlightedNodeText(for node: CanvasNode) -> AttributedString {
@@ -212,6 +248,15 @@ extension CanvasView {
                     },
                     onSubmitBackward: {
                         moveSearchFocus(direction: .backward, displayNodes: displayNodes)
+                    },
+                    onMoveHistoryOlder: {
+                        moveSearchQueryHistory(direction: .older)
+                    },
+                    onMoveHistoryNewer: {
+                        moveSearchQueryHistory(direction: .newer)
+                    },
+                    onTextEdited: {
+                        onSearchQueryEditedByUser()
                     },
                     onCancel: {
                         closeSearch(displayNodes: displayNodes)
