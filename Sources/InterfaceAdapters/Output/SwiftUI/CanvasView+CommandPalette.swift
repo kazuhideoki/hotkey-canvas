@@ -7,6 +7,7 @@ extension CanvasView {
     enum CommandPaletteAction: Equatable {
         case shortcut(CanvasShortcutAction)
         case deleteSelectedOrFocusedEdges(CanvasCommand)
+        case cycleFocusedEdgeDirectionality(CanvasCommand)
         case insertImageFromFinder
     }
 
@@ -81,6 +82,9 @@ extension CanvasView {
         }
         if let edgeDeletionItem = edgeDeletionCommandPaletteItem() {
             items.append(edgeDeletionItem)
+        }
+        if let edgeDirectionalityItem = edgeDirectionalityCommandPaletteItem() {
+            items.append(edgeDirectionalityItem)
         }
         if viewModel.focusedNodeID != nil {
             items.append(
@@ -162,6 +166,24 @@ extension CanvasView {
         )
     }
 
+    private func edgeDirectionalityCommandPaletteItem() -> CommandPaletteItem? {
+        guard let command = edgeDirectionalityCycleCommandFromCurrentState() else {
+            return nil
+        }
+        let title = "Edge: Cycle Directionality"
+        return CommandPaletteItem(
+            id: "cycleFocusedEdgeDirectionality",
+            title: title,
+            shortcutLabel: "⌘;",
+            searchText: Self.commandPaletteSearchText(
+                title: title,
+                shortcutLabel: "⌘;",
+                searchTokens: ["edge", "direction", "directionality", "arrow", "reverse", "cycle"]
+            ),
+            action: .cycleFocusedEdgeDirectionality(command)
+        )
+    }
+
     func executeSelectedCommandIfNeeded() {
         let commandItems = filteredCommandPaletteItems()
         guard !commandItems.isEmpty else {
@@ -197,6 +219,10 @@ extension CanvasView {
                 return
             }
         case .deleteSelectedOrFocusedEdges(let command):
+            Task {
+                await viewModel.apply(commands: [command])
+            }
+        case .cycleFocusedEdgeDirectionality(let command):
             Task {
                 await viewModel.apply(commands: [command])
             }

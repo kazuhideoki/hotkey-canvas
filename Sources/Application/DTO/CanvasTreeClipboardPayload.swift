@@ -80,6 +80,8 @@ public struct CanvasClipboardEdgePayload: Equatable, Sendable {
     public let toSourceReferenceID: String
     /// Edge semantic relation type.
     public let relationType: CanvasEdgeRelationType
+    /// Edge arrow direction relative to endpoint references.
+    public let directionality: CanvasEdgeDirectionality
     /// Stable sibling order used for `parentChild` edges.
     public let parentChildOrder: Int?
 
@@ -88,16 +90,19 @@ public struct CanvasClipboardEdgePayload: Equatable, Sendable {
     ///   - fromSourceReferenceID: Source reference for `from` endpoint.
     ///   - toSourceReferenceID: Source reference for `to` endpoint.
     ///   - relationType: Edge relation.
+    ///   - directionality: Edge arrow direction.
     ///   - parentChildOrder: Stable sibling order for `parentChild` edges.
     public init(
         fromSourceReferenceID: String,
         toSourceReferenceID: String,
         relationType: CanvasEdgeRelationType,
+        directionality: CanvasEdgeDirectionality = .none,
         parentChildOrder: Int? = nil
     ) {
         self.fromSourceReferenceID = fromSourceReferenceID
         self.toSourceReferenceID = toSourceReferenceID
         self.relationType = relationType
+        self.directionality = directionality
         self.parentChildOrder = parentChildOrder
     }
 }

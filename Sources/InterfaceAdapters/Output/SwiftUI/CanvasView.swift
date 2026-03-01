@@ -6,7 +6,7 @@ import Combine
 import Domain
 import SwiftUI
 
-// swiftlint:disable type_body_length
+// swiftlint:disable type_body_length file_length
 /// SwiftUI canvas that displays graph nodes and handles keyboard-first editing interactions.
 public struct CanvasView: View {
     static let minimumCanvasWidth: Double = 900
@@ -220,15 +220,21 @@ public struct CanvasView: View {
                                 } else {
                                     styleSheet.edge.lineWidth
                                 }
-                            path
-                                .applying(
-                                    CanvasViewportTransform.affineTransform(
-                                        viewportSize: viewportSize,
-                                        zoomScale: zoomScale,
-                                        effectiveOffset: cameraOffset
-                                    )
-                                )
-                                .stroke(strokeColor, lineWidth: strokeWidth)
+                            let edgeRenderContext = EdgeRenderContext(
+                                nodesByID: nodesByID,
+                                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                                laneOffsetByEdgeID: laneOffsetByEdgeID,
+                                viewportSize: viewportSize,
+                                zoomScale: zoomScale,
+                                cameraOffset: cameraOffset
+                            )
+                            edgeStrokeAndArrow(
+                                edge: edge,
+                                path: path,
+                                strokeColor: strokeColor,
+                                strokeWidth: strokeWidth,
+                                context: edgeRenderContext
+                            )
                         }
                     }
                     ForEach(displayNodes, id: \.id) { node in
