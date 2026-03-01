@@ -57,7 +57,6 @@ public struct CanvasView: View {
         self.styleSheet = styleSheet
         onDisappearHandler = onDisappear
     }
-
     func styleColor(_ token: CanvasStyleColorToken) -> Color {
         CanvasStylePalette.color(token)
     }

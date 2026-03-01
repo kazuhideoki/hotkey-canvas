@@ -126,6 +126,7 @@ extension ApplyCanvasCommandsUseCase {
             .pasteClipboardAtFocusedNode,
             .setNodeText,
             .upsertNodeAttachment,
+            .scaleSelectedNodes,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
             .createArea,

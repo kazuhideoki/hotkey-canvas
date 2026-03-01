@@ -22,7 +22,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 @MainActor
 struct HotkeyCanvasApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    private let container = DependencyContainer()
+    private let container: DependencyContainer
+    private let debugStateAPIRuntime: DebugStateAPIRuntime
+
+    init() {
+        let container = DependencyContainer()
+        self.container = container
+        debugStateAPIRuntime = DebugStateAPIRuntime(container: container)
+    }
 
     /// Root scene rendered by the application.
     var body: some Scene {

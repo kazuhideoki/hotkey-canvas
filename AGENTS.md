@@ -70,3 +70,29 @@ For pull requests, include:
 - Linked issue/task.
 - Architecture impact note (especially dependency direction).
 - Test evidence (what was run, or why tests are pending).
+
+## Debug State API (Local Development)
+
+Use the debug-state API to fetch live application state from external tools (for example Codex CLI) during local development.
+
+- Enable API at launch (DEBUG build only):
+  - `swift run HotkeyCanvasApp -- --enable-debug-state-api --debug-state-port=8750 --debug-state-token=codex-demo-token`
+- Notes:
+  - API binds to `127.0.0.1` only.
+  - If `--debug-state-token` is omitted, a random token is generated and printed to app logs.
+  - Startup now waits for listener readiness; port conflicts are reported as startup failure.
+
+Endpoints (all require `Authorization: Bearer <token>`):
+
+- Health:
+  - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/health`
+- Session list:
+  - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/sessions`
+- Single session state:
+  - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/sessions/<session-id>/state`
+
+Typical workflow:
+
+1. Start app with `--enable-debug-state-api`.
+2. Call `/debug/v1/sessions` to get active `sessionID`.
+3. Call `/debug/v1/sessions/<session-id>/state` to inspect graph/UI snapshot.
