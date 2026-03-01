@@ -105,9 +105,15 @@ extension CommandPaletteTextField {
                 onCancel()
                 return true
             case #selector(NSResponder.moveUp(_:)):
+                guard textView.hasMarkedText() == false else {
+                    return false
+                }
                 onMoveSelectionUp()
                 return true
             case #selector(NSResponder.moveDown(_:)):
+                guard textView.hasMarkedText() == false else {
+                    return false
+                }
                 onMoveSelectionDown()
                 return true
             default:

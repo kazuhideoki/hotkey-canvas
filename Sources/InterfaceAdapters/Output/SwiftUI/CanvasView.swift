@@ -17,6 +17,10 @@ public struct CanvasView: View {
     @State var isCommandPalettePresented = false
     @State var selectedCommandPaletteIndex: Int = 0
     @State var commandPaletteRecentItemIDs: [String] = []
+    @State var commandPaletteQueryHistory: [String] = []
+    @State var commandPaletteHistoryNavigationIndex: Int = -1
+    @State var commandPaletteHistoryDraftQuery: String = ""
+    @State var isApplyingCommandPaletteHistoryQuery: Bool = false
     @State var searchQuery: String = ""
     @State var isSearchPresented = false
     @State var searchFocusedMatch: CanvasSearchMatch?
@@ -109,10 +113,10 @@ public struct CanvasView: View {
                                 closeCommandPalette()
                             },
                             onMoveSelectionUp: {
-                                movePaletteSelection(offset: -1)
+                                handleCommandPaletteArrowKey(.up)
                             },
                             onMoveSelectionDown: {
-                                movePaletteSelection(offset: 1)
+                                handleCommandPaletteArrowKey(.down)
                             }
                         )
                         .padding(.horizontal, 10)
@@ -489,12 +493,26 @@ public struct CanvasView: View {
                 viewModel.consumePendingEditingNodeID()
             }
         }
-        .onChange(of: commandPaletteQuery) { _ in selectedCommandPaletteIndex = 0 }
+        .onChange(of: commandPaletteQuery) { _ in
+            selectedCommandPaletteIndex = 0
+            if isApplyingCommandPaletteHistoryQuery {
+                isApplyingCommandPaletteHistoryQuery = false
+                return
+            }
+            guard commandPaletteHistoryNavigationIndex >= 0 else {
+                return
+            }
+            commandPaletteHistoryNavigationIndex = -1
+            commandPaletteHistoryDraftQuery = commandPaletteQuery
+        }
         .onChange(of: searchQuery) { _ in onSearchQueryChange(displayNodes: displayNodes) }
         .onChange(of: isCommandPalettePresented) { isVisible in
             if !isVisible {
                 commandPaletteQuery = ""
                 selectedCommandPaletteIndex = 0
+                commandPaletteHistoryNavigationIndex = -1
+                commandPaletteHistoryDraftQuery = ""
+                isApplyingCommandPaletteHistoryQuery = false
             }
         }
         .onReceive(viewModel.$viewportIntent) { viewportIntent in
