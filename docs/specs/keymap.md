@@ -40,6 +40,7 @@
 
 - `modal`（Command Palette / Add Node Mode Selection / Connect Mode 内操作）は本表の対象外です。
 - Command Palette では edge 対象時に `Edge: Delete Selected` が表示され、`delete` と同じ削除規則（focused edge を含む複数選択は一括削除）が適用されます。
+- Command Palette では起動直後（検索語句が空）に `↑` で検索語句履歴を過去方向へ 1 件ずつ呼び出し、`↓` で新しい方向へ戻せる。最新入力まで戻りきった後の `↓` は従来どおり候補リストのスクロールに使える。
 - Add Node Mode Selection では `t` / `d` / `enter` に加えて、`↑` / `↓` で選択移動、`esc` でキャンセルが可能です。
 - Connect Mode では `↑` / `↓` / `←` / `→` で候補移動、`enter` で確定、`esc` でキャンセルが可能です。
 - 入力正規化として、`fn+arrow` と `fn+delete` は `fn` を無視して通常ショートカットとして解決されます。

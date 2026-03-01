@@ -185,6 +185,7 @@ extension CanvasViewModel {
             .moveFocus, .focusNode, .focusArea, .extendSelection, .moveNode, .nudgeNode, .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
+            .cycleFocusedEdgeDirectionality,
             .deleteSelectedOrFocusedNodes,
             .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree, .pasteClipboardAtFocusedNode,

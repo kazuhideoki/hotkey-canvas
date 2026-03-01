@@ -236,6 +236,7 @@ extension CanvasDebugStateJSONMapper {
         let fromNodeID: String
         let toNodeID: String
         let relationType: String
+        let directionality: String
         let parentChildOrder: Int?
         let label: String?
         let metadata: [String: String]
@@ -246,6 +247,7 @@ extension CanvasDebugStateJSONMapper {
                 fromNodeID: edge.fromNodeID.rawValue,
                 toNodeID: edge.toNodeID.rawValue,
                 relationType: edge.relationType.rawValue,
+                directionality: edge.directionality.rawValue,
                 parentChildOrder: edge.parentChildOrder,
                 label: edge.label,
                 metadata: edge.metadata

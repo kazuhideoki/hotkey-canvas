@@ -153,7 +153,7 @@
 ### Phase 1: 意図辞書の固定（ドキュメント）
 
 - Intent 一覧と定義文を本書で固定する。
-- 現行 KeyTrigger から Intent への対応表は「操作プリミティブ対象」に限定して `docs/domain.md` のショートカット節へ追記可能な形で整理する。
+- 現行 KeyTrigger から Intent への対応表は「操作プリミティブ対象」に限定して `docs/specs/domain.md` のショートカット節へ追記可能な形で整理する。
 - グローバルショートカット（palette/history/zoom など）は Intent 対象外として別管理であることを明記する。
 
 ### Phase 2: ルーティング境界の設計
@@ -183,7 +183,7 @@
 
 ### 8.1 Phase 1 実施内容（完了）
 
-- `docs/domain.md` に以下を追記し、意図辞書と境界仕様を固定した。
+- `docs/specs/domain.md` に以下を追記し、意図辞書と境界仕様を固定した。
   - `primitive/global/modal` の Scope 分離ルール
   - Primitive Intent 語彙
   - KeyTrigger -> Primitive Intent 対応表（操作プリミティブ限定）

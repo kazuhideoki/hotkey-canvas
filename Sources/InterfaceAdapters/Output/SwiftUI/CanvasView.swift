@@ -6,7 +6,7 @@ import Combine
 import Domain
 import SwiftUI
 
-// swiftlint:disable type_body_length
+// swiftlint:disable type_body_length file_length
 /// SwiftUI canvas that displays graph nodes and handles keyboard-first editing interactions.
 public struct CanvasView: View {
     static let minimumCanvasSize = CGSize(width: 900, height: 600)
@@ -15,6 +15,11 @@ public struct CanvasView: View {
     @State var commandPaletteQuery: String = ""
     @State var isCommandPalettePresented = false
     @State var selectedCommandPaletteIndex: Int = 0
+    @State var commandPaletteRecentItemIDs: [String] = []
+    @State var commandPaletteQueryHistory: [String] = []
+    @State var commandPaletteHistoryNavigationIndex: Int = -1
+    @State var commandPaletteHistoryDraftQuery: String = ""
+    @State var isApplyingCommandPaletteHistoryQuery: Bool = false
     @State var searchQuery: String = ""
     @State var isSearchPresented = false
     @State var searchFocusedMatch: CanvasSearchMatch?
@@ -82,6 +87,9 @@ public struct CanvasView: View {
             )
             let laneOffsetByEdgeID = CanvasEdgeRouting.laneOffsetByEdgeID(edges: viewModel.edges)
             let commandPaletteItems = filteredCommandPaletteItems()
+            let recentCommandPaletteItemIDs = Set(
+                commandPaletteRecentItemIDs.prefix(Self.commandPaletteRecentPinnedCount)
+            )
             ZStack(alignment: .topLeading) {
                 styleColor(.textBackground)
                     .ignoresSafeArea()
@@ -101,10 +109,10 @@ public struct CanvasView: View {
                                 closeCommandPalette()
                             },
                             onMoveSelectionUp: {
-                                movePaletteSelection(offset: -1)
+                                handleCommandPaletteArrowKey(.up)
                             },
                             onMoveSelectionDown: {
-                                movePaletteSelection(offset: 1)
+                                handleCommandPaletteArrowKey(.down)
                             }
                         )
                         .padding(.horizontal, 10)
@@ -129,6 +137,11 @@ public struct CanvasView: View {
                                 VStack(spacing: 0) {
                                     ForEach(Array(commandPaletteItems.enumerated()), id: \.element.id) { index, item in
                                         HStack {
+                                            if recentCommandPaletteItemIDs.contains(item.id) {
+                                                Image(systemName: "clock.arrow.circlepath")
+                                                    .font(.system(size: 12, weight: .semibold))
+                                                    .foregroundStyle(.secondary)
+                                            }
                                             Text(item.title)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                             Text(item.shortcutLabel)
@@ -218,15 +231,21 @@ public struct CanvasView: View {
                                 } else {
                                     styleSheet.edge.lineWidth
                                 }
-                            path
-                                .applying(
-                                    CanvasViewportTransform.affineTransform(
-                                        viewportSize: viewportSize,
-                                        zoomScale: zoomScale,
-                                        effectiveOffset: cameraOffset
-                                    )
-                                )
-                                .stroke(strokeColor, lineWidth: strokeWidth)
+                            let edgeRenderContext = EdgeRenderContext(
+                                nodesByID: nodesByID,
+                                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                                laneOffsetByEdgeID: laneOffsetByEdgeID,
+                                viewportSize: viewportSize,
+                                zoomScale: zoomScale,
+                                cameraOffset: cameraOffset
+                            )
+                            edgeStrokeAndArrow(
+                                edge: edge,
+                                path: path,
+                                strokeColor: strokeColor,
+                                strokeWidth: strokeWidth,
+                                context: edgeRenderContext
+                            )
                         }
                     }
                     ForEach(displayNodes, id: \.id) { node in
@@ -473,12 +492,26 @@ public struct CanvasView: View {
                 viewModel.consumePendingEditingNodeID()
             }
         }
-        .onChange(of: commandPaletteQuery) { _ in selectedCommandPaletteIndex = 0 }
+        .onChange(of: commandPaletteQuery) { _ in
+            selectedCommandPaletteIndex = 0
+            if isApplyingCommandPaletteHistoryQuery {
+                isApplyingCommandPaletteHistoryQuery = false
+                return
+            }
+            guard commandPaletteHistoryNavigationIndex >= 0 else {
+                return
+            }
+            commandPaletteHistoryNavigationIndex = -1
+            commandPaletteHistoryDraftQuery = commandPaletteQuery
+        }
         .onChange(of: searchQuery) { _ in onSearchQueryChange(displayNodes: displayNodes) }
         .onChange(of: isCommandPalettePresented) { isVisible in
             if !isVisible {
                 commandPaletteQuery = ""
                 selectedCommandPaletteIndex = 0
+                commandPaletteHistoryNavigationIndex = -1
+                commandPaletteHistoryDraftQuery = ""
+                isApplyingCommandPaletteHistoryQuery = false
             }
         }
         .onReceive(viewModel.$viewportIntent) { viewportIntent in

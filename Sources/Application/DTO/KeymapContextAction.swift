@@ -6,6 +6,7 @@ import Domain
 public enum KeymapContextAction: Equatable, Sendable {
     case apply(commands: [CanvasCommand])
     case switchTargetKind(variant: KeymapSwitchTargetKindIntentVariant)
+    case cycleFocusedEdgeDirectionality
     case presentAddNodeModeSelection
     case reportUnsupportedIntent(intent: KeymapPrimitiveIntent)
 }

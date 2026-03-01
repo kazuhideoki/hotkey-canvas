@@ -116,3 +116,24 @@ func test_edgeDeletionCommand_keepsCurrentSelectedSet() {
     #expect(focusedEdge.originNodeID == focusedNodeID)
     #expect(selectedEdgeIDs == [focusedEdgeID, selectedEdgeID])
 }
+
+@Test("CanvasView edge target sync: edge directionality command keeps focused edge, origin node, and selection")
+func test_edgeDirectionalityCycleCommand_keepsFocusedEdgeOriginNodeAndSelection() {
+    let focusedNodeID = CanvasNodeID(rawValue: "node-focused")
+    let focusedEdgeID = CanvasEdgeID(rawValue: "edge-focused")
+    let selectedEdgeID = CanvasEdgeID(rawValue: "edge-selected")
+
+    let command = CanvasView.edgeDirectionalityCycleCommand(
+        focusedNodeID: focusedNodeID,
+        focusedEdgeID: focusedEdgeID,
+        selectedEdgeIDs: [focusedEdgeID, selectedEdgeID]
+    )
+
+    guard case .cycleFocusedEdgeDirectionality(let focusedEdge, let selectedEdgeIDs) = command else {
+        Issue.record("Expected cycleFocusedEdgeDirectionality command")
+        return
+    }
+    #expect(focusedEdge.edgeID == focusedEdgeID)
+    #expect(focusedEdge.originNodeID == focusedNodeID)
+    #expect(selectedEdgeIDs == [focusedEdgeID, selectedEdgeID])
+}
