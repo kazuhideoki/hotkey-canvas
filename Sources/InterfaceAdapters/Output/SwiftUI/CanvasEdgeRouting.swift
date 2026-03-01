@@ -9,6 +9,8 @@ enum CanvasEdgeRouting {
     private static let minimumLegLength: Double = 6
     private static let defaultCornerRadius: Double = 14
     private static let verticalPreferenceRatio: Double = 0.9
+    private static let parallelLaneSpacing: Double = 14
+    private static let minimumAnchorInset: Double = 4
 
     /// Primary axis used for routing one edge.
     enum RouteAxis: Hashable {
@@ -26,11 +28,25 @@ enum CanvasEdgeRouting {
         let endY: Double
     }
 
+    /// Endpoint coordinates derived from node anchors before branch bending.
+    struct RouteEndpoints: Equatable {
+        let startX: Double
+        let startY: Double
+        let endX: Double
+        let endY: Double
+    }
+
     /// Parent+axis+direction key used for storing shared branch coordinates.
     struct BranchKey: Hashable {
         let parentNodeID: CanvasNodeID
         let axis: RouteAxis
         let direction: Int
+    }
+
+    /// Undirected node-pair key used for assigning parallel lanes.
+    struct ParallelBundleKey: Hashable {
+        let firstNodeID: CanvasNodeID
+        let secondNodeID: CanvasNodeID
     }
 
     /// Returns the shared branch coordinate for each parent node side.
@@ -75,6 +91,35 @@ enum CanvasEdgeRouting {
         return result
     }
 
+    /// Returns lane offsets for edges between the same node pair so each edge gets a distinct route.
+    /// - Parameter edges: Graph edges to route.
+    /// - Returns: Mapping from edge identifier to perpendicular offset.
+    static func laneOffsetByEdgeID(edges: [CanvasEdge]) -> [CanvasEdgeID: Double] {
+        let groupedEdges = Dictionary(
+            grouping: edges,
+            by: parallelBundleKey(for:)
+        )
+        var laneOffsetByEdgeID: [CanvasEdgeID: Double] = [:]
+
+        for key in groupedEdges.keys.sorted(by: isParallelBundleKeyOrdered) {
+            guard let bundleEdges = groupedEdges[key] else {
+                continue
+            }
+            let sortedBundleEdges = bundleEdges.sorted { $0.id.rawValue < $1.id.rawValue }
+            guard sortedBundleEdges.count > 1 else {
+                continue
+            }
+
+            let centerIndex = Double(sortedBundleEdges.count - 1) / 2
+            for (index, edge) in sortedBundleEdges.enumerated() {
+                let laneOffset = (Double(index) - centerIndex) * parallelLaneSpacing
+                laneOffsetByEdgeID[edge.id] = laneOffset
+            }
+        }
+
+        return laneOffsetByEdgeID
+    }
+
     /// Builds a rounded route path for a single edge.
     /// - Parameters:
     ///   - edge: Edge to route.
@@ -84,13 +129,15 @@ enum CanvasEdgeRouting {
     static func path(
         for edge: CanvasEdge,
         nodesByID: [CanvasNodeID: CanvasNode],
-        branchCoordinateByParentAndDirection: [BranchKey: Double]
+        branchCoordinateByParentAndDirection: [BranchKey: Double],
+        laneOffsetByEdgeID: [CanvasEdgeID: Double] = [:]
     ) -> Path? {
         guard
             let geometry = routeGeometry(
                 for: edge,
                 nodesByID: nodesByID,
-                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                laneOffsetByEdgeID: laneOffsetByEdgeID
             )
         else {
             return nil
@@ -119,7 +166,8 @@ enum CanvasEdgeRouting {
     static func routeGeometry(
         for edge: CanvasEdge,
         nodesByID: [CanvasNodeID: CanvasNode],
-        branchCoordinateByParentAndDirection: [BranchKey: Double]
+        branchCoordinateByParentAndDirection: [BranchKey: Double],
+        laneOffsetByEdgeID: [CanvasEdgeID: Double] = [:]
     ) -> RouteGeometry? {
         guard
             let parentNode = nodesByID[edge.fromNodeID],
@@ -135,57 +183,109 @@ enum CanvasEdgeRouting {
             axis: axis,
             direction: direction > 0 ? 1 : -1
         )
-
-        let startCenterX = parentNode.bounds.x + (parentNode.bounds.width / 2)
-        let startCenterY = parentNode.bounds.y + (parentNode.bounds.height / 2)
-        let endCenterX = childNode.bounds.x + (childNode.bounds.width / 2)
-        let endCenterY = childNode.bounds.y + (childNode.bounds.height / 2)
-        let startX =
-            if axis == .horizontal {
-                edgeExitCoordinate(for: parentNode, axis: axis, direction: direction)
-            } else {
-                startCenterX
-            }
-        let endX =
-            if axis == .horizontal {
-                edgeEntryCoordinate(for: childNode, axis: axis, direction: direction)
-            } else {
-                endCenterX
-            }
-        let startY =
-            if axis == .horizontal {
-                startCenterY
-            } else {
-                edgeExitCoordinate(for: parentNode, axis: axis, direction: direction)
-            }
-        let endY =
-            if axis == .horizontal {
-                endCenterY
-            } else {
-                edgeEntryCoordinate(for: childNode, axis: axis, direction: direction)
-            }
-
-        let startCoordinate = axis == .horizontal ? startX : startY
-        let endCoordinate = axis == .horizontal ? endX : endY
+        let laneOffset = laneOffsetByEdgeID[edge.id] ?? 0
+        let endpoints = routeEndpoints(
+            axis: axis,
+            direction: direction,
+            parentNode: parentNode,
+            childNode: childNode,
+            laneOffset: laneOffset
+        )
+        let startCoordinate = axis == .horizontal ? endpoints.startX : endpoints.startY
+        let endCoordinate = axis == .horizontal ? endpoints.endX : endpoints.endY
         let branchCoordinate = constrainBranchCoordinate(
-            branchCoordinateByParentAndDirection[directionKey]
-                ?? (startCoordinate + ((endCoordinate - startCoordinate) / 2)),
+            (branchCoordinateByParentAndDirection[directionKey]
+                ?? (startCoordinate + ((endCoordinate - startCoordinate) / 2))) + laneOffset,
             start: startCoordinate,
             end: endCoordinate
         )
 
         return RouteGeometry(
             axis: axis,
-            startX: startX,
-            startY: startY,
+            startX: endpoints.startX,
+            startY: endpoints.startY,
             branchCoordinate: branchCoordinate,
-            endX: endX,
-            endY: endY
+            endX: endpoints.endX,
+            endY: endpoints.endY
         )
     }
 }
 
 extension CanvasEdgeRouting {
+    private static func isParallelBundleKeyOrdered(_ lhs: ParallelBundleKey, _ rhs: ParallelBundleKey) -> Bool {
+        if lhs.firstNodeID.rawValue != rhs.firstNodeID.rawValue {
+            return lhs.firstNodeID.rawValue < rhs.firstNodeID.rawValue
+        }
+        if lhs.secondNodeID.rawValue != rhs.secondNodeID.rawValue {
+            return lhs.secondNodeID.rawValue < rhs.secondNodeID.rawValue
+        }
+        return false
+    }
+
+    private static func parallelBundleKey(for edge: CanvasEdge) -> ParallelBundleKey {
+        if edge.fromNodeID.rawValue <= edge.toNodeID.rawValue {
+            return ParallelBundleKey(firstNodeID: edge.fromNodeID, secondNodeID: edge.toNodeID)
+        }
+        return ParallelBundleKey(firstNodeID: edge.toNodeID, secondNodeID: edge.fromNodeID)
+    }
+
+    private static func laneAdjustedCoordinate(
+        for node: CanvasNode,
+        axis: RouteAxis,
+        baseCoordinate: Double,
+        laneOffset: Double
+    ) -> Double {
+        let desiredCoordinate = baseCoordinate + laneOffset
+        switch axis {
+        case .horizontal:
+            let lower = node.bounds.y + minimumAnchorInset
+            let upper = node.bounds.y + node.bounds.height - minimumAnchorInset
+            guard lower <= upper else {
+                return baseCoordinate
+            }
+            return min(max(desiredCoordinate, lower), upper)
+        case .vertical:
+            let lower = node.bounds.x + minimumAnchorInset
+            let upper = node.bounds.x + node.bounds.width - minimumAnchorInset
+            guard lower <= upper else {
+                return baseCoordinate
+            }
+            return min(max(desiredCoordinate, lower), upper)
+        }
+    }
+
+    private static func routeEndpoints(
+        axis: RouteAxis,
+        direction: Double,
+        parentNode: CanvasNode,
+        childNode: CanvasNode,
+        laneOffset: Double
+    ) -> RouteEndpoints {
+        let parentCenterX = parentNode.bounds.x + (parentNode.bounds.width / 2)
+        let parentCenterY = parentNode.bounds.y + (parentNode.bounds.height / 2)
+        let childCenterX = childNode.bounds.x + (childNode.bounds.width / 2)
+        let childCenterY = childNode.bounds.y + (childNode.bounds.height / 2)
+
+        let startX =
+            axis == .horizontal
+            ? edgeExitCoordinate(for: parentNode, axis: axis, direction: direction)
+            : laneAdjustedCoordinate(for: parentNode, axis: axis, baseCoordinate: parentCenterX, laneOffset: laneOffset)
+        let startY =
+            axis == .horizontal
+            ? laneAdjustedCoordinate(for: parentNode, axis: axis, baseCoordinate: parentCenterY, laneOffset: laneOffset)
+            : edgeExitCoordinate(for: parentNode, axis: axis, direction: direction)
+        let endX =
+            axis == .horizontal
+            ? edgeEntryCoordinate(for: childNode, axis: axis, direction: direction)
+            : laneAdjustedCoordinate(for: childNode, axis: axis, baseCoordinate: childCenterX, laneOffset: laneOffset)
+        let endY =
+            axis == .horizontal
+            ? laneAdjustedCoordinate(for: childNode, axis: axis, baseCoordinate: childCenterY, laneOffset: laneOffset)
+            : edgeEntryCoordinate(for: childNode, axis: axis, direction: direction)
+
+        return RouteEndpoints(startX: startX, startY: startY, endX: endX, endY: endY)
+    }
+
     private static func routeAxis(
         parentNode: CanvasNode,
         childNode: CanvasNode

@@ -41,10 +41,6 @@ extension ApplyCanvasCommandsUseCase {
         guard fromAreaID == toAreaID else {
             return noOpMutationResult(for: graph)
         }
-        guard !hasNormalEdge(fromNodeID: fromNodeID, toNodeID: toNodeID, in: graph) else {
-            return noOpMutationResult(for: graph)
-        }
-
         let graphAfterMutation = try CanvasGraphCRUDService.createEdge(
             CanvasEdge(
                 id: CanvasEdgeID(rawValue: "edge-\(UUID().uuidString.lowercased())"),
@@ -80,25 +76,5 @@ extension ApplyCanvasCommandsUseCase {
                 needsFocusNormalization: false
             )
         )
-    }
-}
-
-extension ApplyCanvasCommandsUseCase {
-    /// Returns whether a directed normal edge already exists between source and target.
-    /// - Parameters:
-    ///   - fromNodeID: Candidate edge source node identifier.
-    ///   - toNodeID: Candidate edge destination node identifier.
-    ///   - graph: Graph snapshot to inspect.
-    /// - Returns: `true` when a matching normal edge already exists.
-    private func hasNormalEdge(
-        fromNodeID: CanvasNodeID,
-        toNodeID: CanvasNodeID,
-        in graph: CanvasGraph
-    ) -> Bool {
-        graph.edgesByID.values.contains { edge in
-            edge.fromNodeID == fromNodeID
-                && edge.toNodeID == toNodeID
-                && edge.relationType == .normal
-        }
     }
 }
