@@ -90,9 +90,23 @@ Endpoints (all require `Authorization: Bearer <token>`):
   - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/sessions`
 - Single session state:
   - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/sessions/<session-id>/state`
+- Domain catalog for a session:
+  - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/sessions/<session-id>/domains`
+- Domain-specific state:
+  - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/sessions/<session-id>/domains/<domain-id>`
+  - Available `domain-id` values:
+    - `d1-canvas-graph-editing`
+    - `d2-focus-and-selection`
+    - `d3-area-layout`
+    - `d4-tree-layout`
+    - `d5-shortcut-catalog`
+    - `d6-fold-visibility`
+    - `d7-area-mode-membership`
 
 Typical workflow:
 
 1. Start app with `--enable-debug-state-api`.
 2. Call `/debug/v1/sessions` to get active `sessionID`.
-3. Call `/debug/v1/sessions/<session-id>/state` to inspect graph/UI snapshot.
+3. Call `/debug/v1/sessions/<session-id>/domains` to discover domain endpoints.
+4. Call `/debug/v1/sessions/<session-id>/domains/<domain-id>` for target domain state.
+5. Call `/debug/v1/sessions/<session-id>/state` when full graph/UI snapshot is needed.
