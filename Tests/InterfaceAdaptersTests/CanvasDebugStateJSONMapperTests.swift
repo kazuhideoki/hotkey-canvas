@@ -114,6 +114,66 @@ func test_sessionStatePayload_includesGraphAndUI() throws {
     #expect(areaRows?.first?["editingMode"] as? String == "diagram")
 }
 
+@Test("CanvasDebugStateJSONMapper: domain catalog payload includes all domain endpoints")
+func test_domainCatalogPayload_includesAllDomainEndpoints() throws {
+    let sessionID = CanvasSessionID(rawValue: "session-a")
+    let data = try CanvasDebugStateJSONMapper.makeDomainCatalogPayload(sessionID: sessionID)
+    let root = try jsonObject(from: data)
+
+    #expect(root["schemaVersion"] as? String == "debug-state.v1")
+    #expect(root["sessionID"] as? String == "session-a")
+    #expect(root["domainCount"] as? Int == 7)
+
+    let domains = root["domains"] as? [[String: Any]]
+    #expect(domains?.count == 7)
+    #expect(domains?.first?["domainID"] as? String == "d1-canvas-graph-editing")
+    #expect(
+        domains?.first?["statePath"] as? String == "/debug/v1/sessions/session-a/domains/d1-canvas-graph-editing"
+    )
+}
+
+@Test("CanvasDebugStateJSONMapper: fold visibility domain payload includes hidden and visible nodes")
+func test_domainStatePayload_foldVisibility_includesHiddenAndVisibleNodes() throws {
+    let sessionID = CanvasSessionID(rawValue: "session-a")
+    let rootID = CanvasNodeID(rawValue: "root")
+    let childID = CanvasNodeID(rawValue: "child")
+    let edgeID = CanvasEdgeID(rawValue: "edge-1")
+
+    let graph = CanvasGraph(
+        nodesByID: [
+            rootID: CanvasNode(
+                id: rootID, kind: .text, text: "root", bounds: CanvasBounds(x: 0, y: 0, width: 120, height: 40)),
+            childID: CanvasNode(
+                id: childID, kind: .text, text: "child", bounds: CanvasBounds(x: 200, y: 0, width: 120, height: 40)),
+        ],
+        edgesByID: [
+            edgeID: CanvasEdge(
+                id: edgeID,
+                fromNodeID: rootID,
+                toNodeID: childID,
+                relationType: .parentChild
+            )
+        ],
+        collapsedRootNodeIDs: [rootID],
+        areasByID: [
+            .defaultTree: CanvasArea(id: .defaultTree, nodeIDs: [rootID, childID], editingMode: .tree)
+        ]
+    )
+    let result = ApplyResult(newState: graph)
+    let data = try CanvasDebugStateJSONMapper.makeDomainStatePayload(
+        sessionID: sessionID,
+        result: result,
+        domainID: .d6FoldVisibility
+    )
+    let root = try jsonObject(from: data)
+
+    #expect(root["domainID"] as? String == "d6-fold-visibility")
+    let state = root["state"] as? [String: Any]
+    #expect(state?["collapsedRootNodeIDs"] as? [String] == ["root"])
+    #expect(state?["hiddenNodeIDs"] as? [String] == ["child"])
+    #expect(state?["visibleNodeIDs"] as? [String] == ["root"])
+}
+
 private func jsonObject(from data: Data) throws -> [String: Any] {
     let object = try JSONSerialization.jsonObject(with: data)
     guard let dictionary = object as? [String: Any] else {

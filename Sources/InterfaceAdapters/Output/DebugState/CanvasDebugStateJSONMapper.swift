@@ -64,7 +64,7 @@ public enum CanvasDebugStateJSONMapper {
 }
 
 extension CanvasDebugStateJSONMapper {
-    private static func focusedEdgeID(in graph: CanvasGraph) -> String? {
+    static func focusedEdgeID(in graph: CanvasGraph) -> String? {
         guard case .edge(let edgeFocus) = graph.focusedElement else {
             return nil
         }
@@ -73,20 +73,20 @@ extension CanvasDebugStateJSONMapper {
 }
 
 extension CanvasDebugStateJSONMapper {
-    private struct HealthPayload: Codable {
+    struct HealthPayload: Codable {
         let schemaVersion: String
         let status: String
         let generatedAt: String
     }
 
-    private struct SessionsPayload: Codable {
+    struct SessionsPayload: Codable {
         let schemaVersion: String
         let generatedAt: String
         let sessionCount: Int
         let sessions: [SessionSummaryPayload]
     }
 
-    private struct SessionSummaryPayload: Codable {
+    struct SessionSummaryPayload: Codable {
         let sessionID: String
         let nodeCount: Int
         let edgeCount: Int
@@ -94,7 +94,7 @@ extension CanvasDebugStateJSONMapper {
         let focusedEdgeID: String?
     }
 
-    private struct SessionStatePayload: Codable {
+    struct SessionStatePayload: Codable {
         let schemaVersion: String
         let generatedAt: String
         let sessionID: String
@@ -102,12 +102,12 @@ extension CanvasDebugStateJSONMapper {
         let graph: GraphPayload
     }
 
-    private struct UIPayload: Codable {
+    struct UIPayload: Codable {
         let canUndo: Bool
         let canRedo: Bool
     }
 
-    private struct GraphPayload: Codable {
+    struct GraphPayload: Codable {
         let focusedNodeID: String?
         let focusedElement: FocusedElementPayload?
         let selectedNodeIDs: [String]
@@ -137,7 +137,7 @@ extension CanvasDebugStateJSONMapper {
         }
     }
 
-    private struct FocusedElementPayload: Codable {
+    struct FocusedElementPayload: Codable {
         let kind: String
         let nodeID: String?
         let edgeID: String?
@@ -166,7 +166,7 @@ extension CanvasDebugStateJSONMapper {
         }
     }
 
-    private struct NodePayload: Codable {
+    struct NodePayload: Codable {
         let id: String
         let kind: String
         let text: String?
@@ -190,7 +190,7 @@ extension CanvasDebugStateJSONMapper {
         }
     }
 
-    private struct BoundsPayload: Codable {
+    struct BoundsPayload: Codable {
         let x: Double
         let y: Double
         let width: Double
@@ -201,7 +201,7 @@ extension CanvasDebugStateJSONMapper {
         }
     }
 
-    private struct AttachmentPayload: Codable {
+    struct AttachmentPayload: Codable {
         let id: String
         let kind: String
         let filePath: String
@@ -220,7 +220,7 @@ extension CanvasDebugStateJSONMapper {
         }
     }
 
-    private struct EdgePayload: Codable {
+    struct EdgePayload: Codable {
         let id: String
         let fromNodeID: String
         let toNodeID: String
@@ -242,7 +242,7 @@ extension CanvasDebugStateJSONMapper {
         }
     }
 
-    private struct AreaPayload: Codable {
+    struct AreaPayload: Codable {
         let id: String
         let editingMode: String
         let nodeIDs: [String]
@@ -258,7 +258,7 @@ extension CanvasDebugStateJSONMapper {
 }
 
 extension CanvasAttachmentPlacement {
-    fileprivate var debugStateRawValue: String {
+    var debugStateRawValue: String {
         switch self {
         case .aboveText:
             return "above-text"
@@ -267,7 +267,7 @@ extension CanvasAttachmentPlacement {
 }
 
 extension CanvasEditingMode {
-    fileprivate var debugStateRawValue: String {
+    var debugStateRawValue: String {
         switch self {
         case .tree:
             return "tree"

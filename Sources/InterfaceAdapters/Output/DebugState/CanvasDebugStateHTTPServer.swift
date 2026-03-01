@@ -187,43 +187,111 @@ extension CanvasDebugStateHTTPServer {
             return .json(status: .unauthorized, body: errorBody(code: "unauthorized"))
         }
 
-        if request.path == "/debug/v1/health" {
-            do {
-                return .json(status: .ok, body: try CanvasDebugStateJSONMapper.makeHealthPayload())
-            } catch {
-                return .json(status: .internalServerError, body: errorBody(code: "serialization_failed"))
-            }
+        if let response = routeHealth(request: request) {
+            return response
         }
 
         let resultsBySessionID = await fetchResultsBySessionID()
 
-        if request.path == "/debug/v1/sessions" {
-            do {
-                return .json(
-                    status: .ok,
-                    body: try CanvasDebugStateJSONMapper.makeSessionsPayload(resultsBySessionID: resultsBySessionID)
-                )
-            } catch {
-                return .json(status: .internalServerError, body: errorBody(code: "serialization_failed"))
-            }
+        if let response = routeSessions(request: request, resultsBySessionID: resultsBySessionID) {
+            return response
         }
 
-        if let sessionID = request.sessionIDForStatePath() {
-            let key = CanvasSessionID(rawValue: sessionID)
-            guard let result = resultsBySessionID[key] else {
-                return .json(status: .notFound, body: errorBody(code: "session_not_found"))
-            }
-            do {
-                return .json(
-                    status: .ok,
-                    body: try CanvasDebugStateJSONMapper.makeSessionStatePayload(sessionID: key, result: result)
-                )
-            } catch {
-                return .json(status: .internalServerError, body: errorBody(code: "serialization_failed"))
-            }
+        if let response = routeDomainCatalog(request: request, resultsBySessionID: resultsBySessionID) {
+            return response
+        }
+
+        if let response = routeDomainState(request: request, resultsBySessionID: resultsBySessionID) {
+            return response
+        }
+
+        if let response = routeSessionState(request: request, resultsBySessionID: resultsBySessionID) {
+            return response
         }
 
         return .json(status: .notFound, body: errorBody(code: "not_found"))
+    }
+
+    private func routeHealth(request: HTTPRequest) -> HTTPResponse? {
+        guard request.path == "/debug/v1/health" else {
+            return nil
+        }
+        return makeJSONResponse { try CanvasDebugStateJSONMapper.makeHealthPayload() }
+    }
+
+    private func routeSessions(
+        request: HTTPRequest,
+        resultsBySessionID: [CanvasSessionID: ApplyResult]
+    ) -> HTTPResponse? {
+        guard request.path == "/debug/v1/sessions" else {
+            return nil
+        }
+        return makeJSONResponse {
+            try CanvasDebugStateJSONMapper.makeSessionsPayload(resultsBySessionID: resultsBySessionID)
+        }
+    }
+
+    private func routeDomainCatalog(
+        request: HTTPRequest,
+        resultsBySessionID: [CanvasSessionID: ApplyResult]
+    ) -> HTTPResponse? {
+        guard let sessionID = request.sessionIDForDomainsPath() else {
+            return nil
+        }
+        let key = CanvasSessionID(rawValue: sessionID)
+        guard resultsBySessionID[key] != nil else {
+            return .json(status: .notFound, body: errorBody(code: "session_not_found"))
+        }
+        return makeJSONResponse {
+            try CanvasDebugStateJSONMapper.makeDomainCatalogPayload(sessionID: key)
+        }
+    }
+
+    private func routeDomainState(
+        request: HTTPRequest,
+        resultsBySessionID: [CanvasSessionID: ApplyResult]
+    ) -> HTTPResponse? {
+        guard let path = request.sessionAndDomainIDForDomainStatePath() else {
+            return nil
+        }
+        let key = CanvasSessionID(rawValue: path.sessionID)
+        guard let result = resultsBySessionID[key] else {
+            return .json(status: .notFound, body: errorBody(code: "session_not_found"))
+        }
+        guard let domainID = CanvasDebugDomainID(rawValue: path.domainID) else {
+            return .json(status: .notFound, body: errorBody(code: "domain_not_found"))
+        }
+        return makeJSONResponse {
+            try CanvasDebugStateJSONMapper.makeDomainStatePayload(
+                sessionID: key,
+                result: result,
+                domainID: domainID
+            )
+        }
+    }
+
+    private func routeSessionState(
+        request: HTTPRequest,
+        resultsBySessionID: [CanvasSessionID: ApplyResult]
+    ) -> HTTPResponse? {
+        guard let sessionID = request.sessionIDForStatePath() else {
+            return nil
+        }
+        let key = CanvasSessionID(rawValue: sessionID)
+        guard let result = resultsBySessionID[key] else {
+            return .json(status: .notFound, body: errorBody(code: "session_not_found"))
+        }
+        return makeJSONResponse {
+            try CanvasDebugStateJSONMapper.makeSessionStatePayload(sessionID: key, result: result)
+        }
+    }
+
+    private func makeJSONResponse(_ bodyBuilder: () throws -> Data) -> HTTPResponse {
+        do {
+            return .json(status: .ok, body: try bodyBuilder())
+        } catch {
+            return .json(status: .internalServerError, body: errorBody(code: "serialization_failed"))
+        }
     }
 
     private func send(response: HTTPResponse, on connection: NWConnection) {
@@ -315,6 +383,45 @@ extension CanvasDebugStateHTTPServer {
                 return nil
             }
             return String(path[start..<end])
+        }
+
+        func sessionIDForDomainsPath() -> String? {
+            let prefix = "/debug/v1/sessions/"
+            let suffix = "/domains"
+            guard path.hasPrefix(prefix), path.hasSuffix(suffix) else {
+                return nil
+            }
+
+            let start = path.index(path.startIndex, offsetBy: prefix.count)
+            let end = path.index(path.endIndex, offsetBy: -suffix.count)
+            guard start < end else {
+                return nil
+            }
+            return String(path[start..<end])
+        }
+
+        func sessionAndDomainIDForDomainStatePath() -> (sessionID: String, domainID: String)? {
+            let prefix = "/debug/v1/sessions/"
+            let marker = "/domains/"
+            guard path.hasPrefix(prefix), let markerRange = path.range(of: marker) else {
+                return nil
+            }
+
+            let sessionStart = path.index(path.startIndex, offsetBy: prefix.count)
+            let sessionEnd = markerRange.lowerBound
+            guard sessionStart < sessionEnd else {
+                return nil
+            }
+            let domainStart = markerRange.upperBound
+            guard domainStart < path.endIndex else {
+                return nil
+            }
+            let sessionID = String(path[sessionStart..<sessionEnd])
+            let domainID = String(path[domainStart...])
+            guard !sessionID.isEmpty, !domainID.isEmpty else {
+                return nil
+            }
+            return (sessionID, domainID)
         }
     }
 
