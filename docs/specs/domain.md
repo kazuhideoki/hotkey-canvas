@@ -5,7 +5,7 @@
 - `Sources/Domain/` の責務をドメイン単位で整理し、実装時の判断基準を明確にする。
 - Domain の構造、サービス責務、利用状況、不変条件をまとめ、変更時の影響範囲を追跡しやすくする。
 - Domain テストと Application/InterfaceAdapters の利用実態を対応づけ、仕様と実装のずれを防ぐ。
-- ドメイン構造の関係図は `docs/domain-er.md` を参照する。
+- ドメイン構造の関係図は `docs/specs/domain-er.md` を参照する。
 
 ## 2. 対象範囲
 
