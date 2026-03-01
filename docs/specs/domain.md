@@ -78,13 +78,8 @@
 - エンティティ/値オブジェクト
   - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.attachments` はノード内添付、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
   - `CanvasAttachment`, `CanvasAttachmentID`, `CanvasAttachmentKind`, `CanvasAttachmentPlacement`
-<<<<<<< HEAD:docs/domain.md
-  - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`（`parentChild` エッジは `parentChildOrder` で兄弟順序を保持）
-  - `CanvasFocusedElement`（`.node` / `.edge` / `.area` の操作対象）
-=======
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`, `CanvasEdgeDirectionality`（`parentChild` エッジは `parentChildOrder` で兄弟順序を保持、`directionality` は `none/fromTo/toFrom` で矢印表示方向を保持）
-  - `CanvasFocusedElement`（`.node` / `.edge` の操作対象）
->>>>>>> main:docs/specs/domain.md
+  - `CanvasFocusedElement`（`.node` / `.edge` / `.area` の操作対象）
   - `CanvasEdgeFocus`（`edgeID` と `originNodeID` を保持する edge フォーカス情報）
   - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`、画像添付時の Diagram ノード上限 `diagramImageMaxSide = 330`、Diagram ノード最小辺長 `diagramMinNodeSide = 110`、選択ノード拡縮ステップ `nodeScaleStepRatio = 0.1`）
 - コマンド
@@ -457,12 +452,8 @@
 | `cmd+arrow` | `moveNode` |
 | `cmd+shift+arrow` | `nudgeNode` |
 | `opt+.` | `toggleVisibility` |
-<<<<<<< HEAD:docs/domain.md
 | `tab` | `switchTargetKind(.cycle)` |
-=======
-| `tab` | `switchTargetKind(.edge)` |
 | `cmd+;` | `cycleFocusedEdgeDirectionality` |
->>>>>>> main:docs/specs/domain.md
 
 注記:
 - `switchTargetKind(.cycle)` の実行は InterfaceAdapters 側で `node -> edge -> area -> node` 対象切替として扱う（利用不可対象はスキップ）。
@@ -728,10 +719,7 @@
 - 2026-02-28: `CanvasCommand.scaleSelectedNodes` と `CanvasNodeScaleDirection` を追加し、`⌘⌥+` / `⌘⌥-`（互換キーコードを含む）で選択ノードの拡大縮小を実行可能にした。拡縮量は基準長に対する比率（`nodeScaleStepRatio = 0.1`）で一元管理し、Diagram ノードは `110...330` の正方形へ正規化する仕様へ更新した。
 - 2026-03-01: Diagram エリアの `connectNodes` を更新し、同一ノード間の `normal` エッジ重複接続を許可した。重複エッジは表示時にレーン分離で描画し、edge フォーカス移動では同一点エッジ群を方向キーで巡回できる仕様へ更新した。
 - 2026-03-01: `CanvasFocusNavigationService.nextFocusedEdgeID` を更新し、重複 edge の巡回を方向候補探索より優先するよう変更。巡回対象は「同一 endpoint ペア（無向・relationType 一致）」に限定し、中心座標一致のみの無関係 edge への遷移を禁止した。
-<<<<<<< HEAD:docs/domain.md
 - 2026-03-01: `CanvasFocusedElement` に `area` を追加し、`CanvasCommand.focusArea` と `switchTargetKind(.cycle)` を導入。`tab` で `node -> edge -> area -> node` を巡回し、area 対象時はエリア外周（凸包）をフォーカス表示する仕様へ更新した。
-=======
 - 2026-03-01: `CanvasEdgeDirectionality`（`none/fromTo/toFrom`）と `CanvasCommand.cycleFocusedEdgeDirectionality` を追加し、edge ターゲット中の `cmd+;` / Command Palette から矢印方向を循環切替できるよう更新。表示側は `directionality` に応じてエッジ先端へ矢印を描画する仕様に変更した。あわせて directionality 切替時の `selectedEdgeIDs` 受け渡しを追加し、edge ターゲットの複数選択が潰れないよう修正した。
 - 2026-03-01: Tree エリアの `moveNode` を更新し、top-level root への移動コマンドは常に no-op として扱うよう変更。Diagram エリア共存時でも root が他エリアノードへ再接続されない仕様へ修正した。
 - 2026-03-01: Tree エリアの `moveNode` を補正し、multi-selection の `up/down` 経路でも top-level root への移動を no-op とした。単一選択経路と同じ制約で一貫するよう更新した。
->>>>>>> main:docs/specs/domain.md
