@@ -9,6 +9,9 @@ public enum KeymapIntentResolver {
         if gesture == CanvasShortcutGesture(key: .tab, modifiers: []) {
             return .primitive(intent: .switchTargetKind(variant: .edge))
         }
+        if gesture == CanvasShortcutGesture(key: .character(";"), modifiers: [.command]) {
+            return .primitive(intent: .cycleFocusedEdgeDirectionality)
+        }
         if let globalAction = globalAction(for: gesture) {
             return .global(action: globalAction)
         }

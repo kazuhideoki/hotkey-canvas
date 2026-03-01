@@ -109,6 +109,7 @@ func test_sessionStatePayload_includesGraphAndUI() throws {
     let edges = graphObject?["edges"] as? [[String: Any]]
     #expect(edges?.count == 1)
     #expect(edges?.first?["id"] as? String == "edge-1")
+    #expect(edges?.first?["directionality"] as? String == "none")
 
     let areaRows = graphObject?["areas"] as? [[String: Any]]
     #expect(areaRows?.first?["editingMode"] as? String == "diagram")
