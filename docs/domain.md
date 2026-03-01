@@ -473,6 +473,9 @@
       - フォーカスなしでエリア mode が一意の場合: その mode
       - 上記以外: `nil`（mode 依存項目は非表示）
     - mode が確定している場合、同一ショートカットでも文言を mode 別に上書きする（例: `copy/cut/paste`）。
+- Debug API 出力
+  - `Sources/InterfaceAdapters/Output/DebugState/CanvasDebugStateJSONMapper.swift`
+    - `d5-shortcut-catalog` の状態ペイロード生成で `commandPaletteDefinitions()` / `commandPaletteDefinitions(context:)` を利用する。
 - 主要テスト
   - `Tests/DomainTests/CanvasShortcutCatalogServiceTests.swift`
   - `Tests/InterfaceAdaptersTests/CanvasHotkeyTranslatorTests.swift`
@@ -530,6 +533,8 @@
 - InterfaceAdapters 出力
   - `Sources/InterfaceAdapters/Output/ViewModel/CanvasViewModel.swift`
     - 可視グラフのみを画面描画用 state として公開する。
+  - `Sources/InterfaceAdapters/Output/DebugState/CanvasDebugStateJSONMapper.swift`
+    - `d6-fold-visibility` の状態ペイロード生成で `hiddenNodeIDs(in:)` / `visibleNodeIDs(in:)` を利用する。
 - 主要テスト
   - `Tests/DomainTests/CanvasFoldedSubtreeVisibilityServiceTests.swift`
   - `Tests/ApplicationTests/ApplyCanvasCommandsUseCase/ApplyCanvasCommandsUseCase+ToggleFoldFocusedSubtreeTests.swift`
