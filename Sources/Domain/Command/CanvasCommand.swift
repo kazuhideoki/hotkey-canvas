@@ -7,6 +7,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case alignAllAreasVertically
     case moveFocus(CanvasFocusDirection)
     case focusNode(CanvasNodeID)
+    case focusArea(CanvasAreaID)
     case extendSelection(CanvasFocusDirection)
     case moveNode(CanvasNodeMoveDirection)
     case nudgeNode(CanvasNodeMoveDirection)

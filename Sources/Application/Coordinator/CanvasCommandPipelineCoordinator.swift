@@ -418,14 +418,26 @@ extension CanvasCommandPipelineCoordinator {
     /// Ensures focus points to a visible existing node after mutation and layout.
     private func runFocusNormalizationStage(on graph: CanvasGraph) -> CanvasGraph {
         let normalizedFocusedNodeID = normalizedFocusedNodeID(in: graph)
-        guard normalizedFocusedNodeID != graph.focusedNodeID else {
+        let normalizedFocusedElement = normalizedFocusedElement(
+            in: graph,
+            normalizedFocusedNodeID: normalizedFocusedNodeID
+        )
+        let areaAnchoredFocusedNodeID = normalizedFocusedNodeIDForNormalizedElement(
+            in: graph,
+            normalizedFocusedNodeID: normalizedFocusedNodeID,
+            normalizedFocusedElement: normalizedFocusedElement
+        )
+        guard
+            areaAnchoredFocusedNodeID != graph.focusedNodeID
+                || normalizedFocusedElement != graph.focusedElement
+        else {
             return graph
         }
         return CanvasGraph(
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
-            focusedNodeID: normalizedFocusedNodeID,
-            focusedElement: normalizedFocusedNodeID.map { .node($0) },
+            focusedNodeID: areaAnchoredFocusedNodeID,
+            focusedElement: normalizedFocusedElement,
             selectedNodeIDs: graph.selectedNodeIDs,
             selectedEdgeIDs: [],
             collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
@@ -471,26 +483,4 @@ extension CanvasCommandPipelineCoordinator {
         return newGraph.nodesByID.keys.contains { !previousNodeIDs.contains($0) }
     }
 
-    /// Normalizes focus to the first visible node in stable order when current focus is invalid.
-    private func normalizedFocusedNodeID(in graph: CanvasGraph) -> CanvasNodeID? {
-        let visibleGraph = CanvasFoldedSubtreeVisibilityService.visibleGraph(from: graph)
-        guard !visibleGraph.nodesByID.isEmpty else {
-            return nil
-        }
-        if let focusedNodeID = visibleGraph.focusedNodeID, visibleGraph.nodesByID[focusedNodeID] != nil {
-            return focusedNodeID
-        }
-        return visibleGraph.nodesByID.values
-            .sorted { lhs, rhs in
-                if lhs.bounds.y != rhs.bounds.y {
-                    return lhs.bounds.y < rhs.bounds.y
-                }
-                if lhs.bounds.x != rhs.bounds.x {
-                    return lhs.bounds.x < rhs.bounds.x
-                }
-                return lhs.id.rawValue < rhs.id.rawValue
-            }
-            .first?
-            .id
-    }
 }

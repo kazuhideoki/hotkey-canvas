@@ -79,7 +79,7 @@
   - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.attachments` はノード内添付、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
   - `CanvasAttachment`, `CanvasAttachmentID`, `CanvasAttachmentKind`, `CanvasAttachmentPlacement`
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`（`parentChild` エッジは `parentChildOrder` で兄弟順序を保持）
-  - `CanvasFocusedElement`（`.node` / `.edge` の操作対象）
+  - `CanvasFocusedElement`（`.node` / `.edge` / `.area` の操作対象）
   - `CanvasEdgeFocus`（`edgeID` と `originNodeID` を保持する edge フォーカス情報）
   - `CanvasDefaultNodeDistance`（既定ノード間距離。`treeHorizontal = 32`、`treeVertical = 24`、`diagramHorizontal = 220`、`diagramVertical = 220`、画像添付時の Diagram ノード上限 `diagramImageMaxSide = 330`、Diagram ノード最小辺長 `diagramMinNodeSide = 110`、選択ノード拡縮ステップ `nodeScaleStepRatio = 0.1`）
 - コマンド
@@ -102,6 +102,7 @@
   - `CanvasCommand.alignAllAreasVertically`
   - `CanvasCommand.extendSelection`
   - `CanvasCommand.focusNode(CanvasNodeID)`
+  - `CanvasCommand.focusArea(CanvasAreaID)`
 - エラー
   - `CanvasGraphError`
 - サービス
@@ -159,6 +160,7 @@
   - ノード/エッジの ID 重複は許容しない。
   - `CanvasGraph.focusedElement` は操作対象の種類を保持する。未指定時は `focusedNodeID` から `.node` を導出する。
   - `CanvasGraph.selectedEdgeIDs` は `focusedElement == .edge` のときにのみ意味を持ち、正規化時に `focused edge` を必ず含む。
+  - `CanvasGraph.focusedElement == .area(areaID)` のとき、`areaID` は必ず `areasByID` に存在し、`focusedNodeID` は既存コマンド互換のアンカーノードとして保持する。
 - エラー（`CanvasGraphError`）
   - `invalidNodeID`
   - `invalidEdgeID`
@@ -215,7 +217,7 @@
 
 - Application ユースケース
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveFocus.swift`
-    - `moveFocus` はフォーカス移動時に選択集合を単一ノードへ置き換える。
+    - `moveFocus` は node/edge/area の現在対象に応じてフォーカス移動を解決する。area 対象時はエリア間移動を行い、アンカーノードを同期する。
     - `extendSelection` は `shift+矢印` 用にフォーカス移動先を選択集合へ追加する。
   - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
     - `needsFocusNormalization` が `true` のときに Focus Normalization Stage が実行される。
@@ -448,10 +450,10 @@
 | `cmd+arrow` | `moveNode` |
 | `cmd+shift+arrow` | `nudgeNode` |
 | `opt+.` | `toggleVisibility` |
-| `tab` | `switchTargetKind(.edge)` |
+| `tab` | `switchTargetKind(.cycle)` |
 
 注記:
-- `switchTargetKind(.edge)` の実行は InterfaceAdapters 側で `node/edge` 対象切替として扱う。
+- `switchTargetKind(.cycle)` の実行は InterfaceAdapters 側で `node -> edge -> area -> node` 対象切替として扱う（利用不可対象はスキップ）。
 - 対象切替キーは `tab` を使用する。
 
 補足:
@@ -570,7 +572,7 @@
 | --- | --- |
 | `validate(in:)` | 「ノードはちょうど1エリアに所属」「エリアが存在しないノード参照を持たない」を検証する。 |
 | `areaID(containing:in:)` | ノード所属エリアを解決する。 |
-| `focusedAreaID(in:)` | フォーカスノード所属エリアを解決する。 |
+| `focusedAreaID(in:)` | フォーカス対象からエリアIDを解決する（`focusedElement == .area` を優先し、未指定時はフォーカスノード所属を解決）。 |
 | `area(withID:in:)` | エリアIDからエリア情報を取得する。 |
 | `convertFocusedAreaMode(to:in:)` | フォーカスノード所属エリアの編集モードを変換する（同一モード指定は no-op 成功）。 |
 | `createArea(id:mode:nodeIDs:in:)` | 新規エリアを作成する。 |
@@ -709,3 +711,4 @@
 - 2026-02-28: `CanvasCommand.scaleSelectedNodes` と `CanvasNodeScaleDirection` を追加し、`⌘⌥+` / `⌘⌥-`（互換キーコードを含む）で選択ノードの拡大縮小を実行可能にした。拡縮量は基準長に対する比率（`nodeScaleStepRatio = 0.1`）で一元管理し、Diagram ノードは `110...330` の正方形へ正規化する仕様へ更新した。
 - 2026-03-01: Diagram エリアの `connectNodes` を更新し、同一ノード間の `normal` エッジ重複接続を許可した。重複エッジは表示時にレーン分離で描画し、edge フォーカス移動では同一点エッジ群を方向キーで巡回できる仕様へ更新した。
 - 2026-03-01: `CanvasFocusNavigationService.nextFocusedEdgeID` を更新し、重複 edge の巡回を方向候補探索より優先するよう変更。巡回対象は「同一 endpoint ペア（無向・relationType 一致）」に限定し、中心座標一致のみの無関係 edge への遷移を禁止した。
+- 2026-03-01: `CanvasFocusedElement` に `area` を追加し、`CanvasCommand.focusArea` と `switchTargetKind(.cycle)` を導入。`tab` で `node -> edge -> area -> node` を巡回し、area 対象時はエリア外周（凸包）をフォーカス表示する仕様へ更新した。

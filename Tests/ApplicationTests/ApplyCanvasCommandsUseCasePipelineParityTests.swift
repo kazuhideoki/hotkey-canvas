@@ -265,6 +265,58 @@ func test_pipelineCoordinator_focusNormalization_resolvesInvalidFocus() {
     #expect(result.viewportIntent == nil)
 }
 
+@Test("CanvasCommandPipelineCoordinator: area focus normalization re-anchors focused node inside focused area")
+func test_pipelineCoordinator_focusNormalization_reanchorsAreaFocusInsideFocusedArea() {
+    let areaAID = CanvasAreaID(rawValue: "area-a")
+    let areaBID = CanvasAreaID(rawValue: "area-b")
+    let areaAnchorID = CanvasNodeID(rawValue: "area-a-anchor")
+    let otherAreaNodeID = CanvasNodeID(rawValue: "area-b-node")
+    let graph = CanvasGraph(
+        nodesByID: [
+            areaAnchorID: CanvasNode(
+                id: areaAnchorID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 320, y: 200, width: 220, height: 120)
+            ),
+            otherAreaNodeID: CanvasNode(
+                id: otherAreaNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 40, y: 40, width: 220, height: 120)
+            ),
+        ],
+        edgesByID: [:],
+        focusedNodeID: otherAreaNodeID,
+        focusedElement: .area(areaAID),
+        selectedNodeIDs: [otherAreaNodeID],
+        areasByID: [
+            areaAID: CanvasArea(id: areaAID, nodeIDs: [areaAnchorID], editingMode: .diagram),
+            areaBID: CanvasArea(id: areaBID, nodeIDs: [otherAreaNodeID], editingMode: .diagram),
+        ]
+    )
+    let coordinator = CanvasCommandPipelineCoordinator()
+
+    let result = coordinator.run(
+        on: graph,
+        mutationResults: [
+            CanvasMutationResult(
+                graphBeforeMutation: graph,
+                graphAfterMutation: graph,
+                effects: CanvasMutationEffects(
+                    didMutateGraph: true,
+                    needsTreeLayout: false,
+                    needsAreaLayout: false,
+                    needsFocusNormalization: true
+                )
+            )
+        ]
+    )
+
+    #expect(result.graph.focusedElement == .area(areaAID))
+    #expect(result.graph.focusedNodeID == areaAnchorID)
+}
+
 @Test(
     "CanvasCommandPipelineCoordinator: selection normalization updates edge selection when node selection is stable"
 )

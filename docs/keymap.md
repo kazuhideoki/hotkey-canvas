@@ -34,7 +34,7 @@
 | `moveNode` | `cmd+arrow` | 構造移動（並び替え/indent/outdent） | 位置移動（diagram grid） | |
 | `nudgeNode` | `cmd+shift+arrow` | 実行経路はあるが no-op | 微小移動 | |
 | `toggleVisibility` | `opt+.` | subtree の fold/unfold 切替 | 非対応 | |
-| `switchTargetKind(.edge)` | `tab` | node/edge 対象を切替 | node/edge 対象を切替 | edge 対象中の `tab` は node へ戻す |
+| `switchTargetKind(.cycle)` | `tab` | node/edge/area 対象を巡回 | node/edge/area 対象を巡回 | `node -> edge -> area -> node`（利用不可対象はスキップ） |
 
 ## 補足
 

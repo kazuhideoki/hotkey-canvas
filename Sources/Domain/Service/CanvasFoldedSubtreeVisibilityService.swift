@@ -137,6 +137,18 @@ extension CanvasFoldedSubtreeVisibilityService {
                     return .node(visibleFocusedNodeID)
                 }
                 return nil
+            case .area(let areaID):
+                guard let area = graph.areasByID[areaID] else {
+                    return nil
+                }
+                let hasVisibleNode = area.nodeIDs.isDisjoint(with: visibleNodeIDs) == false
+                guard hasVisibleNode else {
+                    if let visibleFocusedNodeID {
+                        return .node(visibleFocusedNodeID)
+                    }
+                    return nil
+                }
+                return .area(areaID)
             }
         }
         if let visibleFocusedNodeID {

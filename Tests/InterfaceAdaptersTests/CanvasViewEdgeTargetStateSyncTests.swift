@@ -10,6 +10,7 @@ func test_edgeTargetStateSyncedWithModel_adoptsEdgeMode() {
     let state = CanvasView.edgeTargetStateSyncedWithModel(
         currentTargetKind: .node,
         modelFocusedEdgeID: edgeID,
+        modelFocusedAreaID: nil,
         modelSelectedEdgeIDs: [edgeID]
     )
 
@@ -25,6 +26,7 @@ func test_edgeTargetStateSyncedWithModel_dropsEdgeModeWhenModelHasNoEdgeFocus() 
     let state = CanvasView.edgeTargetStateSyncedWithModel(
         currentTargetKind: .edge,
         modelFocusedEdgeID: nil,
+        modelFocusedAreaID: nil,
         modelSelectedEdgeIDs: [staleEdgeID]
     )
 
@@ -38,10 +40,58 @@ func test_edgeTargetStateSyncedWithModel_keepsNodeModeWhenModelHasNoEdgeFocus() 
     let state = CanvasView.edgeTargetStateSyncedWithModel(
         currentTargetKind: .node,
         modelFocusedEdgeID: nil,
+        modelFocusedAreaID: nil,
         modelSelectedEdgeIDs: []
     )
 
     #expect(state.targetKind == .node)
+    #expect(state.focusedEdgeID == nil)
+    #expect(state.selectedEdgeIDs.isEmpty)
+}
+
+@Test("CanvasView edge target sync: drops stale area mode when model has no focused area")
+func test_edgeTargetStateSyncedWithModel_dropsAreaModeWhenModelHasNoAreaFocus() {
+    let state = CanvasView.edgeTargetStateSyncedWithModel(
+        currentTargetKind: .area,
+        modelFocusedEdgeID: nil,
+        modelFocusedAreaID: nil,
+        modelSelectedEdgeIDs: []
+    )
+
+    #expect(state.targetKind == .node)
+    #expect(state.focusedEdgeID == nil)
+    #expect(state.selectedEdgeIDs.isEmpty)
+}
+
+@Test("CanvasView edge target sync: adopts area target when model-focused area exists")
+func test_edgeTargetStateSyncedWithModel_adoptsAreaMode() {
+    let areaID = CanvasAreaID(rawValue: "area-1")
+
+    let state = CanvasView.edgeTargetStateSyncedWithModel(
+        currentTargetKind: .node,
+        modelFocusedEdgeID: nil,
+        modelFocusedAreaID: areaID,
+        modelSelectedEdgeIDs: []
+    )
+
+    #expect(state.targetKind == .area)
+    #expect(state.focusedEdgeID == nil)
+    #expect(state.selectedEdgeIDs.isEmpty)
+}
+
+@Test("CanvasView edge target sync: area focus overrides stale edge mode")
+func test_edgeTargetStateSyncedWithModel_areaFocusOverridesEdgeMode() {
+    let areaID = CanvasAreaID(rawValue: "area-1")
+    let staleEdgeID = CanvasEdgeID(rawValue: "edge-stale")
+
+    let state = CanvasView.edgeTargetStateSyncedWithModel(
+        currentTargetKind: .edge,
+        modelFocusedEdgeID: nil,
+        modelFocusedAreaID: areaID,
+        modelSelectedEdgeIDs: [staleEdgeID]
+    )
+
+    #expect(state.targetKind == .area)
     #expect(state.focusedEdgeID == nil)
     #expect(state.selectedEdgeIDs.isEmpty)
 }

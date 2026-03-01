@@ -24,8 +24,10 @@ public enum KeymapMoveFocusIntentVariant: Equatable, Sendable {
 
 /// Intent variant for switching operation target kind.
 public enum KeymapSwitchTargetKindIntentVariant: Equatable, Sendable {
+    case cycle
     case node
     case edge
+    case area
 }
 
 /// Intent variant for transform-like primitive actions.
