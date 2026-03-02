@@ -30,7 +30,8 @@ extension ApplyCanvasCommandsUseCase {
                 parentID: parentID,
                 focusedNode: focusedNode,
                 position: position
-            )
+            ),
+            in: graph
         )
 
         var graphWithSibling = try CanvasGraphCRUDService.createNode(siblingNode, in: graph).get()

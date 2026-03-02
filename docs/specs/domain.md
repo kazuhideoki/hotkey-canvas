@@ -76,7 +76,7 @@
 - 集約
 - `CanvasGraph`: ノード/エッジ/フォーカス/選択集合/折りたたみルートを保持する不変スナップショット。
 - エンティティ/値オブジェクト
-  - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.attachments` はノード内添付、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否）
+  - `CanvasNode`, `CanvasNodeID`, `CanvasNodeKind`, `CanvasBounds`（`CanvasNode.attachments` はノード内添付、`CanvasNode.markdownStyleEnabled` は確定描画時 Markdown スタイル適用可否、`CanvasNode.metadata["createdOrder"]` は作成順メタデータ）
   - `CanvasAttachment`, `CanvasAttachmentID`, `CanvasAttachmentKind`, `CanvasAttachmentPlacement`
   - `CanvasEdge`, `CanvasEdgeID`, `CanvasEdgeRelationType`, `CanvasEdgeDirectionality`（`parentChild` エッジは `parentChildOrder` で兄弟順序を保持、`directionality` は `none/fromTo/toFrom` で矢印表示方向を保持）
   - `CanvasFocusedElement`（`.node` / `.edge` / `.area` の操作対象）
@@ -220,13 +220,14 @@
 - Application ユースケース
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+MoveFocus.swift`
     - `moveFocus` は node/edge/area の現在対象に応じてフォーカス移動を解決する。area 対象時はエリア間移動を行い、アンカーノードを同期する。
+    - `moveFocusAcrossAreasToRoot` は `cmd+opt+←/→` 用に、左右隣接エリアへ移動してアンカーノードを更新する。Tree はルート node、Diagram は `metadata["createdOrder"]` が最小の node を優先する。方向先にエリアがない場合は反対端へループする。
     - `extendSelection` は `shift+矢印` 用にフォーカス移動先を選択集合へ追加する。
   - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
     - `needsFocusNormalization` が `true` のときに Focus Normalization Stage が実行される。
     - `focusedNodeID` が無効な場合は `y -> x -> id` 順で先頭ノードへ正規化する。
     - グラフ更新後は Selection Normalization Stage で `selectedNodeIDs` を正規化する。
 - コマンド発行
-  - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（矢印キー -> `.moveFocus`、`shift+矢印キー` -> `.extendSelection`、`cmd+矢印キー` -> `.moveNode`、`cmd+shift+矢印キー` -> `.nudgeNode`）
+  - `Sources/InterfaceAdapters/Input/Hotkey/CanvasHotkeyTranslator.swift`（矢印キー -> `.moveFocus`、`shift+矢印キー` -> `.extendSelection`、`cmd+opt+←/→` -> `.moveFocusAcrossAreasToRoot`、`cmd+矢印キー` -> `.moveNode`、`cmd+shift+矢印キー` -> `.nudgeNode`）
   - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+CompositeMove.swift`（`cmd+矢印` の連続入力を合成し、`upLeft/upRight/downLeft/downRight` を `.moveNode` として適用）
   - `Sources/InterfaceAdapters/Output/SwiftUI/CanvasView+Search.swift`（`esc` で検索解除時に `.focusNode` を適用し、検索移動先ノードへフォーカス同期）
 - 主要テスト
@@ -449,6 +450,7 @@
 | `cmd+d` | `duplicate` |
 | `arrow` | `moveFocus(.single)` |
 | `shift+arrow` | `moveFocus(.extendSelection)` |
+| `cmd+opt+left/right` | `moveFocus(.acrossAreasToRoot)` |
 | `cmd+arrow` | `moveNode` |
 | `cmd+shift+arrow` | `nudgeNode` |
 | `opt+.` | `toggleVisibility` |
@@ -723,3 +725,4 @@
 - 2026-03-01: `CanvasEdgeDirectionality`（`none/fromTo/toFrom`）と `CanvasCommand.cycleFocusedEdgeDirectionality` を追加し、edge ターゲット中の `cmd+;` / Command Palette から矢印方向を循環切替できるよう更新。表示側は `directionality` に応じてエッジ先端へ矢印を描画する仕様に変更した。あわせて directionality 切替時の `selectedEdgeIDs` 受け渡しを追加し、edge ターゲットの複数選択が潰れないよう修正した。
 - 2026-03-01: Tree エリアの `moveNode` を更新し、top-level root への移動コマンドは常に no-op として扱うよう変更。Diagram エリア共存時でも root が他エリアノードへ再接続されない仕様へ修正した。
 - 2026-03-01: Tree エリアの `moveNode` を補正し、multi-selection の `up/down` 経路でも top-level root への移動を no-op とした。単一選択経路と同じ制約で一貫するよう更新した。
+- 2026-03-02: `CanvasCommand.moveFocusAcrossAreasToRoot` と `cmd+opt+←/→` を追加し、node/area target のまま左右隣接エリアへ高速移動できるよう更新。遷移先アンカーは Tree で root node、Diagram で `CanvasNode.metadata["createdOrder"]` 最小 node を採用し、端では反対端へループする仕様を追加した。

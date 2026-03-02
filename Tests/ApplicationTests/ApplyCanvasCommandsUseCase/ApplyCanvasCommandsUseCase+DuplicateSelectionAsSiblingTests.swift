@@ -17,7 +17,9 @@ func test_apply_duplicateSelectionAsSibling_duplicatesFocusedSubtree() async thr
     #expect(duplicatedRoot.id != fixture.focusedID)
     #expect(duplicatedRoot.text == "focused")
     #expect(duplicatedRoot.attachments == fixture.focusedNode.attachments)
-    #expect(duplicatedRoot.metadata == fixture.focusedNode.metadata)
+    #expect(duplicatedRoot.metadata["tag"] == fixture.focusedNode.metadata["tag"])
+    #expect(duplicatedRoot.metadata["createdOrder"] != fixture.focusedNode.metadata["createdOrder"])
+    #expect(duplicatedRoot.metadata["createdOrder"] != nil)
     #expect(duplicatedRoot.markdownStyleEnabled == fixture.focusedNode.markdownStyleEnabled)
     #expect(duplicatedRoot.bounds.width == fixture.focusedNode.bounds.width)
     #expect(duplicatedRoot.bounds.height == fixture.focusedNode.bounds.height)
@@ -40,6 +42,29 @@ func test_apply_duplicateSelectionAsSibling_duplicatesFocusedSubtree() async thr
     let duplicatedChild = try #require(result.newState.nodesByID[duplicatedChildEdge.toNodeID])
     #expect(duplicatedChild.id != fixture.childID)
     #expect(duplicatedChild.text == "child")
+}
+
+@Test("ApplyCanvasCommandsUseCase: duplicateSelectionAsSibling rewrites createdOrder for duplicated nodes")
+func test_apply_duplicateSelectionAsSibling_rewritesCreatedOrder() async throws {
+    let fixture = makeDuplicateFocusedSubtreeFixture()
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
+
+    let result = try await sut.apply(commands: [.duplicateSelectionAsSibling])
+
+    let duplicatedRootID = try #require(result.newState.focusedNodeID)
+    let duplicatedRoot = try #require(result.newState.nodesByID[duplicatedRootID])
+    let duplicatedRootOrder = try #require(duplicatedRootCreatedOrder(duplicatedRoot))
+    #expect(duplicatedRootOrder == 3)
+
+    let duplicatedChildEdge = try #require(
+        result.newState.edgesByID.values.first { edge in
+            edge.relationType == .parentChild
+                && edge.fromNodeID == duplicatedRootID
+        }
+    )
+    let duplicatedChild = try #require(result.newState.nodesByID[duplicatedChildEdge.toNodeID])
+    let duplicatedChildOrder = try #require(duplicatedRootCreatedOrder(duplicatedChild))
+    #expect(duplicatedChildOrder == 4)
 }
 
 @Test("ApplyCanvasCommandsUseCase: duplicateSelectionAsSibling stops recursive clone on cyclic descendants")
@@ -161,14 +186,15 @@ private func makeDuplicateFocusedSubtreeFixture() -> DuplicateFocusedSubtreeFixt
             )
         ],
         bounds: CanvasBounds(x: 260, y: 200, width: 360, height: 160),
-        metadata: ["tag": "focused"],
+        metadata: ["tag": "focused", "createdOrder": "1"],
         markdownStyleEnabled: false
     )
     let childNode = CanvasNode(
         id: childID,
         kind: .text,
         text: "child",
-        bounds: CanvasBounds(x: 520, y: 200, width: 220, height: 120)
+        bounds: CanvasBounds(x: 520, y: 200, width: 220, height: 120),
+        metadata: ["createdOrder": "2"]
     )
     return DuplicateFocusedSubtreeFixture(
         rootID: rootID,
@@ -194,6 +220,13 @@ private func makeDuplicateFocusedSubtreeFixture() -> DuplicateFocusedSubtreeFixt
             focusedNodeID: focusedID
         )
     )
+}
+
+private func duplicatedRootCreatedOrder(_ node: CanvasNode) -> Int? {
+    guard let createdOrder = node.metadata["createdOrder"] else {
+        return nil
+    }
+    return Int(createdOrder)
 }
 
 private struct DuplicateCyclicDescendantFixture {

@@ -31,6 +31,7 @@
 | `edit.pasteClipboardAtFocusedNode` | `cmd+v` | 子として貼り付け | 貼り付け | |
 | `moveFocus(.single)` | `arrow` | フォーカス移動 | フォーカス移動 | |
 | `moveFocus(.extendSelection)` | `shift+arrow` | 選択拡張 | 選択拡張 | |
+| `moveFocus(.acrossAreasToRoot)` | `cmd+opt+←/→` | 隣接エリアへ移動し、遷移先エリアのルート node へフォーカス | 隣接エリアへ移動し、遷移先エリアの最初に作成された node へフォーカス | node/area target の両方で有効。端では反対端へループ |
 | `moveNode` | `cmd+arrow` | 構造移動（並び替え/indent/outdent） | 位置移動（diagram grid） | |
 | `nudgeNode` | `cmd+shift+arrow` | 実行経路はあるが no-op | 微小移動 | |
 | `toggleVisibility` | `opt+.` | subtree の fold/unfold 切替 | 非対応 | |

@@ -208,7 +208,7 @@ extension CanvasShortcutCatalogService {
     }
 
     private static func focusNavigationDefinitions() -> [CanvasShortcutDefinition] {
-        focusMoveDefinitions() + focusExtendDefinitions()
+        focusMoveDefinitions() + focusExtendDefinitions() + focusMoveAcrossAreasDefinitions()
     }
 
     private static func focusMoveDefinitions() -> [CanvasShortcutDefinition] {

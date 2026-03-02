@@ -194,6 +194,15 @@ func test_resolveAction_shiftLeft_returnsExtendSelection() {
     #expect(action == .apply(commands: [.extendSelection(.left)]))
 }
 
+@Test("Shortcut catalog: command-option-right resolves moveFocusAcrossAreasToRoot")
+func test_resolveAction_commandOptionRight_returnsMoveFocusAcrossAreasToRoot() {
+    let gesture = CanvasShortcutGesture(key: .arrowRight, modifiers: [.command, .option])
+
+    let action = CanvasShortcutCatalogService.resolveAction(for: gesture)
+
+    #expect(action == .apply(commands: [.moveFocusAcrossAreasToRoot(.right)]))
+}
+
 @Test("Shortcut catalog: diagram context hides tree-only command palette definitions")
 func test_commandPaletteDefinitions_diagramContext_hidesTreeOnlyDefinitions() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(

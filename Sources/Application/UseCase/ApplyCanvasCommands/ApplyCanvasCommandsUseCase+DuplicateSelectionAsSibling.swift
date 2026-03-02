@@ -74,6 +74,7 @@ extension ApplyCanvasCommandsUseCase {
         sourceGraph: CanvasGraph
     ) throws -> DuplicateRootsResult {
         var graphAfterMutation = sourceGraph
+        var nextCreatedOrder = nextNodeCreatedOrder(in: sourceGraph)
         var duplicatedRootNodeIDs: [CanvasNodeID] = []
         var insertedNodeIDs: Set<CanvasNodeID> = []
 
@@ -81,7 +82,8 @@ extension ApplyCanvasCommandsUseCase {
             let rootDuplicationResult = try duplicateSingleRoot(
                 sourceRootNodeID: sourceRootNodeID,
                 sourceGraph: sourceGraph,
-                into: graphAfterMutation
+                into: graphAfterMutation,
+                nextCreatedOrder: &nextCreatedOrder
             )
             guard let rootDuplicationResult else {
                 continue
@@ -108,7 +110,8 @@ extension ApplyCanvasCommandsUseCase {
     private func duplicateSingleRoot(
         sourceRootNodeID: CanvasNodeID,
         sourceGraph: CanvasGraph,
-        into graph: CanvasGraph
+        into graph: CanvasGraph,
+        nextCreatedOrder: inout Int
     ) throws -> DuplicateSingleRootResult? {
         guard
             let sourceRootNode = sourceGraph.nodesByID[sourceRootNodeID],
@@ -130,7 +133,12 @@ extension ApplyCanvasCommandsUseCase {
             width: sourceRootNode.bounds.width,
             height: sourceRootNode.bounds.height
         )
-        let duplicateRootNode = makeDuplicatedNode(from: sourceRootNode, bounds: duplicateBounds)
+        let duplicateRootNode = makeDuplicatedNode(
+            from: sourceRootNode,
+            bounds: duplicateBounds,
+            createdOrder: nextCreatedOrder
+        )
+        nextCreatedOrder += 1
         var graphAfterMutation = try CanvasGraphCRUDService.createNode(duplicateRootNode, in: graph).get()
         graphAfterMutation = normalizeParentChildOrder(for: parentID, in: graphAfterMutation)
         let rootOrder = duplicateRootInsertionOrder(
@@ -158,7 +166,8 @@ extension ApplyCanvasCommandsUseCase {
             toDuplicatedParentNodeID: duplicateRootNode.id,
             sourceGraph: sourceGraph,
             into: graphAfterMutation,
-            traversalState: &traversalState
+            traversalState: &traversalState,
+            nextCreatedOrder: &nextCreatedOrder
         )
         return DuplicateSingleRootResult(
             graphAfterMutation: graphAfterMutation,
@@ -242,14 +251,20 @@ extension ApplyCanvasCommandsUseCase {
     }
 
     /// Creates a duplicated node with copied content and new identifier.
-    private func makeDuplicatedNode(from sourceNode: CanvasNode, bounds: CanvasBounds) -> CanvasNode {
-        CanvasNode(
+    private func makeDuplicatedNode(
+        from sourceNode: CanvasNode,
+        bounds: CanvasBounds,
+        createdOrder: Int
+    ) -> CanvasNode {
+        var metadata = sourceNode.metadata
+        metadata[Self.nodeCreatedOrderMetadataKey] = String(createdOrder)
+        return CanvasNode(
             id: CanvasNodeID(rawValue: "node-\(UUID().uuidString.lowercased())"),
             kind: sourceNode.kind,
             text: sourceNode.text,
             attachments: sourceNode.attachments,
             bounds: bounds,
-            metadata: sourceNode.metadata,
+            metadata: metadata,
             markdownStyleEnabled: sourceNode.markdownStyleEnabled
         )
     }
@@ -260,7 +275,8 @@ extension ApplyCanvasCommandsUseCase {
         toDuplicatedParentNodeID duplicatedParentNodeID: CanvasNodeID,
         sourceGraph: CanvasGraph,
         into graph: CanvasGraph,
-        traversalState: inout DuplicateTraversalState
+        traversalState: inout DuplicateTraversalState,
+        nextCreatedOrder: inout Int
     ) throws -> CanvasGraph {
         var nextGraph = graph
         traversalState.activeSourcePathNodeIDs.insert(sourceNodeID)
@@ -284,8 +300,10 @@ extension ApplyCanvasCommandsUseCase {
 
             let duplicatedChildNode = makeDuplicatedNode(
                 from: sourceChildNode,
-                bounds: sourceChildNode.bounds
+                bounds: sourceChildNode.bounds,
+                createdOrder: nextCreatedOrder
             )
+            nextCreatedOrder += 1
             nextGraph = try CanvasGraphCRUDService.createNode(duplicatedChildNode, in: nextGraph).get()
             traversalState.duplicatedNodeIDBySourceNodeID[sourceChildNode.id] = duplicatedChildNode.id
             nextGraph = try createParentChildEdgeIfNeeded(
@@ -299,7 +317,8 @@ extension ApplyCanvasCommandsUseCase {
                 toDuplicatedParentNodeID: duplicatedChildNode.id,
                 sourceGraph: sourceGraph,
                 into: nextGraph,
-                traversalState: &traversalState
+                traversalState: &traversalState,
+                nextCreatedOrder: &nextCreatedOrder
             )
         }
         return nextGraph

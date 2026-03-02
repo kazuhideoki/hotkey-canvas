@@ -89,6 +89,8 @@ extension DefaultKeymapContextActionResolver {
             return .apply(commands: [.moveFocus(direction)])
         case .extendSelection:
             return .apply(commands: [.extendSelection(direction)])
+        case .acrossAreasToRoot:
+            return .apply(commands: [.moveFocusAcrossAreasToRoot(direction)])
         }
     }
 

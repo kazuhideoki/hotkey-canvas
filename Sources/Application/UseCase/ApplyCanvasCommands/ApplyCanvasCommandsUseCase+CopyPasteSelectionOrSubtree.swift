@@ -325,6 +325,7 @@ extension ApplyCanvasCommandsUseCase {
     ) throws -> Set<CanvasNodeID> {
         let sortedNodePayloads = nodePayloads.sorted { $0.sourceReferenceID < $1.sourceReferenceID }
         var insertedNodeIDs: Set<CanvasNodeID> = []
+        var nextCreatedOrder = nextNodeCreatedOrder(in: graph)
         for nodePayload in sortedNodePayloads {
             let nextNodeID = CanvasNodeID(rawValue: "node-\(UUID().uuidString.lowercased())")
             let translatedBounds = CanvasBounds(
@@ -333,22 +334,24 @@ extension ApplyCanvasCommandsUseCase {
                 width: nodePayload.bounds.width,
                 height: nodePayload.bounds.height
             )
+            var metadata = nodePayload.metadata
+            metadata[Self.nodeCreatedOrderMetadataKey] = String(nextCreatedOrder)
             let newNode = CanvasNode(
                 id: nextNodeID,
                 kind: nodePayload.kind,
                 text: nodePayload.text,
                 attachments: nodePayload.attachments,
                 bounds: translatedBounds,
-                metadata: nodePayload.metadata,
+                metadata: metadata,
                 markdownStyleEnabled: nodePayload.markdownStyleEnabled
             )
             graph = try CanvasGraphCRUDService.createNode(newNode, in: graph).get()
             mappedNodeIDBySourceReferenceID[nodePayload.sourceReferenceID] = nextNodeID
             insertedNodeIDs.insert(nextNodeID)
+            nextCreatedOrder += 1
         }
         return insertedNodeIDs
     }
-
     /// Inserts copied internal edges between already inserted nodes.
     private func insertClipboardEdges(
         _ edgePayloads: [CanvasClipboardEdgePayload],
@@ -388,7 +391,6 @@ extension ApplyCanvasCommandsUseCase {
             graph = try CanvasGraphCRUDService.createEdge(newEdge, in: graph).get()
         }
     }
-
     /// Attaches pasted roots under parent when tree mode requires parent-child connection.
     private func attachTreeRootEdgesIfNeeded(
         mode: CanvasEditingMode,
@@ -409,7 +411,6 @@ extension ApplyCanvasCommandsUseCase {
             nextOrder += 1
         }
     }
-
     /// Deletes the selected node set and picks deterministic next focus.
     private func deleteSelectedNodes(
         _ nodeIDsToDelete: Set<CanvasNodeID>,

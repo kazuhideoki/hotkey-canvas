@@ -43,6 +43,7 @@ erDiagram
         CanvasNodeID id PK
         CanvasNodeKind kind
         string text "optional"
+        map metadata
         CanvasBounds bounds
         bool markdownStyleEnabled
     }
@@ -84,6 +85,7 @@ erDiagram
 - `collapsedRootNodeIDs` は「可視性計算の入力集合」で、ノード実体は `CanvasNode` 側に存在する。
 - `focusedElement` は `node` または `edge` を保持し、`edge` の場合は `CanvasEdgeFocus`（`edgeID` と `originNodeID`）を保持する。
 - `selectedEdgeIDs` は edge 対象時の複数選択集合で、正規化時に `focused edge` を必ず含む。
+- `CanvasNode.metadata["createdOrder"]` は作成順メタデータとして利用し、area 跨ぎフォーカス移動時の Diagram アンカー決定に使用する。
 
 ## 4. ショートカット解決 ER
 
