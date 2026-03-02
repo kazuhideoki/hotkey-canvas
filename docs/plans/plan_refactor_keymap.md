@@ -83,6 +83,9 @@
   - 既存分岐場所
   - 期待結果（true/false）
 - `docs/specs/keymap.md` に「keymap 有効化条件（宣言型）」と「対象条件の組合せ例」を追記する。
+- テストは本フェーズで同時実施:
+  - 既存仕様が表現できる最小ケースを列挙し、現状観測値を検証する。
+  - 既存の回帰テストを実行し、ここまでの変更で回帰していないことを確認する。
 
 #### Phase 1 進捗（2026-03-02）
 
@@ -183,6 +186,9 @@
   - `mode ポリシー条件`
   - `edge-target 上書き`
 - まずは値オブジェクト追加より先に「条件名」と「適用範囲」を文書化し、同値テーブルを完成させる（現フェーズの完了条件）
+  - Phase1の完了条件:
+    - 散在条件の同値表を完成させ、未解決/曖昧条件を明示する。
+    - 既存テストの赤減らし（新規失敗なし）を確認する。
 
 ### Phase 2: Domain 層の土台実装
 
@@ -190,6 +196,10 @@
 - `CanvasShortcutDefinition` の条件フィールド追加（既存 API 互換を保つ）。
 - `KeymapExecutionPolicyResolver` を実装。
 - `CanvasShortcutCatalogService` 側で既存 shortcut ごとの条件マッピングを定義（当面は既存同値）。
+- 同時に Domain テストを追加:
+  - `KeymapExecutionCondition` の真理値評価
+  - `mode / targetKind / text editing / modal` の基本組合せを網羅した同値テスト
+  - `swift test` はこのフェーズで既に回して、Domain 層の追加で既存 suite が崩れていないことを担保。
 
 ### Phase 3: 共通評価経路への接続
 
@@ -197,27 +207,25 @@
   - `CanvasView+HotkeyHandling.swift` の許可/拒否判定を `isEnabled` ベースへ差し替え。
 - Command Palette 経路
   - 表示フィルタと `isCommandPaletteShortcutHidden` 判定を共通評価へ統合。
+- Adapter 側テストを同時に更新:
+  - `CanvasViewHotkeyAreaTargetPolicyTests` を新条件評価へ置換。
+  - Command Palette 目線のフィルターテストを文脈（`KeymapExecutionContext`）ベースで再記述。
+- `swift test` をこのフェーズで実行して、既存挙動不変を再確認。
 
 ### Phase 4: 実行経路の最終ガード統一
 
 - `ApplyCanvasCommands` の `supportedIn(mode)` 経路と `KeymapExecutionPolicyResolver` を整合。
 - 同一入力に対して UIで拒否された場合と実行時拒否結果が一致することを担保。
-
-### Phase 5: テスト整備
-
-- Domain 単体テスト
-  - 条件 DSL の真理値評価テスト
-  - 主要条件（area/node/edge、editing mode、text editing）の組合せテスト
-- Adapter/UseCase 回帰テスト
-  - `CanvasViewHotkeyAreaTargetPolicyTests` の期待結果を新条件評価へマッピング。
-  - Command Palette フィルタの可否を context で検証。
-  - `swift test` を通して既存テスト回帰が増えないことを確認。
-
-### Phase 6: 収束
-
-- 分散ガード関数の削除/非推奨化。
-- ロジック重複を減らし、条件の単一発火点を明確にする。
-- 変更履歴を `docs/specs/domain.md` と本計画に反映。
+- このフェーズで「真の統合」を完了させる:
+  - hotkey/capture、command palette、実行ガード（UseCase）が同一条件評価系に寄せられ、フロー差分が消える状態を目標にする。
+  - `handleCompositeMoveHotkey` など既存の優先ルートは現行仕様どおり維持したまま、評価経路の責務境界を明確化。
+  - 分散ガード関数の整理（削除/非推奨化）とドキュメント反映をこのフェーズで終える。
+- テストはこのフェーズの重要項目として実行:
+  - Adapter/UseCase の既存 suite の再実行
+  - `swift build` / `swift test` / `./scripts/lint_and_format.sh` の全部をここでパスさせ、Phase4完了を受け入れ条件とする。
+- Phase4の完了条件（本計画上の最重要）:
+  - カタログ定義、捕捉処理、実行ガードの同一評価結果が一致。
+  - 既存動作（同一入力で同一反応）を維持し、機能回収率が 100% である。
 
 ## 6. 受け入れ条件
 
