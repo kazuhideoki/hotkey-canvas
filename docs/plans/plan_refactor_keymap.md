@@ -84,6 +84,106 @@
   - 期待結果（true/false）
 - `docs/specs/keymap.md` に「keymap 有効化条件（宣言型）」と「対象条件の組合せ例」を追記する。
 
+#### Phase 1 進捗（2026-03-02）
+
+##### 現在の「有効化条件」の分散箇所
+
+- `CanvasShortcutCatalogService` / `CanvasShortcutCatalogService+CommandPaletteVisibility` で、`commandPaletteDefinitions(context:)` の
+  `commandPaletteVisibility` 判定を保持。
+  - `CanvasCommandPaletteVisibility` は `always` / `requiresFocusedNode` / `requiresMode` / `requiresFocusedNodeAndMode` を持つが、現行では `requiresMode` は使われていない。
+- `CanvasCommandPaletteContext` / `CanvasView+CommandPalette.swift`
+  - `commandPaletteContext()` が `hasFocusedNode` と `activeEditingMode` を作る。
+  - `activeEditingMode` は focused node 由来を優先し、なければ area mode が単一なら採用、複数なら `nil`。
+- `CanvasView` / `CanvasHotkeyCaptureView` でハンドル開始条件を保持。
+  - `editingContext == nil && !isCommandPalettePresented && !isSearchPresented`
+- `CanvasView.handleCanvasHotkeyEvent`
+  - `connectNodeSelection` / `addNode` の modal を先頭で吸収
+  - `handleCompositeMoveHotkey`（`cmd+矢印`）を translator より先に実行
+  - 解決できないキーは `NodeEditingStartResolver` でインライン編集開始判定へ委譲
+- `presentConnectNodeSelectionIfPossible` は `global` の `beginConnectNodeSelection` でも追加条件を持つ
+  - `connectNodeSelectionSourceNodeID == nil`
+  - `focusedNodeID != nil`
+  - focused node が diagram であること
+  - 対象 area が存在し、接続候補が空でないこと
+- `CanvasView+HotkeyHandling` で target kind ベースのブロック
+  - `.area` 時の `global` ブロック: `blocksGlobalActionInAreaTarget`
+  - `.area` 時の primitive ブロック: `blocksPrimitiveContextActionInAreaTarget` / `blocksCommandInAreaTarget`
+- `CanvasView+EdgeTarget` で `.edge` 時の上書き
+  - `handleEdgeTargetCommands(...)` が方向移動・削除・edge向き反転を再解釈
+- `ApplyCanvasCommandsUseCase+CommandDispatch` の実行時ガード
+  - `isCommand(normalizedCommand, supportedIn: resolvedArea.editingMode)` + policy サービス
+
+##### 現行条件の寄せ先（同値判定の観点）
+
+- `editing mode`（tree/diagram）
+  - カタログの可視性: `commandPaletteVisibility` / `activeEditingMode`
+  - 実行可否: `ApplyCanvasCommandsUseCase+CommandDispatch` の `TreeAreaPolicyService` / `DiagramAreaPolicyService`
+- `target kind`（area/node/edge）
+  - `.area`: `CanvasView+HotkeyHandling` が global/primitive を事前ブロック
+  - `.node`: catalog/命令系の既定ルート
+  - `.edge`: `CanvasView+EdgeTarget` で一部命令を edge 操作へ上書き
+- `text input mode`
+  - `editingContext != nil` で capture off
+  - 未解決キーは `NodeEditingStartResolver` を介して文字入力開始へ
+- 併せて `commandPalette/search/connect-node/add-node` の modal が capture より上位でキー受付を横取り
+- `modal/state flags`
+  - `isCommandPalettePresented`, `isSearchPresented`, `connectNodeSelection`, `isAddNodeModePopupPresented` は route の入り口で吸収
+
+- `handleCompositeMoveHotkey` は `command + 上下左右矢印` を `CanvasCommand.moveNode` に直接変換し、`operationTargetKind` や `commandPaletteVisibility` を参照しない（分散条件として分離されている）
+
+##### キーマップ定義側の現行有効化条件（初版）
+
+- 常時有効（`commandPaletteVisibility: .always`, `isVisibleInCommandPalette: true`）
+  - `undo`, `redo`, `zoomIn*`, `zoomOut*`, `addNode`
+- `requiresFocusedNode`
+  - `deleteSelectedOrFocusedNodes`
+  - `moveFocus*`, `extendSelection*`
+  - `moveNode*`, `scaleSelectedNodes*`, `copySelectionOrFocusedSubtree`, `cutSelectionOrFocusedSubtree`, `pasteClipboardAtFocusedNode`
+  - `centerFocusedNode`
+  - `moveFocusAcrossAreasToRoot*`
+- `requiresFocusedNodeAndMode([.tree])`
+  - `addChildNode`
+  - `addSiblingNodeAbove / addSiblingNodeBelow`
+  - `duplicateSelectionAsSibling`
+  - `toggleFoldFocusedSubtree`
+- `requiresFocusedNodeAndMode([.diagram])`
+  - `beginConnectNodeSelection`
+  - `nudgeNode*`
+
+- `isVisibleInCommandPalette: false`
+  - `openCommandPalette.commandK`, `openCommandPalette.commandShiftP`
+
+##### コマンドパレット表示時の追加ハイドロジック（catalog 外）
+
+- `operationTargetKind == .area` のとき `isCommandPaletteShortcutHiddenInAreaTarget` で除外
+  - `CanvasShortcutAction.beginConnectNodeSelection` は常時除外
+  - `CanvasShortcutAction.apply(commands:)` は `blocksCommandInAreaTarget` 準拠（`centerFocusedNode` は専用で除外）
+- カタログ外の動的追加
+  - `focusedNodeMarkdownToggle`（`.apply(.toggleFocusedNodeMarkdownStyle)`)  
+    （`focusedNodeID != nil`）
+  - `Edge: Delete Selected`（`operationTargetKind == .edge` かつ `selected/focused edge` が存在）
+  - `Edge: Cycle Directionality`（`operationTargetKind == .edge` かつ `selected/focused edge` が存在）
+  - `Image: Insert From Finder`（`focusedNodeID != nil`）
+  - `Area: Align All Areas Vertically`（`focusedNodeID != nil`）
+- `isCommandPaletteShortcutHiddenInAreaTarget` は catalog 外項目には適用されない（現状）
+
+##### 実行時の現行同値条件（mode ベース）
+
+- Tree mode で `supports` = true: ほぼ全体
+  - false: `connectNodes`, `cycleFocusedEdgeDirectionality`（`TreeAreaPolicyService`）
+- Diagram mode で `supports` = true:
+  - false: `addChildNode`, `addSiblingNode`, `duplicateSelectionAsSibling`, `toggleFoldFocusedSubtree`（`DiagramAreaPolicyService`）
+
+##### Phase 1 での最優先タスク（提案）
+
+- 上記の要素を以下の順で 1:1 対応させる
+  - `入力 capture 条件`
+  - `コマンド定義（Visibility）`
+  - `対象 kind 条件`
+  - `mode ポリシー条件`
+  - `edge-target 上書き`
+- まずは値オブジェクト追加より先に「条件名」と「適用範囲」を文書化し、同値テーブルを完成させる（現フェーズの完了条件）
+
 ### Phase 2: Domain 層の土台実装
 
 - `KeymapExecutionContext` と `KeymapExecutionCondition` を追加。
