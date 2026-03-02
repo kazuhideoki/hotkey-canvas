@@ -423,6 +423,9 @@ public struct CanvasView: View {
             }
             .onChange(of: viewModel.edges) { _ in synchronizeEdgeTargetState() }
             .onChange(of: viewModel.focusedEdgeID) { _ in synchronizeEdgeTargetStateFromViewModel() }
+            .onChange(of: focusedEdgeID) { _ in
+                applyFocusVisibilityRule(viewportSize: viewportSize)
+            }
             .onChange(of: viewModel.focusedAreaID) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
                 synchronizeEdgeTargetStateFromViewModel()

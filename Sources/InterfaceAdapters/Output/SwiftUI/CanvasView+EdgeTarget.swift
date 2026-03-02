@@ -147,7 +147,7 @@ extension CanvasView {
         return !edgeCandidates(in: areaID).isEmpty
     }
 
-    private func currentFocusedAreaID() -> CanvasAreaID? {
+    func currentFocusedAreaID() -> CanvasAreaID? {
         if let focusedAreaID = viewModel.focusedAreaID, graphAreaHasVisibleNode(focusedAreaID) {
             return focusedAreaID
         }

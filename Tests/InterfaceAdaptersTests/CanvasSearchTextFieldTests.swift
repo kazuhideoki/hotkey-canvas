@@ -16,12 +16,14 @@ func test_control_insertNewline_withMarkedText_returnsFalseWithoutSubmit() {
     var backwardCount = 0
     let coordinator = CanvasSearchTextField.Coordinator(
         text: binding,
-        onSubmitForward: { forwardCount += 1 },
-        onSubmitBackward: { backwardCount += 1 },
-        onMoveHistoryOlder: {},
-        onMoveHistoryNewer: {},
-        onTextEdited: {},
-        onCancel: {}
+        handlers: .init(
+            onSubmitForward: { forwardCount += 1 },
+            onSubmitBackward: { backwardCount += 1 },
+            onMoveHistoryOlder: {},
+            onMoveHistoryNewer: {},
+            onTextEdited: {},
+            onCancel: {}
+        )
     )
 
     let control = NSControl()
@@ -51,12 +53,14 @@ func test_control_insertNewline_withoutMarkedText_returnsTrueAndSubmitsForward()
     var backwardCount = 0
     let coordinator = CanvasSearchTextField.Coordinator(
         text: binding,
-        onSubmitForward: { forwardCount += 1 },
-        onSubmitBackward: { backwardCount += 1 },
-        onMoveHistoryOlder: {},
-        onMoveHistoryNewer: {},
-        onTextEdited: {},
-        onCancel: {}
+        handlers: .init(
+            onSubmitForward: { forwardCount += 1 },
+            onSubmitBackward: { backwardCount += 1 },
+            onMoveHistoryOlder: {},
+            onMoveHistoryNewer: {},
+            onTextEdited: {},
+            onCancel: {}
+        )
     )
 
     let control = NSControl()
@@ -86,12 +90,14 @@ func test_control_moveUpDown_invokesHistoryHandlers() {
     var newerCount = 0
     let coordinator = CanvasSearchTextField.Coordinator(
         text: binding,
-        onSubmitForward: {},
-        onSubmitBackward: {},
-        onMoveHistoryOlder: { olderCount += 1 },
-        onMoveHistoryNewer: { newerCount += 1 },
-        onTextEdited: {},
-        onCancel: {}
+        handlers: .init(
+            onSubmitForward: {},
+            onSubmitBackward: {},
+            onMoveHistoryOlder: { olderCount += 1 },
+            onMoveHistoryNewer: { newerCount += 1 },
+            onTextEdited: {},
+            onCancel: {}
+        )
     )
     let control = NSControl()
     let textView = MockMarkedTextView()
@@ -125,12 +131,14 @@ func test_control_moveUpDown_withMarkedText_doesNotInvokeHistoryHandlers() {
     var newerCount = 0
     let coordinator = CanvasSearchTextField.Coordinator(
         text: binding,
-        onSubmitForward: {},
-        onSubmitBackward: {},
-        onMoveHistoryOlder: { olderCount += 1 },
-        onMoveHistoryNewer: { newerCount += 1 },
-        onTextEdited: {},
-        onCancel: {}
+        handlers: .init(
+            onSubmitForward: {},
+            onSubmitBackward: {},
+            onMoveHistoryOlder: { olderCount += 1 },
+            onMoveHistoryNewer: { newerCount += 1 },
+            onTextEdited: {},
+            onCancel: {}
+        )
     )
     let control = NSControl()
     let textView = MockMarkedTextView()
@@ -164,12 +172,14 @@ func test_controlTextDidChange_updatesBindingAndEditCallback() {
     var editCount = 0
     let coordinator = CanvasSearchTextField.Coordinator(
         text: binding,
-        onSubmitForward: {},
-        onSubmitBackward: {},
-        onMoveHistoryOlder: {},
-        onMoveHistoryNewer: {},
-        onTextEdited: { editCount += 1 },
-        onCancel: {}
+        handlers: .init(
+            onSubmitForward: {},
+            onSubmitBackward: {},
+            onMoveHistoryOlder: {},
+            onMoveHistoryNewer: {},
+            onTextEdited: { editCount += 1 },
+            onCancel: {}
+        )
     )
     let textField = NSTextField()
     textField.stringValue = "updated query"
