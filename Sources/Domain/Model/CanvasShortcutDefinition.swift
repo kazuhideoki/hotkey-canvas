@@ -20,6 +20,8 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
     public let commandPaletteVisibility: CanvasCommandPaletteVisibility
     /// Execution/capture policy for this shortcut.
     public let executionCondition: KeymapExecutionCondition
+    /// Route policy for this shortcut's execution.
+    public let executionRoute: KeymapExecutionRoute
 
     /// Creates a shortcut catalog entry.
     /// - Parameters:
@@ -31,6 +33,7 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
     ///   - searchTokens: Additional search keywords.
     ///   - isVisibleInCommandPalette: Visibility flag for command palette listing.
     ///   - commandPaletteVisibility: Runtime visibility policy for command palette filtering.
+    ///   - executionRoute: Execution route preference for apply actions.
     public init(
         id: CanvasShortcutID,
         commandPaletteLabel: CanvasCommandPaletteLabel,
@@ -39,7 +42,8 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
         shortcutLabel: String,
         searchTokens: [String] = [],
         isVisibleInCommandPalette: Bool = true,
-        commandPaletteVisibility: CanvasCommandPaletteVisibility = .always
+        commandPaletteVisibility: CanvasCommandPaletteVisibility = .always,
+        executionRoute: KeymapExecutionRoute = .direct
     ) {
         self.id = id
         self.commandPaletteLabel = commandPaletteLabel
@@ -50,6 +54,7 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
         self.isVisibleInCommandPalette = isVisibleInCommandPalette
         self.commandPaletteVisibility = commandPaletteVisibility
         self.executionCondition = commandPaletteVisibility.defaultExecutionCondition
+        self.executionRoute = executionRoute
     }
 
     /// Creates a shortcut catalog entry.
@@ -63,6 +68,7 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
     ///   - isVisibleInCommandPalette: Visibility flag for command palette listing.
     ///   - commandPaletteVisibility: Runtime visibility policy for command palette filtering.
     ///   - executionCondition: Custom execution policy for this shortcut.
+    ///   - executionRoute: Execution route preference for apply actions.
     public init(
         id: CanvasShortcutID,
         commandPaletteLabel: CanvasCommandPaletteLabel,
@@ -72,7 +78,8 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
         searchTokens: [String] = [],
         isVisibleInCommandPalette: Bool = true,
         commandPaletteVisibility: CanvasCommandPaletteVisibility = .always,
-        executionCondition: KeymapExecutionCondition
+        executionCondition: KeymapExecutionCondition,
+        executionRoute: KeymapExecutionRoute = .direct
     ) {
         self.id = id
         self.commandPaletteLabel = commandPaletteLabel
@@ -83,6 +90,7 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
         self.isVisibleInCommandPalette = isVisibleInCommandPalette
         self.commandPaletteVisibility = commandPaletteVisibility
         self.executionCondition = executionCondition
+        self.executionRoute = executionRoute
     }
 
     /// Display title rendered in Noun: Verb format.

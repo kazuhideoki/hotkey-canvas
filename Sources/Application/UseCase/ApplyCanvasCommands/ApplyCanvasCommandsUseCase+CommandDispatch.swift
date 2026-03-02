@@ -367,7 +367,11 @@ extension ApplyCanvasCommandsUseCase {
     ) -> KeymapExecutionContext {
         KeymapExecutionContext(
             editingMode: editingMode,
-            operationTargetKind: operationTargetKind(for: command, in: graph),
+            operationTargetKind: operationTargetKind(
+                for: command,
+                in: graph,
+                editingMode: editingMode
+            ),
             hasFocusedNode: graph.focusedNodeID != nil,
             isEditingText: false,
             isCommandPalettePresented: false,
@@ -381,7 +385,8 @@ extension ApplyCanvasCommandsUseCase {
 
     private func operationTargetKind(
         for command: CanvasCommand,
-        in graph: CanvasGraph
+        in graph: CanvasGraph,
+        editingMode: CanvasEditingMode
     ) -> KeymapSwitchTargetKindIntentVariant {
         if case .edge = graph.focusedElement {
             return .edge
@@ -394,7 +399,27 @@ extension ApplyCanvasCommandsUseCase {
             return .area
         default:
             if case .area = graph.focusedElement {
-                return .area
+                guard let definition = CanvasShortcutCatalogService.definition(for: command) else {
+                    return .area
+                }
+                let areaContext = KeymapExecutionContext(
+                    editingMode: editingMode,
+                    operationTargetKind: .area,
+                    hasFocusedNode: graph.focusedNodeID != nil,
+                    isEditingText: false,
+                    isCommandPalettePresented: false,
+                    isSearchPresented: false,
+                    isConnectNodeSelectionActive: false,
+                    isAddNodePopupPresented: false,
+                    selectedNodeCount: graph.selectedNodeIDs.count,
+                    selectedEdgeCount: graph.selectedEdgeIDs.count
+                )
+                if KeymapExecutionPolicyResolver.isEnabled(
+                    definition: definition,
+                    context: areaContext
+                ) {
+                    return .area
+                }
             }
             return .node
         }

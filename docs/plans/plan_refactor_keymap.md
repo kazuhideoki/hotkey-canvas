@@ -235,7 +235,8 @@
   - `CanvasViewHotkeyAreaTargetPolicyTests` と `CanvasShortcutCatalogServiceTests` の既存テスト群を更新。
 - 検証:
   - `swift build` 成功
-  - `swift test`（`KeymapExecutionPolicyResolverTests` / `CanvasViewHotkeyAreaTargetPolicyTests` / `CanvasShortcutCatalogServiceTests` / 全体）合計 477 件成功（回帰なし）
+- `swift test`（`KeymapExecutionPolicyResolverTests` / `CanvasViewHotkeyAreaTargetPolicyTests` / `CanvasShortcutCatalogServiceTests` / 全体）合計 486 件成功（回帰なし）
+- `KeymapExecutionRoute` を導入し、edge 対応ショートカットの実行ルートを catalog 側で統一して apply 経路へ反映した。
 
 ### Phase 4: 実行経路の最終ガード統一
 
@@ -262,10 +263,11 @@
   - `CanvasShortcutCatalogService.commandPaletteDefinitions` に `executionContext` 引数版を追加し、Command Palette 側の表示判定を `executionCondition` へ一本化した（`commandPaletteVisibility` 追加フィルタを除去）。
   - `CanvasView+CompositeMove.swift` の `cmd+arrow` 特例経路を `isActionEnabled(.moveNode)` ベースへ変更し、直接入力と同一の条件評価を共有した。
   - `addChildNode` は Diagram でもショートカット/Palette 両方で同条件になるよう維持し、UseCase 側の既存正規化（`addNode`）に接続した。
+- `KeymapExecutionRoute` の導入で、`moveFocus` / `extendSelection` / `deleteSelectedOrFocusedNodes` の edge 対応を catalog 側で宣言し、UI/実行経路を分岐なく統一。
 - 検証結果（実行時）:
   - `swift build`: pass
-  - `swift test`: pass（477件）
-  - `./scripts/lint_and_format.sh`: 既存の 2 件違反で停止（`ApplyCanvasCommandsUseCase+DuplicateSelectionAsSibling.swift` の関数引数数、`CanvasShortcutCatalogService.swift` の行数上限）
+  - `swift test`: pass（486件）
+  - `./scripts/lint_and_format.sh`: 既存の 4 件違反で停止（`ApplyCanvasCommandsUseCase+DuplicateSelectionAsSibling.swift` の関数引数数、`CanvasShortcutCatalogService.swift` の行数上限、`ApplyCanvasCommandsUseCase+CommandDispatch.swift` の行数上限、`ApplyCanvasCommandsUseCaseAreaPolicyTests.swift` の行数上限）
 
 ## 6. 受け入れ条件
 

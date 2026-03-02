@@ -248,17 +248,18 @@ extension CanvasView {
             // Keep add-node behavior aligned with the shortcut route (mode-selection popup).
             if commands.count == 1, commands[0] == .addNode {
                 let addNodeAction: KeymapContextAction = .presentAddNodeModeSelection
-                let context = keymapExecutionContextForCommandPalette()
-                guard Self.isActionEnabled(addNodeAction, context: context) else {
+                let commandContext = keymapExecutionContextForCommandPalette()
+                guard Self.isActionEnabled(addNodeAction, context: commandContext) else {
                     return true
                 }
                 presentAddNodeModeSelectionPopup()
                 return true
             }
-            if Self.shouldDelegateCommandPaletteApplyToEdgeTarget(
-                commands: commands,
-                operationTargetKind: operationTargetKind
-            ), handleEdgeTargetCommands(commands: commands) {
+            let commandContext = keymapExecutionContextForCommandPalette()
+            if Self.shouldExecuteCommandViaEdgeTarget(commands: commands, context: commandContext) {
+                if handleEdgeTargetCommands(commands: commands) {
+                    return true
+                }
                 return true
             }
             Task {
@@ -287,17 +288,6 @@ extension CanvasView {
         case .openCommandPalette:
             return false
         }
-    }
-
-    static func shouldDelegateCommandPaletteApplyToEdgeTarget(
-        commands: [CanvasCommand],
-        operationTargetKind: KeymapSwitchTargetKindIntentVariant
-    ) -> Bool {
-        guard operationTargetKind == .edge else {
-            return false
-        }
-        // Keep add-node mode selection popup route aligned with direct shortcut handling.
-        return !(commands.count == 1 && commands[0] == .addNode)
     }
 
     private func matchesCommandPaletteQuery(_ value: String, _ rawQuery: String) -> Bool {
@@ -372,7 +362,7 @@ extension CanvasView {
     private func commandPaletteContext() -> CanvasCommandPaletteContext {
         CanvasCommandPaletteContext(
             activeEditingMode: commandPaletteActiveEditingMode(),
-            hasFocusedNode: operationTargetKind == .node && viewModel.focusedNodeID != nil
+            hasFocusedNode: viewModel.focusedNodeID != nil
         )
     }
 
@@ -397,7 +387,7 @@ extension CanvasView {
         KeymapExecutionContext(
             editingMode: commandPaletteActiveEditingMode(),
             operationTargetKind: operationTargetKind,
-            hasFocusedNode: operationTargetKind == .node && viewModel.focusedNodeID != nil,
+            hasFocusedNode: viewModel.focusedNodeID != nil,
             isEditingText: editingContext != nil,
             isCommandPalettePresented: isCommandPalettePresented,
             isSearchPresented: isSearchPresented,

@@ -206,11 +206,8 @@ extension CanvasView {
     }
 
     func handleEdgeTargetCommands(commands: [CanvasCommand]) -> Bool {
-        guard operationTargetKind == .edge else {
+        guard let command = commands.first else {
             return false
-        }
-        guard commands.count == 1, let command = commands.first else {
-            return true
         }
         switch command {
         case .moveFocus(let direction):
@@ -231,7 +228,7 @@ extension CanvasView {
             cycleFocusedEdgeDirectionalityIfPossible()
             return true
         default:
-            return true
+            return false
         }
     }
 

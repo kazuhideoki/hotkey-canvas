@@ -318,3 +318,17 @@ func test_commandPaletteDefinitions_diagramContext_rewritesClipboardAndNudgeLabe
     #expect(titleByID["pasteClipboardAtFocusedNode"] == "Node: Paste")
     #expect(titleByID["nudgeNodeUp"] == "Node: Move Up Slightly")
 }
+
+@Test("Shortcut catalog: edge-aware route is attached to edge-target navigation commands")
+func test_commandPaletteDefinitions_attachEdgeAwareRouteToEdgeNavigationCommands() {
+    let moveFocus = CanvasShortcutCatalogService.definition(for: .moveFocus(.up))
+    let extendSelection = CanvasShortcutCatalogService.definition(for: .extendSelection(.left))
+    let deleteSelected = CanvasShortcutCatalogService.definition(for: .deleteSelectedOrFocusedNodes)
+
+    #expect(moveFocus != nil)
+    #expect(extendSelection != nil)
+    #expect(deleteSelected != nil)
+    #expect(moveFocus?.executionRoute == .edgeAware)
+    #expect(extendSelection?.executionRoute == .edgeAware)
+    #expect(deleteSelected?.executionRoute == .edgeAware)
+}
