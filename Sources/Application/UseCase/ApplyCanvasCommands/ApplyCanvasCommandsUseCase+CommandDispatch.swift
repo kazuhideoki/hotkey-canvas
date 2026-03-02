@@ -32,7 +32,6 @@ extension ApplyCanvasCommandsUseCase {
         }
     }
 
-    // swiftlint:disable cyclomatic_complexity
     private func applyGraphEditingCommand(
         command: CanvasCommand,
         to graph: CanvasGraph,
@@ -113,7 +112,6 @@ extension ApplyCanvasCommandsUseCase {
             return nil
         }
     }
-    // swiftlint:enable cyclomatic_complexity
 
     private func applyDeleteCommand(
         command: CanvasCommand,

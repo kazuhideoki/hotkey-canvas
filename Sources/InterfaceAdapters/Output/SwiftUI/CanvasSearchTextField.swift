@@ -4,6 +4,15 @@ import AppKit
 import SwiftUI
 
 struct CanvasSearchTextField: NSViewRepresentable {
+    struct Handlers {
+        let onSubmitForward: () -> Void
+        let onSubmitBackward: () -> Void
+        let onMoveHistoryOlder: () -> Void
+        let onMoveHistoryNewer: () -> Void
+        let onTextEdited: () -> Void
+        let onCancel: () -> Void
+    }
+
     @Binding var text: String
     let onSubmitForward: () -> Void
     let onSubmitBackward: () -> Void
@@ -13,15 +22,7 @@ struct CanvasSearchTextField: NSViewRepresentable {
     let onCancel: () -> Void
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(
-            text: $text,
-            onSubmitForward: onSubmitForward,
-            onSubmitBackward: onSubmitBackward,
-            onMoveHistoryOlder: onMoveHistoryOlder,
-            onMoveHistoryNewer: onMoveHistoryNewer,
-            onTextEdited: onTextEdited,
-            onCancel: onCancel
-        )
+        Coordinator(text: $text, handlers: currentHandlers())
     }
 
     func makeNSView(context: Context) -> CanvasSearchNSTextField {
@@ -45,7 +46,11 @@ struct CanvasSearchTextField: NSViewRepresentable {
         if nsView.stringValue != text {
             nsView.stringValue = text
         }
-        context.coordinator.updateHandlers(
+        context.coordinator.updateHandlers(currentHandlers())
+    }
+
+    private func currentHandlers() -> Handlers {
+        Handlers(
             onSubmitForward: onSubmitForward,
             onSubmitBackward: onSubmitBackward,
             onMoveHistoryOlder: onMoveHistoryOlder,
@@ -66,38 +71,23 @@ extension CanvasSearchTextField {
         private var onTextEdited: () -> Void
         private var onCancel: () -> Void
 
-        init(
-            text: Binding<String>,
-            onSubmitForward: @escaping () -> Void,
-            onSubmitBackward: @escaping () -> Void,
-            onMoveHistoryOlder: @escaping () -> Void,
-            onMoveHistoryNewer: @escaping () -> Void,
-            onTextEdited: @escaping () -> Void,
-            onCancel: @escaping () -> Void
-        ) {
+        init(text: Binding<String>, handlers: Handlers) {
             self.text = text
-            self.onSubmitForward = onSubmitForward
-            self.onSubmitBackward = onSubmitBackward
-            self.onMoveHistoryOlder = onMoveHistoryOlder
-            self.onMoveHistoryNewer = onMoveHistoryNewer
-            self.onTextEdited = onTextEdited
-            self.onCancel = onCancel
+            onSubmitForward = handlers.onSubmitForward
+            onSubmitBackward = handlers.onSubmitBackward
+            onMoveHistoryOlder = handlers.onMoveHistoryOlder
+            onMoveHistoryNewer = handlers.onMoveHistoryNewer
+            onTextEdited = handlers.onTextEdited
+            onCancel = handlers.onCancel
         }
 
-        func updateHandlers(
-            onSubmitForward: @escaping () -> Void,
-            onSubmitBackward: @escaping () -> Void,
-            onMoveHistoryOlder: @escaping () -> Void,
-            onMoveHistoryNewer: @escaping () -> Void,
-            onTextEdited: @escaping () -> Void,
-            onCancel: @escaping () -> Void
-        ) {
-            self.onSubmitForward = onSubmitForward
-            self.onSubmitBackward = onSubmitBackward
-            self.onMoveHistoryOlder = onMoveHistoryOlder
-            self.onMoveHistoryNewer = onMoveHistoryNewer
-            self.onTextEdited = onTextEdited
-            self.onCancel = onCancel
+        func updateHandlers(_ handlers: Handlers) {
+            onSubmitForward = handlers.onSubmitForward
+            onSubmitBackward = handlers.onSubmitBackward
+            onMoveHistoryOlder = handlers.onMoveHistoryOlder
+            onMoveHistoryNewer = handlers.onMoveHistoryNewer
+            onTextEdited = handlers.onTextEdited
+            onCancel = handlers.onCancel
         }
 
         func controlTextDidChange(_ notification: Notification) {

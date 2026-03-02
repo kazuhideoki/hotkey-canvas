@@ -10,15 +10,21 @@ enum CanvasSearchQueryHistoryDirection {
 enum CanvasSearchQueryHistoryNavigator {
     static let historyLimit = 50
 
+    struct NavigationState: Equatable {
+        let query: String
+        let cursor: Int?
+        let draft: String
+    }
+
     static func navigate(
         query: String,
         history: [String],
         cursor: Int?,
         draft: String,
         direction: CanvasSearchQueryHistoryDirection
-    ) -> (query: String, cursor: Int?, draft: String) {
+    ) -> NavigationState {
         guard !history.isEmpty else {
-            return (query, cursor, draft)
+            return NavigationState(query: query, cursor: cursor, draft: draft)
         }
 
         switch direction {
@@ -32,17 +38,17 @@ enum CanvasSearchQueryHistoryNavigator {
                 nextCursor = 0
                 nextDraft = query
             }
-            return (history[nextCursor], nextCursor, nextDraft)
+            return NavigationState(query: history[nextCursor], cursor: nextCursor, draft: nextDraft)
 
         case .newer:
             guard let cursor else {
-                return (query, cursor, draft)
+                return NavigationState(query: query, cursor: cursor, draft: draft)
             }
             let nextCursor = cursor - 1
             guard nextCursor >= 0 else {
-                return (draft, nil, draft)
+                return NavigationState(query: draft, cursor: nil, draft: draft)
             }
-            return (history[nextCursor], nextCursor, draft)
+            return NavigationState(query: history[nextCursor], cursor: nextCursor, draft: draft)
         }
     }
 

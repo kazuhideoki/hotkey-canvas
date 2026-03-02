@@ -12,7 +12,7 @@ extension CanvasView {
         effectiveOffset: CGSize
     ) -> some View {
         guard operationTargetKind == .area else { return AnyView(EmptyView()) }
-        guard let focusedAreaID = viewModel.focusedAreaID else { return AnyView(EmptyView()) }
+        guard let focusedAreaID = currentFocusedAreaID() else { return AnyView(EmptyView()) }
 
         let nodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
         let areaNodeIDs = Set(

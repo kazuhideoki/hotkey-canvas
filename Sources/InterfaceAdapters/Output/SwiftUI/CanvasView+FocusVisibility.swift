@@ -1,15 +1,18 @@
-// Background: Focus target can be larger than the viewport, especially in area target mode.
+// Background: Focus target can be larger than the viewport, especially in area/edge target mode.
 // Responsibility: Keep the focused shape visible by camera compensation and conditional auto zoom-out.
 import Domain
 import SwiftUI
 
 extension CanvasView {
+    static let edgeFocusViewportPadding: Double = 12
+
     func cameraOffset(viewportSize: CGSize) -> CGSize {
         let nodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
-        guard !nodes.isEmpty, let focusNode = currentFocusNode(in: nodes) else {
+        guard !nodes.isEmpty, let focusRect = focusedShapeRect(in: nodes) else {
             return .zero
         }
-        let anchorPoint = hasInitializedCameraAnchor ? cameraAnchorPoint : centerPoint(for: focusNode)
+        let focusCenterPoint = CGPoint(x: focusRect.midX, y: focusRect.midY)
+        let anchorPoint = hasInitializedCameraAnchor ? cameraAnchorPoint : focusCenterPoint
         return CGSize(
             width: (viewportSize.width / 2) - anchorPoint.x,
             height: (viewportSize.height / 2) - anchorPoint.y
@@ -103,19 +106,30 @@ extension CanvasView {
     }
 
     func focusedShapeRect(in nodes: [CanvasNode]) -> CGRect? {
-        if operationTargetKind == .area, let focusedAreaRect = focusedAreaRect(in: nodes) {
-            return focusedAreaRect
+        switch operationTargetKind {
+        case .area:
+            if let focusedAreaID = currentFocusedAreaID(),
+                let focusedAreaRect = focusedAreaRect(in: nodes, areaID: focusedAreaID)
+            {
+                return focusedAreaRect
+            }
+        case .edge:
+            if let focusedEdgeID, let focusedEdgeRect = focusedEdgeRect(in: nodes, edgeID: focusedEdgeID) {
+                return focusedEdgeRect
+            }
+        case .node, .cycle:
+            break
         }
-        guard let focusNode = currentFocusNode(in: nodes) else {
-            return nil
+        if let focusedNodeID = viewModel.focusedNodeID,
+            let focusedNode = nodes.first(where: { $0.id == focusedNodeID })
+        {
+            return focusRect(for: focusedNode)
         }
-        return focusRect(for: focusNode)
+        guard let firstNode = nodes.first else { return nil }
+        return focusRect(for: firstNode)
     }
 
-    func focusedAreaRect(in nodes: [CanvasNode]) -> CGRect? {
-        guard let focusedAreaID = viewModel.focusedAreaID else {
-            return nil
-        }
+    func focusedAreaRect(in nodes: [CanvasNode], areaID focusedAreaID: CanvasAreaID) -> CGRect? {
         let areaNodes = nodes.filter { viewModel.areaIDByNodeID[$0.id] == focusedAreaID }
         let areaNodeIDs = Set(areaNodes.map(\.id))
         guard !areaNodeIDs.isEmpty else {
@@ -140,11 +154,27 @@ extension CanvasView {
         )
     }
 
-    func currentFocusNode(in nodes: [CanvasNode]) -> CanvasNode? {
-        if let focusedNodeID = viewModel.focusedNodeID {
-            return nodes.first(where: { $0.id == focusedNodeID }) ?? nodes.first
+    func focusedEdgeRect(in nodes: [CanvasNode], edgeID focusedEdgeID: CanvasEdgeID) -> CGRect? {
+        guard let focusedEdge = viewModel.edges.first(where: { $0.id == focusedEdgeID }) else {
+            return nil
         }
-        return nodes.first
+        guard
+            let fromNode = nodes.first(where: { $0.id == focusedEdge.fromNodeID }),
+            let toNode = nodes.first(where: { $0.id == focusedEdge.toNodeID })
+        else {
+            return nil
+        }
+
+        let fromRect = focusRect(for: fromNode)
+        let toRect = focusRect(for: toNode)
+        let edgeEnvelopeRect = fromRect.union(toRect)
+        let padding = Self.edgeFocusViewportPadding
+        return CGRect(
+            x: edgeEnvelopeRect.minX - padding,
+            y: edgeEnvelopeRect.minY - padding,
+            width: edgeEnvelopeRect.width + (padding * 2),
+            height: edgeEnvelopeRect.height + (padding * 2)
+        )
     }
 
     func focusRect(for node: CanvasNode) -> CGRect {
