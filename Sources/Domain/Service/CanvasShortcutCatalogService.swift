@@ -29,6 +29,37 @@ public enum CanvasShortcutCatalogService {
             return commandPaletteDefinition(definition, for: context)
         }
     }
+
+    public static func definition(for action: CanvasShortcutAction) -> CanvasShortcutDefinition? {
+        defaultDefinitionsStorage.first { $0.action == action }
+    }
+
+    public static func definition(for command: CanvasCommand) -> CanvasShortcutDefinition? {
+        defaultDefinitionsStorage.first {
+            guard case .apply(let commands) = $0.action else {
+                return false
+            }
+            return commands.contains(where: { $0 == command })
+        }
+    }
+}
+
+extension CanvasShortcutCatalogService {
+    static func nodeOrEdgeTargetCondition() -> KeymapExecutionCondition {
+        .targetKinds([.node, .edge])
+    }
+
+    static func nodeOrEdgeTargetCondition(
+        combinedWith condition: KeymapExecutionCondition
+    ) -> KeymapExecutionCondition {
+        .all([nodeOrEdgeTargetCondition(), condition])
+    }
+
+    static func nodeOrEdgeExecutionCondition(
+        for visibility: CanvasCommandPaletteVisibility
+    ) -> KeymapExecutionCondition {
+        nodeOrEdgeTargetCondition(combinedWith: visibility.defaultExecutionCondition)
+    }
 }
 
 extension CanvasShortcutCatalogService {
@@ -91,7 +122,8 @@ extension CanvasShortcutCatalogService {
                 shortcutLabel: shortcutLabel(
                     for: CanvasShortcutGesture(key: .enter, modifiers: [.command])
                 ),
-                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree])
+                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.tree]))
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addNode"),
@@ -100,7 +132,8 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.addNode]),
                 shortcutLabel: shortcutLabel(
                     for: CanvasShortcutGesture(key: .enter, modifiers: [.shift])
-                )
+                ),
+                executionCondition: nodeOrEdgeTargetCondition()
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addSiblingNodeAbove"),
@@ -113,7 +146,8 @@ extension CanvasShortcutCatalogService {
                 shortcutLabel: shortcutLabel(
                     for: CanvasShortcutGesture(key: .enter, modifiers: [.option])
                 ),
-                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree])
+                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.tree]))
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addSiblingNodeBelow"),
@@ -126,7 +160,8 @@ extension CanvasShortcutCatalogService {
                 shortcutLabel: shortcutLabel(
                     for: CanvasShortcutGesture(key: .enter, modifiers: [])
                 ),
-                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree])
+                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.tree]))
             ),
         ]
     }
@@ -141,7 +176,8 @@ extension CanvasShortcutCatalogService {
                 shortcutLabel: shortcutLabel(
                     for: CanvasShortcutGesture(key: .deleteBackward, modifiers: [])
                 ),
-                commandPaletteVisibility: .requiresFocusedNode
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "duplicateSelectionAsSibling"),
@@ -155,7 +191,8 @@ extension CanvasShortcutCatalogService {
                     for: CanvasShortcutGesture(key: .character("d"), modifiers: [.command])
                 ),
                 searchTokens: ["duplicate", "selection", "sibling", "tree"],
-                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree])
+                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.tree]))
             ),
         ]
     }
@@ -174,7 +211,8 @@ extension CanvasShortcutCatalogService {
                     for: CanvasShortcutGesture(key: .character("c"), modifiers: [.command])
                 ),
                 searchTokens: ["copy", "selected", "subtree", "node"],
-                commandPaletteVisibility: .requiresFocusedNode
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "cutSelectionOrFocusedSubtree"),
@@ -185,7 +223,8 @@ extension CanvasShortcutCatalogService {
                     for: CanvasShortcutGesture(key: .character("x"), modifiers: [.command])
                 ),
                 searchTokens: ["cut", "selected", "subtree", "node"],
-                commandPaletteVisibility: .requiresFocusedNode
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "pasteClipboardAtFocusedNode"),
@@ -196,7 +235,8 @@ extension CanvasShortcutCatalogService {
                     for: CanvasShortcutGesture(key: .character("v"), modifiers: [.command])
                 ),
                 searchTokens: ["paste", "selected", "subtree", "child", "node"],
-                commandPaletteVisibility: .requiresFocusedNode
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
             ),
         ]
     }
@@ -259,7 +299,8 @@ extension CanvasShortcutCatalogService {
             gesture: CanvasShortcutGesture(key: key, modifiers: [.shift]),
             action: .apply(commands: [.extendSelection(direction)]),
             shortcutLabel: shortcutLabel(for: CanvasShortcutGesture(key: key, modifiers: [.shift])),
-            commandPaletteVisibility: .requiresFocusedNode
+            commandPaletteVisibility: .requiresFocusedNode,
+            executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
         )
     }
 
@@ -298,7 +339,8 @@ extension CanvasShortcutCatalogService {
             gesture: CanvasShortcutGesture(key: key, modifiers: [.command]),
             action: .apply(commands: [.moveNode(direction)]),
             shortcutLabel: shortcutLabel(for: CanvasShortcutGesture(key: key, modifiers: [.command])),
-            commandPaletteVisibility: .requiresFocusedNode
+            commandPaletteVisibility: .requiresFocusedNode,
+            executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
         )
     }
 
@@ -318,7 +360,8 @@ extension CanvasShortcutCatalogService {
                 for: CanvasShortcutGesture(key: key, modifiers: [.command, .shift])
             ),
             searchTokens: ["move", "slightly", "nudge", "grid"],
-            commandPaletteVisibility: .requiresFocusedNodeAndMode([.diagram])
+            commandPaletteVisibility: .requiresFocusedNodeAndMode([.diagram]),
+            executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.diagram]))
         )
     }
 
@@ -336,7 +379,8 @@ extension CanvasShortcutCatalogService {
                     for: CanvasShortcutGesture(key: .character("l"), modifiers: [.command])
                 ),
                 searchTokens: ["connect", "edge", "line", "diagram"],
-                commandPaletteVisibility: .requiresFocusedNodeAndMode([.diagram])
+                commandPaletteVisibility: .requiresFocusedNodeAndMode([.diagram]),
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.diagram]))
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "centerFocusedNode"),
@@ -349,7 +393,8 @@ extension CanvasShortcutCatalogService {
                 shortcutLabel: shortcutLabel(
                     for: CanvasShortcutGesture(key: .character("l"), modifiers: [.control])
                 ),
-                commandPaletteVisibility: .requiresFocusedNode
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "toggleFoldFocusedSubtree"),
@@ -372,7 +417,8 @@ extension CanvasShortcutCatalogService {
                     "focused",
                     "subtree",
                 ],
-                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree])
+                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.tree]))
             ),
         ]
     }

@@ -16,7 +16,8 @@ extension CanvasShortcutCatalogService {
             shortcutLabel: definition.shortcutLabel,
             searchTokens: definition.searchTokens,
             isVisibleInCommandPalette: definition.isVisibleInCommandPalette,
-            commandPaletteVisibility: definition.commandPaletteVisibility
+            commandPaletteVisibility: definition.commandPaletteVisibility,
+            executionCondition: definition.executionCondition
         )
     }
 

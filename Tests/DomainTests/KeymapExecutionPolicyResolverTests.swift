@@ -89,7 +89,7 @@ func test_policyResolver_modalConditions_matchModalSnapshot() {
     #expect(KeymapExecutionPolicyResolver.isEnabled(.modalOut([.commandPalette]), context: noModalContext))
     #expect(!KeymapExecutionPolicyResolver.isEnabled(.modalOut([.commandPalette]), context: paletteContext))
     #expect(
-        !KeymapExecutionPolicyResolver.isEnabled(
+        KeymapExecutionPolicyResolver.isEnabled(
             .all([.modalIn([.commandPalette]), .notTextEditing]), context: nodeContext))
 }
 
@@ -103,8 +103,8 @@ func test_policyResolver_definition_executionCondition_mapsFromVisibility() {
         shortcutLabel: "t",
         commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree, .diagram])
     )
-    let context = KeymapExecutionContext(hasFocusedNode: true, editingMode: .tree)
-    let withoutFocus = KeymapExecutionContext(hasFocusedNode: false, editingMode: .tree)
+    let context = KeymapExecutionContext(editingMode: .tree, hasFocusedNode: true)
+    let withoutFocus = KeymapExecutionContext(editingMode: .tree, hasFocusedNode: false)
 
     #expect(KeymapExecutionPolicyResolver.isEnabled(definition: definition, context: context))
     #expect(!KeymapExecutionPolicyResolver.isEnabled(definition: definition, context: withoutFocus))

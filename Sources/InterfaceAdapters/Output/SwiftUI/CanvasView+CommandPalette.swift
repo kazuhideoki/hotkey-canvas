@@ -81,13 +81,15 @@ extension CanvasView {
     private func defaultCommandPaletteItems() -> [CommandPaletteItem] {
         var items: [CommandPaletteItem] = []
         let context = commandPaletteContext()
+        let keymapContext = keymapExecutionContextForCommandPalette()
         for definition in CanvasShortcutCatalogService.commandPaletteDefinitions(context: context) {
             guard definition.isVisibleInCommandPalette else {
                 continue
             }
-            if operationTargetKind == .area,
-                Self.isCommandPaletteShortcutHiddenInAreaTarget(definition.action)
-            {
+            if !KeymapExecutionPolicyResolver.isEnabled(
+                definition: definition,
+                context: keymapContext
+            ) {
                 continue
             }
             let searchText = Self.commandPaletteSearchText(
@@ -135,24 +137,6 @@ extension CanvasView {
             items.append(alignAllAreasItem)
         }
         return items
-    }
-
-    static func isCommandPaletteShortcutHiddenInAreaTarget(_ action: CanvasShortcutAction) -> Bool {
-        switch action {
-        case .apply(let commands):
-            return commands.contains { command in
-                switch command {
-                case .centerFocusedNode:
-                    return true
-                default:
-                    return blocksCommandInAreaTarget(command)
-                }
-            }
-        case .beginConnectNodeSelection:
-            return true
-        case .undo, .redo, .zoomIn, .zoomOut, .openCommandPalette:
-            return false
-        }
     }
 
     private func focusedNodeMarkdownToggleCommandPaletteItem() -> CommandPaletteItem? {
@@ -358,7 +342,7 @@ extension CanvasView {
         )
     }
 
-    private func commandPaletteActiveEditingMode() -> CanvasEditingMode? {
+    func commandPaletteActiveEditingMode() -> CanvasEditingMode? {
         if let focusedNodeID = viewModel.focusedNodeID {
             if viewModel.diagramNodeIDs.contains(focusedNodeID) {
                 return .diagram
@@ -373,5 +357,20 @@ extension CanvasView {
             return areaModes.first
         }
         return nil
+    }
+
+    private func keymapExecutionContextForCommandPalette() -> KeymapExecutionContext {
+        KeymapExecutionContext(
+            editingMode: commandPaletteActiveEditingMode(),
+            operationTargetKind: operationTargetKind,
+            hasFocusedNode: operationTargetKind == .node && viewModel.focusedNodeID != nil,
+            isEditingText: editingContext != nil,
+            isCommandPalettePresented: isCommandPalettePresented,
+            isSearchPresented: isSearchPresented,
+            isConnectNodeSelectionActive: isConnectNodeSelectionActive(),
+            isAddNodePopupPresented: isAddNodeModePopupPresented,
+            selectedNodeCount: viewModel.selectedNodeIDs.count,
+            selectedEdgeCount: viewModel.selectedEdgeIDs.count
+        )
     }
 }

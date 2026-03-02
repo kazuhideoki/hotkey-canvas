@@ -10,7 +10,8 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.scaleSelectedNodes(.up)]),
                 shortcutLabel: "⌘⌥+",
                 searchTokens: ["node", "scale", "resize", "grow", "expand", "selected"],
-                commandPaletteVisibility: .requiresFocusedNode
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: CanvasShortcutCatalogService.nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "scaleSelectedNodesUp.commandOptionShiftSemicolon"),
@@ -19,7 +20,8 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.scaleSelectedNodes(.up)]),
                 shortcutLabel: "⌘⌥+",
                 searchTokens: ["node", "scale", "resize", "grow", "expand", "selected"],
-                commandPaletteVisibility: .requiresFocusedNode
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: CanvasShortcutCatalogService.nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "scaleSelectedNodesUp.commandOptionShiftEquals"),
@@ -28,7 +30,8 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.scaleSelectedNodes(.up)]),
                 shortcutLabel: "⌘⌥+",
                 searchTokens: ["node", "scale", "resize", "grow", "expand", "selected"],
-                commandPaletteVisibility: .requiresFocusedNode
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: CanvasShortcutCatalogService.nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "scaleSelectedNodesUp.commandOptionEquals"),
@@ -37,7 +40,8 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.scaleSelectedNodes(.up)]),
                 shortcutLabel: "⌘⌥=",
                 searchTokens: ["node", "scale", "resize", "grow", "expand", "selected"],
-                commandPaletteVisibility: .requiresFocusedNode
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: CanvasShortcutCatalogService.nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "scaleSelectedNodesDown.commandOptionMinus"),
@@ -46,7 +50,8 @@ extension CanvasShortcutCatalogService {
                 action: .apply(commands: [.scaleSelectedNodes(.down)]),
                 shortcutLabel: "⌘⌥-",
                 searchTokens: ["node", "scale", "resize", "shrink", "contract", "selected"],
-                commandPaletteVisibility: .requiresFocusedNode
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: CanvasShortcutCatalogService.nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
             ),
         ]
     }

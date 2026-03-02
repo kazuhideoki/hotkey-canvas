@@ -60,7 +60,7 @@ extension CanvasView {
 
 extension CanvasView {
     private func handleGlobalRoute(_ action: KeymapGlobalAction) -> Bool {
-        if operationTargetKind == .area, Self.blocksGlobalActionInAreaTarget(action) {
+        if !Self.isActionEnabled(action, context: keymapExecutionContext()) {
             return true
         }
         switch action {
@@ -98,7 +98,7 @@ extension CanvasView {
     }
 
     private func handlePrimitiveContextAction(_ action: KeymapContextAction) -> Bool {
-        if operationTargetKind == .area, Self.blocksPrimitiveContextActionInAreaTarget(action) {
+        if !Self.isActionEnabled(action, context: keymapExecutionContext()) {
             return true
         }
         switch action {
@@ -124,58 +124,75 @@ extension CanvasView {
         }
     }
 
-    static func blocksGlobalActionInAreaTarget(_ action: KeymapGlobalAction) -> Bool {
-        switch action {
-        case .beginConnectNodeSelection, .centerFocusedNode:
+    static func isActionEnabled(_ action: KeymapGlobalAction, context: KeymapExecutionContext) -> Bool {
+        guard
+            let shortcutAction = Self.shortcutAction(for: action),
+            let definition = CanvasShortcutCatalogService.definition(for: shortcutAction)
+        else {
             return true
-        case .openCommandPalette, .openSearch, .undo, .redo, .zoomIn, .zoomOut:
-            return false
         }
+        return KeymapExecutionPolicyResolver.isEnabled(definition: definition, context: context)
     }
 
-    static func blocksPrimitiveContextActionInAreaTarget(_ action: KeymapContextAction) -> Bool {
+    static func isActionEnabled(_ action: KeymapContextAction, context: KeymapExecutionContext) -> Bool {
         switch action {
         case .apply(let commands):
-            return commands.contains(where: blocksCommandInAreaTarget)
-        case .cycleFocusedEdgeDirectionality, .presentAddNodeModeSelection:
-            return true
+            return commands.allSatisfy { command in
+                isCommandEnabled(command, context: context)
+            }
         case .switchTargetKind, .reportUnsupportedIntent:
-            return false
+            return true
+        case .cycleFocusedEdgeDirectionality, .presentAddNodeModeSelection:
+            return context.operationTargetKind != .area
         }
     }
 
-    static func blocksCommandInAreaTarget(_ command: CanvasCommand) -> Bool {
-        switch command {
-        case .addNode,
-            .addChildNode,
-            .addSiblingNode,
-            .duplicateSelectionAsSibling,
-            .connectNodes,
-            .extendSelection,
-            .moveNode,
-            .nudgeNode,
-            .scaleSelectedNodes,
-            .toggleFoldFocusedSubtree,
-            .deleteSelectedOrFocusedNodes,
-            .deleteSelectedOrFocusedEdges,
-            .cycleFocusedEdgeDirectionality,
-            .copySelectionOrFocusedSubtree,
-            .cutSelectionOrFocusedSubtree,
-            .pasteClipboardAtFocusedNode:
-            return true
-        case .alignAllAreasVertically,
-            .moveFocus,
-            .moveFocusAcrossAreasToRoot,
-            .focusNode,
-            .focusArea,
-            .centerFocusedNode,
-            .setNodeText,
-            .upsertNodeAttachment,
-            .toggleFocusedNodeMarkdownStyle,
-            .convertFocusedAreaMode,
-            .createArea,
-            .assignNodesToArea:
-            return false
+    private static func shortcutAction(for action: KeymapGlobalAction) -> CanvasShortcutAction? {
+        switch action {
+        case .openCommandPalette:
+            return .openCommandPalette
+        case .openSearch:
+            return nil
+        case .beginConnectNodeSelection:
+            return .beginConnectNodeSelection
+        case .undo:
+            return .undo
+        case .redo:
+            return .redo
+        case .zoomIn:
+            return .zoomIn
+        case .zoomOut:
+            return .zoomOut
+        case .centerFocusedNode:
+            return .apply(commands: [.centerFocusedNode])
         }
+    }
+
+    private static func isCommandEnabled(
+        _ command: CanvasCommand,
+        context: KeymapExecutionContext
+    ) -> Bool {
+        guard let definition = CanvasShortcutCatalogService.definition(for: command) else {
+            return true
+        }
+        return KeymapExecutionPolicyResolver.isEnabled(
+            definition: definition,
+            context: context
+        )
+    }
+
+    private func keymapExecutionContext() -> KeymapExecutionContext {
+        KeymapExecutionContext(
+            editingMode: commandPaletteActiveEditingMode(),
+            operationTargetKind: operationTargetKind,
+            hasFocusedNode: viewModel.focusedNodeID != nil,
+            isEditingText: editingContext != nil,
+            isCommandPalettePresented: isCommandPalettePresented,
+            isSearchPresented: isSearchPresented,
+            isConnectNodeSelectionActive: isConnectNodeSelectionActive(),
+            isAddNodePopupPresented: isAddNodeModePopupPresented,
+            selectedNodeCount: viewModel.selectedNodeIDs.count,
+            selectedEdgeCount: viewModel.selectedEdgeIDs.count
+        )
     }
 }
