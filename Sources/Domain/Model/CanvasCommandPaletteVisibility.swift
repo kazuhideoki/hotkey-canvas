@@ -7,3 +7,18 @@ public enum CanvasCommandPaletteVisibility: Equatable, Sendable {
     case requiresMode(Set<CanvasEditingMode>)
     case requiresFocusedNodeAndMode(Set<CanvasEditingMode>)
 }
+
+extension CanvasCommandPaletteVisibility {
+    var defaultExecutionCondition: KeymapExecutionCondition {
+        switch self {
+        case .always:
+            .always
+        case .requiresFocusedNode:
+            .requiresFocusedNode
+        case .requiresMode(let modes):
+            .requiredModes(modes)
+        case .requiresFocusedNodeAndMode(let modes):
+            .all([.requiresFocusedNode, .requiredModes(modes)])
+        }
+    }
+}

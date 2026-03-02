@@ -18,6 +18,8 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
     public let isVisibleInCommandPalette: Bool
     /// Runtime visibility policy for command palette filtering.
     public let commandPaletteVisibility: CanvasCommandPaletteVisibility
+    /// Execution/capture policy for this shortcut.
+    public let executionCondition: KeymapExecutionCondition
 
     /// Creates a shortcut catalog entry.
     /// - Parameters:
@@ -47,6 +49,40 @@ public struct CanvasShortcutDefinition: Equatable, Sendable {
         self.searchTokens = searchTokens
         self.isVisibleInCommandPalette = isVisibleInCommandPalette
         self.commandPaletteVisibility = commandPaletteVisibility
+        self.executionCondition = commandPaletteVisibility.defaultExecutionCondition
+    }
+
+    /// Creates a shortcut catalog entry.
+    /// - Parameters:
+    ///   - id: Stable identifier.
+    ///   - commandPaletteLabel: Structured title model for command palette display.
+    ///   - gesture: Matching gesture.
+    ///   - action: Action to invoke.
+    ///   - shortcutLabel: UI-facing shortcut hint text.
+    ///   - searchTokens: Additional search keywords.
+    ///   - isVisibleInCommandPalette: Visibility flag for command palette listing.
+    ///   - commandPaletteVisibility: Runtime visibility policy for command palette filtering.
+    ///   - executionCondition: Custom execution policy for this shortcut.
+    public init(
+        id: CanvasShortcutID,
+        commandPaletteLabel: CanvasCommandPaletteLabel,
+        gesture: CanvasShortcutGesture,
+        action: CanvasShortcutAction,
+        shortcutLabel: String,
+        searchTokens: [String] = [],
+        isVisibleInCommandPalette: Bool = true,
+        commandPaletteVisibility: CanvasCommandPaletteVisibility = .always,
+        executionCondition: KeymapExecutionCondition
+    ) {
+        self.id = id
+        self.commandPaletteLabel = commandPaletteLabel
+        self.gesture = gesture
+        self.action = action
+        self.shortcutLabel = shortcutLabel
+        self.searchTokens = searchTokens
+        self.isVisibleInCommandPalette = isVisibleInCommandPalette
+        self.commandPaletteVisibility = commandPaletteVisibility
+        self.executionCondition = executionCondition
     }
 
     /// Display title rendered in Noun: Verb format.
