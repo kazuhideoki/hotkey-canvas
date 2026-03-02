@@ -423,6 +423,34 @@ func test_apply_addNode_failsWhenNoFocusAndMultipleAreasExist() async throws {
     }
 }
 
+@Test("ApplyCanvasCommandsUseCase: addNode executes even when focused element is area")
+func test_apply_addNode_executesWhenFocusedElementIsArea() async throws {
+    let areaID = CanvasAreaID(rawValue: "area-1")
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 48, y: 48, width: 220, height: 120)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID,
+        focusedElement: .area(areaID),
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedNodeID], editingMode: .diagram)
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addNode])
+
+    #expect(result.didAddNode)
+    #expect(result.newState.nodesByID.count == 2)
+}
+
 @Test("ApplyCanvasCommandsUseCase: apply fails when graph has nodes but no area data")
 func test_apply_failsWhenAreaDataMissing() async throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")

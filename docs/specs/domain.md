@@ -395,6 +395,7 @@
   - `CanvasCommandPaletteContext`
   - `CanvasCommandPaletteVisibility`
   - `CanvasShortcutDefinition`
+  - `KeymapExecutionRoute`
   - `KeymapShortcutScope`
   - `KeymapPrimitiveIntent`
   - `KeymapGlobalAction`
@@ -414,6 +415,7 @@
 | `resolveAction(for:)` | `CanvasShortcutGesture` から実行アクションを解決する。 |
 | `commandPaletteDefinitions()` | コマンドパレットに表示すべきショートカット定義のみ返す。 |
 | `commandPaletteDefinitions(context:)` | フォーカス有無・編集モードを使って、実行不能な項目を非表示にした定義のみ返す。 |
+| `definition(for:)` | `CanvasCommand` から定義を逆引きし、実行/表示/ルート判定に再利用する。 |
 | `KeymapIntentResolver.resolveRoute(for:)` | `CanvasShortcutGesture` を `primitive/global` の経路へ分類し、`primitive` のみ Intent を返す（非対応は `nil`）。`modal` は View の状態管理で扱う。 |
 
 #### Primitive Intent 語彙（Phase 1 固定）
@@ -493,11 +495,12 @@
 - 不変条件
   - 標準ショートカット定義は実装内の静的配列で管理し、入力解決とコマンドパレット表示で共有する。
   - `CanvasCommandPaletteVisibility` により、mode/フォーカス条件を満たさない項目は表示しない（無効表示は行わない）。
-  - `CanvasCommandPaletteLabel` は `Noun: Verb` 形式でタイトルを生成し、コマンド名の表記ゆれを防ぐ。
-  - `deleteSelectedOrFocusedNodes` の表示名は mode 共通で `Node: Delete Selected` とする。
-  - edge ターゲット中の削除は `Edge: Delete Selected` を表示し、`deleteSelectedOrFocusedEdges` へ解決する。
-  - edge ターゲット中の方向切替は `Edge: Cycle Directionality` を表示し、`cycleFocusedEdgeDirectionality` へ解決する。
-  - `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` / `pasteClipboardAtFocusedNode` は mode に応じて文言を切り替える（Tree は subtree を明示、Diagram は selected/paste を優先）。
+- `CanvasCommandPaletteLabel` は `Noun: Verb` 形式でタイトルを生成し、コマンド名の表記ゆれを防ぐ。
+- `deleteSelectedOrFocusedNodes` の表示名は mode 共通で `Node: Delete Selected` とする。
+- edge ターゲット中の削除は `Edge: Delete Selected` を表示し、`deleteSelectedOrFocusedEdges` へ解決する。
+- edge ターゲット中の方向切替は `Edge: Cycle Directionality` を表示し、`cycleFocusedEdgeDirectionality` へ解決する。
+- `moveFocus` / `extendSelection` / `deleteSelectedOrFocusedNodes` は edge 対象時だけ edge ルートへ振り分け、node ルートと分離して扱う。
+- `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` / `pasteClipboardAtFocusedNode` は mode に応じて文言を切り替える（Tree は subtree を明示、Diagram は selected/paste を優先）。
   - `cmd+shift+arrow`（`nudgeNode`）は実行経路を維持しつつ、コマンドパレット表示は Diagram mode のみとする。
   - 状態依存の ON/OFF 操作は原則 `toggle` 動詞で表記し、`enable/disable/on/off` は検索トークンで吸収する。
   - `Shift + 矢印` は `.extendSelection` に解決し、`moveFocus` と競合しない。

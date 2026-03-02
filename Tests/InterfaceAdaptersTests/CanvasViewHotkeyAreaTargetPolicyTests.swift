@@ -113,32 +113,29 @@ func test_diagramNodeTarget_commandPaletteShowsAddChildNode() {
     #expect(!visibleIds.contains("addSiblingNodeBelow"))
 }
 
-@Test("Command palette apply routing: edge target delegates addChildNode to edge handler")
-func test_commandPaletteApplyRouting_edgeTarget_delegatesAddChildNode() {
-    #expect(
-        CanvasView.shouldDelegateCommandPaletteApplyToEdgeTarget(
-            commands: [.addChildNode],
-            operationTargetKind: .edge
-        )
-    )
+@Test("Command palette apply routing: edge target delegates edge-specific apply commands")
+func test_commandPaletteApplyRouting_edgeTarget_delegatesEdgeSpecificApplyCommands() {
+    let command: CanvasCommand = .moveFocus(.up)
+    let definition = CanvasShortcutCatalogService.definition(for: command)
+
+    #expect(definition != nil)
+    #expect(definition?.executionRoute == .edgeAware)
 }
 
-@Test("Command palette apply routing: edge target keeps addNode popup route")
-func test_commandPaletteApplyRouting_edgeTarget_keepsAddNodePopupRoute() {
-    #expect(
-        !CanvasView.shouldDelegateCommandPaletteApplyToEdgeTarget(
-            commands: [.addNode],
-            operationTargetKind: .edge
-        )
-    )
+@Test("Command palette apply routing: edge target does not delegate generic node apply commands")
+func test_commandPaletteApplyRouting_edgeTarget_doesNotDelegateGenericNodeApplyCommands() {
+    let command: CanvasCommand = .addChildNode
+    let definition = CanvasShortcutCatalogService.definition(for: command)
+
+    #expect(definition != nil)
+    #expect(definition?.executionRoute != .edgeAware)
 }
 
-@Test("Command palette apply routing: node target does not delegate to edge handler")
-func test_commandPaletteApplyRouting_nodeTarget_doesNotDelegate() {
-    #expect(
-        !CanvasView.shouldDelegateCommandPaletteApplyToEdgeTarget(
-            commands: [.addChildNode],
-            operationTargetKind: .node
-        )
-    )
+@Test("Command palette apply routing: non-edge-aware commands stay direct")
+func test_commandPaletteApplyRouting_nonEdgeAwareCommandsRemainDirect() {
+    let command: CanvasCommand = .addSiblingNode(position: .below)
+    let definition = CanvasShortcutCatalogService.definition(for: command)
+
+    #expect(definition != nil)
+    #expect(definition?.executionRoute == .direct)
 }

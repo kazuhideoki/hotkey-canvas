@@ -103,7 +103,13 @@ extension CanvasView {
         }
         switch action {
         case .apply(let commands):
-            if handleEdgeTargetCommands(commands: commands) {
+            let context = keymapExecutionContext()
+            if Self.shouldExecuteCommandViaEdgeTarget(commands: commands, context: context),
+                handleEdgeTargetCommands(commands: commands)
+            {
+                return true
+            }
+            if Self.shouldExecuteCommandViaEdgeTarget(commands: commands, context: context) {
                 return true
             }
             Task {
@@ -179,6 +185,22 @@ extension CanvasView {
             definition: definition,
             context: context
         )
+    }
+
+    static func shouldExecuteCommandViaEdgeTarget(
+        commands: [CanvasCommand],
+        context: KeymapExecutionContext
+    ) -> Bool {
+        guard context.operationTargetKind == .edge else {
+            return false
+        }
+        guard commands.count == 1, let command = commands.first else {
+            return false
+        }
+        guard let definition = CanvasShortcutCatalogService.definition(for: command) else {
+            return false
+        }
+        return definition.executionRoute == .edgeAware
     }
 
     func keymapExecutionContext() -> KeymapExecutionContext {

@@ -199,7 +199,8 @@ extension CanvasShortcutCatalogService {
                     for: CanvasShortcutGesture(key: .deleteBackward, modifiers: [])
                 ),
                 commandPaletteVisibility: .requiresFocusedNode,
-                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
+                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode),
+                executionRoute: .edgeAware
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "duplicateSelectionAsSibling"),
@@ -304,7 +305,8 @@ extension CanvasShortcutCatalogService {
             gesture: CanvasShortcutGesture(key: key, modifiers: []),
             action: .apply(commands: [.moveFocus(direction)]),
             shortcutLabel: shortcutLabel(for: CanvasShortcutGesture(key: key, modifiers: [])),
-            commandPaletteVisibility: .requiresFocusedNode
+            commandPaletteVisibility: .requiresFocusedNode,
+            executionRoute: .edgeAware
         )
     }
 
@@ -322,7 +324,8 @@ extension CanvasShortcutCatalogService {
             action: .apply(commands: [.extendSelection(direction)]),
             shortcutLabel: shortcutLabel(for: CanvasShortcutGesture(key: key, modifiers: [.shift])),
             commandPaletteVisibility: .requiresFocusedNode,
-            executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
+            executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode),
+            executionRoute: .edgeAware
         )
     }
 
