@@ -203,14 +203,19 @@ func test_resolveAction_commandOptionRight_returnsMoveFocusAcrossAreasToRoot() {
     #expect(action == .apply(commands: [.moveFocusAcrossAreasToRoot(.right)]))
 }
 
-@Test("Shortcut catalog: diagram context hides tree-only command palette definitions")
-func test_commandPaletteDefinitions_diagramContext_hidesTreeOnlyDefinitions() {
+@Test("Shortcut catalog: diagram context keeps addChild and hides tree-only command palette definitions")
+func test_commandPaletteDefinitions_diagramContext_hidesTreeOnlyDefinitionsExceptAddChild() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
-        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true)
+        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
+        executionContext: KeymapExecutionContext(
+            editingMode: .diagram,
+            operationTargetKind: .node,
+            hasFocusedNode: true
+        )
     )
     let ids = Set(definitions.map(\.id.rawValue))
 
-    #expect(!ids.contains("addChildNode"))
+    #expect(ids.contains("addChildNode"))
     #expect(!ids.contains("addSiblingNodeAbove"))
     #expect(!ids.contains("addSiblingNodeBelow"))
     #expect(!ids.contains("duplicateSelectionAsSibling"))
@@ -221,7 +226,12 @@ func test_commandPaletteDefinitions_diagramContext_hidesTreeOnlyDefinitions() {
 @Test("Shortcut catalog: tree context hides diagram-only command palette definitions")
 func test_commandPaletteDefinitions_treeContext_hidesDiagramOnlyDefinitions() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
-        context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
+        context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true),
+        executionContext: KeymapExecutionContext(
+            editingMode: .tree,
+            operationTargetKind: .node,
+            hasFocusedNode: true
+        )
     )
     let ids = Set(definitions.map(\.id.rawValue))
 
@@ -238,21 +248,49 @@ func test_commandPaletteDefinitions_treeContext_hidesDiagramOnlyDefinitions() {
 @Test("Shortcut catalog: no-focus context hides focus-required command palette definitions")
 func test_commandPaletteDefinitions_withoutFocus_hidesFocusRequiredDefinitions() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
-        context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: false)
+        context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: false),
+        executionContext: KeymapExecutionContext(
+            editingMode: .tree,
+            operationTargetKind: .node,
+            hasFocusedNode: false
+        )
     )
     let ids = Set(definitions.map(\.id.rawValue))
 
     #expect(ids.contains("addNode"))
+    #expect(ids.contains("addChildNode"))
     #expect(ids.contains("undo"))
-    #expect(!ids.contains("addChildNode"))
     #expect(!ids.contains("deleteSelectedOrFocusedNodes"))
     #expect(!ids.contains("centerFocusedNode"))
+}
+
+@Test("Shortcut catalog: area target hides node-target command palette definitions")
+func test_commandPaletteDefinitions_areaTarget_hidesNodeTargetDefinitions() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true),
+        executionContext: KeymapExecutionContext(
+            editingMode: .tree,
+            operationTargetKind: .area,
+            hasFocusedNode: true
+        )
+    )
+    let ids = Set(definitions.map(\.id.rawValue))
+
+    #expect(!ids.contains("addNode"))
+    #expect(!ids.contains("addChildNode"))
+    #expect(!ids.contains("moveNodeUp"))
+    #expect(ids.contains("undo"))
 }
 
 @Test("Shortcut catalog: tree context rewrites copy cut paste labels")
 func test_commandPaletteDefinitions_treeContext_rewritesClipboardLabels() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
-        context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
+        context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true),
+        executionContext: KeymapExecutionContext(
+            editingMode: .tree,
+            operationTargetKind: .node,
+            hasFocusedNode: true
+        )
     )
     let titleByID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0.title) })
 
@@ -265,7 +303,12 @@ func test_commandPaletteDefinitions_treeContext_rewritesClipboardLabels() {
 @Test("Shortcut catalog: diagram context rewrites copy cut paste and nudge labels")
 func test_commandPaletteDefinitions_diagramContext_rewritesClipboardAndNudgeLabels() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
-        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true)
+        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
+        executionContext: KeymapExecutionContext(
+            editingMode: .diagram,
+            operationTargetKind: .node,
+            hasFocusedNode: true
+        )
     )
     let titleByID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0.title) })
 

@@ -1,6 +1,7 @@
 // Background: Diagram movement should react directly to command-arrow input without hidden direction conversion.
 // Responsibility: Capture command-arrow events for diagram nodes and forward them as move commands.
 import AppKit
+import Application
 import Domain
 
 extension CanvasView {
@@ -10,10 +11,10 @@ extension CanvasView {
     static let upArrowKeyCode: UInt16 = 126
 
     func handleCompositeMoveHotkey(_ event: NSEvent) -> Bool {
-        guard isCompositeMoveEnabled() else {
+        guard let direction = commandOnlyArrowDirection(from: event) else {
             return false
         }
-        guard let direction = commandOnlyArrowDirection(from: event) else {
+        guard Self.shouldEnableCompositeMove(direction: direction, context: keymapExecutionContext()) else {
             return false
         }
 
@@ -23,21 +24,12 @@ extension CanvasView {
         return true
     }
 
-    func isCompositeMoveEnabled() -> Bool {
-        Self.shouldEnableCompositeMove(
-            focusedNodeID: viewModel.focusedNodeID,
-            diagramNodeIDs: viewModel.diagramNodeIDs
-        )
-    }
-
     static func shouldEnableCompositeMove(
-        focusedNodeID: CanvasNodeID?,
-        diagramNodeIDs: Set<CanvasNodeID>
+        direction: CanvasNodeMoveDirection,
+        context: KeymapExecutionContext
     ) -> Bool {
-        guard let focusedNodeID else {
-            return false
-        }
-        return diagramNodeIDs.contains(focusedNodeID)
+        let action = KeymapContextAction.apply(commands: [.moveNode(direction)])
+        return isActionEnabled(action, context: context)
     }
 
     func commandOnlyArrowDirection(from event: NSEvent) -> CanvasNodeMoveDirection? {

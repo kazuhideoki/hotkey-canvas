@@ -83,16 +83,10 @@ extension CanvasView {
         var items: [CommandPaletteItem] = []
         let context = commandPaletteContext()
         let keymapContext = keymapExecutionContextForCommandPalette()
-        for definition in CanvasShortcutCatalogService.commandPaletteDefinitions(context: context) {
-            guard definition.isVisibleInCommandPalette else {
-                continue
-            }
-            if !KeymapExecutionPolicyResolver.isEnabled(
-                definition: definition,
-                context: keymapContext
-            ) {
-                continue
-            }
+        for definition in CanvasShortcutCatalogService.commandPaletteDefinitions(
+            context: context,
+            executionContext: keymapContext
+        ) {
             let searchText = Self.commandPaletteSearchText(
                 title: definition.title,
                 shortcutLabel: definition.shortcutLabel,
@@ -261,6 +255,12 @@ extension CanvasView {
                 presentAddNodeModeSelectionPopup()
                 return true
             }
+            if Self.shouldDelegateCommandPaletteApplyToEdgeTarget(
+                commands: commands,
+                operationTargetKind: operationTargetKind
+            ), handleEdgeTargetCommands(commands: commands) {
+                return true
+            }
             Task {
                 await viewModel.apply(commands: commands)
             }
@@ -287,6 +287,17 @@ extension CanvasView {
         case .openCommandPalette:
             return false
         }
+    }
+
+    static func shouldDelegateCommandPaletteApplyToEdgeTarget(
+        commands: [CanvasCommand],
+        operationTargetKind: KeymapSwitchTargetKindIntentVariant
+    ) -> Bool {
+        guard operationTargetKind == .edge else {
+            return false
+        }
+        // Keep add-node mode selection popup route aligned with direct shortcut handling.
+        return !(commands.count == 1 && commands[0] == .addNode)
     }
 
     private func matchesCommandPaletteQuery(_ value: String, _ rawQuery: String) -> Bool {

@@ -72,20 +72,18 @@ func test_hotkeyPolicy_addChildNodeEnabledInDiagramNodeTargetWithoutFocus() {
 @Test("Command palette filtering reuses execution policy in area target")
 func test_areaTarget_commandPaletteFiltersByExecutionPolicy() {
     let paletteContext = CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
-    let keymapContext = KeymapExecutionContext(
-        editingMode: .tree,
-        operationTargetKind: .area,
-        hasFocusedNode: true,
-        selectedNodeCount: 1,
-        selectedEdgeCount: 0
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: paletteContext,
+        executionContext: KeymapExecutionContext(
+            editingMode: .tree,
+            operationTargetKind: .area,
+            hasFocusedNode: true,
+            selectedNodeCount: 1,
+            selectedEdgeCount: 0
+        )
     )
-    let rawIds = CanvasShortcutCatalogService.commandPaletteDefinitions(context: paletteContext).compactMap {
-        KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: keymapContext)
-            ? $0.id.rawValue
-            : nil
-    }
+    let visibleIds = Set(definitions.map(\.id.rawValue))
 
-    let visibleIds = Set(rawIds)
     #expect(!visibleIds.contains("addNode"))
     #expect(!visibleIds.contains("addChildNode"))
     #expect(!visibleIds.contains("addSiblingNodeAbove"))
@@ -96,4 +94,51 @@ func test_areaTarget_commandPaletteFiltersByExecutionPolicy() {
     #expect(!visibleIds.contains("scaleSelectedNodesUp.commandOptionPlus"))
     #expect(!visibleIds.contains("centerFocusedNode"))
     #expect(visibleIds.contains("undo"))
+}
+
+@Test("Command palette filtering: addChildNode is visible in diagram node target")
+func test_diagramNodeTarget_commandPaletteShowsAddChildNode() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: false),
+        executionContext: KeymapExecutionContext(
+            editingMode: .diagram,
+            operationTargetKind: .node,
+            hasFocusedNode: false
+        )
+    )
+    let visibleIds = Set(definitions.map(\.id.rawValue))
+
+    #expect(visibleIds.contains("addChildNode"))
+    #expect(!visibleIds.contains("addSiblingNodeAbove"))
+    #expect(!visibleIds.contains("addSiblingNodeBelow"))
+}
+
+@Test("Command palette apply routing: edge target delegates addChildNode to edge handler")
+func test_commandPaletteApplyRouting_edgeTarget_delegatesAddChildNode() {
+    #expect(
+        CanvasView.shouldDelegateCommandPaletteApplyToEdgeTarget(
+            commands: [.addChildNode],
+            operationTargetKind: .edge
+        )
+    )
+}
+
+@Test("Command palette apply routing: edge target keeps addNode popup route")
+func test_commandPaletteApplyRouting_edgeTarget_keepsAddNodePopupRoute() {
+    #expect(
+        !CanvasView.shouldDelegateCommandPaletteApplyToEdgeTarget(
+            commands: [.addNode],
+            operationTargetKind: .edge
+        )
+    )
+}
+
+@Test("Command palette apply routing: node target does not delegate to edge handler")
+func test_commandPaletteApplyRouting_nodeTarget_doesNotDelegate() {
+    #expect(
+        !CanvasView.shouldDelegateCommandPaletteApplyToEdgeTarget(
+            commands: [.addChildNode],
+            operationTargetKind: .node
+        )
+    )
 }

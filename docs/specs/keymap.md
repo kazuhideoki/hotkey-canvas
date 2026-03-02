@@ -42,6 +42,8 @@
 - `modal`（Command Palette / Add Node Mode Selection / Connect Mode 内操作）は本表の対象外です。
 - `operation target = area` のときは、area 操作と直接関係しない node/edge 対象ショートカットを無効化する。  
   例: `enter` / `opt+enter` / `cmd+enter` / `shift+enter` / `delete` / `cmd+d` / `cmd+c` / `cmd+x` / `cmd+v` / `shift+arrow` / `cmd+arrow` / `cmd+shift+arrow` / `cmd+opt++` / `cmd+opt+=` / `cmd+opt+shift+=` / `cmd+opt+shift+;` / `cmd+opt+-` / `opt+.` / `cmd+l` / `cmd+;` / `ctrl+l`
+- Command Palette のカタログ項目は、`openCommandPalette` トリガーを除き「ショートカット定義がある項目」を表示対象にする。表示可否は直接ショートカットと同じ `executionCondition` で判定する。
+- モード差分や正規化ルールは上記 `Primitive（EditMode差分）` の各行を正本とし、Command Palette も同じ条件系に従う。
 - Command Palette では edge 対象時に `Edge: Delete Selected` が表示され、`delete` と同じ削除規則（focused edge を含む複数選択は一括削除）が適用されます。
 - Command Palette では起動直後（検索語句が空）に `↑` で検索語句履歴を過去方向へ 1 件ずつ呼び出し、`↓` で新しい方向へ戻せる。最新入力まで戻りきった後の `↓` は従来どおり候補リストのスクロールに使える。
 - Add Node Mode Selection では `t` / `d` / `enter` に加えて、`↑` / `↓` で選択移動、`esc` でキャンセルが可能です。

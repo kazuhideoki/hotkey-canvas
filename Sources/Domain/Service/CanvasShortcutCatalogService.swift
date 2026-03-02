@@ -14,15 +14,37 @@ public enum CanvasShortcutCatalogService {
         defaultDefinitionsStorage.filter(\.isVisibleInCommandPalette)
     }
     /// Returns command-palette visible shortcuts for a runtime context.
-    /// - Parameter context: Runtime context used for conditional visibility filtering.
+    /// - Parameter context: Runtime context used for label adaptation and fallback filtering.
     /// - Returns: Shortcut entries visible to command palette UI.
     public static func commandPaletteDefinitions(
         context: CanvasCommandPaletteContext
     ) -> [CanvasShortcutDefinition] {
+        commandPaletteDefinitions(
+            context: context,
+            executionContext: KeymapExecutionContext(
+                editingMode: context.activeEditingMode,
+                operationTargetKind: .node,
+                hasFocusedNode: context.hasFocusedNode
+            )
+        )
+    }
+
+    /// Returns command-palette visible shortcuts for a runtime context.
+    /// - Parameters:
+    ///   - context: Runtime context used for label adaptation.
+    ///   - executionContext: Runtime context used for execution-policy filtering.
+    /// - Returns: Shortcut entries visible to command palette UI.
+    public static func commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext,
+        executionContext: KeymapExecutionContext
+    ) -> [CanvasShortcutDefinition] {
         defaultDefinitionsStorage.compactMap { definition in
             guard
                 definition.isVisibleInCommandPalette,
-                commandPaletteVisibilityMatches(definition.commandPaletteVisibility, context: context)
+                KeymapExecutionPolicyResolver.isEnabled(
+                    definition: definition,
+                    context: executionContext
+                )
             else {
                 return nil
             }
