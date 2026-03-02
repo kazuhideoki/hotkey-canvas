@@ -252,6 +252,17 @@
   - カタログ定義、捕捉処理、実行ガードの同一評価結果が一致。
   - 既存動作（同一入力で同一反応）を維持し、機能回収率が 100% である。
 
+#### Phase 4 進捗（2026-03-02）
+
+- `ApplyCanvasCommandsUseCase+CommandDispatch.swift` を `KeymapExecutionPolicyResolver` と接続。
+  - `isCommandSupported`（mode ガード）を維持し、`CanvasAreaPolicyError.unsupportedCommandInMode` は従来どおり残した。
+  - `isCommandExecutionAllowed` を追加し、`CanvasShortcutDefinition.executionCondition` の評価で条件付き no-op を入れた。
+  - `makeExecutionContext` と `operationTargetKind` を追加して、`graph` から `KeymapExecutionContext` を構築。
+- 検証結果（実行時）:
+  - `swift build`: pass
+  - `swift test`: pass（477件）
+  - `./scripts/lint_and_format.sh`: 既存の 2 件違反で停止（`ApplyCanvasCommandsUseCase+DuplicateSelectionAsSibling.swift` の関数引数数、`CanvasShortcutCatalogService.swift` の行数上限）
+
 ## 6. 受け入れ条件
 
 - 挙動を変えずに、keymap の有効/無効判定が宣言的に確認できる。
