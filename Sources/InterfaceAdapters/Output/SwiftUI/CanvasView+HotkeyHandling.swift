@@ -165,6 +165,7 @@ extension CanvasView {
             return true
         case .alignAllAreasVertically,
             .moveFocus,
+            .moveFocusAcrossAreasToRoot,
             .focusNode,
             .focusArea,
             .centerFocusedNode,

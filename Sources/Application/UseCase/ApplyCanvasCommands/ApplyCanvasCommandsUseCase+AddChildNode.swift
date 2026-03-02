@@ -23,7 +23,8 @@ extension ApplyCanvasCommandsUseCase {
 
         let siblingAreaNodeIDs = parentChildAreaNodeIDs(containing: parentID, in: graph)
         let childNode = makeTextNode(
-            bounds: calculateChildBounds(for: parentNode, in: graph, avoiding: siblingAreaNodeIDs)
+            bounds: calculateChildBounds(for: parentNode, in: graph, avoiding: siblingAreaNodeIDs),
+            in: graph
         )
 
         var graphWithChild = try CanvasGraphCRUDService.createNode(childNode, in: graph).get()

@@ -110,3 +110,12 @@ func test_resolveRoute_shiftLeft_returnsPrimitiveMoveFocusExtendSelectionLeft() 
 
     #expect(route == .primitive(intent: .moveFocus(direction: .left, variant: .extendSelection)))
 }
+
+@Test("KeymapIntentResolver: command-option-right resolves primitive across-areas focus intent")
+func test_resolveRoute_commandOptionRight_returnsPrimitiveMoveFocusAcrossAreasToRoot() {
+    let gesture = CanvasShortcutGesture(key: .arrowRight, modifiers: [.command, .option])
+
+    let route = KeymapIntentResolver.resolveRoute(for: gesture)
+
+    #expect(route == .primitive(intent: .moveFocus(direction: .right, variant: .acrossAreasToRoot)))
+}

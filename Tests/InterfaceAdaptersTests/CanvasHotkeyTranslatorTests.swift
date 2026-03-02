@@ -146,6 +146,18 @@ func test_resolve_shiftArrow_returnsExtendSelectionIntent() throws {
     #expect(route == .primitive(intent: .moveFocus(direction: .left, variant: .extendSelection)))
 }
 
+@Test("CanvasHotkeyTranslator: Command+Option+Right resolves across-areas focus intent")
+func test_resolve_commandOptionRightArrow_returnsMoveFocusAcrossAreasToRootIntent() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try makeKeyEvent(
+        keyCode: 124, characters: "→", charactersIgnoringModifiers: "→", modifiers: [.command, .option]
+    )
+
+    let route = sut.resolve(event)
+
+    #expect(route == .primitive(intent: .moveFocus(direction: .right, variant: .acrossAreasToRoot)))
+}
+
 @Test("CanvasHotkeyTranslator: Arrow with Function flag still resolves move-focus intent")
 func test_resolve_functionArrow_returnsMoveFocusIntent() throws {
     let sut = CanvasHotkeyTranslator()

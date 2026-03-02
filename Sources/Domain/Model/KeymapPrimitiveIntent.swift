@@ -20,6 +20,7 @@ public enum KeymapEditIntentVariant: Equatable, Sendable {
 public enum KeymapMoveFocusIntentVariant: Equatable, Sendable {
     case single
     case extendSelection
+    case acrossAreasToRoot
 }
 
 /// Intent variant for switching operation target kind.

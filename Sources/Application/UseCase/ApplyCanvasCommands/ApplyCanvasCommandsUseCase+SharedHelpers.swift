@@ -11,18 +11,41 @@ extension ApplyCanvasCommandsUseCase {
     static let newNodeVerticalSpacing: Double = CanvasDefaultNodeDistance.treeVertical
     static let childHorizontalGap: Double = CanvasDefaultNodeDistance.treeHorizontal
     static let areaCollisionSpacing: Double = CanvasDefaultNodeDistance.treeHorizontal
+    static let nodeCreatedOrderMetadataKey = "createdOrder"
 
     /// Creates a default text node using the provided bounds.
     /// - Parameter bounds: Bounds to assign to the new node.
     /// - Returns: A text node with a generated identifier.
-    func makeTextNode(bounds: CanvasBounds) -> CanvasNode {
+    func makeTextNode(bounds: CanvasBounds, in graph: CanvasGraph) -> CanvasNode {
         CanvasNode(
             id: CanvasNodeID(rawValue: "node-\(UUID().uuidString.lowercased())"),
             kind: .text,
             text: nil,
             attachments: [],
-            bounds: bounds
+            bounds: bounds,
+            metadata: [Self.nodeCreatedOrderMetadataKey: String(nextNodeCreatedOrder(in: graph))]
         )
+    }
+
+    /// Returns the next monotonic created-order value for new nodes.
+    /// - Parameter graph: Current graph snapshot.
+    /// - Returns: Next created-order value.
+    func nextNodeCreatedOrder(in graph: CanvasGraph) -> Int {
+        var maxCreatedOrder: Int?
+        for node in graph.nodesByID.values {
+            guard
+                let rawValue = node.metadata[Self.nodeCreatedOrderMetadataKey],
+                let createdOrder = Int(rawValue)
+            else {
+                continue
+            }
+            if let currentMax = maxCreatedOrder {
+                maxCreatedOrder = max(currentMax, createdOrder)
+            } else {
+                maxCreatedOrder = createdOrder
+            }
+        }
+        return (maxCreatedOrder ?? -1) + 1
     }
 
     /// Creates a parent-child edge between two nodes.

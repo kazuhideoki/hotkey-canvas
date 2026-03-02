@@ -131,6 +131,8 @@ extension KeymapIntentResolver {
         switch command {
         case .moveFocus(let direction):
             return .moveFocus(direction: direction, variant: .single)
+        case .moveFocusAcrossAreasToRoot(let direction):
+            return .moveFocus(direction: direction, variant: .acrossAreasToRoot)
         case .extendSelection(let direction):
             return .moveFocus(direction: direction, variant: .extendSelection)
         case .moveNode(let direction):

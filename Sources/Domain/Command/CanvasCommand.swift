@@ -6,6 +6,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case connectNodes(fromNodeID: CanvasNodeID, toNodeID: CanvasNodeID)
     case alignAllAreasVertically
     case moveFocus(CanvasFocusDirection)
+    case moveFocusAcrossAreasToRoot(CanvasFocusDirection)
     case focusNode(CanvasNodeID)
     case focusArea(CanvasAreaID)
     case extendSelection(CanvasFocusDirection)

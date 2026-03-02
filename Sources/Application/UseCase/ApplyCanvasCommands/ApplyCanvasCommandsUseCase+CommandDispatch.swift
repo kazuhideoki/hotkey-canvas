@@ -90,7 +90,7 @@ extension ApplyCanvasCommandsUseCase {
             return try applyNodeContentCommand(command: command, to: graph)
         case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return noOpMutationResult(for: graph)
-        case .moveFocus, .focusNode, .focusArea, .extendSelection:
+        case .moveFocus, .moveFocusAcrossAreasToRoot, .focusNode, .focusArea, .extendSelection:
             return noOpMutationResult(for: graph)
         }
     }
@@ -102,6 +102,8 @@ extension ApplyCanvasCommandsUseCase {
         switch command {
         case .moveFocus(let direction):
             return moveFocus(in: graph, direction: direction)
+        case .moveFocusAcrossAreasToRoot(let direction):
+            return moveFocusAcrossAreasToRoot(in: graph, direction: direction)
         case .focusNode(let nodeID):
             return focusNode(in: graph, nodeID: nodeID)
         case .focusArea(let areaID):
@@ -141,6 +143,7 @@ extension ApplyCanvasCommandsUseCase {
             .connectNodes,
             .alignAllAreasVertically,
             .moveFocus,
+            .moveFocusAcrossAreasToRoot,
             .focusNode,
             .focusArea,
             .extendSelection,
@@ -184,6 +187,7 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .alignAllAreasVertically,
             .moveFocus,
+            .moveFocusAcrossAreasToRoot,
             .focusNode,
             .focusArea,
             .extendSelection,
@@ -237,6 +241,7 @@ extension ApplyCanvasCommandsUseCase {
             .connectNodes,
             .alignAllAreasVertically,
             .moveFocus,
+            .moveFocusAcrossAreasToRoot,
             .focusNode,
             .focusArea,
             .extendSelection,
@@ -287,6 +292,7 @@ extension ApplyCanvasCommandsUseCase {
             .connectNodes,
             .alignAllAreasVertically,
             .moveFocus,
+            .moveFocusAcrossAreasToRoot,
             .focusNode,
             .focusArea,
             .extendSelection,
@@ -372,6 +378,7 @@ extension ApplyCanvasCommandsUseCase {
             .duplicateSelectionAsSibling,
             .alignAllAreasVertically,
             .moveFocus,
+            .moveFocusAcrossAreasToRoot,
             .extendSelection,
             .moveNode,
             .nudgeNode,

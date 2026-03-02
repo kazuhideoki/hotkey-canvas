@@ -461,7 +461,8 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
                 didAddNode = true
-            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .focusNode, .focusArea,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
+                .focusNode, .focusArea,
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
@@ -621,7 +622,8 @@ extension OverlappingFailureCanvasEditingInputPort {
                     focusedNodeID: node.id
                 )
                 didAddNode = true
-            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .focusNode, .focusArea,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
+                .focusNode, .focusArea,
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
@@ -825,7 +827,8 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .upsertNodeAttachment:
                 continue
-            case .addNode, .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .focusNode,
+            case .addNode, .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus,
+                .moveFocusAcrossAreasToRoot, .focusNode,
                 .focusArea,
                 .extendSelection,
                 .moveNode, .nudgeNode,
@@ -1063,7 +1066,8 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                     nodeIDs: nodeIDs,
                     in: nextGraph
                 ).get()
-            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .focusNode, .focusArea,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
+                .focusNode, .focusArea,
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
@@ -1171,7 +1175,8 @@ actor TreeModeSelectionFromDiagramCanvasEditingInputPort: CanvasEditingInputPort
                     nodeIDs: nodeIDs,
                     in: nextGraph
                 ).get()
-            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .focusNode, .focusArea,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
+                .focusNode, .focusArea,
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
@@ -1278,7 +1283,8 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
                     nodeIDs: nodeIDs,
                     in: nextGraph
                 ).get()
-            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .focusNode, .focusArea,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
+                .focusNode, .focusArea,
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
@@ -1363,7 +1369,8 @@ actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                     nodeIDs: nodeIDs,
                     in: nextGraph
                 ).get()
-            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .focusNode, .focusArea,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
+                .focusNode, .focusArea,
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
@@ -1481,7 +1488,8 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nodeID
                 )
-            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .focusNode, .focusArea,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
+                .focusNode, .focusArea,
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
@@ -1539,7 +1547,8 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                     edgesByID: nextGraph.edgesByID,
                     focusedNodeID: nodeID
                 )
-            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .focusNode, .focusArea,
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
+                .focusNode, .focusArea,
                 .extendSelection, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,

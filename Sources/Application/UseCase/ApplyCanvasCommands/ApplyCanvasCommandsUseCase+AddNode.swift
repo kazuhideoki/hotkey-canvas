@@ -28,7 +28,7 @@ extension ApplyCanvasCommandsUseCase {
                 verticalSpacing: CanvasDefaultNodeDistance.vertical(for: .diagram)
             )
         }
-        let node = makeTextNode(bounds: bounds)
+        let node = makeTextNode(bounds: bounds, in: graph)
         var graphAfterMutation = try CanvasGraphCRUDService.createNode(node, in: graph).get()
         graphAfterMutation = try CanvasAreaMembershipService.assign(
             nodeIDs: Set([node.id]),

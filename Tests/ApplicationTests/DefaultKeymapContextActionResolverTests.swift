@@ -49,6 +49,15 @@ func test_resolve_moveFocusExtendSelection_returnsExtendSelectionCommand() {
     #expect(action == .apply(commands: [.extendSelection(.up)]))
 }
 
+@Test("DefaultKeymapContextActionResolver: across-areas focus intent maps to moveFocusAcrossAreasToRoot command")
+func test_resolve_moveFocusAcrossAreasToRoot_returnsMoveFocusAcrossAreasToRootCommand() {
+    let sut = DefaultKeymapContextActionResolver()
+
+    let action = sut.resolve(primitiveIntent: .moveFocus(direction: .right, variant: .acrossAreasToRoot))
+
+    #expect(action == .apply(commands: [.moveFocusAcrossAreasToRoot(.right)]))
+}
+
 @Test("DefaultKeymapContextActionResolver: scale-selection-up transform maps to scale-selected-nodes command")
 func test_resolve_transformScaleSelectionUp_returnsScaleSelectedNodesUp() {
     let sut = DefaultKeymapContextActionResolver()
