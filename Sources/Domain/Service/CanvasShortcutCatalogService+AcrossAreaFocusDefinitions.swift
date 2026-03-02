@@ -22,7 +22,11 @@ extension CanvasShortcutCatalogService {
             action: .apply(commands: [.moveFocusAcrossAreasToRoot(direction)]),
             shortcutLabel: shortcutLabelForAcrossAreaFocus(key),
             searchTokens: ["focus", "area", "across", "root", "oldest"],
-            commandPaletteVisibility: .requiresFocusedNode
+            commandPaletteVisibility: .requiresFocusedNode,
+            executionCondition: .all([
+                .targetKinds([.node, .area]),
+                .requiresFocusedNode,
+            ])
         )
     }
 
