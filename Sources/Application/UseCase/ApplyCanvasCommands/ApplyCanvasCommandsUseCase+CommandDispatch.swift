@@ -12,11 +12,19 @@ extension ApplyCanvasCommandsUseCase {
         )
         let resolvedAreaID = try resolveAreaID(for: normalizedCommand, in: graph).get()
         let resolvedArea = try CanvasAreaMembershipService.area(withID: resolvedAreaID, in: graph).get()
-        guard isCommand(normalizedCommand, supportedIn: resolvedArea.editingMode) else {
+        let executionContext = makeExecutionContext(
+            for: normalizedCommand,
+            in: graph,
+            editingMode: resolvedArea.editingMode
+        )
+        guard isCommandSupported(normalizedCommand, supportedIn: resolvedArea.editingMode) else {
             throw CanvasAreaPolicyError.unsupportedCommandInMode(
                 mode: resolvedArea.editingMode,
                 command: normalizedCommand
             )
+        }
+        guard isCommandExecutionAllowed(normalizedCommand, context: executionContext) else {
+            return noOpMutationResult(for: graph)
         }
 
         switch normalizedCommand {
@@ -330,12 +338,65 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 
-    private func isCommand(_ command: CanvasCommand, supportedIn mode: CanvasEditingMode) -> Bool {
+    private func isCommandSupported(_ command: CanvasCommand, supportedIn mode: CanvasEditingMode) -> Bool {
         switch mode {
         case .tree:
             return TreeAreaPolicyService.supports(command)
         case .diagram:
             return DiagramAreaPolicyService.supports(command)
+        }
+    }
+
+    private func isCommandExecutionAllowed(
+        _ command: CanvasCommand,
+        context: KeymapExecutionContext
+    ) -> Bool {
+        guard let definition = CanvasShortcutCatalogService.definition(for: command) else {
+            return true
+        }
+        return KeymapExecutionPolicyResolver.isEnabled(
+            definition: definition,
+            context: context
+        )
+    }
+
+    private func makeExecutionContext(
+        for command: CanvasCommand,
+        in graph: CanvasGraph,
+        editingMode: CanvasEditingMode
+    ) -> KeymapExecutionContext {
+        KeymapExecutionContext(
+            editingMode: editingMode,
+            operationTargetKind: operationTargetKind(for: command, in: graph),
+            hasFocusedNode: graph.focusedNodeID != nil,
+            isEditingText: false,
+            isCommandPalettePresented: false,
+            isSearchPresented: false,
+            isConnectNodeSelectionActive: false,
+            isAddNodePopupPresented: false,
+            selectedNodeCount: graph.selectedNodeIDs.count,
+            selectedEdgeCount: graph.selectedEdgeIDs.count
+        )
+    }
+
+    private func operationTargetKind(
+        for command: CanvasCommand,
+        in graph: CanvasGraph
+    ) -> KeymapSwitchTargetKindIntentVariant {
+        if case .edge = graph.focusedElement {
+            return .edge
+        }
+
+        switch command {
+        case .deleteSelectedOrFocusedEdges, .cycleFocusedEdgeDirectionality:
+            return .edge
+        case .focusArea:
+            return .area
+        default:
+            if case .area = graph.focusedElement {
+                return .area
+            }
+            return .node
         }
     }
 

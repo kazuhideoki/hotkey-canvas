@@ -123,7 +123,7 @@ extension CanvasShortcutCatalogService {
                     for: CanvasShortcutGesture(key: .enter, modifiers: [.command])
                 ),
                 commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
-                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.tree]))
+                executionCondition: nodeOrEdgeTargetCondition()
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addNode"),

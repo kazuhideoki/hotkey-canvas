@@ -1,5 +1,6 @@
 // Background: Command palette interactions need isolated key handling and filtering helpers.
 // Responsibility: Provide command palette behavior for keyboard handling and action dispatch.
+import Application
 import Domain
 import Foundation
 
@@ -229,26 +230,7 @@ extension CanvasView {
         markCommandPaletteQueryAsRecentlyUsed(commandPaletteQuery)
         switch item.action {
         case .shortcut(let shortcutAction):
-            switch shortcutAction {
-            case .apply(let commands):
-                Task {
-                    await viewModel.apply(commands: commands)
-                }
-            case .undo:
-                Task {
-                    await viewModel.undo()
-                }
-            case .redo:
-                Task {
-                    await viewModel.redo()
-                }
-            case .zoomIn:
-                applyZoom(action: .zoomIn)
-            case .zoomOut:
-                applyZoom(action: .zoomOut)
-            case .beginConnectNodeSelection:
-                presentConnectNodeSelectionIfPossible()
-            case .openCommandPalette:
+            if !executeCommandPaletteShortcutAction(shortcutAction) {
                 return
             }
         case .deleteSelectedOrFocusedEdges(let command):
@@ -264,6 +246,47 @@ extension CanvasView {
         }
         markCommandPaletteItemAsRecentlyUsed(itemID: item.id)
         closeCommandPalette()
+    }
+
+    private func executeCommandPaletteShortcutAction(_ shortcutAction: CanvasShortcutAction) -> Bool {
+        switch shortcutAction {
+        case .apply(let commands):
+            // Keep add-node behavior aligned with the shortcut route (mode-selection popup).
+            if commands.count == 1, commands[0] == .addNode {
+                let addNodeAction: KeymapContextAction = .presentAddNodeModeSelection
+                let context = keymapExecutionContextForCommandPalette()
+                guard Self.isActionEnabled(addNodeAction, context: context) else {
+                    return true
+                }
+                presentAddNodeModeSelectionPopup()
+                return true
+            }
+            Task {
+                await viewModel.apply(commands: commands)
+            }
+            return true
+        case .undo:
+            Task {
+                await viewModel.undo()
+            }
+            return true
+        case .redo:
+            Task {
+                await viewModel.redo()
+            }
+            return true
+        case .zoomIn:
+            applyZoom(action: .zoomIn)
+            return true
+        case .zoomOut:
+            applyZoom(action: .zoomOut)
+            return true
+        case .beginConnectNodeSelection:
+            presentConnectNodeSelectionIfPossible()
+            return true
+        case .openCommandPalette:
+            return false
+        }
     }
 
     private func matchesCommandPaletteQuery(_ value: String, _ rawQuery: String) -> Bool {

@@ -43,6 +43,32 @@ func test_areaTarget_isActionEnabled_disablesNodeOrEdgeCommands() {
     #expect(!CanvasView.isActionEnabled(.presentAddNodeModeSelection, context: context))
 }
 
+@Test("CanvasView hotkey policy: allows addChildNode in diagram node target")
+func test_hotkeyPolicy_addChildNodeEnabledInDiagramNodeTarget() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .node,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 0
+    )
+
+    #expect(CanvasView.isActionEnabled(.apply(commands: [.addChildNode]), context: context))
+}
+
+@Test("CanvasView hotkey policy: allows addChildNode in diagram node target without focused node")
+func test_hotkeyPolicy_addChildNodeEnabledInDiagramNodeTargetWithoutFocus() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .node,
+        hasFocusedNode: false,
+        selectedNodeCount: 0,
+        selectedEdgeCount: 0
+    )
+
+    #expect(CanvasView.isActionEnabled(.apply(commands: [.addChildNode]), context: context))
+}
+
 @Test("Command palette filtering reuses execution policy in area target")
 func test_areaTarget_commandPaletteFiltersByExecutionPolicy() {
     let paletteContext = CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
