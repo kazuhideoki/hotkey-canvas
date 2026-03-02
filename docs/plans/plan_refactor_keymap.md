@@ -201,6 +201,19 @@
   - `mode / targetKind / text editing / modal` の基本組合せを網羅した同値テスト
   - `swift test` はこのフェーズで既に回して、Domain 層の追加で既存 suite が崩れていないことを担保。
 
+#### Phase 2 進捗（2026-03-02）
+
+- 実施済み:
+  - `KeymapExecutionContext` を追加した。
+  - `KeymapExecutionCondition`（`KeymapExecutionSelectionCountCondition` / `KeymapExecutionModalKind`）を追加した。
+  - `KeymapExecutionPolicyResolver` を追加し、同値評価ロジックを実装した。
+  - `CanvasShortcutDefinition` に `executionCondition` を追加し、既存定義の API を壊さない形で `commandPaletteVisibility` 由来の既定条件を付与した。
+  - `CanvasCommandPaletteVisibility` に `defaultExecutionCondition` を追加した。
+  - Domain テスト `KeymapExecutionPolicyResolverTests` を追加した（条件評価ユニット）。
+- 未完了:
+  - 追加した Domain テスト群の `swift test` 実行（現環境の SwiftPM plugin 設定の制約で保留）。
+  - `CanvasShortcutCatalogService` 側での個別ショートカット条件への明示的マッピング（既定同値マップの段階）。
+
 ### Phase 3: 共通評価経路への接続
 
 - Hotkey 経路
