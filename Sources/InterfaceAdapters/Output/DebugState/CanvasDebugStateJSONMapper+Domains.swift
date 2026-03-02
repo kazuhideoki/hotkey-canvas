@@ -278,7 +278,14 @@ extension CanvasDebugStateJSONMapper {
     }
 
     private static func commandPaletteItemCount(context: CanvasCommandPaletteContext) -> Int {
-        CanvasShortcutCatalogService.commandPaletteDefinitions(context: context).count
+        CanvasShortcutCatalogService.commandPaletteDefinitions(
+            context: context,
+            executionContext: KeymapExecutionContext(
+                editingMode: context.activeEditingMode,
+                operationTargetKind: .node,
+                hasFocusedNode: context.hasFocusedNode
+            )
+        ).count
     }
 
     private static func shortcutActionKind(for action: CanvasShortcutAction) -> String {

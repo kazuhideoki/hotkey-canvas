@@ -258,6 +258,10 @@
   - `isCommandSupported`（mode ガード）を維持し、`CanvasAreaPolicyError.unsupportedCommandInMode` は従来どおり残した。
   - `isCommandExecutionAllowed` を追加し、`CanvasShortcutDefinition.executionCondition` の評価で条件付き no-op を入れた。
   - `makeExecutionContext` と `operationTargetKind` を追加して、`graph` から `KeymapExecutionContext` を構築。
+- 追加改善（同日）:
+  - `CanvasShortcutCatalogService.commandPaletteDefinitions` に `executionContext` 引数版を追加し、Command Palette 側の表示判定を `executionCondition` へ一本化した（`commandPaletteVisibility` 追加フィルタを除去）。
+  - `CanvasView+CompositeMove.swift` の `cmd+arrow` 特例経路を `isActionEnabled(.moveNode)` ベースへ変更し、直接入力と同一の条件評価を共有した。
+  - `addChildNode` は Diagram でもショートカット/Palette 両方で同条件になるよう維持し、UseCase 側の既存正規化（`addNode`）に接続した。
 - 検証結果（実行時）:
   - `swift build`: pass
   - `swift test`: pass（477件）

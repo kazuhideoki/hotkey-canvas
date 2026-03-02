@@ -181,7 +181,7 @@ extension CanvasView {
         )
     }
 
-    private func keymapExecutionContext() -> KeymapExecutionContext {
+    func keymapExecutionContext() -> KeymapExecutionContext {
         KeymapExecutionContext(
             editingMode: commandPaletteActiveEditingMode(),
             operationTargetKind: operationTargetKind,
