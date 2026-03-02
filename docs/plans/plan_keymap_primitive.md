@@ -217,7 +217,7 @@
 - `KeymapIntentResolver` を拡張し、既存ホットキーを新ルートで全解決可能にした。
   - `cmd+c/x/v` を `primitive` の `edit` variant として解決。
   - 矢印系の方向情報（`moveFocus/moveNode/nudgeNode`）を Intent へ保持。
-- Application に `DefaultKeymapContextActionResolver` を追加し、Primitive Intent を既存コマンドへ再構成する境界を実装した。
+- `Sources/Application/Port/Input` に `DefaultKeymapContextActionResolver` を追加し、Primitive Intent を既存コマンドへ再構成する境界を実装した。
 - 未実装 Intent は `reportUnsupportedIntent` 経由で no-op 契約とした（新規挙動追加なし）。
 - Command Palette の表示項目は増やしていない（未実装IntentのUI追加なし）。
 

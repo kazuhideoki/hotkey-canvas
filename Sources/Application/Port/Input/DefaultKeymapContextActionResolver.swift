@@ -1,5 +1,5 @@
-// Background: Primitive intent routing needs an application-level bridge into executable behavior.
-// Responsibility: Convert primitive intents into concrete context actions without UI/framework dependencies.
+// Background: Primitive intent routing needs a stable application input-port bridge into executable behavior.
+// Responsibility: Convert primitive intents into context actions without UI/framework dependencies.
 import Domain
 
 /// Default resolver from primitive keymap intent to executable context action.
