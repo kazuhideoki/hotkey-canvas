@@ -203,6 +203,41 @@ func test_resolveAction_commandOptionRight_returnsMoveFocusAcrossAreasToRoot() {
     #expect(action == .apply(commands: [.moveFocusAcrossAreasToRoot(.right)]))
 }
 
+@Test("Shortcut catalog: moveFocusAcrossAreasToRoot is disabled in edge target")
+func test_moveFocusAcrossAreasToRoot_isDisabledInEdgeTarget() {
+    let definition = CanvasShortcutCatalogService.definition(for: .moveFocusAcrossAreasToRoot(.right))
+
+    #expect(definition != nil)
+    #expect(
+        definition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(
+                definition: $0,
+                context: KeymapExecutionContext(
+                    editingMode: .diagram,
+                    operationTargetKind: .edge,
+                    hasFocusedNode: true
+                )
+            )
+        } == true
+    )
+}
+
+@Test("Shortcut catalog: edge target hides moveFocusAcrossAreasToRoot in command palette")
+func test_commandPaletteDefinitions_edgeTarget_hidesMoveFocusAcrossAreasToRoot() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
+        executionContext: KeymapExecutionContext(
+            editingMode: .diagram,
+            operationTargetKind: .edge,
+            hasFocusedNode: true
+        )
+    )
+    let ids = Set(definitions.map(\.id.rawValue))
+
+    #expect(!ids.contains("moveFocusAcrossAreasToRootLeft"))
+    #expect(!ids.contains("moveFocusAcrossAreasToRootRight"))
+}
+
 @Test("Shortcut catalog: diagram context keeps addChild and hides tree-only command palette definitions")
 func test_commandPaletteDefinitions_diagramContext_hidesTreeOnlyDefinitionsExceptAddChild() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(

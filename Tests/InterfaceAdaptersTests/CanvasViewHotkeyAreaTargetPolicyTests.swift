@@ -69,6 +69,24 @@ func test_hotkeyPolicy_addChildNodeEnabledInDiagramNodeTargetWithoutFocus() {
     #expect(CanvasView.isActionEnabled(.apply(commands: [.addChildNode]), context: context))
 }
 
+@Test("CanvasView hotkey policy: moveFocusAcrossAreasToRoot is disabled in edge target")
+func test_hotkeyPolicy_moveFocusAcrossAreasToRootDisabledInEdgeTarget() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .edge,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 1
+    )
+
+    #expect(
+        !CanvasView.isActionEnabled(
+            .apply(commands: [.moveFocusAcrossAreasToRoot(.right)]),
+            context: context
+        )
+    )
+}
+
 @Test("Command palette filtering reuses execution policy in area target")
 func test_areaTarget_commandPaletteFiltersByExecutionPolicy() {
     let paletteContext = CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
