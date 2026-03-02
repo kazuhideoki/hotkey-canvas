@@ -108,7 +108,7 @@
   - `focusedNodeID != nil`
   - focused node が diagram であること
   - 対象 area が存在し、接続候補が空でないこと
-- `CanvasView+HotkeyHandling` で target kind ベースのブロック
+- `CanvasView+HotkeyHandling` で target kind ベースのブロック（Phase1時点）
   - `.area` 時の `global` ブロック: `blocksGlobalActionInAreaTarget`
   - `.area` 時の primitive ブロック: `blocksPrimitiveContextActionInAreaTarget` / `blocksCommandInAreaTarget`
 - `CanvasView+EdgeTarget` で `.edge` 時の上書き
@@ -158,9 +158,9 @@
 
 ##### コマンドパレット表示時の追加ハイドロジック（catalog 外）
 
-- `operationTargetKind == .area` のとき `isCommandPaletteShortcutHiddenInAreaTarget` で除外
-  - `CanvasShortcutAction.beginConnectNodeSelection` は常時除外
-  - `CanvasShortcutAction.apply(commands:)` は `blocksCommandInAreaTarget` 準拠（`centerFocusedNode` は専用で除外）
+- catalog から得られた定義は、`KeymapExecutionPolicyResolver` による `executionCondition` を通して最終的に表示判定を行う。
+  - `operationTargetKind == .area` 時は `node/edge` 依存コマンドが自然に除外される（Phase3で反映）。
+  - `CanvasShortcutAction.beginConnectNodeSelection` は catalog 条件で非表示扱いになり除外される。
 - カタログ外の動的追加
   - `focusedNodeMarkdownToggle`（`.apply(.toggleFocusedNodeMarkdownStyle)`)  
     （`focusedNodeID != nil`）
@@ -168,7 +168,7 @@
   - `Edge: Cycle Directionality`（`operationTargetKind == .edge` かつ `selected/focused edge` が存在）
   - `Image: Insert From Finder`（`focusedNodeID != nil`）
   - `Area: Align All Areas Vertically`（`focusedNodeID != nil`）
-- `isCommandPaletteShortcutHiddenInAreaTarget` は catalog 外項目には適用されない（現状）
+- catalog 外項目の追加条件は従来どおり。
 
 ##### 実行時の現行同値条件（mode ベース）
 
@@ -209,21 +209,33 @@
   - `KeymapExecutionPolicyResolver` を追加し、同値評価ロジックを実装した。
   - `CanvasShortcutDefinition` に `executionCondition` を追加し、既存定義の API を壊さない形で `commandPaletteVisibility` 由来の既定条件を付与した。
   - `CanvasCommandPaletteVisibility` に `defaultExecutionCondition` を追加した。
+  - `CanvasShortcutCatalogService` 側で、既存 node/edge 系ショートカットへ `executionCondition` を明示付与し、`keymap` 状態条件を接続。
+  - `CanvasShortcutCatalogService` の `definition(for:)` を公開し、Adapter から共通評価に参照可能にした。
   - Domain テスト `KeymapExecutionPolicyResolverTests` を追加した（条件評価ユニット）。
 - 未完了:
-  - 追加した Domain テスト群の `swift test` 実行（現環境の SwiftPM plugin 設定の制約で保留）。
-  - `CanvasShortcutCatalogService` 側での個別ショートカット条件への明示的マッピング（既定同値マップの段階）。
+  - なし（この計画内の実装対象は完了）。
 
 ### Phase 3: 共通評価経路への接続
 
 - Hotkey 経路
   - `CanvasView+HotkeyHandling.swift` の許可/拒否判定を `isEnabled` ベースへ差し替え。
 - Command Palette 経路
-  - 表示フィルタと `isCommandPaletteShortcutHidden` 判定を共通評価へ統合。
+  - 表示フィルタと従来のローカル判定（`isCommandPaletteShortcutHidden...` 系）を `KeymapExecutionPolicyResolver` へ統合。
 - Adapter 側テストを同時に更新:
   - `CanvasViewHotkeyAreaTargetPolicyTests` を新条件評価へ置換。
   - Command Palette 目線のフィルターテストを文脈（`KeymapExecutionContext`）ベースで再記述。
 - `swift test` をこのフェーズで実行して、既存挙動不変を再確認。
+
+#### Phase 3 進捗（2026-03-02）
+
+- 実施済み:
+  - `CanvasView+HotkeyHandling.swift` の `blocks*` 系判定を廃止し、`isActionEnabled` + `KeymapExecutionPolicyResolver` ベースへ接続。
+  - `CanvasView+CommandPalette.swift` の表示フィルタを `executionCondition` 判定へ一本化。
+  - `CanvasShortcutCatalogService` でコマンド条件を `executionCondition` に反映。
+  - `CanvasViewHotkeyAreaTargetPolicyTests` と `CanvasShortcutCatalogServiceTests` の既存テスト群を更新。
+- 検証:
+  - `swift build` 成功
+  - `swift test`（`KeymapExecutionPolicyResolverTests` / `CanvasViewHotkeyAreaTargetPolicyTests` / `CanvasShortcutCatalogServiceTests` / 全体）合計 477 件成功（回帰なし）
 
 ### Phase 4: 実行経路の最終ガード統一
 
