@@ -439,6 +439,7 @@
 
 - Intent は修飾キーを保持しない。
 - 同一プリミティブ内の意味差分は Intent variant で扱う（例: `add` の追加位置差分）。
+- `area target` 時の `cmd+arrow` は `moveNode` Intent を `CanvasCommand.moveArea` へ再解釈して実行する。
 
 #### KeyTrigger 対応表（primitive 対象のみ）
 
@@ -453,7 +454,7 @@
 | `arrow` | `moveFocus(.single)` |
 | `shift+arrow` | `moveFocus(.extendSelection)` |
 | `cmd+opt+left/right` | `moveFocus(.acrossAreasToRoot)` |
-| `cmd+arrow` | `moveNode` |
+| `cmd+arrow` | `moveNode`（area target 時は `moveArea`） |
 | `cmd+shift+arrow` | `nudgeNode` |
 | `opt+.` | `toggleVisibility` |
 | `tab` | `switchTargetKind(.cycle)` |
@@ -598,6 +599,7 @@
     - Diagram エリアでは `addChildNode` を `addNode` へ正規化する。
     - Diagram エリアでは `duplicateSelectionAsSibling` を不許可とする（`unsupportedCommandInMode`）。
     - Diagram エリアでは `connectNodes` を許可し、同一エリア内の既存ノード同士を `normal` エッジで接続する（自己接続・跨ぎ接続は no-op、同一ノード間の重複接続は許可）。接続成功時はフォーカスと選択を接続先ノードへ移す。
+    - `moveArea` は area target 時の `cmd+矢印` 入力で実行し、フォーカス中エリア所属ノードをエリア単位で平行移動する。移動後は area layout を適用し、他エリアとの衝突を解消する。移動方向は上下左右の4方向のみとする。
     - Tree エリアでは `moveNode` 実行時、フォーカスが選択集合に含まれ同一エリアで2件以上選択されている場合、選択ノード群をフォーカス移動先の親配下へ兄弟として再配置する。複数の親にまたがる選択でも移動後は同一親へ一本化し、選択内の親子関係はフラット化する。`up` / `down` は選択中の兄弟ノードを飛ばして非選択兄弟と入れ替え、複数選択を1ブロックとして並び替える。
     - Tree エリアでは top-level root（親を持たないノード）に対する `moveNode` は no-op とし、他エリアノードとの並び替えや親子再接続を発生させない。
     - Diagram エリアでは `moveNode` を8方向移動として扱う。接続アンカーがある場合はアンカー基準でステップ距離（`CanvasDefaultNodeDistance` 横 `220`・縦 `220`）を決定し、移動先がアンカーと同じ行/列でステップ距離未満になるときは移動方向の軸距離を最低1ステップに補正する。補正後も重なる場合のみ、同方向に追加ステップして重なりを回避する。接続アンカーがない場合でも、フォーカスノード自身の寸法を基準に同じグリッド間隔で移動できる。複数選択条件（フォーカスを含む同一エリア2件以上）を満たす場合は、フォーカスで解決した移動量を選択ノード群へ同一の平行移動として適用する。
@@ -729,3 +731,4 @@
 - 2026-03-01: Tree エリアの `moveNode` を更新し、top-level root への移動コマンドは常に no-op として扱うよう変更。Diagram エリア共存時でも root が他エリアノードへ再接続されない仕様へ修正した。
 - 2026-03-01: Tree エリアの `moveNode` を補正し、multi-selection の `up/down` 経路でも top-level root への移動を no-op とした。単一選択経路と同じ制約で一貫するよう更新した。
 - 2026-03-02: `CanvasCommand.moveFocusAcrossAreasToRoot` と `cmd+opt+←/→` を追加し、node/area target のまま左右隣接エリアへ高速移動できるよう更新。遷移先アンカーは Tree で root node、Diagram で `CanvasNode.metadata["createdOrder"]` 最小 node を採用し、端では反対端へループする仕様を追加した。
+- 2026-03-03: `CanvasCommand.moveArea` を追加し、area target 時の `cmd+矢印` をエリア単位移動に割り当てた。移動後は `CanvasAreaLayoutService` によるエリア衝突解消を適用する仕様へ更新した。

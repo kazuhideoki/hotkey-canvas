@@ -59,6 +59,12 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .alignAllAreasVertically:
             return alignAllAreasVertically(in: graph, areaID: resolvedAreaID)
+        case .moveArea(let direction):
+            return moveArea(
+                in: graph,
+                areaID: resolvedAreaID,
+                direction: direction
+            )
         case .moveNode(let direction):
             return try moveNode(
                 in: graph,
@@ -155,6 +161,7 @@ extension ApplyCanvasCommandsUseCase {
             .focusNode,
             .focusArea,
             .extendSelection,
+            .moveArea,
             .moveNode,
             .nudgeNode,
             .scaleSelectedNodes,
@@ -199,6 +206,7 @@ extension ApplyCanvasCommandsUseCase {
             .focusNode,
             .focusArea,
             .extendSelection,
+            .moveArea,
             .moveNode,
             .nudgeNode,
             .scaleSelectedNodes,
@@ -253,6 +261,7 @@ extension ApplyCanvasCommandsUseCase {
             .focusNode,
             .focusArea,
             .extendSelection,
+            .moveArea,
             .moveNode,
             .nudgeNode,
             .toggleFoldFocusedSubtree,
@@ -304,6 +313,7 @@ extension ApplyCanvasCommandsUseCase {
             .focusNode,
             .focusArea,
             .extendSelection,
+            .moveArea,
             .moveNode,
             .nudgeNode,
             .scaleSelectedNodes,
@@ -466,6 +476,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveFocus,
             .moveFocusAcrossAreasToRoot,
             .extendSelection,
+            .moveArea,
             .moveNode,
             .nudgeNode,
             .scaleSelectedNodes,

@@ -19,8 +19,8 @@ func test_shouldEnableCompositeMove_whenMoveNodeEnabled_returnsTrue() {
     #expect(result)
 }
 
-@Test("CanvasView composite move: disabled in area target")
-func test_shouldEnableCompositeMove_areaTarget_returnsFalse() {
+@Test("CanvasView composite move: enabled in area target")
+func test_shouldEnableCompositeMove_areaTarget_returnsTrue() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
         operationTargetKind: .area,
@@ -32,7 +32,7 @@ func test_shouldEnableCompositeMove_areaTarget_returnsFalse() {
         context: context
     )
 
-    #expect(!result)
+    #expect(result)
 }
 
 @Test("CanvasView composite move: disabled when no focused node")
@@ -49,4 +49,36 @@ func test_shouldEnableCompositeMove_withoutFocusedNode_returnsFalse() {
     )
 
     #expect(!result)
+}
+
+@Test("CanvasView composite move: area target resolves moveArea command")
+func test_compositeMoveCommand_areaTarget_resolvesMoveArea() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .area,
+        hasFocusedNode: true
+    )
+
+    let command = CanvasView.compositeMoveCommand(
+        direction: .left,
+        context: context
+    )
+
+    #expect(command == .moveArea(.left))
+}
+
+@Test("CanvasView composite move: node target resolves moveNode command")
+func test_compositeMoveCommand_nodeTarget_resolvesMoveNode() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .node,
+        hasFocusedNode: true
+    )
+
+    let command = CanvasView.compositeMoveCommand(
+        direction: .left,
+        context: context
+    )
+
+    #expect(command == .moveNode(.left))
 }

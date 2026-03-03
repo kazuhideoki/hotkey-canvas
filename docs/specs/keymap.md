@@ -32,7 +32,7 @@
 | `moveFocus(.single)` | `arrow` | フォーカス移動 | フォーカス移動 | |
 | `moveFocus(.extendSelection)` | `shift+arrow` | 選択拡張 | 選択拡張 | |
 | `moveFocus(.acrossAreasToRoot)` | `cmd+opt+←/→` | 隣接エリアへ移動し、遷移先エリアのルート node へフォーカス | 隣接エリアへ移動し、遷移先エリアの最初に作成された node へフォーカス | node/area target の両方で有効。端では反対端へループ |
-| `moveNode` | `cmd+arrow` | 構造移動（並び替え/indent/outdent） | 位置移動（diagram grid） | |
+| `moveNode` | `cmd+arrow` | 構造移動（並び替え/indent/outdent） | 位置移動（diagram grid） | area target 時は `moveArea`（エリア単位平行移動 + エリア衝突解消）として実行 |
 | `nudgeNode` | `cmd+shift+arrow` | 実行経路はあるが no-op | 微小移動 | |
 | `toggleVisibility` | `opt+.` | subtree の fold/unfold 切替 | 非対応 | |
 | `switchTargetKind(.cycle)` | `tab` | node/edge/area 対象を巡回 | node/edge/area 対象を巡回 | `node -> edge -> area -> node`（利用不可対象はスキップ） |
@@ -41,7 +41,8 @@
 
 - `modal`（Command Palette / Add Node Mode Selection / Connect Mode 内操作）は本表の対象外です。
 - `operation target = area` のときは、area 操作と直接関係しない node/edge 対象ショートカットを無効化する。  
-  例: `enter` / `opt+enter` / `cmd+enter` / `shift+enter` / `delete` / `cmd+d` / `cmd+c` / `cmd+x` / `cmd+v` / `shift+arrow` / `cmd+arrow` / `cmd+shift+arrow` / `cmd+opt++` / `cmd+opt+=` / `cmd+opt+shift+=` / `cmd+opt+shift+;` / `cmd+opt+-` / `opt+.` / `cmd+l` / `cmd+;` / `ctrl+l`
+  例: `enter` / `opt+enter` / `cmd+enter` / `shift+enter` / `delete` / `cmd+d` / `cmd+c` / `cmd+x` / `cmd+v` / `shift+arrow` / `cmd+shift+arrow` / `cmd+opt++` / `cmd+opt+=` / `cmd+opt+shift+=` / `cmd+opt+shift+;` / `cmd+opt+-` / `opt+.` / `cmd+l` / `cmd+;` / `ctrl+l`
+- `operation target = area` での `cmd+arrow` は `moveArea` として扱い、フォーカス中エリアを上下左右へ移動する。移動後にエリア衝突があれば area layout で解消する。
 - Command Palette のカタログ項目は、`openCommandPalette` トリガーを除き「ショートカット定義がある項目」を表示対象にする。表示可否は直接ショートカットと同じ `executionCondition` で判定する。
 - edge 対象で `moveFocus` / `extendSelection` / `deleteSelectedOrFocusedNodes` を使う場合は、`KeymapExecutionRoute: .edgeAware` として同一入力を edge ハンドリングへ委譲する。
 - モード差分や正規化ルールは上記 `Primitive（EditMode差分）` の各行を正本とし、Command Palette も同じ条件系に従う。
