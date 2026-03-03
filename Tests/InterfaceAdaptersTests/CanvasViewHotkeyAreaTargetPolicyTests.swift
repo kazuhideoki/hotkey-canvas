@@ -35,6 +35,7 @@ func test_areaTarget_isActionEnabled_disablesNodeOrEdgeCommands() {
     #expect(!CanvasView.isActionEnabled(.apply(commands: [.addSiblingNode(position: .below)]), context: context))
     #expect(!CanvasView.isActionEnabled(.apply(commands: [.moveNode(.right)]), context: context))
     #expect(!CanvasView.isActionEnabled(.apply(commands: [.nudgeNode(.left)]), context: context))
+    #expect(CanvasView.isActionEnabled(.apply(commands: [.moveArea(.right)]), context: context))
     #expect(!CanvasView.isActionEnabled(.apply(commands: [.deleteSelectedOrFocusedNodes]), context: context))
     #expect(!CanvasView.isActionEnabled(.apply(commands: [.extendSelection(.up)]), context: context))
     #expect(CanvasView.isActionEnabled(.apply(commands: [.moveFocus(.up)]), context: context))

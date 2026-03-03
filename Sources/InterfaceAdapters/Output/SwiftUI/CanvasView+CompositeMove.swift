@@ -14,12 +14,14 @@ extension CanvasView {
         guard let direction = commandOnlyArrowDirection(from: event) else {
             return false
         }
-        guard Self.shouldEnableCompositeMove(direction: direction, context: keymapExecutionContext()) else {
+        let context = keymapExecutionContext()
+        guard Self.shouldEnableCompositeMove(direction: direction, context: context) else {
             return false
         }
+        let command = Self.compositeMoveCommand(direction: direction, context: context)
 
         Task {
-            await viewModel.apply(commands: [.moveNode(direction)])
+            await viewModel.apply(commands: [command])
         }
         return true
     }
@@ -28,8 +30,32 @@ extension CanvasView {
         direction: CanvasNodeMoveDirection,
         context: KeymapExecutionContext
     ) -> Bool {
-        let action = KeymapContextAction.apply(commands: [.moveNode(direction)])
+        let command = compositeMoveCommand(direction: direction, context: context)
+        let action = KeymapContextAction.apply(commands: [command])
         return isActionEnabled(action, context: context)
+    }
+
+    static func compositeMoveCommand(
+        direction: CanvasNodeMoveDirection,
+        context: KeymapExecutionContext
+    ) -> CanvasCommand {
+        if context.operationTargetKind == .area {
+            return .moveArea(focusDirection(from: direction))
+        }
+        return .moveNode(direction)
+    }
+
+    private static func focusDirection(from direction: CanvasNodeMoveDirection) -> CanvasFocusDirection {
+        switch direction {
+        case .up, .upLeft, .upRight:
+            return .up
+        case .down, .downLeft, .downRight:
+            return .down
+        case .left:
+            return .left
+        case .right:
+            return .right
+        }
     }
 
     func commandOnlyArrowDirection(from event: NSEvent) -> CanvasNodeMoveDirection? {

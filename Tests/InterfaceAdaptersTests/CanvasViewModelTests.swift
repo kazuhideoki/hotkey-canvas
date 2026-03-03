@@ -463,7 +463,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
                 .focusNode, .focusArea,
-                .extendSelection, .moveNode,
+                .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
@@ -624,7 +624,7 @@ extension OverlappingFailureCanvasEditingInputPort {
                 didAddNode = true
             case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
                 .focusNode, .focusArea,
-                .extendSelection, .moveNode,
+                .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
@@ -831,7 +831,7 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                 .moveFocusAcrossAreasToRoot, .focusNode,
                 .focusArea,
                 .extendSelection,
-                .moveNode, .nudgeNode,
+                .moveArea, .moveNode, .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree, .centerFocusedNode, .cycleFocusedEdgeDirectionality,
                 .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges,
@@ -1068,7 +1068,7 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 ).get()
             case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
                 .focusNode, .focusArea,
-                .extendSelection, .moveNode,
+                .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
@@ -1177,7 +1177,7 @@ actor TreeModeSelectionFromDiagramCanvasEditingInputPort: CanvasEditingInputPort
                 ).get()
             case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
                 .focusNode, .focusArea,
-                .extendSelection, .moveNode,
+                .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
@@ -1285,7 +1285,7 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
                 ).get()
             case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
                 .focusNode, .focusArea,
-                .extendSelection, .moveNode,
+                .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
@@ -1371,7 +1371,7 @@ actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 ).get()
             case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
                 .focusNode, .focusArea,
-                .extendSelection, .moveNode,
+                .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
@@ -1490,7 +1490,7 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
                 .focusNode, .focusArea,
-                .extendSelection, .moveNode,
+                .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
@@ -1549,7 +1549,7 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                 )
             case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
                 .focusNode, .focusArea,
-                .extendSelection, .moveNode,
+                .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,

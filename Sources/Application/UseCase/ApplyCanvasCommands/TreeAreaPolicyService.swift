@@ -18,6 +18,7 @@ enum TreeAreaPolicyService {
             .focusNode,
             .focusArea,
             .extendSelection,
+            .moveArea,
             .moveNode,
             .nudgeNode,
             .scaleSelectedNodes,

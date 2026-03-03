@@ -10,6 +10,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case focusNode(CanvasNodeID)
     case focusArea(CanvasAreaID)
     case extendSelection(CanvasFocusDirection)
+    case moveArea(CanvasFocusDirection)
     case moveNode(CanvasNodeMoveDirection)
     case nudgeNode(CanvasNodeMoveDirection)
     case scaleSelectedNodes(CanvasNodeScaleDirection)
