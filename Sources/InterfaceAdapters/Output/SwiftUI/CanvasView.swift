@@ -147,9 +147,11 @@ public struct CanvasView: View {
                                             }
                                             Text(item.title)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                            Text(item.shortcutLabel)
-                                                .foregroundStyle(.secondary)
-                                                .frame(maxWidth: 170, alignment: .trailing)
+                                            if item.hasShortcutBinding {
+                                                Text(item.shortcutLabel)
+                                                    .foregroundStyle(.secondary)
+                                                    .frame(maxWidth: 170, alignment: .trailing)
+                                            }
                                         }
                                         .font(.system(size: 13, weight: .medium))
                                         .padding(.vertical, 8)
