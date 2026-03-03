@@ -31,8 +31,25 @@ extension CanvasView {
         let id: String
         let title: String
         let shortcutLabel: String
+        let hasShortcutBinding: Bool
         let searchText: String
         let action: CommandPaletteAction
+
+        init(
+            id: String,
+            title: String,
+            shortcutLabel: String,
+            hasShortcutBinding: Bool = true,
+            searchText: String,
+            action: CommandPaletteAction
+        ) {
+            self.id = id
+            self.title = title
+            self.shortcutLabel = shortcutLabel
+            self.hasShortcutBinding = hasShortcutBinding
+            self.searchText = searchText
+            self.action = action
+        }
     }
 
     func openCommandPalette() {
@@ -119,6 +136,7 @@ extension CanvasView {
                     id: "insertImageFromFinder",
                     title: "Image: Insert From Finder",
                     shortcutLabel: "Finder",
+                    hasShortcutBinding: false,
                     searchText: Self.commandPaletteSearchText(
                         title: "Image: Insert From Finder",
                         shortcutLabel: "Finder",
@@ -149,6 +167,7 @@ extension CanvasView {
             id: "toggleFocusedNodeMarkdownStyle",
             title: title,
             shortcutLabel: "Focused Node",
+            hasShortcutBinding: false,
             searchText: Self.commandPaletteSearchText(
                 title: title,
                 shortcutLabel: "Focused Node",
@@ -166,6 +185,7 @@ extension CanvasView {
             id: "alignAllAreasVertically",
             title: "Area: Align All Areas Vertically",
             shortcutLabel: "Focused Area",
+            hasShortcutBinding: false,
             searchText: Self.commandPaletteSearchText(
                 title: "Area: Align All Areas Vertically",
                 shortcutLabel: "Focused Area",
