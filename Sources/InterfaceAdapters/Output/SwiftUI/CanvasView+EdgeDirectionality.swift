@@ -35,9 +35,7 @@ extension CanvasView {
         if let arrowPath = edgeArrowPath(
             edge: edge,
             strokeWidth: strokeWidth,
-            nodesByID: context.nodesByID,
-            branchCoordinateByParentAndDirection: context.branchCoordinateByParentAndDirection,
-            laneOffsetByEdgeID: context.laneOffsetByEdgeID
+            context: context
         ) {
             arrowPath
                 .applying(transform)
@@ -49,13 +47,17 @@ extension CanvasView {
 extension CanvasView {
     private static let edgeArrowLengthFactor: CGFloat = 2.8
     private static let edgeArrowHalfWidthFactor: CGFloat = 1.8
+    static func edgeArrowZoomCompensation(for zoomScale: Double) -> CGFloat {
+        if zoomScale < 1.0 {
+            return CGFloat(1.0 / zoomScale)
+        }
+        return 1.0
+    }
 
     private func edgeArrowPath(
         edge: CanvasEdge,
         strokeWidth: CGFloat,
-        nodesByID: [CanvasNodeID: CanvasNode],
-        branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double],
-        laneOffsetByEdgeID: [CanvasEdgeID: Double]
+        context: EdgeRenderContext
     ) -> Path? {
         guard edge.directionality != .none else {
             return nil
@@ -63,9 +65,9 @@ extension CanvasView {
         guard
             let geometry = CanvasEdgeRouting.routeGeometry(
                 for: edge,
-                nodesByID: nodesByID,
-                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-                laneOffsetByEdgeID: laneOffsetByEdgeID
+                nodesByID: context.nodesByID,
+                branchCoordinateByParentAndDirection: context.branchCoordinateByParentAndDirection,
+                laneOffsetByEdgeID: context.laneOffsetByEdgeID
             )
         else {
             return nil
@@ -76,8 +78,13 @@ extension CanvasView {
             return nil
         }
 
-        let arrowLength = max(8, strokeWidth * Self.edgeArrowLengthFactor)
-        let arrowHalfWidth = max(4, strokeWidth * Self.edgeArrowHalfWidthFactor)
+        let zoomCompensation = Self.edgeArrowZoomCompensation(for: context.zoomScale)
+        let arrowLength =
+            max(8, strokeWidth * Self.edgeArrowLengthFactor)
+            * zoomCompensation
+        let arrowHalfWidth =
+            max(4, strokeWidth * Self.edgeArrowHalfWidthFactor)
+            * zoomCompensation
         let baseCenter = CGPoint(
             x: tipAndVector.tip.x - (unitVector.dx * arrowLength),
             y: tipAndVector.tip.y - (unitVector.dy * arrowLength)
