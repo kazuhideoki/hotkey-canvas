@@ -114,6 +114,10 @@ public final class CanvasViewModel: ObservableObject {
         await apply(commands: [.setNodeText(nodeID: nodeID, text: text, nodeHeight: nodeHeight)])
     }
 
+    public func commitEdgeLabel(edgeID: CanvasEdgeID, label: String) async {
+        await apply(commands: [.setEdgeLabel(edgeID: edgeID, label: label)])
+    }
+
     public func insertNodeImage(
         nodeID: CanvasNodeID,
         imagePath: String,
@@ -188,6 +192,7 @@ extension CanvasViewModel {
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .cycleFocusedEdgeDirectionality,
+            .setEdgeLabel,
             .deleteSelectedOrFocusedNodes,
             .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree, .pasteClipboardAtFocusedNode,

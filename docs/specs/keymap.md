@@ -45,6 +45,8 @@
 - `operation target = area` での `cmd+arrow` は `moveArea` として扱い、フォーカス中エリアを上下左右へ移動する。移動後にエリア衝突があれば area layout で解消する。
 - Command Palette のカタログ項目は、`openCommandPalette` トリガーを除き「ショートカット定義がある項目」を表示対象にする。表示可否は直接ショートカットと同じ `executionCondition` で判定する。
 - edge 対象で `moveFocus` / `extendSelection` / `deleteSelectedOrFocusedNodes` を使う場合は、`KeymapExecutionRoute: .edgeAware` として同一入力を edge ハンドリングへ委譲する。
+- edge 対象では `ctrl+a` / `ctrl+e` / 直接文字入力で edge ラベルのインライン編集を開始できる。`ctrl+a` はカーソル先頭、`ctrl+e` はカーソル末尾で開始する。
+- edge にラベル文字列がある場合は、edge ルート中央に最小限のラベル枠を表示する。
 - モード差分や正規化ルールは上記 `Primitive（EditMode差分）` の各行を正本とし、Command Palette も同じ条件系に従う。
 - Command Palette では edge 対象時に `Edge: Delete Selected` が表示され、`delete` と同じ削除規則（focused edge を含む複数選択は一括削除）が適用されます。
 - Command Palette では起動直後（検索語句が空）に `↑` で検索語句履歴を過去方向へ 1 件ずつ呼び出し、`↓` で新しい方向へ戻せる。最新入力まで戻りきった後の `↓` は従来どおり候補リストのスクロールに使える。

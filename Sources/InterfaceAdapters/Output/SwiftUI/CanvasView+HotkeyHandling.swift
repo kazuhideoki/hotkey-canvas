@@ -30,7 +30,11 @@ extension CanvasView {
         }
     }
 
-    func handleCanvasHotkeyEvent(_ event: NSEvent, displayNodes: [CanvasNode]) -> Bool {
+    func handleCanvasHotkeyEvent(
+        _ event: NSEvent,
+        displayNodes: [CanvasNode],
+        displayEdges: [CanvasEdge]
+    ) -> Bool {
         if isConnectNodeSelectionActive() {
             return handleConnectNodeSelectionHotkey(event)
         }
@@ -43,7 +47,8 @@ extension CanvasView {
 
         guard let route = hotkeyTranslator.resolve(event) else {
             let displayNodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
-            return handleTypingInputStart(event, nodesByID: displayNodesByID)
+            let displayEdgesByID = Dictionary(uniqueKeysWithValues: displayEdges.map { ($0.id, $0) })
+            return handleTypingInputStart(event, nodesByID: displayNodesByID, edgesByID: displayEdgesByID)
         }
 
         switch route {
@@ -208,7 +213,7 @@ extension CanvasView {
             editingMode: commandPaletteActiveEditingMode(),
             operationTargetKind: operationTargetKind,
             hasFocusedNode: viewModel.focusedNodeID != nil,
-            isEditingText: editingContext != nil,
+            isEditingText: editingContext != nil || edgeEditingContext != nil,
             isCommandPalettePresented: isCommandPalettePresented,
             isSearchPresented: isSearchPresented,
             isConnectNodeSelectionActive: isConnectNodeSelectionActive(),

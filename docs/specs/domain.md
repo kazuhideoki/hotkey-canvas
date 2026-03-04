@@ -98,6 +98,7 @@
   - `CanvasCommand.pasteClipboardAtFocusedNode`
   - `CanvasCommand.deleteSelectedOrFocusedEdges(focusedEdge:selectedEdgeIDs:)`
   - `CanvasCommand.cycleFocusedEdgeDirectionality(focusedEdge:selectedEdgeIDs:)`
+  - `CanvasCommand.setEdgeLabel(edgeID:label:)`
   - `CanvasCommand.duplicateSelectionAsSibling`
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
   - `CanvasCommand.alignAllAreasVertically`
@@ -626,6 +627,8 @@
     - `deleteSelectedOrFocusedEdges` は focused edge を必ず削除対象に含める。選択集合に focused edge が含まれ、かつ2件以上選択されている場合は選択 edge を一括削除する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CycleFocusedEdgeDirectionality.swift`
     - `cycleFocusedEdgeDirectionality` は focused edge の `directionality` を `none -> fromTo -> toFrom -> none` で循環更新する。`selectedEdgeIDs` はコマンド入力を優先して正規化し、edge ターゲットの複数選択を維持する。focused edge が不在の場合は no-op とする。
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+SetEdgeLabel.swift`
+    - `setEdgeLabel` は edge ラベルを更新し、空文字は `nil` に正規化する。対象 edge が不在の場合は no-op とする。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CopyPasteSubtree.swift`
     - 追加/削除時の所属更新を行う。
     - `copySelectionOrFocusedSubtree` / `cutSelectionOrFocusedSubtree` は「同一フォーカスエリア内で複数選択が2件以上ある場合」に選択集合を対象として扱い、それ以外は従来どおりフォーカス部分木を対象とする。
@@ -732,3 +735,4 @@
 - 2026-03-01: Tree エリアの `moveNode` を補正し、multi-selection の `up/down` 経路でも top-level root への移動を no-op とした。単一選択経路と同じ制約で一貫するよう更新した。
 - 2026-03-02: `CanvasCommand.moveFocusAcrossAreasToRoot` と `cmd+opt+←/→` を追加し、node/area target のまま左右隣接エリアへ高速移動できるよう更新。遷移先アンカーは Tree で root node、Diagram で `CanvasNode.metadata["createdOrder"]` 最小 node を採用し、端では反対端へループする仕様を追加した。
 - 2026-03-03: `CanvasCommand.moveArea` を追加し、area target 時の `cmd+矢印` をエリア単位移動に割り当てた。移動後は `CanvasAreaLayoutService` によるエリア衝突解消を適用する仕様へ更新した。
+- 2026-03-04: `CanvasCommand.setEdgeLabel` を追加し、edge ターゲットのインライン入力（`ctrl+a` / `ctrl+e` / 直接文字入力）でラベル編集できるよう更新。表示側はラベルがある edge の中央に最小枠を描画する仕様を追加した。

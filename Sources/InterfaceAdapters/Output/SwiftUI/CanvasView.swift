@@ -12,6 +12,7 @@ public struct CanvasView: View {
     static let minimumCanvasSize = CGSize(width: 900, height: 600)
     @StateObject var viewModel: CanvasViewModel
     @State var editingContext: NodeEditingContext?
+    @State var edgeEditingContext: EdgeEditingContext?
     @State var commandPaletteQuery: String = ""
     @State var isCommandPalettePresented = false
     @State var selectedCommandPaletteIndex: Int = 0
@@ -47,6 +48,7 @@ public struct CanvasView: View {
     let addNodeModeSelectionHotkeyResolver = AddNodeModeSelectionHotkeyResolver()
     let connectNodeSelectionHotkeyResolver = ConnectNodeSelectionHotkeyResolver()
     let editingStartResolver = NodeEditingStartResolver()
+    let edgeEditingStartResolver = EdgeEditingStartResolver()
     var nodeTextStyle: NodeTextStyle { NodeTextStyle(styleSheet: styleSheet) }
     public init(
         viewModel: CanvasViewModel,
@@ -64,6 +66,7 @@ public struct CanvasView: View {
     func styleColor(_ token: CanvasStyleColorToken) -> Color { CanvasStylePalette.color(token) }
     public var body: some View {
         let displayNodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
+        let displayEdges = viewModel.edges.map(displayEdgeForCurrentEditingState)
         let nodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
         return GeometryReader { geometryProxy in
             let viewportSize = CGSize(
@@ -85,10 +88,10 @@ public struct CanvasView: View {
             }
             let renderedNodesByID = Dictionary(uniqueKeysWithValues: renderedNodes.map { ($0.id, $0) })
             let branchCoordinateByParentAndDirection = CanvasEdgeRouting.branchCoordinateByParentAndDirection(
-                edges: viewModel.edges,
+                edges: displayEdges,
                 nodesByID: nodesByID
             )
-            let laneOffsetByEdgeID = CanvasEdgeRouting.laneOffsetByEdgeID(edges: viewModel.edges)
+            let laneOffsetByEdgeID = CanvasEdgeRouting.laneOffsetByEdgeID(edges: displayEdges)
             let commandPaletteItems = filteredCommandPaletteItems()
             let recentCommandPaletteItemIDs = Set(
                 commandPaletteRecentItemIDs.prefix(Self.commandPaletteRecentPinnedCount)
@@ -213,7 +216,7 @@ public struct CanvasView: View {
                 ZStack(alignment: .topLeading) {
                     areaFocusOverlay(
                         displayNodes: displayNodes, viewportSize: viewportSize, effectiveOffset: cameraOffset)
-                    ForEach(viewModel.edges, id: \.id) { edge in
+                    ForEach(displayEdges, id: \.id) { edge in
                         if let path = CanvasEdgeRouting.path(
                             for: edge,
                             nodesByID: nodesByID,
@@ -249,6 +252,10 @@ public struct CanvasView: View {
                                 path: path,
                                 strokeColor: strokeColor,
                                 strokeWidth: strokeWidth,
+                                context: edgeRenderContext
+                            )
+                            edgeLabelOverlay(
+                                edge: edge,
                                 context: edgeRenderContext
                             )
                         }
@@ -366,9 +373,16 @@ public struct CanvasView: View {
                         .allowsHitTesting(false)
                 }
                 CanvasHotkeyCaptureView(
-                    isEnabled: editingContext == nil && !isCommandPalettePresented && !isSearchPresented
+                    isEnabled: editingContext == nil
+                        && edgeEditingContext == nil
+                        && !isCommandPalettePresented
+                        && !isSearchPresented
                 ) { event in
-                    handleCanvasHotkeyEvent(event, displayNodes: displayNodes)
+                    handleCanvasHotkeyEvent(
+                        event,
+                        displayNodes: displayNodes,
+                        displayEdges: displayEdges
+                    )
                 }
                 .frame(width: 1, height: 1)
                 // Keep key capture active without intercepting canvas rendering.
@@ -423,10 +437,14 @@ public struct CanvasView: View {
                 synchronizeConnectNodeSelectionState()
                 synchronizeEdgeTargetState()
             }
-            .onChange(of: viewModel.edges) { _ in synchronizeEdgeTargetState() }
+            .onChange(of: viewModel.edges) { _ in
+                synchronizeEdgeTargetState()
+                synchronizeEdgeEditingState()
+            }
             .onChange(of: viewModel.focusedEdgeID) { _ in synchronizeEdgeTargetStateFromViewModel() }
             .onChange(of: focusedEdgeID) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
+                synchronizeEdgeEditingState()
             }
             .onChange(of: viewModel.focusedAreaID) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
@@ -436,8 +454,12 @@ public struct CanvasView: View {
             .onChange(of: viewModel.diagramNodeIDs) { _ in synchronizeEdgeTargetState() }
             .onChange(of: operationTargetKind) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
+                synchronizeEdgeEditingState()
             }
             .onChange(of: editingContext) { _ in
+                applyFocusVisibilityRule(viewportSize: viewportSize)
+            }
+            .onChange(of: edgeEditingContext) { _ in
                 applyFocusVisibilityRule(viewportSize: viewportSize)
             }
             .onChange(of: viewportSize) { _ in

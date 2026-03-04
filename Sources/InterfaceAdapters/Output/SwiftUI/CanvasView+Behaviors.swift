@@ -186,8 +186,12 @@ extension CanvasView {
 
     func handleTypingInputStart(
         _ event: NSEvent,
-        nodesByID: [CanvasNodeID: CanvasNode]
+        nodesByID: [CanvasNodeID: CanvasNode],
+        edgesByID: [CanvasEdgeID: CanvasEdge]
     ) -> Bool {
+        if operationTargetKind == .edge {
+            return handleEdgeTypingInputStart(event, edgesByID: edgesByID)
+        }
         guard
             let context = editingStartResolver.resolve(
                 from: event,
