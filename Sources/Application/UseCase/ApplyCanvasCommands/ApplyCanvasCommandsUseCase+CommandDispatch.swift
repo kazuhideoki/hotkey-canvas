@@ -102,6 +102,8 @@ extension ApplyCanvasCommandsUseCase {
             return try pasteClipboardAtFocusedNode(in: graph)
         case .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .scaleSelectedNodes:
             return try applyNodeContentCommand(command: command, to: graph)
+        case .setEdgeLabel(let edgeID, let label):
+            return setEdgeLabel(in: graph, edgeID: edgeID, label: label)
         case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return noOpMutationResult(for: graph)
         case .moveFocus, .moveFocusAcrossAreasToRoot, .focusNode, .focusArea, .extendSelection:
@@ -171,6 +173,7 @@ extension ApplyCanvasCommandsUseCase {
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
             .setNodeText,
+            .setEdgeLabel,
             .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
@@ -219,6 +222,7 @@ extension ApplyCanvasCommandsUseCase {
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
             .setNodeText,
+            .setEdgeLabel,
             .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
             .convertFocusedAreaMode,
@@ -272,6 +276,7 @@ extension ApplyCanvasCommandsUseCase {
             .copySelectionOrFocusedSubtree,
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
+            .setEdgeLabel,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
@@ -326,6 +331,7 @@ extension ApplyCanvasCommandsUseCase {
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
             .setNodeText,
+            .setEdgeLabel,
             .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle:
             return noOpMutationResult(for: graph)
@@ -403,7 +409,7 @@ extension ApplyCanvasCommandsUseCase {
         }
 
         switch command {
-        case .deleteSelectedOrFocusedEdges, .cycleFocusedEdgeDirectionality:
+        case .deleteSelectedOrFocusedEdges, .cycleFocusedEdgeDirectionality, .setEdgeLabel:
             return .edge
         case .focusArea:
             return .area
@@ -456,6 +462,11 @@ extension ApplyCanvasCommandsUseCase {
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
         case .upsertNodeAttachment(let nodeID, _, _, _):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
+        case .setEdgeLabel(let edgeID, _):
+            guard let edge = graph.edgesByID[edgeID] else {
+                return CanvasAreaMembershipService.focusedAreaID(in: graph)
+            }
+            return CanvasAreaMembershipService.areaID(containing: edge.fromNodeID, in: graph)
         case .focusNode(let nodeID):
             return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
         case .focusArea(let areaID):

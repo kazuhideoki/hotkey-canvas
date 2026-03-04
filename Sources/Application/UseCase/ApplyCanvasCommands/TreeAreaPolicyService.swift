@@ -24,6 +24,7 @@ enum TreeAreaPolicyService {
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
+            .setEdgeLabel,
             .deleteSelectedOrFocusedNodes,
             .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree,

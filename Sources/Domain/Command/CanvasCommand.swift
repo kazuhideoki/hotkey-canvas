@@ -25,6 +25,7 @@ public enum CanvasCommand: Equatable, Sendable {
         focusedEdge: CanvasEdgeFocus,
         selectedEdgeIDs: Set<CanvasEdgeID>
     )
+    case setEdgeLabel(edgeID: CanvasEdgeID, label: String)
     case copySelectionOrFocusedSubtree
     case cutSelectionOrFocusedSubtree
     case pasteClipboardAtFocusedNode

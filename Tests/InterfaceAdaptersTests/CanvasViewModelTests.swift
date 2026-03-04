@@ -467,10 +467,11 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .copySelectionOrFocusedSubtree,
+                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode,
-                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode,
+                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .convertFocusedAreaMode,
                 .createArea,
                 .assignNodesToArea, .connectNodes, .alignAllAreasVertically:
                 continue
@@ -628,10 +629,11 @@ extension OverlappingFailureCanvasEditingInputPort {
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .copySelectionOrFocusedSubtree,
+                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode,
-                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode,
+                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .convertFocusedAreaMode,
                 .createArea,
                 .assignNodesToArea, .connectNodes, .alignAllAreasVertically:
                 continue
@@ -823,6 +825,25 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                 nextGraph = CanvasGraph(
                     nodesByID: nextGraph.nodesByID.merging([nodeID: updatedNode], uniquingKeysWith: { _, new in new }),
                     edgesByID: nextGraph.edgesByID,
+                    focusedNodeID: nextGraph.focusedNodeID
+                )
+            case .setEdgeLabel(let edgeID, let label):
+                guard let edge = nextGraph.edgesByID[edgeID] else {
+                    continue
+                }
+                let updatedEdge = CanvasEdge(
+                    id: edge.id,
+                    fromNodeID: edge.fromNodeID,
+                    toNodeID: edge.toNodeID,
+                    relationType: edge.relationType,
+                    directionality: edge.directionality,
+                    parentChildOrder: edge.parentChildOrder,
+                    label: label.isEmpty ? nil : label,
+                    metadata: edge.metadata
+                )
+                nextGraph = CanvasGraph(
+                    nodesByID: nextGraph.nodesByID,
+                    edgesByID: nextGraph.edgesByID.merging([edgeID: updatedEdge], uniquingKeysWith: { _, new in new }),
                     focusedNodeID: nextGraph.focusedNodeID
                 )
             case .upsertNodeAttachment:
@@ -1072,7 +1093,7 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .copySelectionOrFocusedSubtree,
+                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
@@ -1181,7 +1202,7 @@ actor TreeModeSelectionFromDiagramCanvasEditingInputPort: CanvasEditingInputPort
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .copySelectionOrFocusedSubtree,
+                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
@@ -1289,7 +1310,7 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .copySelectionOrFocusedSubtree,
+                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
@@ -1375,7 +1396,7 @@ actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .copySelectionOrFocusedSubtree,
+                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
@@ -1494,7 +1515,7 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .copySelectionOrFocusedSubtree,
+                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
@@ -1553,7 +1574,7 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                 .nudgeNode,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
-                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .copySelectionOrFocusedSubtree,
+                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
                 .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
