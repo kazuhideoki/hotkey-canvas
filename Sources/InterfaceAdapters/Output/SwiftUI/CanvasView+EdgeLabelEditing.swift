@@ -97,7 +97,7 @@ extension CanvasView {
                 for: edge,
                 nodesByID: context.nodesByID,
                 branchCoordinateByParentAndDirection: context.branchCoordinateByParentAndDirection,
-                laneOffsetByEdgeID: context.laneOffsetByEdgeID
+                laneOffsetsByEdgeID: context.laneOffsetsByEdgeID
             )
         else {
             return nil

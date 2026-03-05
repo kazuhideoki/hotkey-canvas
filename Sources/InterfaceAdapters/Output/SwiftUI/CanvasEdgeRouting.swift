@@ -1,5 +1,6 @@
 // Background: Straight center-to-center edges overlap sibling nodes as child counts grow.
 // Responsibility: Compute side-anchored branched routes so parent-child edges remain readable.
+// swiftlint:disable file_length
 import Domain
 import SwiftUI
 
@@ -53,10 +54,19 @@ enum CanvasEdgeRouting {
         let direction: Int
     }
 
-    /// Undirected node-pair key used for assigning parallel lanes.
-    struct ParallelBundleKey: Hashable {
-        let firstNodeID: CanvasNodeID
-        let secondNodeID: CanvasNodeID
+    /// Node+axis+side key used for assigning non-overlapping anchors around one node side.
+    struct AnchorBundleKey: Hashable {
+        let nodeID: CanvasNodeID
+        let axis: RouteAxis
+        let direction: Int
+    }
+
+    /// Per-endpoint lane offsets for one edge.
+    struct EdgeLaneOffsets: Equatable {
+        let start: Double
+        let end: Double
+
+        static let zero = EdgeLaneOffsets(start: 0, end: 0)
     }
 
     /// Returns the shared branch coordinate for each parent node side.
@@ -101,33 +111,59 @@ enum CanvasEdgeRouting {
         return result
     }
 
-    /// Returns lane offsets for edges between the same node pair so each edge gets a distinct route.
-    /// - Parameter edges: Graph edges to route.
-    /// - Returns: Mapping from edge identifier to perpendicular offset.
-    static func laneOffsetByEdgeID(edges: [CanvasEdge]) -> [CanvasEdgeID: Double] {
-        let groupedEdges = Dictionary(
-            grouping: edges,
-            by: parallelBundleKey(for:)
-        )
-        var laneOffsetByEdgeID: [CanvasEdgeID: Double] = [:]
+    /// Returns per-endpoint lane offsets so edges sharing one node-side anchor do not overlap.
+    /// - Parameters:
+    ///   - edges: Graph edges to route.
+    ///   - nodesByID: Node lookup used for route axis and direction resolution.
+    /// - Returns: Mapping from edge identifier to start/end offsets.
+    static func laneOffsetsByEdgeID(
+        edges: [CanvasEdge],
+        nodesByID: [CanvasNodeID: CanvasNode]
+    ) -> [CanvasEdgeID: EdgeLaneOffsets] {
+        var groupedRefsByAnchor: [AnchorBundleKey: [AnchorEdgeRef]] = [:]
+        var laneOffsetsByEdgeID: [CanvasEdgeID: EdgeLaneOffsets] = [:]
 
-        for key in groupedEdges.keys.sorted(by: isParallelBundleKeyOrdered) {
-            guard let bundleEdges = groupedEdges[key] else {
+        for edge in edges {
+            guard
+                let parentNode = nodesByID[edge.fromNodeID],
+                let childNode = nodesByID[edge.toNodeID]
+            else {
                 continue
             }
-            let sortedBundleEdges = bundleEdges.sorted { $0.id.rawValue < $1.id.rawValue }
-            guard sortedBundleEdges.count > 1 else {
+            let axis = routeAxis(parentNode: parentNode, childNode: childNode)
+            let direction = directionSign(for: axis, parentNode: parentNode, childNode: childNode)
+            let startDirection = direction > 0 ? 1 : -1
+            let endDirection = -startDirection
+            let startKey = AnchorBundleKey(nodeID: edge.fromNodeID, axis: axis, direction: startDirection)
+            let endKey = AnchorBundleKey(nodeID: edge.toNodeID, axis: axis, direction: endDirection)
+            groupedRefsByAnchor[startKey, default: []].append(AnchorEdgeRef(edgeID: edge.id, kind: .start))
+            groupedRefsByAnchor[endKey, default: []].append(AnchorEdgeRef(edgeID: edge.id, kind: .end))
+            laneOffsetsByEdgeID[edge.id] = .zero
+        }
+
+        for key in groupedRefsByAnchor.keys.sorted(by: isAnchorBundleKeyOrdered) {
+            guard let refs = groupedRefsByAnchor[key] else {
+                continue
+            }
+            let sortedRefs = refs.sorted(by: isAnchorEdgeRefOrdered)
+            guard sortedRefs.count > 1 else {
                 continue
             }
 
-            let centerIndex = Double(sortedBundleEdges.count - 1) / 2
-            for (index, edge) in sortedBundleEdges.enumerated() {
+            let centerIndex = Double(sortedRefs.count - 1) / 2
+            for (index, ref) in sortedRefs.enumerated() {
                 let laneOffset = (Double(index) - centerIndex) * parallelLaneSpacing
-                laneOffsetByEdgeID[edge.id] = laneOffset
+                let current = laneOffsetsByEdgeID[ref.edgeID] ?? .zero
+                switch ref.kind {
+                case .start:
+                    laneOffsetsByEdgeID[ref.edgeID] = EdgeLaneOffsets(start: laneOffset, end: current.end)
+                case .end:
+                    laneOffsetsByEdgeID[ref.edgeID] = EdgeLaneOffsets(start: current.start, end: laneOffset)
+                }
             }
         }
 
-        return laneOffsetByEdgeID
+        return laneOffsetsByEdgeID
     }
 
     /// Builds a rounded route path for a single edge.
@@ -140,15 +176,19 @@ enum CanvasEdgeRouting {
         for edge: CanvasEdge,
         nodesByID: [CanvasNodeID: CanvasNode],
         branchCoordinateByParentAndDirection: [BranchKey: Double],
+<<<<<<< HEAD
         laneOffsetByEdgeID: [CanvasEdgeID: Double] = [:],
         edgeShapeStyle: CanvasAreaEdgeShapeStyle
+=======
+        laneOffsetsByEdgeID: [CanvasEdgeID: EdgeLaneOffsets] = [:]
+>>>>>>> main
     ) -> Path? {
         guard
             let geometry = routeGeometry(
                 for: edge,
                 nodesByID: nodesByID,
                 branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-                laneOffsetByEdgeID: laneOffsetByEdgeID
+                laneOffsetsByEdgeID: laneOffsetsByEdgeID
             )
         else {
             return nil
@@ -212,7 +252,7 @@ enum CanvasEdgeRouting {
         for edge: CanvasEdge,
         nodesByID: [CanvasNodeID: CanvasNode],
         branchCoordinateByParentAndDirection: [BranchKey: Double],
-        laneOffsetByEdgeID: [CanvasEdgeID: Double] = [:]
+        laneOffsetsByEdgeID: [CanvasEdgeID: EdgeLaneOffsets] = [:]
     ) -> RouteGeometry? {
         guard
             let parentNode = nodesByID[edge.fromNodeID],
@@ -228,19 +268,20 @@ enum CanvasEdgeRouting {
             axis: axis,
             direction: direction > 0 ? 1 : -1
         )
-        let laneOffset = laneOffsetByEdgeID[edge.id] ?? 0
+        let laneOffsets = laneOffsetsByEdgeID[edge.id] ?? .zero
         let endpoints = routeEndpoints(
             axis: axis,
             direction: direction,
             parentNode: parentNode,
             childNode: childNode,
-            laneOffset: laneOffset
+            laneOffsets: laneOffsets
         )
         let startCoordinate = axis == .horizontal ? endpoints.startX : endpoints.startY
         let endCoordinate = axis == .horizontal ? endpoints.endX : endpoints.endY
+        let branchLaneOffset = laneOffsets.start
         let branchCoordinate = constrainBranchCoordinate(
             (branchCoordinateByParentAndDirection[directionKey]
-                ?? (startCoordinate + ((endCoordinate - startCoordinate) / 2))) + laneOffset,
+                ?? (startCoordinate + ((endCoordinate - startCoordinate) / 2))) + branchLaneOffset,
             start: startCoordinate,
             end: endCoordinate
         )
@@ -257,21 +298,41 @@ enum CanvasEdgeRouting {
 }
 
 extension CanvasEdgeRouting {
-    private static func isParallelBundleKeyOrdered(_ lhs: ParallelBundleKey, _ rhs: ParallelBundleKey) -> Bool {
-        if lhs.firstNodeID.rawValue != rhs.firstNodeID.rawValue {
-            return lhs.firstNodeID.rawValue < rhs.firstNodeID.rawValue
+    private enum AnchorEdgeKind {
+        case start
+        case end
+    }
+
+    private struct AnchorEdgeRef {
+        let edgeID: CanvasEdgeID
+        let kind: AnchorEdgeKind
+    }
+
+    private static func isAnchorBundleKeyOrdered(_ lhs: AnchorBundleKey, _ rhs: AnchorBundleKey) -> Bool {
+        if lhs.nodeID.rawValue != rhs.nodeID.rawValue {
+            return lhs.nodeID.rawValue < rhs.nodeID.rawValue
         }
-        if lhs.secondNodeID.rawValue != rhs.secondNodeID.rawValue {
-            return lhs.secondNodeID.rawValue < rhs.secondNodeID.rawValue
+        if lhs.axis != rhs.axis {
+            return lhs.axis == .horizontal
+        }
+        if lhs.direction != rhs.direction {
+            return lhs.direction < rhs.direction
         }
         return false
     }
 
-    private static func parallelBundleKey(for edge: CanvasEdge) -> ParallelBundleKey {
-        if edge.fromNodeID.rawValue <= edge.toNodeID.rawValue {
-            return ParallelBundleKey(firstNodeID: edge.fromNodeID, secondNodeID: edge.toNodeID)
+    private static func isAnchorEdgeRefOrdered(_ lhs: AnchorEdgeRef, _ rhs: AnchorEdgeRef) -> Bool {
+        if lhs.edgeID.rawValue != rhs.edgeID.rawValue {
+            return lhs.edgeID.rawValue < rhs.edgeID.rawValue
         }
-        return ParallelBundleKey(firstNodeID: edge.toNodeID, secondNodeID: edge.fromNodeID)
+        switch (lhs.kind, rhs.kind) {
+        case (.start, .end):
+            return true
+        case (.end, .start):
+            return false
+        default:
+            return false
+        }
     }
 
     private static func laneAdjustedCoordinate(
@@ -304,7 +365,7 @@ extension CanvasEdgeRouting {
         direction: Double,
         parentNode: CanvasNode,
         childNode: CanvasNode,
-        laneOffset: Double
+        laneOffsets: EdgeLaneOffsets
     ) -> RouteEndpoints {
         let parentCenterX = parentNode.bounds.x + (parentNode.bounds.width / 2)
         let parentCenterY = parentNode.bounds.y + (parentNode.bounds.height / 2)
@@ -314,18 +375,22 @@ extension CanvasEdgeRouting {
         let startX =
             axis == .horizontal
             ? edgeExitCoordinate(for: parentNode, axis: axis, direction: direction)
-            : laneAdjustedCoordinate(for: parentNode, axis: axis, baseCoordinate: parentCenterX, laneOffset: laneOffset)
+            : laneAdjustedCoordinate(
+                for: parentNode, axis: axis, baseCoordinate: parentCenterX, laneOffset: laneOffsets.start)
         let startY =
             axis == .horizontal
-            ? laneAdjustedCoordinate(for: parentNode, axis: axis, baseCoordinate: parentCenterY, laneOffset: laneOffset)
+            ? laneAdjustedCoordinate(
+                for: parentNode, axis: axis, baseCoordinate: parentCenterY, laneOffset: laneOffsets.start)
             : edgeExitCoordinate(for: parentNode, axis: axis, direction: direction)
         let endX =
             axis == .horizontal
             ? edgeEntryCoordinate(for: childNode, axis: axis, direction: direction)
-            : laneAdjustedCoordinate(for: childNode, axis: axis, baseCoordinate: childCenterX, laneOffset: laneOffset)
+            : laneAdjustedCoordinate(
+                for: childNode, axis: axis, baseCoordinate: childCenterX, laneOffset: laneOffsets.end)
         let endY =
             axis == .horizontal
-            ? laneAdjustedCoordinate(for: childNode, axis: axis, baseCoordinate: childCenterY, laneOffset: laneOffset)
+            ? laneAdjustedCoordinate(
+                for: childNode, axis: axis, baseCoordinate: childCenterY, laneOffset: laneOffsets.end)
             : edgeEntryCoordinate(for: childNode, axis: axis, direction: direction)
 
         return RouteEndpoints(startX: startX, startY: startY, endX: endX, endY: endY)
@@ -497,3 +562,4 @@ extension CanvasEdgeRouting {
         }
     }
 }
+// swiftlint:enable file_length
