@@ -731,6 +731,7 @@
 - 2026-02-28: `pasteClipboardAtFocusedNode` を更新し、複数ノード貼り付け後の `selectedNodeIDs` を先頭ルート1件ではなく、挿入された全ノード集合へ更新する仕様に変更。
 - 2026-02-28: `CanvasCommand.scaleSelectedNodes` と `CanvasNodeScaleDirection` を追加し、`⌘⌥+` / `⌘⌥-`（互換キーコードを含む）で選択ノードの拡大縮小を実行可能にした。拡縮量は基準長に対する比率（`nodeScaleStepRatio = 0.1`）で一元管理し、Diagram ノードは `110...330` の正方形へ正規化する仕様へ更新した。
 - 2026-03-01: Diagram エリアの `connectNodes` を更新し、同一ノード間の `normal` エッジ重複接続を許可した。重複エッジは表示時にレーン分離で描画し、edge フォーカス移動では同一点エッジ群を方向キーで巡回できる仕様へ更新した。
+- 2026-03-05: edge 描画ルーティングを拡張し、同一 endpoint ペアの重複だけでなく「片側ノード・同一辺アンカーを共有する edge（例: A-B / A-C）」でも接続点をレーン分離する仕様へ更新した。矢印先端と edge ラベル位置も同一ルート幾何を参照するため、分離結果に追従する。
 - 2026-03-01: `CanvasFocusNavigationService.nextFocusedEdgeID` を更新し、重複 edge の巡回を方向候補探索より優先するよう変更。巡回対象は「同一 endpoint ペア（無向・relationType 一致）」に限定し、中心座標一致のみの無関係 edge への遷移を禁止した。
 - 2026-03-01: `CanvasFocusedElement` に `area` を追加し、`CanvasCommand.focusArea` と `switchTargetKind(.cycle)` を導入。`tab` で `node -> edge -> area -> node` を巡回し、area 対象時はエリア外周（凸包）をフォーカス表示する仕様へ更新した。
 - 2026-03-01: `CanvasEdgeDirectionality`（`none/fromTo/toFrom`）と `CanvasCommand.cycleFocusedEdgeDirectionality` を追加し、edge ターゲット中の `cmd+;` / Command Palette から矢印方向を循環切替できるよう更新。表示側は `directionality` に応じてエッジ先端へ矢印を描画する仕様に変更した。あわせて directionality 切替時の `selectedEdgeIDs` 受け渡しを追加し、edge ターゲットの複数選択が潰れないよう修正した。

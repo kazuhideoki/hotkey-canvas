@@ -91,7 +91,10 @@ public struct CanvasView: View {
                 edges: displayEdges,
                 nodesByID: nodesByID
             )
-            let laneOffsetByEdgeID = CanvasEdgeRouting.laneOffsetByEdgeID(edges: displayEdges)
+            let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
+                edges: displayEdges,
+                nodesByID: nodesByID
+            )
             let commandPaletteItems = filteredCommandPaletteItems()
             let recentCommandPaletteItemIDs = Set(
                 commandPaletteRecentItemIDs.prefix(Self.commandPaletteRecentPinnedCount)
@@ -223,8 +226,12 @@ public struct CanvasView: View {
                             for: edge,
                             nodesByID: nodesByID,
                             branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+<<<<<<< HEAD
                             laneOffsetByEdgeID: laneOffsetByEdgeID,
                             edgeShapeStyle: edgeShapeStyle
+=======
+                            laneOffsetsByEdgeID: laneOffsetsByEdgeID
+>>>>>>> main
                         ) {
                             let isFocusedEdge = focusedEdgeID == edge.id
                             let isSelectedEdge = selectedEdgeIDs.contains(edge.id)
@@ -245,9 +252,13 @@ public struct CanvasView: View {
                             let edgeRenderContext = EdgeRenderContext(
                                 nodesByID: nodesByID,
                                 branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+<<<<<<< HEAD
                                 laneOffsetByEdgeID: laneOffsetByEdgeID,
                                 areaIDByNodeID: viewModel.areaIDByNodeID,
                                 areaEdgeShapeStyleByID: viewModel.areaEdgeShapeStyleByID,
+=======
+                                laneOffsetsByEdgeID: laneOffsetsByEdgeID,
+>>>>>>> main
                                 viewportSize: viewportSize,
                                 zoomScale: zoomScale,
                                 cameraOffset: cameraOffset
