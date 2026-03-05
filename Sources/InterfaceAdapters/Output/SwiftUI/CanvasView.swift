@@ -217,11 +217,14 @@ public struct CanvasView: View {
                     areaFocusOverlay(
                         displayNodes: displayNodes, viewportSize: viewportSize, effectiveOffset: cameraOffset)
                     ForEach(displayEdges, id: \.id) { edge in
+                        let areaID = viewModel.areaIDByNodeID[edge.fromNodeID]
+                        let edgeShapeStyle = areaID.flatMap { viewModel.areaEdgeShapeStyleByID[$0] } ?? .curved
                         if let path = CanvasEdgeRouting.path(
                             for: edge,
                             nodesByID: nodesByID,
                             branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-                            laneOffsetByEdgeID: laneOffsetByEdgeID
+                            laneOffsetByEdgeID: laneOffsetByEdgeID,
+                            edgeShapeStyle: edgeShapeStyle
                         ) {
                             let isFocusedEdge = focusedEdgeID == edge.id
                             let isSelectedEdge = selectedEdgeIDs.contains(edge.id)
@@ -243,6 +246,8 @@ public struct CanvasView: View {
                                 nodesByID: nodesByID,
                                 branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
                                 laneOffsetByEdgeID: laneOffsetByEdgeID,
+                                areaIDByNodeID: viewModel.areaIDByNodeID,
+                                areaEdgeShapeStyleByID: viewModel.areaEdgeShapeStyleByID,
                                 viewportSize: viewportSize,
                                 zoomScale: zoomScale,
                                 cameraOffset: cameraOffset

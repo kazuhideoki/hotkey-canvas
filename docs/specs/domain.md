@@ -23,7 +23,7 @@
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
 | D5 | ショートカットカタログ | `CanvasCommandPaletteLabel`, `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService`, `KeymapShortcutScope`, `KeymapPrimitiveIntent`, `KeymapGlobalAction`, `KeymapResolvedRoute`, `KeymapIntentResolver` |
 | D6 | 折りたたみ可視性 | `CanvasFoldedSubtreeVisibilityService` |
-| D7 | エリアモード所属管理 | `CanvasAreaID`, `CanvasEditingMode`, `CanvasArea`, `CanvasAreaMembershipService`, `CanvasAreaPolicyError` |
+| D7 | エリアモード所属管理 | `CanvasAreaID`, `CanvasEditingMode`, `CanvasArea`, `CanvasAreaEdgeShapeStyle`, `CanvasAreaMembershipService`, `CanvasAreaPolicyError` |
 
 ### D5 追加仕様（ズーム/折りたたみ/接続/複製ショートカット）
 
@@ -101,6 +101,7 @@
   - `CanvasCommand.setEdgeLabel(edgeID:label:)`
   - `CanvasCommand.duplicateSelectionAsSibling`
   - `CanvasCommand.toggleFocusedNodeMarkdownStyle`
+  - `CanvasCommand.toggleFocusedAreaEdgeShapeStyle`
   - `CanvasCommand.alignAllAreasVertically`
   - `CanvasCommand.extendSelection`
   - `CanvasCommand.focusNode(CanvasNodeID)`
@@ -570,7 +571,8 @@
 - モデル
   - `CanvasAreaID`
   - `CanvasEditingMode`（`tree` / `diagram`）
-  - `CanvasArea`（`id`, `nodeIDs`, `editingMode`）
+  - `CanvasArea`（`id`, `nodeIDs`, `editingMode`, `edgeShapeStyle`）
+  - `CanvasAreaEdgeShapeStyle`（`curved` / `straight`）
 - エラー
   - `CanvasAreaPolicyError`
 - サービス
@@ -587,6 +589,7 @@
 | `focusedAreaID(in:)` | フォーカス対象からエリアIDを解決する（`focusedElement == .area` を優先し、未指定時はフォーカスノード所属を解決）。 |
 | `area(withID:in:)` | エリアIDからエリア情報を取得する。 |
 | `convertFocusedAreaMode(to:in:)` | フォーカスノード所属エリアの編集モードを変換する（同一モード指定は no-op 成功）。 |
+| `toggleFocusedAreaEdgeShapeStyle(in:)` | フォーカスエリアの edge 描画スタイル（`curved` / `straight`）をトグルする。 |
 | `createArea(id:mode:nodeIDs:in:)` | 新規エリアを作成する。 |
 | `assign(nodeIDs:to:in:)` | ノード集合を指定エリアへ再所属させる。 |
 | `remove(nodeIDs:in:)` | ノード集合を全エリア所属から除外する。 |
@@ -596,7 +599,7 @@
 - Application ユースケース
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+CommandDispatch.swift`
     - コマンド適用前に所属整合性検証と対象エリア解決を行う。
-    - `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
+    - `toggleFocusedAreaEdgeShapeStyle` / `convertFocusedAreaMode` / `createArea` / `assignNodesToArea` をエリア管理コマンドとして適用する。
     - Diagram エリアでは `addChildNode` を `addNode` へ正規化する。
     - Diagram エリアでは `duplicateSelectionAsSibling` を不許可とする（`unsupportedCommandInMode`）。
     - Diagram エリアでは `connectNodes` を許可し、同一エリア内の既存ノード同士を `normal` エッジで接続する（自己接続・跨ぎ接続は no-op、同一ノード間の重複接続は許可）。接続成功時はフォーカスと選択を接続先ノードへ移す。

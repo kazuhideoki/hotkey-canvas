@@ -476,6 +476,24 @@ extension CanvasShortcutCatalogService {
                 commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
                 executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.tree]))
             ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "toggleFocusedAreaEdgeShapeStyle"),
+                commandPaletteLabel: CanvasCommandPaletteLabel(
+                    noun: "Area",
+                    verb: "Toggle Edge Shape"
+                ),
+                gesture: CanvasShortcutGesture(key: .character("e"), modifiers: [.command, .shift]),
+                action: .apply(commands: [.toggleFocusedAreaEdgeShapeStyle]),
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("e"), modifiers: [.command, .shift])
+                ),
+                searchTokens: ["area", "edge", "shape", "style", "curved", "straight", "toggle"],
+                commandPaletteVisibility: .requiresFocusedNode,
+                executionCondition: .all([
+                    .targetKinds([.node, .edge, .area]),
+                    .requiresFocusedNode,
+                ])
+            ),
         ]
     }
 

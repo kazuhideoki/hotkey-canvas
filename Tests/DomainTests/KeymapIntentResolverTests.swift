@@ -119,3 +119,12 @@ func test_resolveRoute_commandOptionRight_returnsPrimitiveMoveFocusAcrossAreasTo
 
     #expect(route == .primitive(intent: .moveFocus(direction: .right, variant: .acrossAreasToRoot)))
 }
+
+@Test("KeymapIntentResolver: command-shift-e resolves area edge-shape toggle edit intent")
+func test_resolveRoute_commandShiftE_returnsPrimitiveEditToggleAreaEdgeShape() {
+    let gesture = CanvasShortcutGesture(key: .character("e"), modifiers: [.command, .shift])
+
+    let route = KeymapIntentResolver.resolveRoute(for: gesture)
+
+    #expect(route == .primitive(intent: .edit(variant: .toggleFocusedAreaEdgeShapeStyle)))
+}

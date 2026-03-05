@@ -56,6 +56,8 @@ extension DefaultKeymapContextActionResolver {
         switch variant {
         case .alignAllAreasVertically:
             return .apply(commands: [.alignAllAreasVertically])
+        case .toggleFocusedAreaEdgeShapeStyle:
+            return .apply(commands: [.toggleFocusedAreaEdgeShapeStyle])
         case .copySelectionOrFocusedSubtree:
             return .apply(commands: [.copySelectionOrFocusedSubtree])
         case .cutSelectionOrFocusedSubtree:

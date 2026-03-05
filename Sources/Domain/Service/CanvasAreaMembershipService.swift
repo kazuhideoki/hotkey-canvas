@@ -107,10 +107,16 @@ public enum CanvasAreaMembershipService {
             nextAreasByID[currentAreaID] = CanvasArea(
                 id: currentArea.id,
                 nodeIDs: currentArea.nodeIDs.subtracting(nodeIDs),
-                editingMode: currentArea.editingMode
+                editingMode: currentArea.editingMode,
+                edgeShapeStyle: currentArea.edgeShapeStyle
             )
         }
-        nextAreasByID[id] = CanvasArea(id: id, nodeIDs: nodeIDs, editingMode: mode)
+        nextAreasByID[id] = CanvasArea(
+            id: id,
+            nodeIDs: nodeIDs,
+            editingMode: mode,
+            edgeShapeStyle: .curved
+        )
         let nextGraph = CanvasGraph(
             nodesByID: graph.nodesByID,
             edgesByID: graph.edgesByID,
@@ -162,7 +168,8 @@ public enum CanvasAreaMembershipService {
             nextAreasByID[currentAreaID] = CanvasArea(
                 id: currentArea.id,
                 nodeIDs: remainingNodeIDs,
-                editingMode: currentArea.editingMode
+                editingMode: currentArea.editingMode,
+                edgeShapeStyle: currentArea.edgeShapeStyle
             )
         }
 
@@ -172,7 +179,8 @@ public enum CanvasAreaMembershipService {
         nextAreasByID[areaID] = CanvasArea(
             id: destination.id,
             nodeIDs: destination.nodeIDs.union(nodeIDs),
-            editingMode: destination.editingMode
+            editingMode: destination.editingMode,
+            edgeShapeStyle: destination.edgeShapeStyle
         )
 
         let nextGraph = CanvasGraph(
@@ -211,7 +219,8 @@ public enum CanvasAreaMembershipService {
             nextAreasByID[areaID] = CanvasArea(
                 id: area.id,
                 nodeIDs: area.nodeIDs.subtracting(nodeIDs),
-                editingMode: area.editingMode
+                editingMode: area.editingMode,
+                edgeShapeStyle: area.edgeShapeStyle
             )
         }
         return CanvasGraph(
@@ -246,13 +255,53 @@ public enum CanvasAreaMembershipService {
             nextAreasByID[areaID] = CanvasArea(
                 id: focusedArea.id,
                 nodeIDs: focusedArea.nodeIDs,
-                editingMode: mode
+                editingMode: mode,
+                edgeShapeStyle: focusedArea.edgeShapeStyle
             )
             let nextGraph = CanvasGraph(
                 nodesByID: graph.nodesByID,
                 edgesByID: graph.edgesByID,
                 focusedNodeID: graph.focusedNodeID,
                 selectedNodeIDs: graph.selectedNodeIDs,
+                collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+                areasByID: nextAreasByID
+            )
+            switch validate(in: nextGraph) {
+            case .success:
+                return .success(nextGraph)
+            case .failure(let error):
+                return .failure(error)
+            }
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
+    /// Toggles focused area edge shape style.
+    /// - Parameter graph: Source graph.
+    /// - Returns: Graph with toggled edge shape style in focused area.
+    public static func toggleFocusedAreaEdgeShapeStyle(
+        in graph: CanvasGraph
+    ) -> Result<CanvasGraph, CanvasAreaPolicyError> {
+        switch focusedAreaID(in: graph) {
+        case .success(let areaID):
+            guard let focusedArea = graph.areasByID[areaID] else {
+                return .failure(.areaNotFound(areaID))
+            }
+            var nextAreasByID = graph.areasByID
+            nextAreasByID[areaID] = CanvasArea(
+                id: focusedArea.id,
+                nodeIDs: focusedArea.nodeIDs,
+                editingMode: focusedArea.editingMode,
+                edgeShapeStyle: focusedArea.edgeShapeStyle.toggled
+            )
+            let nextGraph = CanvasGraph(
+                nodesByID: graph.nodesByID,
+                edgesByID: graph.edgesByID,
+                focusedNodeID: graph.focusedNodeID,
+                focusedElement: graph.focusedElement,
+                selectedNodeIDs: graph.selectedNodeIDs,
+                selectedEdgeIDs: graph.selectedEdgeIDs,
                 collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
                 areasByID: nextAreasByID
             )

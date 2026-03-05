@@ -321,6 +321,52 @@ func test_routeGeometry_relativelyVertical_prefersVerticalRouting() {
     #expect(geometry?.endY == 310)  // child top edge
 }
 
+@Test("CanvasEdgeRouting: curved geometry bulges outward for vertical routes regardless of edge direction")
+func test_curvedGeometry_verticalRoute_positiveLaneBulgesOutwardForBothDirections() {
+    let downward = CanvasEdgeRouting.RouteGeometry(
+        axis: .vertical,
+        startX: 300,
+        startY: 120,
+        branchCoordinate: 300,
+        endX: 300,
+        endY: 520
+    )
+    let upward = CanvasEdgeRouting.RouteGeometry(
+        axis: .vertical,
+        startX: 300,
+        startY: 520,
+        branchCoordinate: 300,
+        endX: 300,
+        endY: 120
+    )
+
+    let downwardCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: downward, laneOffset: 10)
+    let upwardCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: upward, laneOffset: 10)
+
+    #expect(downwardCurve.control1.x > downward.startX)
+    #expect(downwardCurve.control2.x > downward.endX)
+    #expect(upwardCurve.control1.x > upward.startX)
+    #expect(upwardCurve.control2.x > upward.endX)
+}
+
+@Test("CanvasEdgeRouting: curved geometry increases bulge as lane gets farther from center")
+func test_curvedGeometry_largerLaneOffsetIncreasesBulge() {
+    let geometry = CanvasEdgeRouting.RouteGeometry(
+        axis: .horizontal,
+        startX: 120,
+        startY: 220,
+        branchCoordinate: 320,
+        endX: 620,
+        endY: 220
+    )
+
+    let nearCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffset: 7)
+    let farCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffset: 21)
+
+    #expect(farCurve.control1.y - geometry.startY > nearCurve.control1.y - geometry.startY)
+    #expect(farCurve.control2.y - geometry.endY > nearCurve.control2.y - geometry.endY)
+}
+
 private func makeNode(
     id: CanvasNodeID,
     x: Double,

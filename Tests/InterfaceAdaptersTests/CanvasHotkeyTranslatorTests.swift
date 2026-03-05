@@ -95,6 +95,21 @@ func test_resolve_commandSemicolon_returnsCycleEdgeDirectionalityIntent() throws
     #expect(route == .primitive(intent: .cycleFocusedEdgeDirectionality))
 }
 
+@Test("CanvasHotkeyTranslator: Command+Shift+E resolves area edge-shape toggle intent")
+func test_resolve_commandShiftE_returnsToggleAreaEdgeShapeIntent() throws {
+    let sut = CanvasHotkeyTranslator()
+    let event = try makeKeyEvent(
+        keyCode: 14,
+        characters: "E",
+        charactersIgnoringModifiers: "e",
+        modifiers: [.command, .shift]
+    )
+
+    let route = sut.resolve(event)
+
+    #expect(route == .primitive(intent: .edit(variant: .toggleFocusedAreaEdgeShapeStyle)))
+}
+
 @Test("CanvasHotkeyTranslator: Option+Period resolves toggle-visibility intent")
 func test_resolve_optionPeriod_returnsToggleVisibilityIntent() throws {
     let sut = CanvasHotkeyTranslator()

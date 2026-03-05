@@ -11,6 +11,7 @@ public enum KeymapAddIntentVariant: Equatable, Sendable {
 /// Intent variant for edit-like primitive actions.
 public enum KeymapEditIntentVariant: Equatable, Sendable {
     case alignAllAreasVertically
+    case toggleFocusedAreaEdgeShapeStyle
     case copySelectionOrFocusedSubtree
     case cutSelectionOrFocusedSubtree
     case pasteClipboardAtFocusedNode
