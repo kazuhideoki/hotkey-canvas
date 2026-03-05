@@ -44,7 +44,8 @@ extension CanvasView {
                     )
                     .frame(
                         width: fieldWidth,
-                        height: CGFloat(edgeEditingContext?.editorHeight ?? edgeLabelEditorHeight(zoomScale: context.zoomScale))
+                        height: CGFloat(
+                            edgeEditingContext?.editorHeight ?? edgeLabelEditorHeight(zoomScale: context.zoomScale))
                     )
                     .padding(.horizontal, Self.edgeLabelHorizontalPadding)
                     .padding(.vertical, Self.edgeLabelVerticalPadding)
@@ -96,7 +97,7 @@ extension CanvasView {
                 for: edge,
                 nodesByID: context.nodesByID,
                 branchCoordinateByParentAndDirection: context.branchCoordinateByParentAndDirection,
-                laneOffsetByEdgeID: context.laneOffsetByEdgeID
+                laneOffsetsByEdgeID: context.laneOffsetsByEdgeID
             )
         else {
             return nil
@@ -130,7 +131,8 @@ extension CanvasView {
             ofSize: edgeLabelFontSize(zoomScale: zoomScale),
             weight: .medium
         )
-        let measuredWidth = label
+        let measuredWidth =
+            label
             .split(separator: "\n", omittingEmptySubsequences: false)
             .map { line in
                 (String(line) as NSString).size(withAttributes: [.font: font]).width
@@ -147,7 +149,8 @@ extension CanvasView {
         )
         // Keep editing height to one line so edge label editor remains compact.
         let contentHeight = font.ascender - font.descender + font.leading
-        let insets = nodeTextStyle.textContainerInset
+        let insets =
+            nodeTextStyle.textContainerInset
             * max(CGFloat(zoomScale), 0.0001)
             * edgeLabelEditorContentScale(zoomScale: zoomScale)
             * 2

@@ -91,7 +91,10 @@ public struct CanvasView: View {
                 edges: displayEdges,
                 nodesByID: nodesByID
             )
-            let laneOffsetByEdgeID = CanvasEdgeRouting.laneOffsetByEdgeID(edges: displayEdges)
+            let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
+                edges: displayEdges,
+                nodesByID: nodesByID
+            )
             let commandPaletteItems = filteredCommandPaletteItems()
             let recentCommandPaletteItemIDs = Set(
                 commandPaletteRecentItemIDs.prefix(Self.commandPaletteRecentPinnedCount)
@@ -221,7 +224,7 @@ public struct CanvasView: View {
                             for: edge,
                             nodesByID: nodesByID,
                             branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-                            laneOffsetByEdgeID: laneOffsetByEdgeID
+                            laneOffsetsByEdgeID: laneOffsetsByEdgeID
                         ) {
                             let isFocusedEdge = focusedEdgeID == edge.id
                             let isSelectedEdge = selectedEdgeIDs.contains(edge.id)
@@ -242,7 +245,7 @@ public struct CanvasView: View {
                             let edgeRenderContext = EdgeRenderContext(
                                 nodesByID: nodesByID,
                                 branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-                                laneOffsetByEdgeID: laneOffsetByEdgeID,
+                                laneOffsetsByEdgeID: laneOffsetsByEdgeID,
                                 viewportSize: viewportSize,
                                 zoomScale: zoomScale,
                                 cameraOffset: cameraOffset

@@ -8,7 +8,7 @@ extension CanvasView {
     struct EdgeRenderContext {
         let nodesByID: [CanvasNodeID: CanvasNode]
         let branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double]
-        let laneOffsetByEdgeID: [CanvasEdgeID: Double]
+        let laneOffsetsByEdgeID: [CanvasEdgeID: CanvasEdgeRouting.EdgeLaneOffsets]
         let viewportSize: CGSize
         let zoomScale: Double
         let cameraOffset: CGSize
@@ -67,7 +67,7 @@ extension CanvasView {
                 for: edge,
                 nodesByID: context.nodesByID,
                 branchCoordinateByParentAndDirection: context.branchCoordinateByParentAndDirection,
-                laneOffsetByEdgeID: context.laneOffsetByEdgeID
+                laneOffsetsByEdgeID: context.laneOffsetsByEdgeID
             )
         else {
             return nil

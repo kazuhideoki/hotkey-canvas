@@ -5,8 +5,8 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasEdgeRouting: duplicated edges receive symmetric lane offsets")
-func test_laneOffsetByEdgeID_forDuplicatedEdges_returnsSymmetricOffsets() throws {
+@Test("CanvasEdgeRouting: duplicated edges receive symmetric lane offsets on both endpoints")
+func test_laneOffsetsByEdgeID_forDuplicatedEdges_returnsSymmetricOffsets() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
     let edgeAID = CanvasEdgeID(rawValue: "edge-a")
@@ -15,18 +15,23 @@ func test_laneOffsetByEdgeID_forDuplicatedEdges_returnsSymmetricOffsets() throws
         CanvasEdge(id: edgeAID, fromNodeID: parentID, toNodeID: childID, relationType: .normal),
         CanvasEdge(id: edgeBID, fromNodeID: parentID, toNodeID: childID, relationType: .normal),
     ]
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 80, y: 200, width: 220, height: 220),
+        childID: makeNode(id: childID, x: 460, y: 360, width: 220, height: 220),
+    ]
 
-    let laneOffsetByEdgeID = CanvasEdgeRouting.laneOffsetByEdgeID(edges: edges)
+    let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(edges: edges, nodesByID: nodesByID)
 
-    let laneOffsetA = try #require(laneOffsetByEdgeID[edgeAID])
-    let laneOffsetB = try #require(laneOffsetByEdgeID[edgeBID])
-    #expect(laneOffsetA == -laneOffsetB)
-    #expect(laneOffsetA < 0)
-    #expect(laneOffsetB > 0)
+    let laneOffsetsA = try #require(laneOffsetsByEdgeID[edgeAID])
+    let laneOffsetsB = try #require(laneOffsetsByEdgeID[edgeBID])
+    #expect(laneOffsetsA.start == -laneOffsetsB.start)
+    #expect(laneOffsetsA.end == -laneOffsetsB.end)
+    #expect(laneOffsetsA.start < 0)
+    #expect(laneOffsetsB.start > 0)
 }
 
 @Test("CanvasEdgeRouting: opposite directions between same nodes also receive split lanes")
-func test_laneOffsetByEdgeID_forOppositeDirections_returnsSymmetricOffsets() throws {
+func test_laneOffsetsByEdgeID_forOppositeDirections_returnsSymmetricOffsets() throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
     let edgeABID = CanvasEdgeID(rawValue: "edge-a-b")
@@ -35,13 +40,18 @@ func test_laneOffsetByEdgeID_forOppositeDirections_returnsSymmetricOffsets() thr
         CanvasEdge(id: edgeABID, fromNodeID: nodeAID, toNodeID: nodeBID, relationType: .normal),
         CanvasEdge(id: edgeBAID, fromNodeID: nodeBID, toNodeID: nodeAID, relationType: .normal),
     ]
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        nodeAID: makeNode(id: nodeAID, x: 80, y: 200, width: 220, height: 220),
+        nodeBID: makeNode(id: nodeBID, x: 460, y: 360, width: 220, height: 220),
+    ]
 
-    let laneOffsetByEdgeID = CanvasEdgeRouting.laneOffsetByEdgeID(edges: edges)
-    let laneOffsetAB = try #require(laneOffsetByEdgeID[edgeABID])
-    let laneOffsetBA = try #require(laneOffsetByEdgeID[edgeBAID])
-    #expect(laneOffsetAB == -laneOffsetBA)
-    #expect(laneOffsetAB != 0)
-    #expect(laneOffsetBA != 0)
+    let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(edges: edges, nodesByID: nodesByID)
+    let laneOffsetsAB = try #require(laneOffsetsByEdgeID[edgeABID])
+    let laneOffsetsBA = try #require(laneOffsetsByEdgeID[edgeBAID])
+    #expect(laneOffsetsAB.start == -laneOffsetsBA.end)
+    #expect(laneOffsetsAB.end == -laneOffsetsBA.start)
+    #expect(laneOffsetsAB.start != 0)
+    #expect(laneOffsetsBA.start != 0)
 }
 
 @Test("CanvasEdgeRouting: sibling edges share a branch column between parent and children on right side")
@@ -194,14 +204,17 @@ func test_routeGeometry_withLaneOffsets_separatesDuplicatedHorizontalEdges() thr
         parentID: makeNode(id: parentID, x: 80, y: 200, width: 220, height: 220),
         childID: makeNode(id: childID, x: 460, y: 360, width: 220, height: 220),
     ]
-    let laneOffsetByEdgeID = CanvasEdgeRouting.laneOffsetByEdgeID(edges: [edgeA, edgeB])
+    let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
+        edges: [edgeA, edgeB],
+        nodesByID: nodesByID
+    )
 
     let geometryA = try #require(
         CanvasEdgeRouting.routeGeometry(
             for: edgeA,
             nodesByID: nodesByID,
             branchCoordinateByParentAndDirection: [:],
-            laneOffsetByEdgeID: laneOffsetByEdgeID
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID
         )
     )
     let geometryB = try #require(
@@ -209,7 +222,7 @@ func test_routeGeometry_withLaneOffsets_separatesDuplicatedHorizontalEdges() thr
             for: edgeB,
             nodesByID: nodesByID,
             branchCoordinateByParentAndDirection: [:],
-            laneOffsetByEdgeID: laneOffsetByEdgeID
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID
         )
     )
 
@@ -220,6 +233,48 @@ func test_routeGeometry_withLaneOffsets_separatesDuplicatedHorizontalEdges() thr
     #expect(geometryA.startY != geometryB.startY)
     #expect(geometryA.endY != geometryB.endY)
     #expect(geometryA.branchCoordinate != geometryB.branchCoordinate)
+}
+
+@Test("CanvasEdgeRouting: edges sharing only one node side still receive separated anchors")
+func test_routeGeometry_withSharedOneSideNode_separatesSharedAnchors() throws {
+    let sharedNodeID = CanvasNodeID(rawValue: "shared")
+    let nodeBID = CanvasNodeID(rawValue: "node-b")
+    let nodeCID = CanvasNodeID(rawValue: "node-c")
+    let edgeABID = CanvasEdgeID(rawValue: "edge-a-b")
+    let edgeACID = CanvasEdgeID(rawValue: "edge-a-c")
+    let edgeAB = CanvasEdge(id: edgeABID, fromNodeID: sharedNodeID, toNodeID: nodeBID, relationType: .normal)
+    let edgeAC = CanvasEdge(id: edgeACID, fromNodeID: sharedNodeID, toNodeID: nodeCID, relationType: .normal)
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        sharedNodeID: makeNode(id: sharedNodeID, x: 80, y: 200, width: 220, height: 220),
+        nodeBID: makeNode(id: nodeBID, x: 460, y: 120, width: 220, height: 220),
+        nodeCID: makeNode(id: nodeCID, x: 460, y: 420, width: 220, height: 220),
+    ]
+    let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
+        edges: [edgeAB, edgeAC],
+        nodesByID: nodesByID
+    )
+
+    let geometryAB = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: edgeAB,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:],
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID
+        )
+    )
+    let geometryAC = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: edgeAC,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:],
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID
+        )
+    )
+
+    #expect(geometryAB.axis == .horizontal)
+    #expect(geometryAC.axis == .horizontal)
+    #expect(geometryAB.startX == geometryAC.startX)
+    #expect(geometryAB.startY != geometryAC.startY)
 }
 
 @Test("CanvasEdgeRouting: left-side child route enters from child right edge")
