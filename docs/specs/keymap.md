@@ -48,6 +48,7 @@
 - edge 対象では `ctrl+a` / `ctrl+e` / 直接文字入力で edge ラベルのインライン編集を開始できる。`ctrl+a` はカーソル先頭、`ctrl+e` はカーソル末尾で開始する。
 - edge 対象では node 追加系（`cmd+enter` / `shift+enter`）を無効化し、誤ってノード追加に流れないようにする。
 - edge 対象では node 編集系（`cmd+c` / `cmd+x` / `cmd+v` / `cmd+arrow` / `cmd+shift+arrow` / `cmd+opt+-` / `cmd+opt++`）を無効化する。
+- 実行可否ポリシーが明示されていないコマンドは実行不可（default deny）とし、許可するコマンドのみ宣言的に有効条件を定義する。
 - edge にラベル文字列がある場合は、edge ルート中央に最小限のラベル枠を表示する。
 - モード差分や正規化ルールは上記 `Primitive（EditMode差分）` の各行を正本とし、Command Palette も同じ条件系に従う。
 - Command Palette では edge 対象時に `Edge: Delete Selected` が表示され、`delete` と同じ削除規則（focused edge を含む複数選択は一括削除）が適用されます。

@@ -181,7 +181,13 @@ extension CanvasView {
     }
 
     private func alignAllAreasVerticallyCommandPaletteItem() -> CommandPaletteItem? {
-        guard viewModel.focusedNodeID != nil else {
+        guard
+            viewModel.focusedNodeID != nil,
+            Self.isActionEnabled(
+                .apply(commands: [.alignAllAreasVertically]),
+                context: keymapExecutionContextForCommandPalette()
+            )
+        else {
             return nil
         }
         return CommandPaletteItem(
@@ -414,7 +420,7 @@ extension CanvasView {
             editingMode: commandPaletteActiveEditingMode(),
             operationTargetKind: operationTargetKind,
             hasFocusedNode: viewModel.focusedNodeID != nil,
-            isEditingText: editingContext != nil,
+            isEditingText: editingContext != nil || edgeEditingContext != nil,
             isCommandPalettePresented: isCommandPalettePresented,
             isSearchPresented: isSearchPresented,
             isConnectNodeSelectionActive: isConnectNodeSelectionActive(),

@@ -188,13 +188,32 @@ extension CanvasView {
         _ command: CanvasCommand,
         context: KeymapExecutionContext
     ) -> Bool {
-        guard let definition = CanvasShortcutCatalogService.definition(for: command) else {
-            return true
+        if let definition = CanvasShortcutCatalogService.definition(for: command) {
+            return KeymapExecutionPolicyResolver.isEnabled(
+                definition: definition,
+                context: context
+            )
         }
-        return KeymapExecutionPolicyResolver.isEnabled(
-            definition: definition,
-            context: context
-        )
+        guard let fallbackCondition = fallbackExecutionCondition(for: command) else {
+            // Default deny: commands without an explicit policy are not executable.
+            return false
+        }
+        return KeymapExecutionPolicyResolver.isEnabled(fallbackCondition, context: context)
+    }
+
+    private static func fallbackExecutionCondition(
+        for command: CanvasCommand
+    ) -> KeymapExecutionCondition? {
+        switch command {
+        case .moveArea:
+            return .all([.targetKinds([.area]), .requiresFocusedNode])
+        case .alignAllAreasVertically:
+            return .all([.targetKinds([.node, .area]), .requiresFocusedNode])
+        case .toggleFocusedNodeMarkdownStyle:
+            return .all([.targetKinds([.node]), .requiresFocusedNode])
+        default:
+            return nil
+        }
     }
 
     static func shouldExecuteCommandViaEdgeTarget(

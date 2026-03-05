@@ -148,6 +148,50 @@ func test_hotkeyPolicy_clipboardActionsDisabledInEdgeTarget() {
     #expect(!CanvasView.isActionEnabled(.apply(commands: [.pasteClipboardAtFocusedNode]), context: context))
 }
 
+@Test("CanvasView hotkey policy: moveArea is enabled only in area target")
+func test_hotkeyPolicy_moveAreaEnabledOnlyInAreaTarget() {
+    let allowedContext = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .area,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 0
+    )
+    let deniedContext = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .edge,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 1
+    )
+
+    #expect(CanvasView.isActionEnabled(.apply(commands: [.moveArea(.right)]), context: allowedContext))
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.moveArea(.right)]), context: deniedContext))
+}
+
+@Test("CanvasView hotkey policy: non-shortcut command fallback respects edge restrictions")
+func test_hotkeyPolicy_nonShortcutCommandFallbackRespectsEdgeRestrictions() {
+    let edgeContext = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .edge,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 1
+    )
+    let nodeContext = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .node,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 0
+    )
+
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.alignAllAreasVertically]), context: edgeContext))
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.toggleFocusedNodeMarkdownStyle]), context: edgeContext))
+    #expect(CanvasView.isActionEnabled(.apply(commands: [.alignAllAreasVertically]), context: nodeContext))
+    #expect(CanvasView.isActionEnabled(.apply(commands: [.toggleFocusedNodeMarkdownStyle]), context: nodeContext))
+}
+
 @Test("Command palette filtering reuses execution policy in area target")
 func test_areaTarget_commandPaletteFiltersByExecutionPolicy() {
     let paletteContext = CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
@@ -190,6 +234,33 @@ func test_diagramNodeTarget_commandPaletteShowsAddChildNode() {
     #expect(visibleIds.contains("addChildNode"))
     #expect(!visibleIds.contains("addSiblingNodeAbove"))
     #expect(!visibleIds.contains("addSiblingNodeBelow"))
+}
+
+@Test("Command palette filtering reuses execution policy in edge target")
+func test_edgeTarget_commandPaletteFiltersByExecutionPolicy() {
+    let paletteContext = CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: paletteContext,
+        executionContext: KeymapExecutionContext(
+            editingMode: .tree,
+            operationTargetKind: .edge,
+            hasFocusedNode: true,
+            selectedNodeCount: 1,
+            selectedEdgeCount: 1
+        )
+    )
+    let visibleIds = Set(definitions.map(\.id.rawValue))
+
+    #expect(!visibleIds.contains("addNode"))
+    #expect(!visibleIds.contains("addChildNode"))
+    #expect(!visibleIds.contains("addSiblingNodeAbove"))
+    #expect(!visibleIds.contains("addSiblingNodeBelow"))
+    #expect(!visibleIds.contains("copySelectionOrFocusedSubtree"))
+    #expect(!visibleIds.contains("cutSelectionOrFocusedSubtree"))
+    #expect(!visibleIds.contains("pasteClipboardAtFocusedNode"))
+    #expect(!visibleIds.contains("moveNodeUp"))
+    #expect(!visibleIds.contains("nudgeNodeUp"))
+    #expect(!visibleIds.contains("scaleSelectedNodesUp.commandOptionPlus"))
 }
 
 @Test("Command palette apply routing: edge target delegates edge-specific apply commands")
