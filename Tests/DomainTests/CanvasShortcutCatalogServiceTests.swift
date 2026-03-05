@@ -222,6 +222,123 @@ func test_moveFocusAcrossAreasToRoot_isDisabledInEdgeTarget() {
     )
 }
 
+@Test("Shortcut catalog: addNode and addChildNode are disabled in edge target")
+func test_addNodeCommands_areDisabledInEdgeTarget() {
+    let addNodeDefinition = CanvasShortcutCatalogService.definition(for: .addNode)
+    let addChildDefinition = CanvasShortcutCatalogService.definition(for: .addChildNode)
+    let edgeContext = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .edge,
+        hasFocusedNode: true
+    )
+
+    #expect(addNodeDefinition != nil)
+    #expect(addChildDefinition != nil)
+    #expect(
+        addNodeDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeContext)
+        } == true
+    )
+    #expect(
+        addChildDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeContext)
+        } == true
+    )
+}
+
+@Test("Shortcut catalog: tree add commands are disabled in edge target")
+func test_treeAddCommands_areDisabledInEdgeTarget() {
+    let addSiblingAboveDefinition = CanvasShortcutCatalogService.definition(for: .addSiblingNode(position: .above))
+    let addSiblingBelowDefinition = CanvasShortcutCatalogService.definition(for: .addSiblingNode(position: .below))
+    let duplicateDefinition = CanvasShortcutCatalogService.definition(for: .duplicateSelectionAsSibling)
+    let edgeTreeContext = KeymapExecutionContext(
+        editingMode: .tree,
+        operationTargetKind: .edge,
+        hasFocusedNode: true
+    )
+
+    #expect(addSiblingAboveDefinition != nil)
+    #expect(addSiblingBelowDefinition != nil)
+    #expect(duplicateDefinition != nil)
+    #expect(
+        addSiblingAboveDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeTreeContext)
+        } == true
+    )
+    #expect(
+        addSiblingBelowDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeTreeContext)
+        } == true
+    )
+    #expect(
+        duplicateDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeTreeContext)
+        } == true
+    )
+}
+
+@Test("Shortcut catalog: node transform commands are disabled in edge target")
+func test_nodeTransformCommands_areDisabledInEdgeTarget() {
+    let moveNodeDefinition = CanvasShortcutCatalogService.definition(for: .moveNode(.right))
+    let nudgeNodeDefinition = CanvasShortcutCatalogService.definition(for: .nudgeNode(.right))
+    let scaleNodeDefinition = CanvasShortcutCatalogService.definition(for: .scaleSelectedNodes(.up))
+    let edgeContext = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .edge,
+        hasFocusedNode: true
+    )
+
+    #expect(moveNodeDefinition != nil)
+    #expect(nudgeNodeDefinition != nil)
+    #expect(scaleNodeDefinition != nil)
+    #expect(
+        moveNodeDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeContext)
+        } == true
+    )
+    #expect(
+        nudgeNodeDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeContext)
+        } == true
+    )
+    #expect(
+        scaleNodeDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeContext)
+        } == true
+    )
+}
+
+@Test("Shortcut catalog: clipboard commands are disabled in edge target")
+func test_clipboardCommands_areDisabledInEdgeTarget() {
+    let copyDefinition = CanvasShortcutCatalogService.definition(for: .copySelectionOrFocusedSubtree)
+    let cutDefinition = CanvasShortcutCatalogService.definition(for: .cutSelectionOrFocusedSubtree)
+    let pasteDefinition = CanvasShortcutCatalogService.definition(for: .pasteClipboardAtFocusedNode)
+    let edgeContext = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .edge,
+        hasFocusedNode: true
+    )
+
+    #expect(copyDefinition != nil)
+    #expect(cutDefinition != nil)
+    #expect(pasteDefinition != nil)
+    #expect(
+        copyDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeContext)
+        } == true
+    )
+    #expect(
+        cutDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeContext)
+        } == true
+    )
+    #expect(
+        pasteDefinition.map {
+            !KeymapExecutionPolicyResolver.isEnabled(definition: $0, context: edgeContext)
+        } == true
+    )
+}
+
 @Test("Shortcut catalog: edge target hides moveFocusAcrossAreasToRoot in command palette")
 func test_commandPaletteDefinitions_edgeTarget_hidesMoveFocusAcrossAreasToRoot() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
@@ -236,6 +353,55 @@ func test_commandPaletteDefinitions_edgeTarget_hidesMoveFocusAcrossAreasToRoot()
 
     #expect(!ids.contains("moveFocusAcrossAreasToRootLeft"))
     #expect(!ids.contains("moveFocusAcrossAreasToRootRight"))
+}
+
+@Test("Shortcut catalog: edge target hides addNode in command palette")
+func test_commandPaletteDefinitions_edgeTarget_hidesAddNode() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
+        executionContext: KeymapExecutionContext(
+            editingMode: .diagram,
+            operationTargetKind: .edge,
+            hasFocusedNode: true
+        )
+    )
+    let ids = Set(definitions.map(\.id.rawValue))
+
+    #expect(!ids.contains("addNode"))
+}
+
+@Test("Shortcut catalog: edge target hides node transform commands in command palette")
+func test_commandPaletteDefinitions_edgeTarget_hidesNodeTransformCommands() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
+        executionContext: KeymapExecutionContext(
+            editingMode: .diagram,
+            operationTargetKind: .edge,
+            hasFocusedNode: true
+        )
+    )
+    let ids = Set(definitions.map(\.id.rawValue))
+
+    #expect(!ids.contains("moveNodeUp"))
+    #expect(!ids.contains("nudgeNodeUp"))
+    #expect(!ids.contains("scaleSelectedNodesUp.commandOptionPlus"))
+}
+
+@Test("Shortcut catalog: edge target hides node clipboard commands in command palette")
+func test_commandPaletteDefinitions_edgeTarget_hidesNodeClipboardCommands() {
+    let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
+        context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
+        executionContext: KeymapExecutionContext(
+            editingMode: .diagram,
+            operationTargetKind: .edge,
+            hasFocusedNode: true
+        )
+    )
+    let ids = Set(definitions.map(\.id.rawValue))
+
+    #expect(!ids.contains("copySelectionOrFocusedSubtree"))
+    #expect(!ids.contains("cutSelectionOrFocusedSubtree"))
+    #expect(!ids.contains("pasteClipboardAtFocusedNode"))
 }
 
 @Test("Shortcut catalog: diagram context keeps addChild and hides tree-only command palette definitions")

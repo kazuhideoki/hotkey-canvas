@@ -153,8 +153,13 @@ extension CanvasView {
             }
         case .switchTargetKind, .reportUnsupportedIntent:
             return true
-        case .cycleFocusedEdgeDirectionality, .presentAddNodeModeSelection:
-            return context.operationTargetKind != .area
+        case .cycleFocusedEdgeDirectionality:
+            return KeymapExecutionPolicyResolver.isEnabled(
+                .targetKinds([.edge]),
+                context: context
+            )
+        case .presentAddNodeModeSelection:
+            return isCommandEnabled(.addNode, context: context)
         }
     }
 

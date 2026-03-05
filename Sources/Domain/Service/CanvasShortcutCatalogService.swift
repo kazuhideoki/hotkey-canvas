@@ -67,6 +67,16 @@ public enum CanvasShortcutCatalogService {
 }
 
 extension CanvasShortcutCatalogService {
+    static func nodeTargetCondition() -> KeymapExecutionCondition {
+        .targetKinds([.node])
+    }
+
+    static func nodeTargetCondition(
+        combinedWith condition: KeymapExecutionCondition
+    ) -> KeymapExecutionCondition {
+        .all([nodeTargetCondition(), condition])
+    }
+
     static func nodeOrEdgeTargetCondition() -> KeymapExecutionCondition {
         .targetKinds([.node, .edge])
     }
@@ -81,6 +91,12 @@ extension CanvasShortcutCatalogService {
         for visibility: CanvasCommandPaletteVisibility
     ) -> KeymapExecutionCondition {
         nodeOrEdgeTargetCondition(combinedWith: visibility.defaultExecutionCondition)
+    }
+
+    static func nodeExecutionCondition(
+        for visibility: CanvasCommandPaletteVisibility
+    ) -> KeymapExecutionCondition {
+        nodeTargetCondition(combinedWith: visibility.defaultExecutionCondition)
     }
 }
 
@@ -145,7 +161,7 @@ extension CanvasShortcutCatalogService {
                     for: CanvasShortcutGesture(key: .enter, modifiers: [.command])
                 ),
                 commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
-                executionCondition: nodeOrEdgeTargetCondition()
+                executionCondition: nodeTargetCondition()
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addNode"),
@@ -155,7 +171,7 @@ extension CanvasShortcutCatalogService {
                 shortcutLabel: shortcutLabel(
                     for: CanvasShortcutGesture(key: .enter, modifiers: [.shift])
                 ),
-                executionCondition: nodeOrEdgeTargetCondition()
+                executionCondition: nodeTargetCondition()
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addSiblingNodeAbove"),
@@ -169,7 +185,12 @@ extension CanvasShortcutCatalogService {
                     for: CanvasShortcutGesture(key: .enter, modifiers: [.option])
                 ),
                 commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
-                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.tree]))
+                executionCondition: nodeTargetCondition(
+                    combinedWith: .all([
+                        .requiresFocusedNode,
+                        .requiredModes([.tree]),
+                    ])
+                )
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "addSiblingNodeBelow"),
@@ -183,7 +204,12 @@ extension CanvasShortcutCatalogService {
                     for: CanvasShortcutGesture(key: .enter, modifiers: [])
                 ),
                 commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
-                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.tree]))
+                executionCondition: nodeTargetCondition(
+                    combinedWith: .all([
+                        .requiresFocusedNode,
+                        .requiredModes([.tree]),
+                    ])
+                )
             ),
         ]
     }
@@ -215,7 +241,12 @@ extension CanvasShortcutCatalogService {
                 ),
                 searchTokens: ["duplicate", "selection", "sibling", "tree"],
                 commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
-                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.tree]))
+                executionCondition: nodeTargetCondition(
+                    combinedWith: .all([
+                        .requiresFocusedNode,
+                        .requiredModes([.tree]),
+                    ])
+                )
             ),
         ]
     }
@@ -235,7 +266,7 @@ extension CanvasShortcutCatalogService {
                 ),
                 searchTokens: ["copy", "selected", "subtree", "node"],
                 commandPaletteVisibility: .requiresFocusedNode,
-                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
+                executionCondition: nodeExecutionCondition(for: .requiresFocusedNode)
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "cutSelectionOrFocusedSubtree"),
@@ -247,7 +278,7 @@ extension CanvasShortcutCatalogService {
                 ),
                 searchTokens: ["cut", "selected", "subtree", "node"],
                 commandPaletteVisibility: .requiresFocusedNode,
-                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
+                executionCondition: nodeExecutionCondition(for: .requiresFocusedNode)
             ),
             CanvasShortcutDefinition(
                 id: CanvasShortcutID(rawValue: "pasteClipboardAtFocusedNode"),
@@ -259,7 +290,7 @@ extension CanvasShortcutCatalogService {
                 ),
                 searchTokens: ["paste", "selected", "subtree", "child", "node"],
                 commandPaletteVisibility: .requiresFocusedNode,
-                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
+                executionCondition: nodeExecutionCondition(for: .requiresFocusedNode)
             ),
         ]
     }
@@ -365,7 +396,7 @@ extension CanvasShortcutCatalogService {
             action: .apply(commands: [.moveNode(direction)]),
             shortcutLabel: shortcutLabel(for: CanvasShortcutGesture(key: key, modifiers: [.command])),
             commandPaletteVisibility: .requiresFocusedNode,
-            executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode)
+            executionCondition: nodeExecutionCondition(for: .requiresFocusedNode)
         )
     }
 
@@ -386,7 +417,7 @@ extension CanvasShortcutCatalogService {
             ),
             searchTokens: ["move", "slightly", "nudge", "grid"],
             commandPaletteVisibility: .requiresFocusedNodeAndMode([.diagram]),
-            executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNodeAndMode([.diagram]))
+            executionCondition: nodeExecutionCondition(for: .requiresFocusedNodeAndMode([.diagram]))
         )
     }
 

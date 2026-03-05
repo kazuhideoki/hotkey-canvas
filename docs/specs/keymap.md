@@ -22,18 +22,18 @@
 | --- | --- | --- | --- | --- |
 | `add(.primary)` | `enter` | 兄弟ノードを下に追加 | 非対応 | |
 | `add(.alternate)` | `opt+enter` | 兄弟ノードを上に追加 | 非対応 | |
-| `add(.hierarchical)` | `cmd+enter` | 子ノード追加 | `addNode` に正規化して追加 | |
-| `add(.modeSelect)` | `shift+enter` | Add Node Mode 選択ポップアップを開く | Add Node Mode 選択ポップアップを開く | `t` / `d` / `enter` で確定 |
+| `add(.hierarchical)` | `cmd+enter` | 子ノード追加 | `addNode` に正規化して追加 | node target のみ有効（edge/area target では無効） |
+| `add(.modeSelect)` | `shift+enter` | Add Node Mode 選択ポップアップを開く | Add Node Mode 選択ポップアップを開く | node target のみ有効（edge/area target では無効）。`t` / `d` / `enter` で確定 |
 | `delete` | `delete` | 選択/フォーカスノードを削除 | node対象: 選択/フォーカスノードを削除 / edge対象: 選択/フォーカスedgeを削除 | edge対象で focused edge を含む複数選択時は一括削除 |
 | `duplicate` | `cmd+d` | 兄弟として複製 | 非対応 | |
-| `edit.copySelectionOrFocusedSubtree` | `cmd+c` | 複数選択時は選択集合、単一/未選択時は focused subtree をコピー | 複数選択時は選択集合、単一/未選択時は focused subtree をコピー | |
-| `edit.cutSelectionOrFocusedSubtree` | `cmd+x` | 複数選択時は選択集合、単一/未選択時は focused subtree をカット | 複数選択時は選択集合、単一/未選択時は focused subtree をカット | |
-| `edit.pasteClipboardAtFocusedNode` | `cmd+v` | 子として貼り付け | 貼り付け | |
+| `edit.copySelectionOrFocusedSubtree` | `cmd+c` | 複数選択時は選択集合、単一/未選択時は focused subtree をコピー | 複数選択時は選択集合、単一/未選択時は focused subtree をコピー | node target のみ有効 |
+| `edit.cutSelectionOrFocusedSubtree` | `cmd+x` | 複数選択時は選択集合、単一/未選択時は focused subtree をカット | 複数選択時は選択集合、単一/未選択時は focused subtree をカット | node target のみ有効 |
+| `edit.pasteClipboardAtFocusedNode` | `cmd+v` | 子として貼り付け | 貼り付け | node target のみ有効 |
 | `moveFocus(.single)` | `arrow` | フォーカス移動 | フォーカス移動 | |
 | `moveFocus(.extendSelection)` | `shift+arrow` | 選択拡張 | 選択拡張 | |
 | `moveFocus(.acrossAreasToRoot)` | `cmd+opt+←/→` | 隣接エリアへ移動し、遷移先エリアのルート node へフォーカス | 隣接エリアへ移動し、遷移先エリアの最初に作成された node へフォーカス | node/area target の両方で有効。端では反対端へループ |
-| `moveNode` | `cmd+arrow` | 構造移動（並び替え/indent/outdent） | 位置移動（diagram grid） | area target 時は `moveArea`（エリア単位平行移動 + エリア衝突解消）として実行 |
-| `nudgeNode` | `cmd+shift+arrow` | 実行経路はあるが no-op | 微小移動 | |
+| `moveNode` | `cmd+arrow` | 構造移動（並び替え/indent/outdent） | 位置移動（diagram grid） | node/area target のみ有効。area target 時は `moveArea`（エリア単位平行移動 + エリア衝突解消）として実行 |
+| `nudgeNode` | `cmd+shift+arrow` | 実行経路はあるが no-op | 微小移動 | node target のみ有効 |
 | `toggleVisibility` | `opt+.` | subtree の fold/unfold 切替 | 非対応 | |
 | `switchTargetKind(.cycle)` | `tab` | node/edge/area 対象を巡回 | node/edge/area 対象を巡回 | `node -> edge -> area -> node`（利用不可対象はスキップ） |
 
@@ -46,6 +46,8 @@
 - Command Palette のカタログ項目は、`openCommandPalette` トリガーを除き「ショートカット定義がある項目」を表示対象にする。表示可否は直接ショートカットと同じ `executionCondition` で判定する。
 - edge 対象で `moveFocus` / `extendSelection` / `deleteSelectedOrFocusedNodes` を使う場合は、`KeymapExecutionRoute: .edgeAware` として同一入力を edge ハンドリングへ委譲する。
 - edge 対象では `ctrl+a` / `ctrl+e` / 直接文字入力で edge ラベルのインライン編集を開始できる。`ctrl+a` はカーソル先頭、`ctrl+e` はカーソル末尾で開始する。
+- edge 対象では node 追加系（`cmd+enter` / `shift+enter`）を無効化し、誤ってノード追加に流れないようにする。
+- edge 対象では node 編集系（`cmd+c` / `cmd+x` / `cmd+v` / `cmd+arrow` / `cmd+shift+arrow` / `cmd+opt+-` / `cmd+opt++`）を無効化する。
 - edge にラベル文字列がある場合は、edge ルート中央に最小限のラベル枠を表示する。
 - モード差分や正規化ルールは上記 `Primitive（EditMode差分）` の各行を正本とし、Command Palette も同じ条件系に従う。
 - Command Palette では edge 対象時に `Edge: Delete Selected` が表示され、`delete` と同じ削除規則（focused edge を含む複数選択は一括削除）が適用されます。
