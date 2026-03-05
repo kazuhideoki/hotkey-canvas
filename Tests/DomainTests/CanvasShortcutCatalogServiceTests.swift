@@ -355,8 +355,8 @@ func test_commandPaletteDefinitions_edgeTarget_hidesMoveFocusAcrossAreasToRoot()
     #expect(!ids.contains("moveFocusAcrossAreasToRootRight"))
 }
 
-@Test("Shortcut catalog: edge target hides addNode in command palette")
-func test_commandPaletteDefinitions_edgeTarget_hidesAddNode() {
+@Test("Shortcut catalog: edge target hides node add commands in command palette")
+func test_commandPaletteDefinitions_edgeTarget_hidesNodeAddCommands() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
         executionContext: KeymapExecutionContext(
@@ -368,6 +368,9 @@ func test_commandPaletteDefinitions_edgeTarget_hidesAddNode() {
     let ids = Set(definitions.map(\.id.rawValue))
 
     #expect(!ids.contains("addNode"))
+    #expect(!ids.contains("addChildNode"))
+    #expect(!ids.contains("addSiblingNodeAbove"))
+    #expect(!ids.contains("addSiblingNodeBelow"))
 }
 
 @Test("Shortcut catalog: edge target hides node transform commands in command palette")
