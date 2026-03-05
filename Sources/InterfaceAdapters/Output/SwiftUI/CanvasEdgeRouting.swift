@@ -159,6 +159,8 @@ enum CanvasEdgeRouting {
             let end = CGPoint(x: geometry.endX, y: geometry.endY)
             path.move(to: start)
             switch edgeShapeStyle {
+            case .legacy:
+                addLegacyPathSegments(path: &path, geometry: geometry, end: end)
             case .straight:
                 path.addLine(to: end)
             case .curved:
@@ -189,6 +191,8 @@ enum CanvasEdgeRouting {
         }
 
         switch edgeShapeStyle {
+        case .legacy:
+            return legacyEdgeTipAndVector(edge: edge, routeGeometry: geometry)
         case .straight:
             return straightEdgeTipAndVector(edge: edge, routeGeometry: geometry)
         case .curved:
@@ -441,4 +445,55 @@ extension CanvasEdgeRouting {
         return min(max(branch, lower), upper)
     }
 
+    private static func addLegacyPathSegments(path: inout Path, geometry: RouteGeometry, end: CGPoint) {
+        switch geometry.axis {
+        case .horizontal:
+            path.addLine(to: CGPoint(x: geometry.branchCoordinate, y: geometry.startY))
+            path.addLine(to: CGPoint(x: geometry.branchCoordinate, y: geometry.endY))
+            path.addLine(to: end)
+        case .vertical:
+            path.addLine(to: CGPoint(x: geometry.startX, y: geometry.branchCoordinate))
+            path.addLine(to: CGPoint(x: geometry.endX, y: geometry.branchCoordinate))
+            path.addLine(to: end)
+        }
+    }
+
+    private static func legacyEdgeTipAndVector(
+        edge: CanvasEdge,
+        routeGeometry: RouteGeometry
+    ) -> EdgeTipVector {
+        let start = CGPoint(x: routeGeometry.startX, y: routeGeometry.startY)
+        let end = CGPoint(x: routeGeometry.endX, y: routeGeometry.endY)
+        if edge.directionality == .fromTo {
+            let previousPoint = legacyPreviousPointBeforeEnd(routeGeometry: routeGeometry)
+            return EdgeTipVector(
+                tip: end,
+                vector: CGVector(dx: end.x - previousPoint.x, dy: end.y - previousPoint.y)
+            )
+        }
+        if edge.directionality == .toFrom {
+            let nextPoint = legacyNextPointAfterStart(routeGeometry: routeGeometry)
+            return EdgeTipVector(
+                tip: start,
+                vector: CGVector(dx: start.x - nextPoint.x, dy: start.y - nextPoint.y)
+            )
+        }
+        return EdgeTipVector(tip: end, vector: CGVector(dx: 0, dy: 0))
+    }
+    private static func legacyNextPointAfterStart(routeGeometry: RouteGeometry) -> CGPoint {
+        switch routeGeometry.axis {
+        case .horizontal:
+            return CGPoint(x: routeGeometry.branchCoordinate, y: routeGeometry.startY)
+        case .vertical:
+            return CGPoint(x: routeGeometry.startX, y: routeGeometry.branchCoordinate)
+        }
+    }
+    private static func legacyPreviousPointBeforeEnd(routeGeometry: RouteGeometry) -> CGPoint {
+        switch routeGeometry.axis {
+        case .horizontal:
+            return CGPoint(x: routeGeometry.branchCoordinate, y: routeGeometry.endY)
+        case .vertical:
+            return CGPoint(x: routeGeometry.endX, y: routeGeometry.branchCoordinate)
+        }
+    }
 }

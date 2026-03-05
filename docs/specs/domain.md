@@ -572,7 +572,7 @@
   - `CanvasAreaID`
   - `CanvasEditingMode`（`tree` / `diagram`）
   - `CanvasArea`（`id`, `nodeIDs`, `editingMode`, `edgeShapeStyle`）
-  - `CanvasAreaEdgeShapeStyle`（`curved` / `straight`）
+  - `CanvasAreaEdgeShapeStyle`（`legacy` / `curved` / `straight`）
 - エラー
   - `CanvasAreaPolicyError`
 - サービス
@@ -589,7 +589,7 @@
 | `focusedAreaID(in:)` | フォーカス対象からエリアIDを解決する（`focusedElement == .area` を優先し、未指定時はフォーカスノード所属を解決）。 |
 | `area(withID:in:)` | エリアIDからエリア情報を取得する。 |
 | `convertFocusedAreaMode(to:in:)` | フォーカスノード所属エリアの編集モードを変換する（同一モード指定は no-op 成功）。 |
-| `toggleFocusedAreaEdgeShapeStyle(in:)` | フォーカスエリアの edge 描画スタイル（`curved` / `straight`）をトグルする。 |
+| `toggleFocusedAreaEdgeShapeStyle(in:)` | フォーカスエリアの edge 描画スタイル（`legacy` → `curved` → `straight` → `legacy`）を循環切替する。 |
 | `createArea(id:mode:nodeIDs:in:)` | 新規エリアを作成する。 |
 | `assign(nodeIDs:to:in:)` | ノード集合を指定エリアへ再所属させる。 |
 | `remove(nodeIDs:in:)` | ノード集合を全エリア所属から除外する。 |
