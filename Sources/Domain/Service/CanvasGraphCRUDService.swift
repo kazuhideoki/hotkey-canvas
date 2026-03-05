@@ -22,7 +22,12 @@ public enum CanvasGraphCRUDService {
         nodes[node.id] = node
         var areasByID = graph.areasByID
         if areasByID.isEmpty {
-            areasByID[.defaultTree] = CanvasArea(id: .defaultTree, nodeIDs: [], editingMode: .tree)
+            areasByID[.defaultTree] = CanvasArea(
+                id: .defaultTree,
+                nodeIDs: [],
+                editingMode: .tree,
+                edgeShapeStyle: .curved
+            )
         }
         if let targetAreaID = areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue }).first,
             let targetArea = areasByID[targetAreaID]
@@ -30,7 +35,8 @@ public enum CanvasGraphCRUDService {
             areasByID[targetAreaID] = CanvasArea(
                 id: targetArea.id,
                 nodeIDs: targetArea.nodeIDs.union([node.id]),
-                editingMode: targetArea.editingMode
+                editingMode: targetArea.editingMode,
+                edgeShapeStyle: targetArea.edgeShapeStyle
             )
         }
         return .success(
@@ -98,7 +104,8 @@ public enum CanvasGraphCRUDService {
             nextAreasByID[areaID] = CanvasArea(
                 id: area.id,
                 nodeIDs: area.nodeIDs.subtracting([id]),
-                editingMode: area.editingMode
+                editingMode: area.editingMode,
+                edgeShapeStyle: area.edgeShapeStyle
             )
         }
         return .success(

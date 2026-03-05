@@ -326,3 +326,30 @@ func test_convertFocusedAreaMode_noOpsWhenTargetModeIsSame() throws {
 
     #expect(converted == graph)
 }
+
+@Test("CanvasAreaMembershipService: toggleFocusedAreaEdgeShapeStyle toggles focused area shape style")
+func test_toggleFocusedAreaEdgeShapeStyle_togglesFocusedAreaShapeStyle() throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let areaID = CanvasAreaID(rawValue: "area-1")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID,
+        areasByID: [
+            areaID: CanvasArea(id: areaID, nodeIDs: [focusedNodeID], editingMode: .diagram, edgeShapeStyle: .curved)
+        ]
+    )
+
+    let toggled = try CanvasAreaMembershipService.toggleFocusedAreaEdgeShapeStyle(in: graph).get()
+    #expect(toggled.areasByID[areaID]?.edgeShapeStyle == .straight)
+
+    let toggledAgain = try CanvasAreaMembershipService.toggleFocusedAreaEdgeShapeStyle(in: toggled).get()
+    #expect(toggledAgain.areasByID[areaID]?.edgeShapeStyle == .curved)
+}

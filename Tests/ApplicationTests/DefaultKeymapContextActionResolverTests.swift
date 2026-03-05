@@ -67,6 +67,15 @@ func test_resolve_transformScaleSelectionUp_returnsScaleSelectedNodesUp() {
     #expect(action == .apply(commands: [.scaleSelectedNodes(.up)]))
 }
 
+@Test("DefaultKeymapContextActionResolver: area edge-shape toggle edit maps to area-edge-shape command")
+func test_resolve_editToggleFocusedAreaEdgeShapeStyle_returnsToggleFocusedAreaEdgeShapeStyle() {
+    let sut = DefaultKeymapContextActionResolver()
+
+    let action = sut.resolve(primitiveIntent: .edit(variant: .toggleFocusedAreaEdgeShapeStyle))
+
+    #expect(action == .apply(commands: [.toggleFocusedAreaEdgeShapeStyle]))
+}
+
 @Test("DefaultKeymapContextActionResolver: output intent returns unsupported contract")
 func test_resolve_output_returnsReportUnsupportedIntent() {
     let sut = DefaultKeymapContextActionResolver()

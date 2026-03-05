@@ -55,7 +55,8 @@ public struct CanvasGraph: Equatable, Sendable {
             .defaultTree: CanvasArea(
                 id: .defaultTree,
                 nodeIDs: [],
-                editingMode: .tree
+                editingMode: .tree,
+                edgeShapeStyle: .curved
             )
         ]
     )

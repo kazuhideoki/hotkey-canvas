@@ -470,7 +470,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode,
-                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .toggleFocusedAreaEdgeShapeStyle,
                 .convertFocusedAreaMode,
                 .createArea,
                 .assignNodesToArea, .connectNodes, .alignAllAreasVertically:
@@ -632,7 +632,7 @@ extension OverlappingFailureCanvasEditingInputPort {
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode,
-                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .toggleFocusedAreaEdgeShapeStyle,
                 .convertFocusedAreaMode,
                 .createArea,
                 .assignNodesToArea, .connectNodes, .alignAllAreasVertically:
@@ -858,7 +858,7 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                 .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges,
                 .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode,
-                .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
+                .toggleFocusedNodeMarkdownStyle, .toggleFocusedAreaEdgeShapeStyle, .convertFocusedAreaMode, .createArea,
                 .assignNodesToArea, .connectNodes, .alignAllAreasVertically:
                 continue
             }
@@ -1096,7 +1096,7 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
-                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .toggleFocusedAreaEdgeShapeStyle,
                 .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges,
                 .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
                 .alignAllAreasVertically:
@@ -1205,7 +1205,7 @@ actor TreeModeSelectionFromDiagramCanvasEditingInputPort: CanvasEditingInputPort
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
-                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .toggleFocusedAreaEdgeShapeStyle,
                 .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges,
                 .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
                 .alignAllAreasVertically:
@@ -1313,7 +1313,7 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
-                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .toggleFocusedAreaEdgeShapeStyle,
                 .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges,
                 .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
                 .alignAllAreasVertically:
@@ -1399,7 +1399,7 @@ actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
-                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .toggleFocusedAreaEdgeShapeStyle,
                 .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges,
                 .convertFocusedAreaMode, .assignNodesToArea, .connectNodes,
                 .alignAllAreasVertically:
@@ -1518,7 +1518,7 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
-                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .toggleFocusedAreaEdgeShapeStyle,
                 .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges,
                 .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
                 .alignAllAreasVertically:
@@ -1577,7 +1577,7 @@ actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
                 .cutSelectionOrFocusedSubtree,
                 .pasteClipboardAtFocusedNode, .setNodeText,
-                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .toggleFocusedAreaEdgeShapeStyle,
                 .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges,
                 .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
                 .alignAllAreasVertically:

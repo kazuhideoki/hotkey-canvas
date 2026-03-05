@@ -16,6 +16,7 @@ public final class CanvasViewModel: ObservableObject {
     @Published public private(set) var treeRootNodeIDs: Set<CanvasNodeID> = []
     @Published public private(set) var areaIDByNodeID: [CanvasNodeID: CanvasAreaID] = [:]
     @Published public private(set) var areaEditingModeByID: [CanvasAreaID: CanvasEditingMode] = [:]
+    @Published public private(set) var areaEdgeShapeStyleByID: [CanvasAreaID: CanvasAreaEdgeShapeStyle] = [:]
     @Published public private(set) var pendingEditingNodeID: CanvasNodeID?
     @Published public private(set) var viewportIntent: CanvasViewportIntent?
     @Published public private(set) var canUndo: Bool = false
@@ -196,7 +197,8 @@ extension CanvasViewModel {
             .deleteSelectedOrFocusedNodes,
             .deleteSelectedOrFocusedEdges,
             .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree, .pasteClipboardAtFocusedNode,
-            .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .convertFocusedAreaMode, .createArea,
+            .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle,
+            .toggleFocusedAreaEdgeShapeStyle, .convertFocusedAreaMode, .createArea,
             .assignNodesToArea:
             return false
         }
@@ -242,6 +244,7 @@ extension CanvasViewModel {
         treeRootNodeIDs = nodePresentation.treeRootNodeIDs
         areaIDByNodeID = areaIDMapping(in: result.newState)
         areaEditingModeByID = areaEditingModeMapping(in: result.newState)
+        areaEdgeShapeStyleByID = areaEdgeShapeStyleMapping(in: result.newState)
         viewportIntent = result.viewportIntent
         canUndo = result.canUndo
         canRedo = result.canRedo
@@ -288,6 +291,17 @@ extension CanvasViewModel {
                 continue
             }
             mapping[area.id] = area.editingMode
+        }
+        return mapping
+    }
+
+    private func areaEdgeShapeStyleMapping(in graph: CanvasGraph) -> [CanvasAreaID: CanvasAreaEdgeShapeStyle] {
+        var mapping: [CanvasAreaID: CanvasAreaEdgeShapeStyle] = [:]
+        for areaID in graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            guard let area = graph.areasByID[areaID] else {
+                continue
+            }
+            mapping[area.id] = area.edgeShapeStyle
         }
         return mapping
     }

@@ -5,12 +5,16 @@ import SwiftUI
 
 /// Computes MindNode-like edge routes with a shared branch axis per parent node.
 enum CanvasEdgeRouting {
-    private static let minimumBranchGap: Double = 12
-    private static let minimumLegLength: Double = 6
-    private static let defaultCornerRadius: Double = 14
-    private static let verticalPreferenceRatio: Double = 0.9
-    private static let parallelLaneSpacing: Double = 14
-    private static let minimumAnchorInset: Double = 4
+    static let minimumBranchGap: Double = 12
+    static let minimumLegLength: Double = 6
+    static let verticalPreferenceRatio: Double = 0.9
+    static let parallelLaneSpacing: Double = 14
+    static let minimumAnchorInset: Double = 4
+    static let curvedBaseOffset: Double = 14
+    static let curvedOffsetPerLaneLevel: Double = 11
+    static let curvedLaneGrowthExponent: Double = 1.35
+    static let curvedMinHandleRatio: Double = 0.2
+    static let curvedMaxHandleLength: Double = 160
 
     /// Primary axis used for routing one edge.
     enum RouteAxis: Hashable {
@@ -26,6 +30,12 @@ enum CanvasEdgeRouting {
         let branchCoordinate: Double
         let endX: Double
         let endY: Double
+    }
+
+    /// Tip/vector pair used for drawing edge arrowheads.
+    struct EdgeTipVector {
+        let tip: CGPoint
+        let vector: CGVector
     }
 
     /// Endpoint coordinates derived from node anchors before branch bending.
@@ -130,7 +140,8 @@ enum CanvasEdgeRouting {
         for edge: CanvasEdge,
         nodesByID: [CanvasNodeID: CanvasNode],
         branchCoordinateByParentAndDirection: [BranchKey: Double],
-        laneOffsetByEdgeID: [CanvasEdgeID: Double] = [:]
+        laneOffsetByEdgeID: [CanvasEdgeID: Double] = [:],
+        edgeShapeStyle: CanvasAreaEdgeShapeStyle
     ) -> Path? {
         guard
             let geometry = routeGeometry(
@@ -147,13 +158,43 @@ enum CanvasEdgeRouting {
             let start = CGPoint(x: geometry.startX, y: geometry.startY)
             let end = CGPoint(x: geometry.endX, y: geometry.endY)
             path.move(to: start)
-
-            switch geometry.axis {
-            case .horizontal:
-                addHorizontalPath(path: &path, geometry: geometry, end: end)
-            case .vertical:
-                addVerticalPath(path: &path, geometry: geometry, end: end)
+            switch edgeShapeStyle {
+            case .straight:
+                path.addLine(to: end)
+            case .curved:
+                let laneOffset = laneOffsetByEdgeID[edge.id] ?? 0
+                let curve = curvedGeometry(routeGeometry: geometry, laneOffset: laneOffset)
+                path.addCurve(to: end, control1: curve.control1, control2: curve.control2)
             }
+        }
+    }
+
+    /// Computes arrow tip and tangent vector for the specified edge style.
+    static func edgeTipAndVector(
+        for edge: CanvasEdge,
+        nodesByID: [CanvasNodeID: CanvasNode],
+        branchCoordinateByParentAndDirection: [BranchKey: Double],
+        laneOffsetByEdgeID: [CanvasEdgeID: Double] = [:],
+        edgeShapeStyle: CanvasAreaEdgeShapeStyle
+    ) -> EdgeTipVector? {
+        guard
+            let geometry = routeGeometry(
+                for: edge,
+                nodesByID: nodesByID,
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                laneOffsetByEdgeID: laneOffsetByEdgeID
+            )
+        else {
+            return nil
+        }
+
+        switch edgeShapeStyle {
+        case .straight:
+            return straightEdgeTipAndVector(edge: edge, routeGeometry: geometry)
+        case .curved:
+            let laneOffset = laneOffsetByEdgeID[edge.id] ?? 0
+            let curve = curvedGeometry(routeGeometry: geometry, laneOffset: laneOffset)
+            return curvedEdgeTipAndVector(edge: edge, routeGeometry: geometry, curve: curve)
         }
     }
 
@@ -400,101 +441,4 @@ extension CanvasEdgeRouting {
         return min(max(branch, lower), upper)
     }
 
-    private static func addHorizontalPath(path: inout Path, geometry: RouteGeometry, end: CGPoint) {
-        let horizontal1 = abs(geometry.branchCoordinate - geometry.startX)
-        let horizontal2 = abs(geometry.endX - geometry.branchCoordinate)
-        let vertical = abs(geometry.endY - geometry.startY)
-        let cornerRadius = min(
-            defaultCornerRadius,
-            horizontal1 / 2,
-            horizontal2 / 2,
-            vertical / 2
-        )
-
-        guard cornerRadius > 0 else {
-            path.addLine(to: end)
-            return
-        }
-
-        let xSignToBranch: Double = geometry.branchCoordinate >= geometry.startX ? 1 : -1
-        let ySignToEnd: Double = geometry.endY >= geometry.startY ? 1 : -1
-        let xSignToEnd: Double = geometry.endX >= geometry.branchCoordinate ? 1 : -1
-
-        path.addLine(
-            to: CGPoint(
-                x: geometry.branchCoordinate - (xSignToBranch * cornerRadius),
-                y: geometry.startY
-            )
-        )
-        path.addQuadCurve(
-            to: CGPoint(
-                x: geometry.branchCoordinate,
-                y: geometry.startY + (ySignToEnd * cornerRadius)
-            ),
-            control: CGPoint(x: geometry.branchCoordinate, y: geometry.startY)
-        )
-        path.addLine(
-            to: CGPoint(
-                x: geometry.branchCoordinate,
-                y: geometry.endY - (ySignToEnd * cornerRadius)
-            )
-        )
-        path.addQuadCurve(
-            to: CGPoint(
-                x: geometry.branchCoordinate + (xSignToEnd * cornerRadius),
-                y: geometry.endY
-            ),
-            control: CGPoint(x: geometry.branchCoordinate, y: geometry.endY)
-        )
-        path.addLine(to: end)
-    }
-
-    private static func addVerticalPath(path: inout Path, geometry: RouteGeometry, end: CGPoint) {
-        let vertical1 = abs(geometry.branchCoordinate - geometry.startY)
-        let vertical2 = abs(geometry.endY - geometry.branchCoordinate)
-        let horizontal = abs(geometry.endX - geometry.startX)
-        let cornerRadius = min(
-            defaultCornerRadius,
-            vertical1 / 2,
-            vertical2 / 2,
-            horizontal / 2
-        )
-
-        guard cornerRadius > 0 else {
-            path.addLine(to: end)
-            return
-        }
-
-        let ySignToBranch: Double = geometry.branchCoordinate >= geometry.startY ? 1 : -1
-        let xSignToEnd: Double = geometry.endX >= geometry.startX ? 1 : -1
-        let ySignToEnd: Double = geometry.endY >= geometry.branchCoordinate ? 1 : -1
-
-        path.addLine(
-            to: CGPoint(
-                x: geometry.startX,
-                y: geometry.branchCoordinate - (ySignToBranch * cornerRadius)
-            )
-        )
-        path.addQuadCurve(
-            to: CGPoint(
-                x: geometry.startX + (xSignToEnd * cornerRadius),
-                y: geometry.branchCoordinate
-            ),
-            control: CGPoint(x: geometry.startX, y: geometry.branchCoordinate)
-        )
-        path.addLine(
-            to: CGPoint(
-                x: geometry.endX - (xSignToEnd * cornerRadius),
-                y: geometry.branchCoordinate
-            )
-        )
-        path.addQuadCurve(
-            to: CGPoint(
-                x: geometry.endX,
-                y: geometry.branchCoordinate + (ySignToEnd * cornerRadius)
-            ),
-            control: CGPoint(x: geometry.endX, y: geometry.branchCoordinate)
-        )
-        path.addLine(to: end)
-    }
 }

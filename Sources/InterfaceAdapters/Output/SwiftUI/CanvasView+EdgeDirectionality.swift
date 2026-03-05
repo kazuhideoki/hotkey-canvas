@@ -9,6 +9,8 @@ extension CanvasView {
         let nodesByID: [CanvasNodeID: CanvasNode]
         let branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double]
         let laneOffsetByEdgeID: [CanvasEdgeID: Double]
+        let areaIDByNodeID: [CanvasNodeID: CanvasAreaID]
+        let areaEdgeShapeStyleByID: [CanvasAreaID: CanvasAreaEdgeShapeStyle]
         let viewportSize: CGSize
         let zoomScale: Double
         let cameraOffset: CGSize
@@ -62,18 +64,20 @@ extension CanvasView {
         guard edge.directionality != .none else {
             return nil
         }
+        let areaID = context.areaIDByNodeID[edge.fromNodeID]
+        let edgeShapeStyle = areaID.flatMap { context.areaEdgeShapeStyleByID[$0] } ?? .curved
         guard
-            let geometry = CanvasEdgeRouting.routeGeometry(
+            let tipAndVector = CanvasEdgeRouting.edgeTipAndVector(
                 for: edge,
                 nodesByID: context.nodesByID,
                 branchCoordinateByParentAndDirection: context.branchCoordinateByParentAndDirection,
-                laneOffsetByEdgeID: context.laneOffsetByEdgeID
+                laneOffsetByEdgeID: context.laneOffsetByEdgeID,
+                edgeShapeStyle: edgeShapeStyle
             )
         else {
             return nil
         }
 
-        let tipAndVector = arrowTipAndVector(for: edge.directionality, geometry: geometry)
         guard let unitVector = normalize(vector: tipAndVector.vector) else {
             return nil
         }
@@ -104,48 +108,6 @@ extension CanvasView {
             path.addLine(to: left)
             path.addLine(to: right)
             path.closeSubpath()
-        }
-    }
-
-    private func arrowTipAndVector(
-        for directionality: CanvasEdgeDirectionality,
-        geometry: CanvasEdgeRouting.RouteGeometry
-    ) -> (tip: CGPoint, vector: CGVector) {
-        switch directionality {
-        case .fromTo:
-            let tip = CGPoint(x: geometry.endX, y: geometry.endY)
-            let near = nearPointTowardEnd(for: geometry)
-            return (
-                tip,
-                CGVector(dx: tip.x - near.x, dy: tip.y - near.y)
-            )
-        case .toFrom:
-            let tip = CGPoint(x: geometry.startX, y: geometry.startY)
-            let near = nearPointTowardStart(for: geometry)
-            return (
-                tip,
-                CGVector(dx: tip.x - near.x, dy: tip.y - near.y)
-            )
-        default:
-            return (CGPoint(x: geometry.endX, y: geometry.endY), CGVector(dx: 0, dy: 0))
-        }
-    }
-
-    private func nearPointTowardEnd(for geometry: CanvasEdgeRouting.RouteGeometry) -> CGPoint {
-        switch geometry.axis {
-        case .horizontal:
-            return CGPoint(x: geometry.branchCoordinate, y: geometry.endY)
-        case .vertical:
-            return CGPoint(x: geometry.endX, y: geometry.branchCoordinate)
-        }
-    }
-
-    private func nearPointTowardStart(for geometry: CanvasEdgeRouting.RouteGeometry) -> CGPoint {
-        switch geometry.axis {
-        case .horizontal:
-            return CGPoint(x: geometry.branchCoordinate, y: geometry.startY)
-        case .vertical:
-            return CGPoint(x: geometry.startX, y: geometry.branchCoordinate)
         }
     }
 

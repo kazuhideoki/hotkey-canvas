@@ -118,7 +118,8 @@ extension CanvasView {
             weight: .medium
         )
         let contentHeight = font.ascender - font.descender + font.leading
-        let insets = nodeTextStyle.textContainerInset
+        let insets =
+            nodeTextStyle.textContainerInset
             * max(CGFloat(zoomScale), 0.0001)
             * edgeLabelEditorContentScale(zoomScale: zoomScale)
             * 2

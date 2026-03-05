@@ -34,6 +34,7 @@
 | `moveFocus(.acrossAreasToRoot)` | `cmd+opt+←/→` | 隣接エリアへ移動し、遷移先エリアのルート node へフォーカス | 隣接エリアへ移動し、遷移先エリアの最初に作成された node へフォーカス | node/area target の両方で有効。端では反対端へループ |
 | `moveNode` | `cmd+arrow` | 構造移動（並び替え/indent/outdent） | 位置移動（diagram grid） | node/area target のみ有効。area target 時は `moveArea`（エリア単位平行移動 + エリア衝突解消）として実行 |
 | `nudgeNode` | `cmd+shift+arrow` | 実行経路はあるが no-op | 微小移動 | node target のみ有効 |
+| `edit(.toggleFocusedAreaEdgeShapeStyle)` | `cmd+shift+e` | focused area の edge 描画を `curved/straight` で切替 | focused area の edge 描画を `curved/straight` で切替 | node/edge/area target のいずれでも有効。エリア単位で適用 |
 | `toggleVisibility` | `opt+.` | subtree の fold/unfold 切替 | 非対応 | |
 | `switchTargetKind(.cycle)` | `tab` | node/edge/area 対象を巡回 | node/edge/area 対象を巡回 | `node -> edge -> area -> node`（利用不可対象はスキップ） |
 

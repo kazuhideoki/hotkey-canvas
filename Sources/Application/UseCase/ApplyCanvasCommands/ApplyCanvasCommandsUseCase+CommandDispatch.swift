@@ -28,7 +28,7 @@ extension ApplyCanvasCommandsUseCase {
         }
 
         switch normalizedCommand {
-        case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
+        case .toggleFocusedAreaEdgeShapeStyle, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return try applyAreaManagementCommand(command: normalizedCommand, to: graph)
         default:
             return try applyGraphEditingCommand(
@@ -104,7 +104,7 @@ extension ApplyCanvasCommandsUseCase {
             return try applyNodeContentCommand(command: command, to: graph)
         case .setEdgeLabel(let edgeID, let label):
             return setEdgeLabel(in: graph, edgeID: edgeID, label: label)
-        case .convertFocusedAreaMode, .createArea, .assignNodesToArea:
+        case .toggleFocusedAreaEdgeShapeStyle, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
             return noOpMutationResult(for: graph)
         case .moveFocus, .moveFocusAcrossAreasToRoot, .focusNode, .focusArea, .extendSelection:
             return noOpMutationResult(for: graph)
@@ -176,6 +176,7 @@ extension ApplyCanvasCommandsUseCase {
             .setEdgeLabel,
             .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
+            .toggleFocusedAreaEdgeShapeStyle,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
@@ -225,6 +226,7 @@ extension ApplyCanvasCommandsUseCase {
             .setEdgeLabel,
             .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
+            .toggleFocusedAreaEdgeShapeStyle,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
@@ -277,6 +279,7 @@ extension ApplyCanvasCommandsUseCase {
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
             .setEdgeLabel,
+            .toggleFocusedAreaEdgeShapeStyle,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
@@ -289,6 +292,11 @@ extension ApplyCanvasCommandsUseCase {
         to graph: CanvasGraph
     ) throws -> CanvasMutationResult {
         switch command {
+        case .toggleFocusedAreaEdgeShapeStyle:
+            let graphAfterMutation = try CanvasAreaMembershipService.toggleFocusedAreaEdgeShapeStyle(
+                in: graph
+            ).get()
+            return areaManagementMutationResult(graphBeforeMutation: graph, graphAfterMutation: graphAfterMutation)
         case .convertFocusedAreaMode(let mode):
             let graphAfterMutation = try CanvasAreaMembershipService.convertFocusedAreaMode(
                 to: mode,
@@ -498,6 +506,7 @@ extension ApplyCanvasCommandsUseCase {
             .cutSelectionOrFocusedSubtree,
             .pasteClipboardAtFocusedNode,
             .toggleFocusedNodeMarkdownStyle,
+            .toggleFocusedAreaEdgeShapeStyle,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:

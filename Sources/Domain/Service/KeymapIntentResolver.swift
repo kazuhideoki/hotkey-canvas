@@ -116,6 +116,8 @@ extension KeymapIntentResolver {
         switch command {
         case .alignAllAreasVertically:
             return .edit(variant: .alignAllAreasVertically)
+        case .toggleFocusedAreaEdgeShapeStyle:
+            return .edit(variant: .toggleFocusedAreaEdgeShapeStyle)
         case .copySelectionOrFocusedSubtree:
             return .edit(variant: .copySelectionOrFocusedSubtree)
         case .cutSelectionOrFocusedSubtree:

@@ -31,6 +31,7 @@ enum DiagramAreaPolicyService {
             .setNodeText,
             .upsertNodeAttachment,
             .toggleFocusedNodeMarkdownStyle,
+            .toggleFocusedAreaEdgeShapeStyle,
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
