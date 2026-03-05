@@ -51,6 +51,22 @@ func test_shouldEnableCompositeMove_withoutFocusedNode_returnsFalse() {
     #expect(!result)
 }
 
+@Test("CanvasView composite move: disabled in edge target")
+func test_shouldEnableCompositeMove_edgeTarget_returnsFalse() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .edge,
+        hasFocusedNode: true
+    )
+
+    let result = CanvasView.shouldEnableCompositeMove(
+        direction: .up,
+        context: context
+    )
+
+    #expect(!result)
+}
+
 @Test("CanvasView composite move: area target resolves moveArea command")
 func test_compositeMoveCommand_areaTarget_resolvesMoveArea() {
     let context = KeymapExecutionContext(

@@ -104,6 +104,9 @@ extension CanvasView {
             context: context,
             executionContext: keymapContext
         ) {
+            if operationTargetKind == .edge, definition.id.rawValue == "deleteSelectedOrFocusedNodes" {
+                continue
+            }
             let searchText = Self.commandPaletteSearchText(
                 title: definition.title,
                 shortcutLabel: definition.shortcutLabel,
@@ -119,7 +122,7 @@ extension CanvasView {
                 )
             )
         }
-        if operationTargetKind != .area,
+        if operationTargetKind == .node,
             let markdownToggleItem = focusedNodeMarkdownToggleCommandPaletteItem()
         {
             items.append(markdownToggleItem)
@@ -130,7 +133,7 @@ extension CanvasView {
         if let edgeDirectionalityItem = edgeDirectionalityCommandPaletteItem() {
             items.append(edgeDirectionalityItem)
         }
-        if operationTargetKind != .area, viewModel.focusedNodeID != nil {
+        if operationTargetKind == .node, viewModel.focusedNodeID != nil {
             items.append(
                 CommandPaletteItem(
                     id: "insertImageFromFinder",
@@ -265,17 +268,20 @@ extension CanvasView {
     private func executeCommandPaletteShortcutAction(_ shortcutAction: CanvasShortcutAction) -> Bool {
         switch shortcutAction {
         case .apply(let commands):
+            let commandContext = keymapExecutionContextForCommandPalette()
+            let commandAction: KeymapContextAction = .apply(commands: commands)
+            guard Self.isActionEnabled(commandAction, context: commandContext) else {
+                return true
+            }
             // Keep add-node behavior aligned with the shortcut route (mode-selection popup).
             if commands.count == 1, commands[0] == .addNode {
                 let addNodeAction: KeymapContextAction = .presentAddNodeModeSelection
-                let commandContext = keymapExecutionContextForCommandPalette()
                 guard Self.isActionEnabled(addNodeAction, context: commandContext) else {
                     return true
                 }
                 presentAddNodeModeSelectionPopup()
                 return true
             }
-            let commandContext = keymapExecutionContextForCommandPalette()
             if Self.shouldExecuteCommandViaEdgeTarget(commands: commands, context: commandContext) {
                 if handleEdgeTargetCommands(commands: commands) {
                     return true

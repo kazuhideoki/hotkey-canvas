@@ -88,6 +88,66 @@ func test_hotkeyPolicy_moveFocusAcrossAreasToRootDisabledInEdgeTarget() {
     )
 }
 
+@Test("CanvasView hotkey policy: add-node actions are disabled in edge target")
+func test_hotkeyPolicy_addNodeActionsDisabledInEdgeTarget() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .edge,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 1
+    )
+
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.addNode]), context: context))
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.addChildNode]), context: context))
+    #expect(!CanvasView.isActionEnabled(.presentAddNodeModeSelection, context: context))
+}
+
+@Test("CanvasView hotkey policy: tree add actions are disabled in edge target")
+func test_hotkeyPolicy_treeAddActionsDisabledInEdgeTarget() {
+    let context = KeymapExecutionContext(
+        editingMode: .tree,
+        operationTargetKind: .edge,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 1
+    )
+
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.addSiblingNode(position: .above)]), context: context))
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.addSiblingNode(position: .below)]), context: context))
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.duplicateSelectionAsSibling]), context: context))
+}
+
+@Test("CanvasView hotkey policy: node transform actions are disabled in edge target")
+func test_hotkeyPolicy_nodeTransformActionsDisabledInEdgeTarget() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .edge,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 1
+    )
+
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.moveNode(.right)]), context: context))
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.nudgeNode(.right)]), context: context))
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.scaleSelectedNodes(.up)]), context: context))
+}
+
+@Test("CanvasView hotkey policy: clipboard actions are disabled in edge target")
+func test_hotkeyPolicy_clipboardActionsDisabledInEdgeTarget() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .edge,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 1
+    )
+
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.copySelectionOrFocusedSubtree]), context: context))
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.cutSelectionOrFocusedSubtree]), context: context))
+    #expect(!CanvasView.isActionEnabled(.apply(commands: [.pasteClipboardAtFocusedNode]), context: context))
+}
+
 @Test("Command palette filtering reuses execution policy in area target")
 func test_areaTarget_commandPaletteFiltersByExecutionPolicy() {
     let paletteContext = CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
