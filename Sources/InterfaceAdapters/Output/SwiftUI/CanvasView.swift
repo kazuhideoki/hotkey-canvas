@@ -226,12 +226,8 @@ public struct CanvasView: View {
                             for: edge,
                             nodesByID: nodesByID,
                             branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-<<<<<<< HEAD
-                            laneOffsetByEdgeID: laneOffsetByEdgeID,
+                            laneOffsetsByEdgeID: laneOffsetsByEdgeID,
                             edgeShapeStyle: edgeShapeStyle
-=======
-                            laneOffsetsByEdgeID: laneOffsetsByEdgeID
->>>>>>> main
                         ) {
                             let isFocusedEdge = focusedEdgeID == edge.id
                             let isSelectedEdge = selectedEdgeIDs.contains(edge.id)
@@ -252,13 +248,9 @@ public struct CanvasView: View {
                             let edgeRenderContext = EdgeRenderContext(
                                 nodesByID: nodesByID,
                                 branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-<<<<<<< HEAD
-                                laneOffsetByEdgeID: laneOffsetByEdgeID,
+                                laneOffsetsByEdgeID: laneOffsetsByEdgeID,
                                 areaIDByNodeID: viewModel.areaIDByNodeID,
                                 areaEdgeShapeStyleByID: viewModel.areaEdgeShapeStyleByID,
-=======
-                                laneOffsetsByEdgeID: laneOffsetsByEdgeID,
->>>>>>> main
                                 viewportSize: viewportSize,
                                 zoomScale: zoomScale,
                                 cameraOffset: cameraOffset
