@@ -136,8 +136,22 @@ enum CanvasEdgeRouting {
             let endDirection = -startDirection
             let startKey = AnchorBundleKey(nodeID: edge.fromNodeID, axis: axis, direction: startDirection)
             let endKey = AnchorBundleKey(nodeID: edge.toNodeID, axis: axis, direction: endDirection)
-            groupedRefsByAnchor[startKey, default: []].append(AnchorEdgeRef(edgeID: edge.id, kind: .start))
-            groupedRefsByAnchor[endKey, default: []].append(AnchorEdgeRef(edgeID: edge.id, kind: .end))
+            let counterpartStartCoordinate = counterpartCoordinate(for: childNode, axis: axis)
+            let counterpartEndCoordinate = counterpartCoordinate(for: parentNode, axis: axis)
+            groupedRefsByAnchor[startKey, default: []].append(
+                AnchorEdgeRef(
+                    edgeID: edge.id,
+                    kind: .start,
+                    counterpartCoordinate: counterpartStartCoordinate
+                )
+            )
+            groupedRefsByAnchor[endKey, default: []].append(
+                AnchorEdgeRef(
+                    edgeID: edge.id,
+                    kind: .end,
+                    counterpartCoordinate: counterpartEndCoordinate
+                )
+            )
             laneOffsetsByEdgeID[edge.id] = .zero
         }
 
@@ -302,6 +316,7 @@ extension CanvasEdgeRouting {
     private struct AnchorEdgeRef {
         let edgeID: CanvasEdgeID
         let kind: AnchorEdgeKind
+        let counterpartCoordinate: Double
     }
 
     private static func isAnchorBundleKeyOrdered(_ lhs: AnchorBundleKey, _ rhs: AnchorBundleKey) -> Bool {
@@ -318,6 +333,9 @@ extension CanvasEdgeRouting {
     }
 
     private static func isAnchorEdgeRefOrdered(_ lhs: AnchorEdgeRef, _ rhs: AnchorEdgeRef) -> Bool {
+        if lhs.counterpartCoordinate != rhs.counterpartCoordinate {
+            return lhs.counterpartCoordinate < rhs.counterpartCoordinate
+        }
         if lhs.edgeID.rawValue != rhs.edgeID.rawValue {
             return lhs.edgeID.rawValue < rhs.edgeID.rawValue
         }
@@ -337,6 +355,12 @@ extension CanvasEdgeRouting {
     ) -> Double {
         let laneOffsets = laneOffsetsByEdgeID[edgeID] ?? .zero
         return (laneOffsets.start + laneOffsets.end) / 2
+    }
+
+    private static func counterpartCoordinate(for node: CanvasNode, axis: RouteAxis) -> Double {
+        axis == .horizontal
+            ? node.bounds.y + (node.bounds.height / 2)
+            : node.bounds.x + (node.bounds.width / 2)
     }
 
     private static func laneAdjustedCoordinate(
