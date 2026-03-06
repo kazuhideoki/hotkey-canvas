@@ -60,7 +60,7 @@ extension CanvasEdgeRouting {
 
     static func curvedGeometry(
         routeGeometry: RouteGeometry,
-        laneOffset: Double
+        laneOffsets: EdgeLaneOffsets
     ) -> CurveGeometry {
         let start = CGPoint(x: routeGeometry.startX, y: routeGeometry.startY)
         let end = CGPoint(x: routeGeometry.endX, y: routeGeometry.endY)
@@ -73,25 +73,31 @@ extension CanvasEdgeRouting {
         let rawNormalX = -tangentY
         let rawNormalY = tangentX
         let handleLength = min(curvedMaxHandleLength, safeDistance * curvedMinHandleRatio)
-        let laneMagnitude = abs(laneOffset)
-        let laneLevel = laneMagnitude / parallelLaneSpacing
-        let curveOffset = curvedBaseOffset + (pow(laneLevel, curvedLaneGrowthExponent) * curvedOffsetPerLaneLevel)
         let laneAxis = laneAxisVector(for: routeGeometry.axis)
         let laneAlignment = (rawNormalX * laneAxis.dx) + (rawNormalY * laneAxis.dy)
         let normalSign = laneAlignment >= 0 ? 1.0 : -1.0
         let normalX = rawNormalX * normalSign
         let normalY = rawNormalY * normalSign
-        let outwardSign = laneOffset >= 0 ? 1.0 : -1.0
+        let startCurveOffset = curveOffset(for: laneOffsets.start)
+        let endCurveOffset = curveOffset(for: laneOffsets.end)
+        let startOutwardSign = laneOffsets.start >= 0 ? 1.0 : -1.0
+        let endOutwardSign = laneOffsets.end >= 0 ? 1.0 : -1.0
 
         let control1 = CGPoint(
-            x: start.x + (tangentX * handleLength) + (normalX * curveOffset * outwardSign),
-            y: start.y + (tangentY * handleLength) + (normalY * curveOffset * outwardSign)
+            x: start.x + (tangentX * handleLength) + (normalX * startCurveOffset * startOutwardSign),
+            y: start.y + (tangentY * handleLength) + (normalY * startCurveOffset * startOutwardSign)
         )
         let control2 = CGPoint(
-            x: end.x - (tangentX * handleLength) + (normalX * curveOffset * outwardSign),
-            y: end.y - (tangentY * handleLength) + (normalY * curveOffset * outwardSign)
+            x: end.x - (tangentX * handleLength) + (normalX * endCurveOffset * endOutwardSign),
+            y: end.y - (tangentY * handleLength) + (normalY * endCurveOffset * endOutwardSign)
         )
         return CurveGeometry(control1: control1, control2: control2)
+    }
+
+    private static func curveOffset(for laneOffset: Double) -> Double {
+        let laneMagnitude = abs(laneOffset)
+        let laneLevel = laneMagnitude / parallelLaneSpacing
+        return curvedBaseOffset + (pow(laneLevel, curvedLaneGrowthExponent) * curvedOffsetPerLaneLevel)
     }
 
     private static func laneAxisVector(for axis: RouteAxis) -> CGVector {
