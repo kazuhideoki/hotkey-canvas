@@ -214,8 +214,8 @@ enum CanvasEdgeRouting {
             case .straight:
                 path.addLine(to: end)
             case .curved:
-                let laneOffset = curveLaneOffset(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
-                let curve = curvedGeometry(routeGeometry: geometry, laneOffset: laneOffset)
+                let laneOffsets = curveLaneOffsets(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
+                let curve = curvedGeometry(routeGeometry: geometry, laneOffsets: laneOffsets)
                 path.addCurve(to: end, control1: curve.control1, control2: curve.control2)
             }
         }
@@ -246,8 +246,8 @@ enum CanvasEdgeRouting {
         case .straight:
             return straightEdgeTipAndVector(edge: edge, routeGeometry: geometry)
         case .curved:
-            let laneOffset = curveLaneOffset(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
-            let curve = curvedGeometry(routeGeometry: geometry, laneOffset: laneOffset)
+            let laneOffsets = curveLaneOffsets(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
+            let curve = curvedGeometry(routeGeometry: geometry, laneOffsets: laneOffsets)
             return curvedEdgeTipAndVector(edge: edge, routeGeometry: geometry, curve: curve)
         }
     }
@@ -349,12 +349,11 @@ extension CanvasEdgeRouting {
         }
     }
 
-    private static func curveLaneOffset(
+    private static func curveLaneOffsets(
         for edgeID: CanvasEdgeID,
         laneOffsetsByEdgeID: [CanvasEdgeID: EdgeLaneOffsets]
-    ) -> Double {
-        let laneOffsets = laneOffsetsByEdgeID[edgeID] ?? .zero
-        return (laneOffsets.start + laneOffsets.end) / 2
+    ) -> EdgeLaneOffsets {
+        laneOffsetsByEdgeID[edgeID] ?? .zero
     }
 
     private static func counterpartCoordinate(for node: CanvasNode, axis: RouteAxis) -> Double {
