@@ -320,6 +320,49 @@ func test_routeGeometry_withSharedStartSide_ordersLanesByCounterpartPosition() t
     #expect(upperGeometry.endY < lowerGeometry.endY)
 }
 
+@Test("CanvasEdgeRouting: sibling edges on one end side follow counterpart order to avoid immediate crossing")
+func test_routeGeometry_withSharedEndSide_ordersLanesByCounterpartPosition() throws {
+    let upperParentID = CanvasNodeID(rawValue: "upper-parent")
+    let lowerParentID = CanvasNodeID(rawValue: "lower-parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let laterEdgeID = CanvasEdgeID(rawValue: "edge-z")
+    let earlierEdgeID = CanvasEdgeID(rawValue: "edge-a")
+    let upperEdge = CanvasEdge(id: laterEdgeID, fromNodeID: upperParentID, toNodeID: childID, relationType: .normal)
+    let lowerEdge = CanvasEdge(id: earlierEdgeID, fromNodeID: lowerParentID, toNodeID: childID, relationType: .normal)
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        upperParentID: makeNode(id: upperParentID, x: 80, y: 120, width: 220, height: 220),
+        lowerParentID: makeNode(id: lowerParentID, x: 80, y: 420, width: 220, height: 220),
+        childID: makeNode(id: childID, x: 460, y: 220, width: 220, height: 220),
+    ]
+    let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
+        edges: [upperEdge, lowerEdge],
+        nodesByID: nodesByID
+    )
+
+    let upperGeometry = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: upperEdge,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:],
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID
+        )
+    )
+    let lowerGeometry = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: lowerEdge,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:],
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID
+        )
+    )
+
+    #expect(upperGeometry.axis == .horizontal)
+    #expect(lowerGeometry.axis == .horizontal)
+    #expect(upperGeometry.endX == lowerGeometry.endX)
+    #expect(upperGeometry.endY < lowerGeometry.endY)
+    #expect(upperGeometry.startY < lowerGeometry.startY)
+}
+
 @Test("CanvasEdgeRouting: left-side child route enters from child right edge")
 func test_routeGeometry_leftDirection_usesOppositeSides() {
     let parentID = CanvasNodeID(rawValue: "parent")
@@ -438,8 +481,14 @@ func test_curvedGeometry_verticalRoute_positiveLaneBulgesOutwardForBothDirection
         endY: 120
     )
 
-    let downwardCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: downward, laneOffset: 10)
-    let upwardCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: upward, laneOffset: 10)
+    let downwardCurve = CanvasEdgeRouting.curvedGeometry(
+        routeGeometry: downward,
+        laneOffsets: .init(start: 10, end: 10)
+    )
+    let upwardCurve = CanvasEdgeRouting.curvedGeometry(
+        routeGeometry: upward,
+        laneOffsets: .init(start: 10, end: 10)
+    )
 
     #expect(downwardCurve.control1.x > downward.startX)
     #expect(downwardCurve.control2.x > downward.endX)
@@ -458,11 +507,75 @@ func test_curvedGeometry_largerLaneOffsetIncreasesBulge() {
         endY: 220
     )
 
-    let nearCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffset: 7)
-    let farCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffset: 21)
+    let nearCurve = CanvasEdgeRouting.curvedGeometry(
+        routeGeometry: geometry,
+        laneOffsets: .init(start: 7, end: 7)
+    )
+    let farCurve = CanvasEdgeRouting.curvedGeometry(
+        routeGeometry: geometry,
+        laneOffsets: .init(start: 21, end: 21)
+    )
 
     #expect(farCurve.control1.y - geometry.startY > nearCurve.control1.y - geometry.startY)
     #expect(farCurve.control2.y - geometry.endY > nearCurve.control2.y - geometry.endY)
+}
+
+@Test("CanvasEdgeRouting: curved geometry respects different lane offsets at start and end")
+func test_curvedGeometry_withDistinctStartAndEndLanes_followsEachEndpointLane() {
+    let geometry = CanvasEdgeRouting.RouteGeometry(
+        axis: .horizontal,
+        startX: 120,
+        startY: 220,
+        branchCoordinate: 320,
+        endX: 620,
+        endY: 220
+    )
+
+    let splitCurve = CanvasEdgeRouting.curvedGeometry(
+        routeGeometry: geometry,
+        laneOffsets: .init(start: -21, end: 21)
+    )
+
+    #expect(splitCurve.control1.y < geometry.startY)
+    #expect(splitCurve.control2.y > geometry.endY)
+}
+
+@Test("CanvasEdgeRouting: edge tip vector respects asymmetric lanes on vertical curved routes")
+func test_edgeTipAndVector_verticalCurvedRoute_withDistinctLanes_tracksEndLaneDirection() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let edgeID = CanvasEdgeID(rawValue: "edge-1")
+    let edge = CanvasEdge(
+        id: edgeID,
+        fromNodeID: parentID,
+        toNodeID: childID,
+        relationType: .normal,
+        directionality: .fromTo
+    )
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 240, y: 120, width: 220, height: 56),
+        childID: makeNode(id: childID, x: 280, y: 420, width: 220, height: 56),
+    ]
+    let branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double] = [
+        CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .vertical, direction: 1): 320
+    ]
+    let laneOffsetsByEdgeID: [CanvasEdgeID: CanvasEdgeRouting.EdgeLaneOffsets] = [
+        edgeID: .init(start: -21, end: 21)
+    ]
+
+    let tipAndVector = try #require(
+        CanvasEdgeRouting.edgeTipAndVector(
+            for: edge,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID,
+            edgeShapeStyle: .curved
+        )
+    )
+
+    #expect(tipAndVector.tip.y == 420)
+    #expect(tipAndVector.vector.dx < 0)
+    #expect(tipAndVector.vector.dy > 0)
 }
 
 private func makeNode(
