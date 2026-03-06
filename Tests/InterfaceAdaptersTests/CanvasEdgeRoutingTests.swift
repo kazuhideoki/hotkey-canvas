@@ -277,6 +277,49 @@ func test_routeGeometry_withSharedOneSideNode_separatesSharedAnchors() throws {
     #expect(geometryAB.startY != geometryAC.startY)
 }
 
+@Test("CanvasEdgeRouting: sibling edges on one side follow counterpart order to avoid immediate crossing")
+func test_routeGeometry_withSharedStartSide_ordersLanesByCounterpartPosition() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let upperChildID = CanvasNodeID(rawValue: "upper-child")
+    let lowerChildID = CanvasNodeID(rawValue: "lower-child")
+    let laterEdgeID = CanvasEdgeID(rawValue: "edge-z")
+    let earlierEdgeID = CanvasEdgeID(rawValue: "edge-a")
+    let upperEdge = CanvasEdge(id: laterEdgeID, fromNodeID: parentID, toNodeID: upperChildID, relationType: .normal)
+    let lowerEdge = CanvasEdge(id: earlierEdgeID, fromNodeID: parentID, toNodeID: lowerChildID, relationType: .normal)
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 80, y: 220, width: 220, height: 220),
+        upperChildID: makeNode(id: upperChildID, x: 460, y: 120, width: 220, height: 220),
+        lowerChildID: makeNode(id: lowerChildID, x: 460, y: 420, width: 220, height: 220),
+    ]
+    let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
+        edges: [upperEdge, lowerEdge],
+        nodesByID: nodesByID
+    )
+
+    let upperGeometry = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: upperEdge,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:],
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID
+        )
+    )
+    let lowerGeometry = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: lowerEdge,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:],
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID
+        )
+    )
+
+    #expect(upperGeometry.axis == .horizontal)
+    #expect(lowerGeometry.axis == .horizontal)
+    #expect(upperGeometry.startX == lowerGeometry.startX)
+    #expect(upperGeometry.startY < lowerGeometry.startY)
+    #expect(upperGeometry.endY < lowerGeometry.endY)
+}
+
 @Test("CanvasEdgeRouting: left-side child route enters from child right edge")
 func test_routeGeometry_leftDirection_usesOppositeSides() {
     let parentID = CanvasNodeID(rawValue: "parent")
