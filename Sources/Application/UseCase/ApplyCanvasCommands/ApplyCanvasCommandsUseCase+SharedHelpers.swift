@@ -4,6 +4,38 @@ import Foundation
 // Background: Multiple canvas command handlers reuse placement and edge-construction helpers.
 // Responsibility: Provide shared node/edge creation and placement routines.
 extension ApplyCanvasCommandsUseCase {
+    /// Returns selected node identifiers constrained to the focused node's area.
+    /// - Parameter graph: Current graph snapshot.
+    /// - Returns: Deterministically sorted selected node identifiers in the focused area.
+    func selectedNodeIDsInFocusedArea(in graph: CanvasGraph) -> [CanvasNodeID] {
+        guard let focusedNodeID = graph.focusedNodeID else {
+            return []
+        }
+        guard graph.nodesByID[focusedNodeID] != nil else {
+            return []
+        }
+        let focusedAreaID: CanvasAreaID
+        switch CanvasAreaMembershipService.areaID(containing: focusedNodeID, in: graph) {
+        case .success(let areaID):
+            focusedAreaID = areaID
+        case .failure:
+            return []
+        }
+        return graph.selectedNodeIDs
+            .filter { selectedNodeID in
+                guard graph.nodesByID[selectedNodeID] != nil else {
+                    return false
+                }
+                switch CanvasAreaMembershipService.areaID(containing: selectedNodeID, in: graph) {
+                case .success(let selectedAreaID):
+                    return selectedAreaID == focusedAreaID
+                case .failure:
+                    return false
+                }
+            }
+            .sorted(by: { $0.rawValue < $1.rawValue })
+    }
+
     static let newNodeWidth: Double = CanvasDefaultNodeDistance.treeNodeWidth
     static let newNodeHeight: Double = CanvasDefaultNodeDistance.treeNodeHeight
     static let defaultNewNodeX: Double = 48
