@@ -77,6 +77,12 @@ extension ApplyCanvasCommandsUseCase {
                 direction: direction,
                 areaMode: resolvedAreaMode
             )
+        case .alignSelectedNodes(let axis):
+            return try alignSelectedNodes(
+                in: graph,
+                axis: axis,
+                areaMode: resolvedAreaMode
+            )
         case .toggleFoldFocusedSubtree:
             return toggleFoldFocusedSubtree(in: graph)
         case .centerFocusedNode:
@@ -166,6 +172,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
@@ -213,6 +220,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
@@ -270,6 +278,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .cycleFocusedEdgeDirectionality,
@@ -329,6 +338,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
@@ -498,6 +508,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
