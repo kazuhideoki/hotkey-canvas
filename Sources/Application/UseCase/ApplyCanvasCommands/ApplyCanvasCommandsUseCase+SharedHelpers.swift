@@ -120,23 +120,6 @@ extension ApplyCanvasCommandsUseCase {
     /// - Parameters:
     ///   - graph: Current canvas graph.
     ///   - nodeIDs: Nodes to consider as placement blockers.
-    /// - Returns: First available non-overlapping bounds.
-    func makeAvailableNewNodeBounds(
-        in graph: CanvasGraph,
-        avoiding nodeIDs: Set<CanvasNodeID>
-    ) -> CanvasBounds {
-        makeAvailableNewNodeBounds(
-            in: graph,
-            avoiding: nodeIDs,
-            width: Self.newNodeWidth,
-            height: Self.newNodeHeight
-        )
-    }
-
-    /// Computes bounds for a newly inserted node while avoiding overlap against the given node set.
-    /// - Parameters:
-    ///   - graph: Current canvas graph.
-    ///   - nodeIDs: Nodes to consider as placement blockers.
     ///   - width: New node width.
     ///   - height: New node height.
     /// - Returns: First available non-overlapping bounds.

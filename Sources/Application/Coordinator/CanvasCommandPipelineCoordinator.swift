@@ -3,15 +3,13 @@
 import Domain
 
 /// Coordinator that evaluates fixed pipeline stage order from phase-1 effect contracts.
-public struct CanvasCommandPipelineCoordinator: Sendable {
-    public init() {}
-
+struct CanvasCommandPipelineCoordinator: Sendable {
     /// Runs mutation outputs through the fixed pipeline order and returns the last aggregated result.
     /// - Parameters:
     ///   - baseGraph: Snapshot before executing the current command sequence.
     ///   - mutationResults: Mutation outputs that already classify stage requirements via effects.
     /// - Returns: Final graph and viewport intent after all eligible stages are evaluated.
-    public func run(
+    func run(
         on baseGraph: CanvasGraph,
         mutationResults: [CanvasMutationResult]
     ) -> CanvasPipelineResult {

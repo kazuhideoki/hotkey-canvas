@@ -187,8 +187,6 @@ public struct CanvasOverlayStyle: Equatable, Sendable {
     public let popupSelectedRowOpacity: Double
     public let popupUnselectedRowColor: CanvasStyleColorToken
     public let popupUnselectedRowOpacity: Double
-    public let zoomPopupFillColor: CanvasStyleColorToken
-    public let zoomPopupFillOpacity: Double
     public let zoomPopupBorderColor: CanvasStyleColorToken
     public let zoomPopupBorderOpacity: Double
     public let zoomPopupShadowColor: CanvasStyleColorToken
@@ -207,8 +205,6 @@ public struct CanvasOverlayStyle: Equatable, Sendable {
         popupSelectedRowOpacity: Double,
         popupUnselectedRowColor: CanvasStyleColorToken,
         popupUnselectedRowOpacity: Double,
-        zoomPopupFillColor: CanvasStyleColorToken,
-        zoomPopupFillOpacity: Double,
         zoomPopupBorderColor: CanvasStyleColorToken,
         zoomPopupBorderOpacity: Double,
         zoomPopupShadowColor: CanvasStyleColorToken,
@@ -225,8 +221,6 @@ public struct CanvasOverlayStyle: Equatable, Sendable {
         self.popupSelectedRowOpacity = popupSelectedRowOpacity
         self.popupUnselectedRowColor = popupUnselectedRowColor
         self.popupUnselectedRowOpacity = popupUnselectedRowOpacity
-        self.zoomPopupFillColor = zoomPopupFillColor
-        self.zoomPopupFillOpacity = zoomPopupFillOpacity
         self.zoomPopupBorderColor = zoomPopupBorderColor
         self.zoomPopupBorderOpacity = zoomPopupBorderOpacity
         self.zoomPopupShadowColor = zoomPopupShadowColor

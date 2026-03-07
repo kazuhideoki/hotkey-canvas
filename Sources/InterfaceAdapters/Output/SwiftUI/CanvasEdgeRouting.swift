@@ -307,6 +307,20 @@ enum CanvasEdgeRouting {
     }
 }
 
+extension CanvasEdgeRouting.BranchKey {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(parentNodeID)
+        hasher.combine(axis)
+        hasher.combine(direction)
+    }
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.parentNodeID == rhs.parentNodeID
+            && lhs.axis == rhs.axis
+            && lhs.direction == rhs.direction
+    }
+}
+
 extension CanvasEdgeRouting {
     private enum AnchorEdgeKind {
         case start

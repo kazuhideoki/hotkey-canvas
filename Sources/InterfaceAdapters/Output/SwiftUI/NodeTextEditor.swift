@@ -44,8 +44,6 @@ struct NodeTextEditor: NSViewRepresentable {
             nsView.string = text
         }
         context.coordinator.nodeWidth = nodeWidth
-        context.coordinator.zoomScale = zoomScale
-        context.coordinator.contentScale = contentScale
         context.coordinator.updateMeasurer(style: style, contentScale: contentScale)
         nsView.onCommit = onCommit
         nsView.onCancel = onCancel
@@ -68,7 +66,6 @@ struct NodeTextEditor: NSViewRepresentable {
         Coordinator(
             text: $text,
             nodeWidth: nodeWidth,
-            zoomScale: zoomScale,
             contentScale: contentScale,
             selectAllOnFirstFocus: selectAllOnFirstFocus,
             initialCursorPlacement: initialCursorPlacement,
@@ -83,8 +80,6 @@ extension NodeTextEditor {
     final class Coordinator: NSObject, NSTextViewDelegate {
         var text: Binding<String>
         var nodeWidth: CGFloat
-        var zoomScale: Double
-        var contentScale: Double
         let selectAllOnFirstFocus: Bool
         let initialCursorPlacement: NodeTextEditorInitialCursorPlacement
         var pendingTypingEvent: NSEvent?
@@ -98,7 +93,6 @@ extension NodeTextEditor {
         init(
             text: Binding<String>,
             nodeWidth: CGFloat,
-            zoomScale: Double,
             contentScale: Double,
             selectAllOnFirstFocus: Bool,
             initialCursorPlacement: NodeTextEditorInitialCursorPlacement,
@@ -108,8 +102,6 @@ extension NodeTextEditor {
         ) {
             self.text = text
             self.nodeWidth = nodeWidth
-            self.zoomScale = zoomScale
-            self.contentScale = contentScale
             self.selectAllOnFirstFocus = selectAllOnFirstFocus
             self.initialCursorPlacement = initialCursorPlacement
             self.pendingTypingEvent = initialTypingEvent

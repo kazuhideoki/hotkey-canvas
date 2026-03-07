@@ -58,8 +58,6 @@ public enum CanvasStylePalette {
             popupSelectedRowOpacity: 0.2,
             popupUnselectedRowColor: .textBackground,
             popupUnselectedRowOpacity: 0.35,
-            zoomPopupFillColor: .treeRootFill,
-            zoomPopupFillOpacity: 0.25,
             zoomPopupBorderColor: .separator,
             zoomPopupBorderOpacity: 0.55,
             zoomPopupShadowColor: .shadow,

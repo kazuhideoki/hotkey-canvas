@@ -22,14 +22,6 @@ public struct KeymapExecutionContext: Equatable, Sendable {
     /// Selected edge count.
     public let selectedEdgeCount: Int
 
-    /// Whether any modal state is currently active.
-    public var isModalActive: Bool {
-        isCommandPalettePresented
-            || isSearchPresented
-            || isConnectNodeSelectionActive
-            || isAddNodePopupPresented
-    }
-
     /// Creates an execution context snapshot.
     /// - Parameters:
     ///   - editingMode: Area editing mode.

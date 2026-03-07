@@ -1,7 +1,5 @@
 // Background: Command palette supports query-history navigation and recency tracking.
 // Responsibility: Isolate history transitions and recent-item bookkeeping from main palette actions.
-import Domain
-
 extension CanvasView {
     func handleCommandPaletteArrowKey(_ direction: CommandPaletteArrowDirection) {
         let shouldHandleAsHistory = Self.shouldHandleArrowAsQueryHistory(

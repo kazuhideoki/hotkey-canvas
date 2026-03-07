@@ -13,10 +13,4 @@ public struct CanvasNodeKind: RawRepresentable, Equatable, Hashable, Sendable {
 
     /// Textual note node.
     public static let text = CanvasNodeKind(rawValue: "text")
-    /// File reference node.
-    public static let file = CanvasNodeKind(rawValue: "file")
-    /// External link node.
-    public static let link = CanvasNodeKind(rawValue: "link")
-    /// Grouping container node.
-    public static let group = CanvasNodeKind(rawValue: "group")
 }

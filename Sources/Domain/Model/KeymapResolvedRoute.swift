@@ -5,16 +5,4 @@ public enum KeymapResolvedRoute: Equatable, Sendable {
     case primitive(intent: KeymapPrimitiveIntent)
     case global(action: KeymapGlobalAction)
     case modal
-
-    /// Scope extracted from route payload.
-    public var scope: KeymapShortcutScope {
-        switch self {
-        case .primitive:
-            return .primitive
-        case .global:
-            return .global
-        case .modal:
-            return .modal
-        }
-    }
 }

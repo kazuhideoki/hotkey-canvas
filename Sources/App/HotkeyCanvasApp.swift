@@ -35,6 +35,9 @@ struct HotkeyCanvasApp: App {
     var body: some Scene {
         WindowGroup {
             CanvasWindowRootView(container: container)
+                .onAppear {
+                    _ = debugStateAPIRuntime
+                }
         }
     }
 }
