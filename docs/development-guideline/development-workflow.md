@@ -21,6 +21,7 @@ Canonical commands:
 - `cat docs/specs/architecture.md`: review constraints before coding.
 - `swift build`
 - `swift test`
+- `./scripts/bootstrap_periphery.sh`
 - `git log --oneline`: inspect prior commit style.
 - `find . -maxdepth 3 -type f`: verify expected scaffold files.
 
@@ -37,6 +38,9 @@ Canonical commands:
   - `Any` is prohibited (SwiftLint `custom_rules.no_any_type` as `error`).
   - Prefer concrete types, generics, or `any Protocol`.
   - Run lint with `./scripts/lint_and_format.sh` (Swift Package Plugin based; no global SwiftLint required).
+  - `./scripts/lint_and_format.sh` also runs Periphery to detect unused declarations and redundant `public` accessibility.
+  - Periphery is invoked with `--retain-codable-properties` to avoid flagging properties that are only used through synthesized `Codable` behavior.
+  - Periphery is provisioned as a repo-local tool under `.tools/` via `./scripts/bootstrap_periphery.sh`, so contributors do not need a global `brew`/`mint` installation and local/CI can share the same fixed version.
 
 ## Comment Policy
 
