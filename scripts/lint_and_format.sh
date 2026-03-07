@@ -22,7 +22,11 @@ if ! "$repo_root/scripts/bootstrap_periphery.sh"; then
     status=1
 fi
 
-if ! "$repo_root/.tools/periphery/3.6.0/periphery" scan --retain-codable-properties; then
+if periphery_binary="$("$repo_root/scripts/bootstrap_periphery.sh" --print-binary-path)"; then
+    if ! "$periphery_binary" scan --retain-codable-properties; then
+        status=1
+    fi
+else
     status=1
 fi
 

@@ -7,8 +7,37 @@ periphery_sha256="983cb6bad09b7030f0ec151e05f650dbf450eb624bd361a0ad89c59fdbf181
 periphery_url="https://github.com/peripheryapp/periphery/releases/download/${periphery_version}/periphery-${periphery_version}.zip"
 install_dir="${repo_root}/.tools/periphery/${periphery_version}"
 binary_path="${install_dir}/periphery"
+binary_checksum_path="${install_dir}/periphery.sha256"
+print_binary_path=false
 
-if [[ -x "${binary_path}" ]]; then
+if [[ "${1:-}" == "--print-binary-path" ]]; then
+    print_binary_path=true
+fi
+
+compute_file_sha256() {
+    shasum -a 256 "$1" | awk '{ print $1 }'
+}
+
+is_installed_binary_valid() {
+    if [[ ! -x "${binary_path}" ]]; then
+        return 1
+    fi
+    if [[ ! -f "${binary_checksum_path}" ]]; then
+        return 1
+    fi
+
+    local expected_binary_sha256
+    expected_binary_sha256="$(<"${binary_checksum_path}")"
+    local current_binary_sha256
+    current_binary_sha256="$(compute_file_sha256 "${binary_path}")"
+
+    [[ "${current_binary_sha256}" == "${expected_binary_sha256}" ]]
+}
+
+if is_installed_binary_valid; then
+    if ${print_binary_path}; then
+        echo "${binary_path}"
+    fi
     exit 0
 fi
 
@@ -42,3 +71,8 @@ if [[ -z "${resolved_binary}" ]]; then
 fi
 
 install -m 755 "${resolved_binary}" "${binary_path}"
+compute_file_sha256 "${binary_path}" > "${binary_checksum_path}"
+
+if ${print_binary_path}; then
+    echo "${binary_path}"
+fi

@@ -41,6 +41,9 @@ Canonical commands:
   - `./scripts/lint_and_format.sh` also runs Periphery to detect unused declarations and redundant `public` accessibility.
   - Periphery is invoked with `--retain-codable-properties` to avoid flagging properties that are only used through synthesized `Codable` behavior.
   - Periphery is provisioned as a repo-local tool under `.tools/` via `./scripts/bootstrap_periphery.sh`, so contributors do not need a global `brew`/`mint` installation and local/CI can share the same fixed version.
+  - The first bootstrap downloads Periphery from GitHub Releases, so `curl`, `unzip`, and network access are required once.
+  - `./scripts/lint_and_format.sh` is a fix-and-verify command: it auto-formats what can be fixed mechanically, then exits non-zero only for remaining manual issues.
+  - When CI uses `./scripts/lint_and_format.sh`, also verify that no diff remains after execution so auto-fixed changes do not silently pass without being committed.
 
 ## Comment Policy
 
