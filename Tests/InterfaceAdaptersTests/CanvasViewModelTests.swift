@@ -1270,44 +1270,15 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
         for command in commands {
             switch command {
             case .addNode:
-                let nodeID = CanvasNodeID(rawValue: "node-\(nextGraph.nodesByID.count + 1)")
-                let node = CanvasNode(
-                    id: nodeID,
-                    kind: .text,
-                    text: nil,
-                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
-                )
-                let createdGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
-                nextGraph = CanvasGraph(
-                    nodesByID: createdGraph.nodesByID,
-                    edgesByID: createdGraph.edgesByID,
-                    focusedNodeID: nodeID,
-                    collapsedRootNodeIDs: createdGraph.collapsedRootNodeIDs,
-                    areasByID: createdGraph.areasByID
-                )
+                nextGraph = try addNode(to: nextGraph)
                 didAddNode = true
             case .createArea(let id, let mode, let nodeIDs):
-                requestedCreateAreaIDs.append(id)
-                if !injectedCollision {
-                    injectedCollision = true
-                    var collisionAreas = nextGraph.areasByID
-                    collisionAreas[id] = CanvasArea(id: id, nodeIDs: [], editingMode: mode)
-                    graph = CanvasGraph(
-                        nodesByID: nextGraph.nodesByID,
-                        edgesByID: nextGraph.edgesByID,
-                        focusedNodeID: nextGraph.focusedNodeID,
-                        collapsedRootNodeIDs: nextGraph.collapsedRootNodeIDs,
-                        areasByID: collisionAreas
-                    )
-                    throw CanvasAreaPolicyError.areaAlreadyExists(id)
-                }
-
-                nextGraph = try CanvasAreaMembershipService.createArea(
+                nextGraph = try createArea(
                     id: id,
                     mode: mode,
                     nodeIDs: nodeIDs,
                     in: nextGraph
-                ).get()
+                )
             case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
                 .focusNode, .focusArea,
                 .extendSelection, .moveArea, .moveNode,
@@ -1328,6 +1299,61 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
 
         graph = nextGraph
         return ApplyResult(newState: graph, didAddNode: didAddNode)
+    }
+
+    private func addNode(to graph: CanvasGraph) throws -> CanvasGraph {
+        let nodeID = CanvasNodeID(rawValue: "node-\(graph.nodesByID.count + 1)")
+        let node = CanvasNode(
+            id: nodeID,
+            kind: .text,
+            text: nil,
+            bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+        )
+        let createdGraph = try CanvasGraphCRUDService.createNode(node, in: graph).get()
+        return CanvasGraph(
+            nodesByID: createdGraph.nodesByID,
+            edgesByID: createdGraph.edgesByID,
+            focusedNodeID: nodeID,
+            collapsedRootNodeIDs: createdGraph.collapsedRootNodeIDs,
+            areasByID: createdGraph.areasByID
+        )
+    }
+
+    private func createArea(
+        id: CanvasAreaID,
+        mode: CanvasEditingMode,
+        nodeIDs: Set<CanvasNodeID>,
+        in graph: CanvasGraph
+    ) throws -> CanvasGraph {
+        requestedCreateAreaIDs.append(id)
+        if !injectedCollision {
+            injectedCollision = true
+            self.graph = graphWithInjectedAreaCollision(id: id, mode: mode, graph: graph)
+            throw CanvasAreaPolicyError.areaAlreadyExists(id)
+        }
+
+        return try CanvasAreaMembershipService.createArea(
+            id: id,
+            mode: mode,
+            nodeIDs: nodeIDs,
+            in: graph
+        ).get()
+    }
+
+    private func graphWithInjectedAreaCollision(
+        id: CanvasAreaID,
+        mode: CanvasEditingMode,
+        graph: CanvasGraph
+    ) -> CanvasGraph {
+        var collisionAreas = graph.areasByID
+        collisionAreas[id] = CanvasArea(id: id, nodeIDs: [], editingMode: mode)
+        return CanvasGraph(
+            nodesByID: graph.nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: graph.focusedNodeID,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+            areasByID: collisionAreas
+        )
     }
 
     func undo() async -> ApplyResult {

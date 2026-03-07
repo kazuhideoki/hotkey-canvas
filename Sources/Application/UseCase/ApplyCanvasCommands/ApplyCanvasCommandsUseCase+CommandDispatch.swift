@@ -6,38 +6,26 @@ extension ApplyCanvasCommandsUseCase {
     /// Dispatches one command to its mutation handler and returns stage effects with the result graph.
     func applyMutation(command: CanvasCommand, to graph: CanvasGraph) throws -> CanvasMutationResult {
         try CanvasAreaMembershipService.validate(in: graph).get()
-        let normalizedCommand = normalize(
-            command: command,
-            in: graph
-        )
-        let resolvedAreaID = try resolveAreaID(for: normalizedCommand, in: graph).get()
-        let resolvedArea = try CanvasAreaMembershipService.area(withID: resolvedAreaID, in: graph).get()
-        let executionContext = makeExecutionContext(
-            for: normalizedCommand,
-            in: graph,
-            editingMode: resolvedArea.editingMode
-        )
-        guard isCommandSupported(normalizedCommand, supportedIn: resolvedArea.editingMode) else {
+        let resolvedContext = try resolvedCommandContext(for: command, in: graph)
+        guard isCommandSupported(resolvedContext.command, supportedIn: resolvedContext.area.editingMode) else {
             throw CanvasAreaPolicyError.unsupportedCommandInMode(
-                mode: resolvedArea.editingMode,
-                command: normalizedCommand
+                mode: resolvedContext.area.editingMode,
+                command: resolvedContext.command
             )
         }
-        guard isCommandExecutionAllowed(normalizedCommand, context: executionContext) else {
+        guard isCommandExecutionAllowed(resolvedContext.command, context: resolvedContext.executionContext) else {
             return noOpMutationResult(for: graph)
         }
 
-        switch normalizedCommand {
-        case .toggleFocusedAreaEdgeShapeStyle, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
-            return try applyAreaManagementCommand(command: normalizedCommand, to: graph)
-        default:
-            return try applyGraphEditingCommand(
-                command: normalizedCommand,
-                to: graph,
-                resolvedAreaID: resolvedAreaID,
-                resolvedAreaMode: resolvedArea.editingMode
-            )
+        if Self.isAreaManagementCommand(resolvedContext.command) {
+            return try applyAreaManagementCommand(command: resolvedContext.command, to: graph)
         }
+        return try applyGraphEditingCommand(
+            command: resolvedContext.command,
+            to: graph,
+            resolvedAreaID: resolvedContext.areaID,
+            resolvedAreaMode: resolvedContext.area.editingMode
+        )
     }
 
     private func applyGraphEditingCommand(
@@ -49,14 +37,34 @@ extension ApplyCanvasCommandsUseCase {
         if let focusCommandResult = applyFocusCommand(command: command, to: graph) {
             return focusCommandResult
         }
-
-        switch command {
-        case .addNode, .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .connectNodes:
+        if Self.isNodeStructureCommand(command) {
             return try applyNodeStructureCommand(
                 command: command,
                 to: graph,
                 resolvedAreaID: resolvedAreaID
             )
+        }
+        if let commandResult = try applyAreaOrNodeMutationCommand(
+            command: command,
+            to: graph,
+            resolvedAreaID: resolvedAreaID,
+            resolvedAreaMode: resolvedAreaMode
+        ) {
+            return commandResult
+        }
+        if let contentCommandResult = try applyContentCommand(command: command, to: graph) {
+            return contentCommandResult
+        }
+        return noOpMutationResult(for: graph)
+    }
+
+    private func applyAreaOrNodeMutationCommand(
+        command: CanvasCommand,
+        to graph: CanvasGraph,
+        resolvedAreaID: CanvasAreaID,
+        resolvedAreaMode: CanvasEditingMode
+    ) throws -> CanvasMutationResult? {
+        switch command {
         case .alignAllAreasVertically:
             return alignAllAreasVertically(in: graph, areaID: resolvedAreaID)
         case .moveArea(let direction):
@@ -85,8 +93,6 @@ extension ApplyCanvasCommandsUseCase {
             )
         case .toggleFoldFocusedSubtree:
             return toggleFoldFocusedSubtree(in: graph)
-        case .centerFocusedNode:
-            return noOpMutationResult(for: graph)
         case .cycleFocusedEdgeDirectionality(let focusedEdge, let selectedEdgeIDs):
             return cycleFocusedEdgeDirectionality(
                 in: graph,
@@ -100,6 +106,18 @@ extension ApplyCanvasCommandsUseCase {
                 resolvedAreaID: resolvedAreaID,
                 resolvedAreaMode: resolvedAreaMode
             )
+        case .centerFocusedNode:
+            return noOpMutationResult(for: graph)
+        default:
+            return nil
+        }
+    }
+
+    private func applyContentCommand(
+        command: CanvasCommand,
+        to graph: CanvasGraph
+    ) throws -> CanvasMutationResult? {
+        switch command {
         case .copySelectionOrFocusedSubtree:
             return copySelectionOrFocusedSubtree(in: graph)
         case .cutSelectionOrFocusedSubtree:
@@ -110,10 +128,8 @@ extension ApplyCanvasCommandsUseCase {
             return try applyNodeContentCommand(command: command, to: graph)
         case .setEdgeLabel(let edgeID, let label):
             return setEdgeLabel(in: graph, edgeID: edgeID, label: label)
-        case .toggleFocusedAreaEdgeShapeStyle, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
-            return noOpMutationResult(for: graph)
-        case .moveFocus, .moveFocusAcrossAreasToRoot, .focusNode, .focusArea, .extendSelection:
-            return noOpMutationResult(for: graph)
+        default:
+            return nil
         }
     }
 
@@ -394,7 +410,7 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 
-    private func makeExecutionContext(
+    func makeExecutionContext(
         for command: CanvasCommand,
         in graph: CanvasGraph,
         editingMode: CanvasEditingMode
@@ -459,105 +475,4 @@ extension ApplyCanvasCommandsUseCase {
         }
     }
 
-    private func resolveAreaID(
-        for command: CanvasCommand,
-        in graph: CanvasGraph
-    ) -> Result<CanvasAreaID, CanvasAreaPolicyError> {
-        switch command {
-        case .addNode:
-            if let focusedNodeID = graph.focusedNodeID, graph.nodesByID[focusedNodeID] != nil {
-                return CanvasAreaMembershipService.areaID(containing: focusedNodeID, in: graph)
-            }
-            let sortedAreaIDs = graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue })
-            if sortedAreaIDs.count == 1, let areaID = sortedAreaIDs.first {
-                return .success(areaID)
-            }
-            if sortedAreaIDs.count > 1 {
-                return .failure(.areaResolutionAmbiguousForAddNode)
-            }
-            return .failure(.focusedNodeNotFound)
-        case .setNodeText(let nodeID, _, _):
-            return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
-        case .upsertNodeAttachment(let nodeID, _, _, _):
-            return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
-        case .setEdgeLabel(let edgeID, _):
-            guard let edge = graph.edgesByID[edgeID] else {
-                return CanvasAreaMembershipService.focusedAreaID(in: graph)
-            }
-            return CanvasAreaMembershipService.areaID(containing: edge.fromNodeID, in: graph)
-        case .focusNode(let nodeID):
-            return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
-        case .focusArea(let areaID):
-            if graph.areasByID[areaID] != nil {
-                return .success(areaID)
-            }
-            return .failure(.areaNotFound(areaID))
-        case .connectNodes(let fromNodeID, _):
-            return CanvasAreaMembershipService.areaID(containing: fromNodeID, in: graph)
-        case .deleteSelectedOrFocusedEdges(let focusedEdge, _):
-            return CanvasAreaMembershipService.areaID(containing: focusedEdge.originNodeID, in: graph)
-        case .cycleFocusedEdgeDirectionality(let focusedEdge, _):
-            return CanvasAreaMembershipService.areaID(containing: focusedEdge.originNodeID, in: graph)
-        case .addChildNode,
-            .addSiblingNode,
-            .duplicateSelectionAsSibling,
-            .alignAllAreasVertically,
-            .moveFocus,
-            .moveFocusAcrossAreasToRoot,
-            .extendSelection,
-            .moveArea,
-            .moveNode,
-            .nudgeNode,
-            .alignSelectedNodes,
-            .scaleSelectedNodes,
-            .toggleFoldFocusedSubtree,
-            .centerFocusedNode,
-            .deleteSelectedOrFocusedNodes,
-            .copySelectionOrFocusedSubtree,
-            .cutSelectionOrFocusedSubtree,
-            .pasteClipboardAtFocusedNode,
-            .toggleFocusedNodeMarkdownStyle,
-            .toggleFocusedAreaEdgeShapeStyle,
-            .convertFocusedAreaMode,
-            .createArea,
-            .assignNodesToArea:
-            return CanvasAreaMembershipService.focusedAreaID(in: graph)
-        }
-    }
-
-    private func normalize(
-        command: CanvasCommand,
-        in graph: CanvasGraph
-    ) -> CanvasCommand {
-        guard case .addChildNode = command else {
-            return command
-        }
-        guard
-            let focusedNodeID = graph.focusedNodeID,
-            graph.nodesByID[focusedNodeID] != nil
-        else {
-            let sortedAreaIDs = graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue })
-            guard sortedAreaIDs.count == 1, let areaID = sortedAreaIDs.first else {
-                return command
-            }
-            switch CanvasAreaMembershipService.area(withID: areaID, in: graph) {
-            case .success(let area):
-                return area.editingMode == .diagram ? .addNode : command
-            case .failure:
-                return command
-            }
-        }
-
-        switch CanvasAreaMembershipService.areaID(containing: focusedNodeID, in: graph) {
-        case .success(let areaID):
-            switch CanvasAreaMembershipService.area(withID: areaID, in: graph) {
-            case .success(let area):
-                return area.editingMode == .diagram ? .addNode : command
-            case .failure:
-                return command
-            }
-        case .failure:
-            return command
-        }
-    }
 }
