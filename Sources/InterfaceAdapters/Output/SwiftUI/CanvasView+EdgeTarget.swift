@@ -252,14 +252,33 @@ extension CanvasView {
         guard !edges.isEmpty else {
             return
         }
-        let graph = CanvasGraph(
-            nodesByID: Dictionary(uniqueKeysWithValues: viewModel.nodes.map { ($0.id, $0) }),
-            edgesByID: Dictionary(uniqueKeysWithValues: edges.map { ($0.id, $0) })
+        let nodesByID = Dictionary(uniqueKeysWithValues: viewModel.nodes.map { ($0.id, $0) })
+        let branchCoordinateByParentAndDirection = CanvasEdgeRouting.branchCoordinateByParentAndDirection(
+            edges: edges,
+            nodesByID: nodesByID
         )
-        let nextFocusedEdgeID = CanvasFocusNavigationService.nextFocusedEdgeID(
-            in: graph,
-            from: focusedEdgeID,
-            moving: direction
+        let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
+            edges: edges,
+            nodesByID: nodesByID
+        )
+        let edgeShapeStyleByEdgeID = Dictionary(
+            uniqueKeysWithValues: edges.map { edge in
+                let areaID = viewModel.areaIDByNodeID[edge.fromNodeID]
+                let edgeShapeStyle = areaID.flatMap { viewModel.areaEdgeShapeStyleByID[$0] } ?? .curved
+                return (edge.id, edgeShapeStyle)
+            }
+        )
+        let context = CanvasEdgeFocusNavigation.Context(
+            edges: edges,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID,
+            edgeShapeStyleByEdgeID: edgeShapeStyleByEdgeID
+        )
+        let nextFocusedEdgeID = CanvasEdgeFocusNavigation.nextFocusedEdgeID(
+            in: context,
+            currentEdgeID: focusedEdgeID,
+            direction: direction
         )
         guard let nextFocusedEdgeID else {
             return
