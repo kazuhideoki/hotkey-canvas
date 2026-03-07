@@ -43,7 +43,12 @@ extension CanvasEdgeRouting {
             return legacyLabelAnchor(edge: edge, nodesByID: nodesByID, routeGeometry: geometry)
         case .curved:
             let laneOffsets = laneOffsetsByEdgeID[edge.id] ?? .zero
-            let curve = curvedGeometry(routeGeometry: geometry, laneOffsets: laneOffsets)
+            let curve = resolvedCurvedGeometry(
+                for: edge,
+                routeGeometry: geometry,
+                nodesByID: nodesByID,
+                laneOffsets: laneOffsets
+            )
             return curvedLabelAnchor(routeGeometry: geometry, curve: curve)
         }
     }
@@ -272,42 +277,4 @@ extension CanvasEdgeRouting {
         return sqrt((dx * dx) + (dy * dy))
     }
 
-    private static func cubicBezierPoint(
-        start: CGPoint,
-        control1: CGPoint,
-        control2: CGPoint,
-        end: CGPoint,
-        parameter: CGFloat
-    ) -> CGPoint {
-        let oneMinusParameter = 1 - parameter
-        let cubicStartWeight = oneMinusParameter * oneMinusParameter * oneMinusParameter
-        let cubicControl1Weight = 3 * oneMinusParameter * oneMinusParameter * parameter
-        let cubicControl2Weight = 3 * oneMinusParameter * parameter * parameter
-        let cubicEndWeight = parameter * parameter * parameter
-        return CGPoint(
-            x: (start.x * cubicStartWeight) + (control1.x * cubicControl1Weight)
-                + (control2.x * cubicControl2Weight) + (end.x * cubicEndWeight),
-            y: (start.y * cubicStartWeight) + (control1.y * cubicControl1Weight)
-                + (control2.y * cubicControl2Weight) + (end.y * cubicEndWeight)
-        )
-    }
-
-    private static func cubicBezierTangent(
-        start: CGPoint,
-        control1: CGPoint,
-        control2: CGPoint,
-        end: CGPoint,
-        parameter: CGFloat
-    ) -> CGVector {
-        let oneMinusParameter = 1 - parameter
-        let dx =
-            3 * oneMinusParameter * oneMinusParameter * (control1.x - start.x)
-            + 6 * oneMinusParameter * parameter * (control2.x - control1.x)
-            + 3 * parameter * parameter * (end.x - control2.x)
-        let dy =
-            3 * oneMinusParameter * oneMinusParameter * (control1.y - start.y)
-            + 6 * oneMinusParameter * parameter * (control2.y - control1.y)
-            + 3 * parameter * parameter * (end.y - control2.y)
-        return CGVector(dx: dx, dy: dy)
-    }
 }

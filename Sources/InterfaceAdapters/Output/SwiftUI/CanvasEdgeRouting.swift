@@ -216,7 +216,12 @@ enum CanvasEdgeRouting {
                 path.addLine(to: end)
             case .curved:
                 let laneOffsets = curveLaneOffsets(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
-                let curve = curvedGeometry(routeGeometry: geometry, laneOffsets: laneOffsets)
+                let curve = resolvedCurvedGeometry(
+                    for: edge,
+                    routeGeometry: geometry,
+                    nodesByID: nodesByID,
+                    laneOffsets: laneOffsets
+                )
                 path.addCurve(to: end, control1: curve.control1, control2: curve.control2)
             }
         }
@@ -249,7 +254,12 @@ enum CanvasEdgeRouting {
             return straightEdgeTipAndVector(edge: edge, routeGeometry: geometry)
         case .curved:
             let laneOffsets = curveLaneOffsets(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
-            let curve = curvedGeometry(routeGeometry: geometry, laneOffsets: laneOffsets)
+            let curve = resolvedCurvedGeometry(
+                for: edge,
+                routeGeometry: geometry,
+                nodesByID: nodesByID,
+                laneOffsets: laneOffsets
+            )
             return curvedEdgeTipAndVector(edge: edge, routeGeometry: geometry, curve: curve)
         }
     }
