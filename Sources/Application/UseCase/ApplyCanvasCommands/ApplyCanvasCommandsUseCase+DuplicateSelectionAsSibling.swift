@@ -10,6 +10,12 @@ extension ApplyCanvasCommandsUseCase {
         var duplicatedNodeIDBySourceNodeID: [CanvasNodeID: CanvasNodeID]
     }
 
+    private struct DuplicateTraversalSession {
+        let sourceGraph: CanvasGraph
+        var state: DuplicateTraversalState
+        var nextCreatedOrder: Int
+    }
+
     /// Duplicates selected nodes (or focused node when selection is empty) as sibling subtrees.
     /// - Parameters:
     ///   - graph: Current canvas graph snapshot.
@@ -121,24 +127,12 @@ extension ApplyCanvasCommandsUseCase {
             return nil
         }
 
-        let siblingInsertionBounds = makeSiblingNodeBounds(
-            in: graph,
-            parentID: parentID,
-            focusedNode: sourceRootNode,
-            position: .below
-        )
-        let duplicateBounds = CanvasBounds(
-            x: siblingInsertionBounds.x,
-            y: siblingInsertionBounds.y,
-            width: sourceRootNode.bounds.width,
-            height: sourceRootNode.bounds.height
-        )
-        let duplicateRootNode = makeDuplicatedNode(
+        let duplicateRootNode = makeDuplicateRootNode(
             from: sourceRootNode,
-            bounds: duplicateBounds,
-            createdOrder: nextCreatedOrder
+            parentID: parentID,
+            in: graph,
+            nextCreatedOrder: &nextCreatedOrder
         )
-        nextCreatedOrder += 1
         var graphAfterMutation = try CanvasGraphCRUDService.createNode(duplicateRootNode, in: graph).get()
         graphAfterMutation = normalizeParentChildOrder(for: parentID, in: graphAfterMutation)
         let rootOrder = duplicateRootInsertionOrder(
@@ -156,23 +150,66 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentID, to: duplicateRootNode.id, order: rootOrder),
             in: graphAfterMutation
         ).get()
-        var traversalState = DuplicateTraversalState(
-            insertedNodeIDs: [duplicateRootNode.id],
-            activeSourcePathNodeIDs: [],
-            duplicatedNodeIDBySourceNodeID: [sourceRootNodeID: duplicateRootNode.id]
+        var traversalSession = makeTraversalSession(
+            sourceGraph: sourceGraph,
+            sourceRootNodeID: sourceRootNodeID,
+            duplicateRootNodeID: duplicateRootNode.id,
+            nextCreatedOrder: nextCreatedOrder
         )
         graphAfterMutation = try duplicateChildSubtrees(
             fromSourceNodeID: sourceRootNodeID,
             toDuplicatedParentNodeID: duplicateRootNode.id,
-            sourceGraph: sourceGraph,
             into: graphAfterMutation,
-            traversalState: &traversalState,
-            nextCreatedOrder: &nextCreatedOrder
+            session: &traversalSession
         )
+        nextCreatedOrder = traversalSession.nextCreatedOrder
         return DuplicateSingleRootResult(
             graphAfterMutation: graphAfterMutation,
             duplicatedRootNodeID: duplicateRootNode.id,
-            insertedNodeIDs: traversalState.insertedNodeIDs
+            insertedNodeIDs: traversalSession.state.insertedNodeIDs
+        )
+    }
+
+    private func makeDuplicateRootNode(
+        from sourceRootNode: CanvasNode,
+        parentID: CanvasNodeID,
+        in graph: CanvasGraph,
+        nextCreatedOrder: inout Int
+    ) -> CanvasNode {
+        let siblingInsertionBounds = makeSiblingNodeBounds(
+            in: graph,
+            parentID: parentID,
+            focusedNode: sourceRootNode,
+            position: .below
+        )
+        let duplicateRootNode = makeDuplicatedNode(
+            from: sourceRootNode,
+            bounds: CanvasBounds(
+                x: siblingInsertionBounds.x,
+                y: siblingInsertionBounds.y,
+                width: sourceRootNode.bounds.width,
+                height: sourceRootNode.bounds.height
+            ),
+            createdOrder: nextCreatedOrder
+        )
+        nextCreatedOrder += 1
+        return duplicateRootNode
+    }
+
+    private func makeTraversalSession(
+        sourceGraph: CanvasGraph,
+        sourceRootNodeID: CanvasNodeID,
+        duplicateRootNodeID: CanvasNodeID,
+        nextCreatedOrder: Int
+    ) -> DuplicateTraversalSession {
+        DuplicateTraversalSession(
+            sourceGraph: sourceGraph,
+            state: DuplicateTraversalState(
+                insertedNodeIDs: [duplicateRootNodeID],
+                activeSourcePathNodeIDs: [],
+                duplicatedNodeIDBySourceNodeID: [sourceRootNodeID: duplicateRootNodeID]
+            ),
+            nextCreatedOrder: nextCreatedOrder
         )
     }
 
@@ -273,21 +310,19 @@ extension ApplyCanvasCommandsUseCase {
     private func duplicateChildSubtrees(
         fromSourceNodeID sourceNodeID: CanvasNodeID,
         toDuplicatedParentNodeID duplicatedParentNodeID: CanvasNodeID,
-        sourceGraph: CanvasGraph,
         into graph: CanvasGraph,
-        traversalState: inout DuplicateTraversalState,
-        nextCreatedOrder: inout Int
+        session: inout DuplicateTraversalSession
     ) throws -> CanvasGraph {
         var nextGraph = graph
-        traversalState.activeSourcePathNodeIDs.insert(sourceNodeID)
+        session.state.activeSourcePathNodeIDs.insert(sourceNodeID)
         defer {
-            traversalState.activeSourcePathNodeIDs.remove(sourceNodeID)
+            session.state.activeSourcePathNodeIDs.remove(sourceNodeID)
         }
-        let sourceChildren = childNodes(of: sourceNodeID, in: sourceGraph)
+        let sourceChildren = childNodes(of: sourceNodeID, in: session.sourceGraph)
 
         for sourceChildNode in sourceChildren {
-            if let duplicatedSourceChildNodeID = traversalState.duplicatedNodeIDBySourceNodeID[sourceChildNode.id] {
-                guard !traversalState.activeSourcePathNodeIDs.contains(sourceChildNode.id) else {
+            if let duplicatedSourceChildNodeID = session.state.duplicatedNodeIDBySourceNodeID[sourceChildNode.id] {
+                guard !session.state.activeSourcePathNodeIDs.contains(sourceChildNode.id) else {
                     continue
                 }
                 nextGraph = try createParentChildEdgeIfNeeded(
@@ -301,24 +336,22 @@ extension ApplyCanvasCommandsUseCase {
             let duplicatedChildNode = makeDuplicatedNode(
                 from: sourceChildNode,
                 bounds: sourceChildNode.bounds,
-                createdOrder: nextCreatedOrder
+                createdOrder: session.nextCreatedOrder
             )
-            nextCreatedOrder += 1
+            session.nextCreatedOrder += 1
             nextGraph = try CanvasGraphCRUDService.createNode(duplicatedChildNode, in: nextGraph).get()
-            traversalState.duplicatedNodeIDBySourceNodeID[sourceChildNode.id] = duplicatedChildNode.id
+            session.state.duplicatedNodeIDBySourceNodeID[sourceChildNode.id] = duplicatedChildNode.id
             nextGraph = try createParentChildEdgeIfNeeded(
                 from: duplicatedParentNodeID,
                 to: duplicatedChildNode.id,
                 in: nextGraph
             )
-            traversalState.insertedNodeIDs.insert(duplicatedChildNode.id)
+            session.state.insertedNodeIDs.insert(duplicatedChildNode.id)
             nextGraph = try duplicateChildSubtrees(
                 fromSourceNodeID: sourceChildNode.id,
                 toDuplicatedParentNodeID: duplicatedChildNode.id,
-                sourceGraph: sourceGraph,
                 into: nextGraph,
-                traversalState: &traversalState,
-                nextCreatedOrder: &nextCreatedOrder
+                session: &session
             )
         }
         return nextGraph

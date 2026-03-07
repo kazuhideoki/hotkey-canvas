@@ -373,4 +373,16 @@ private struct CoincidentEdgeBundleKey: Hashable {
     let firstNodeID: CanvasNodeID
     let secondNodeID: CanvasNodeID
     let relationType: CanvasEdgeRelationType
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(firstNodeID)
+        hasher.combine(secondNodeID)
+        hasher.combine(relationType)
+    }
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.firstNodeID == rhs.firstNodeID
+            && lhs.secondNodeID == rhs.secondNodeID
+            && lhs.relationType == rhs.relationType
+    }
 }
