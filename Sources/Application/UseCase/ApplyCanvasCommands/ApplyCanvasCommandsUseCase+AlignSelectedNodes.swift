@@ -102,7 +102,7 @@ extension ApplyCanvasCommandsUseCase {
             diagramAlignmentConstraint: CanvasDiagramAlignmentConstraint(
                 axis: axis,
                 fixedNodeID: focusedNodeID,
-                targetNodeIDs: Set(selectedNodeIDs)
+                targetNodeIDs: Set(selectedNodeIDs).union([focusedNodeID])
             )
         )
     }
