@@ -95,6 +95,20 @@ public struct CanvasView: View {
                 edges: displayEdges,
                 nodesByID: nodesByID
             )
+            let edgeRenderContext = EdgeRenderContext(
+                nodesByID: nodesByID,
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                laneOffsetsByEdgeID: laneOffsetsByEdgeID,
+                areaIDByNodeID: viewModel.areaIDByNodeID,
+                areaEdgeShapeStyleByID: viewModel.areaEdgeShapeStyleByID,
+                viewportSize: viewportSize,
+                zoomScale: zoomScale,
+                cameraOffset: cameraOffset
+            )
+            let edgeLabelPlacementCenters = edgeLabelPlacementCenters(
+                edges: displayEdges,
+                context: edgeRenderContext
+            )
             let commandPaletteItems = filteredCommandPaletteItems()
             let recentCommandPaletteItemIDs = Set(
                 commandPaletteRecentItemIDs.prefix(Self.commandPaletteRecentPinnedCount)
@@ -245,16 +259,6 @@ public struct CanvasView: View {
                                 } else {
                                     styleSheet.edge.lineWidth
                                 }
-                            let edgeRenderContext = EdgeRenderContext(
-                                nodesByID: nodesByID,
-                                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-                                laneOffsetsByEdgeID: laneOffsetsByEdgeID,
-                                areaIDByNodeID: viewModel.areaIDByNodeID,
-                                areaEdgeShapeStyleByID: viewModel.areaEdgeShapeStyleByID,
-                                viewportSize: viewportSize,
-                                zoomScale: zoomScale,
-                                cameraOffset: cameraOffset
-                            )
                             edgeStrokeAndArrow(
                                 edge: edge,
                                 path: path,
@@ -264,7 +268,8 @@ public struct CanvasView: View {
                             )
                             edgeLabelOverlay(
                                 edge: edge,
-                                context: edgeRenderContext
+                                context: edgeRenderContext,
+                                placementCenter: edgeLabelPlacementCenters[edge.id]
                             )
                         }
                     }

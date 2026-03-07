@@ -77,37 +77,7 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 }
-
 extension ApplyCanvasCommandsUseCase {
-    private func selectedNodeIDsInFocusedArea(in graph: CanvasGraph) -> [CanvasNodeID] {
-        guard let focusedNodeID = graph.focusedNodeID else {
-            return []
-        }
-        guard graph.nodesByID[focusedNodeID] != nil else {
-            return []
-        }
-        let focusedAreaID: CanvasAreaID
-        switch CanvasAreaMembershipService.areaID(containing: focusedNodeID, in: graph) {
-        case .success(let areaID):
-            focusedAreaID = areaID
-        case .failure:
-            return []
-        }
-        return graph.selectedNodeIDs
-            .filter { selectedNodeID in
-                guard graph.nodesByID[selectedNodeID] != nil else {
-                    return false
-                }
-                switch CanvasAreaMembershipService.areaID(containing: selectedNodeID, in: graph) {
-                case .success(let selectedAreaID):
-                    return selectedAreaID == focusedAreaID
-                case .failure:
-                    return false
-                }
-            }
-            .sorted(by: { $0.rawValue < $1.rawValue })
-    }
-
     private func scaledTreeBounds(
         from bounds: CanvasBounds,
         direction: CanvasNodeScaleDirection

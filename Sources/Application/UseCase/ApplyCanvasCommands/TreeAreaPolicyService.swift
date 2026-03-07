@@ -39,7 +39,8 @@ enum TreeAreaPolicyService {
             .assignNodesToArea:
             return true
         case .connectNodes,
-            .cycleFocusedEdgeDirectionality:
+            .cycleFocusedEdgeDirectionality,
+            .alignSelectedNodes:
             return false
         }
     }
