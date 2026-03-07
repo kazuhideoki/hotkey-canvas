@@ -40,7 +40,7 @@ extension CanvasEdgeRouting {
                 normal: perpendicularUnitVector(for: tangent)
             )
         case .legacy:
-            return legacyLabelAnchor(routeGeometry: geometry)
+            return legacyLabelAnchor(edge: edge, nodesByID: nodesByID, routeGeometry: geometry)
         case .curved:
             let laneOffsets = laneOffsetsByEdgeID[edge.id] ?? .zero
             let curve = curvedGeometry(routeGeometry: geometry, laneOffsets: laneOffsets)
@@ -56,8 +56,13 @@ extension CanvasEdgeRouting {
         let totalLength: CGFloat
     }
 
-    private static func legacyLabelAnchor(routeGeometry: RouteGeometry) -> EdgeLabelAnchor {
-        polylineLabelAnchor(points: legacyPoints(routeGeometry: routeGeometry))
+    private static func legacyLabelAnchor(
+        edge: CanvasEdge,
+        nodesByID: [CanvasNodeID: CanvasNode],
+        routeGeometry: RouteGeometry
+    ) -> EdgeLabelAnchor {
+        let route = legacyPolylineRoute(for: edge, routeGeometry: routeGeometry, nodesByID: nodesByID)
+        return polylineLabelAnchor(points: route.points)
     }
 
     private static func curvedLabelAnchor(
@@ -183,27 +188,6 @@ extension CanvasEdgeRouting {
             cumulativeLengths: cumulativeLengths,
             totalLength: totalLength
         )
-    }
-
-    private static func legacyPoints(routeGeometry: RouteGeometry) -> [CGPoint] {
-        let start = CGPoint(x: routeGeometry.startX, y: routeGeometry.startY)
-        let end = CGPoint(x: routeGeometry.endX, y: routeGeometry.endY)
-        switch routeGeometry.axis {
-        case .horizontal:
-            return [
-                start,
-                CGPoint(x: routeGeometry.branchCoordinate, y: routeGeometry.startY),
-                CGPoint(x: routeGeometry.branchCoordinate, y: routeGeometry.endY),
-                end,
-            ]
-        case .vertical:
-            return [
-                start,
-                CGPoint(x: routeGeometry.startX, y: routeGeometry.branchCoordinate),
-                CGPoint(x: routeGeometry.endX, y: routeGeometry.branchCoordinate),
-                end,
-            ]
-        }
     }
 
     private static func polylineLabelAnchor(points: [CGPoint]) -> EdgeLabelAnchor {

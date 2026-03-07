@@ -37,6 +37,39 @@ func test_resolveEdgeLabelPlacements_sameBundle_spreadsAlongTangent() {
     #expect(placements[secondEdgeID] == CGPoint(x: 284, y: 180))
 }
 
+@Test("CanvasView edge label placement: same-bundle labels also spread along a vertical tangent")
+func test_resolveEdgeLabelPlacements_sameBundle_verticalTangent_spreadsAlongTangent() {
+    let firstEdgeID = CanvasEdgeID(rawValue: "edge-1")
+    let secondEdgeID = CanvasEdgeID(rawValue: "edge-2")
+    let candidates = [
+        CanvasView.EdgeLabelPlacementCandidate(
+            edgeID: firstEdgeID,
+            baseCenter: CGPoint(x: 240, y: 180),
+            tangent: CGVector(dx: 0, dy: 1),
+            normal: CGVector(dx: -1, dy: 0),
+            size: CGSize(width: 80, height: 24),
+            bundleKey: .init(firstNodeID: "a", secondNodeID: "b"),
+            bundleSortValue: -1,
+            tangentOffsetLimit: .greatestFiniteMagnitude
+        ),
+        CanvasView.EdgeLabelPlacementCandidate(
+            edgeID: secondEdgeID,
+            baseCenter: CGPoint(x: 240, y: 180),
+            tangent: CGVector(dx: 0, dy: 1),
+            normal: CGVector(dx: -1, dy: 0),
+            size: CGSize(width: 80, height: 24),
+            bundleKey: .init(firstNodeID: "a", secondNodeID: "b"),
+            bundleSortValue: 1,
+            tangentOffsetLimit: .greatestFiniteMagnitude
+        ),
+    ]
+
+    let placements = CanvasView.resolveEdgeLabelPlacements(candidates: candidates)
+
+    #expect(placements[firstEdgeID] == CGPoint(x: 240, y: 136))
+    #expect(placements[secondEdgeID] == CGPoint(x: 240, y: 224))
+}
+
 @Test("CanvasView edge label placement: three same-bundle labels keep the middle label on the anchor")
 func test_resolveEdgeLabelPlacements_threeSameBundle_keepsMiddleOnAnchor() {
     let firstEdgeID = CanvasEdgeID(rawValue: "edge-1")
