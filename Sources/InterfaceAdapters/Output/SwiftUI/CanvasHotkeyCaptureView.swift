@@ -4,7 +4,7 @@ import AppKit
 import SwiftUI
 
 /// SwiftUI bridge that installs an AppKit key-capture view.
-public struct CanvasHotkeyCaptureView: NSViewRepresentable {
+struct CanvasHotkeyCaptureView: NSViewRepresentable {
     private let onKeyDown: (NSEvent) -> Bool
     private let isEnabled: Bool
 
@@ -12,7 +12,7 @@ public struct CanvasHotkeyCaptureView: NSViewRepresentable {
     /// - Parameters:
     ///   - isEnabled: Whether key capture should be active.
     ///   - onKeyDown: Handler invoked for key-down events.
-    public init(
+    init(
         isEnabled: Bool = true,
         onKeyDown: @escaping (NSEvent) -> Bool
     ) {
@@ -20,11 +20,11 @@ public struct CanvasHotkeyCaptureView: NSViewRepresentable {
         self.onKeyDown = onKeyDown
     }
 
-    public func makeNSView(context: Context) -> CanvasKeyCaptureNSView {
+    func makeNSView(context: Context) -> CanvasKeyCaptureNSView {
         CanvasKeyCaptureNSView(isEnabled: isEnabled, onKeyDown: onKeyDown)
     }
 
-    public func updateNSView(_ nsView: CanvasKeyCaptureNSView, context: Context) {
+    func updateNSView(_ nsView: CanvasKeyCaptureNSView, context: Context) {
         nsView.isCaptureEnabled = isEnabled
         nsView.onKeyDown = onKeyDown
         if isEnabled {
@@ -36,7 +36,7 @@ public struct CanvasHotkeyCaptureView: NSViewRepresentable {
 }
 
 /// AppKit responder used to capture canvas shortcuts while not editing text.
-public final class CanvasKeyCaptureNSView: NSView {
+final class CanvasKeyCaptureNSView: NSView {
     var isCaptureEnabled: Bool
     var onKeyDown: (NSEvent) -> Bool
     /// Monotonic token used to discard stale asynchronous focus requests.
@@ -53,11 +53,11 @@ public final class CanvasKeyCaptureNSView: NSView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    public override var acceptsFirstResponder: Bool {
+    override var acceptsFirstResponder: Bool {
         isCaptureEnabled
     }
 
-    public override func viewDidMoveToWindow() {
+    override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         guard isCaptureEnabled else {
             return
@@ -65,7 +65,7 @@ public final class CanvasKeyCaptureNSView: NSView {
         focusIfPossible()
     }
 
-    public override func keyDown(with event: NSEvent) {
+    override func keyDown(with event: NSEvent) {
         // Consume handled shortcuts here to prevent AppKit's default beep/propagation.
         guard !handleKeyDown(event) else {
             return

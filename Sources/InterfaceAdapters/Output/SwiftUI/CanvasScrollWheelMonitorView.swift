@@ -4,7 +4,7 @@ import AppKit
 import SwiftUI
 
 /// SwiftUI bridge that listens to local scroll-wheel events.
-public struct CanvasScrollWheelMonitorView: NSViewRepresentable {
+struct CanvasScrollWheelMonitorView: NSViewRepresentable {
     private let isEnabled: Bool
     private let onScrollWheel: (NSEvent) -> Bool
 
@@ -12,7 +12,7 @@ public struct CanvasScrollWheelMonitorView: NSViewRepresentable {
     /// - Parameters:
     ///   - isEnabled: Whether scroll-wheel monitoring is active.
     ///   - onScrollWheel: Handler invoked for scroll-wheel events.
-    public init(
+    init(
         isEnabled: Bool = true,
         onScrollWheel: @escaping (NSEvent) -> Bool
     ) {
@@ -20,18 +20,18 @@ public struct CanvasScrollWheelMonitorView: NSViewRepresentable {
         self.onScrollWheel = onScrollWheel
     }
 
-    public func makeNSView(context: Context) -> CanvasScrollWheelMonitorNSView {
+    func makeNSView(context: Context) -> CanvasScrollWheelMonitorNSView {
         CanvasScrollWheelMonitorNSView(isEnabled: isEnabled, onScrollWheel: onScrollWheel)
     }
 
-    public func updateNSView(_ nsView: CanvasScrollWheelMonitorNSView, context: Context) {
+    func updateNSView(_ nsView: CanvasScrollWheelMonitorNSView, context: Context) {
         nsView.isEnabled = isEnabled
         nsView.onScrollWheel = onScrollWheel
     }
 }
 
 /// AppKit host view that owns the local event monitor lifecycle.
-public final class CanvasScrollWheelMonitorNSView: NSView {
+final class CanvasScrollWheelMonitorNSView: NSView {
     var isEnabled: Bool
     var onScrollWheel: (NSEvent) -> Bool
 
@@ -52,7 +52,7 @@ public final class CanvasScrollWheelMonitorNSView: NSView {
         removeMonitorIfNeeded()
     }
 
-    public override func viewDidMoveToWindow() {
+    override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         if window == nil {
             removeMonitorIfNeeded()

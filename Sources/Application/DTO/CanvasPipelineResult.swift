@@ -3,18 +3,8 @@
 import Domain
 
 /// Final output of command-pipeline execution.
-public struct CanvasPipelineResult: Equatable, Sendable {
-    public let graph: CanvasGraph
-    public let viewportIntent: CanvasViewportIntent?
-    public let didAddNode: Bool
-
-    public init(
-        graph: CanvasGraph,
-        viewportIntent: CanvasViewportIntent?,
-        didAddNode: Bool
-    ) {
-        self.graph = graph
-        self.viewportIntent = viewportIntent
-        self.didAddNode = didAddNode
-    }
+struct CanvasPipelineResult: Equatable, Sendable {
+    let graph: CanvasGraph
+    let viewportIntent: CanvasViewportIntent?
+    let didAddNode: Bool
 }

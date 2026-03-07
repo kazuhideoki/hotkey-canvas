@@ -23,66 +23,6 @@ extension ApplyCanvasCommandsUseCase {
         return areas.first(where: { $0.nodeIDs.contains(nodeID) })
     }
 
-    /// Resolves overlaps among parent-child areas by translating colliding areas.
-    /// - Parameters:
-    ///   - seedNodeID: Node identifier used to select the seed area.
-    ///   - graph: Graph to resolve.
-    /// - Returns: Graph with translated node bounds after area overlap resolution.
-    func resolveAreaOverlaps(around seedNodeID: CanvasNodeID, in graph: CanvasGraph) -> CanvasGraph {
-        let areas = CanvasAreaLayoutService.makeParentChildAreas(
-            in: graph,
-            shapeKind: .convexHull
-        )
-        guard let seedArea = areas.first(where: { $0.nodeIDs.contains(seedNodeID) }) else {
-            return graph
-        }
-
-        let translationsByAreaID = CanvasAreaLayoutService.resolveOverlaps(
-            areas: areas,
-            seedAreaID: seedArea.id,
-            minimumSpacing: Self.areaCollisionSpacing
-        )
-        guard !translationsByAreaID.isEmpty else {
-            return graph
-        }
-
-        let areasByID = Dictionary(uniqueKeysWithValues: areas.map { ($0.id, $0) })
-        var nodesByID = graph.nodesByID
-
-        for areaID in translationsByAreaID.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
-            guard let translation = translationsByAreaID[areaID] else {
-                continue
-            }
-            guard let area = areasByID[areaID] else {
-                continue
-            }
-
-            for nodeID in area.nodeIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
-                guard let node = nodesByID[nodeID] else {
-                    continue
-                }
-                nodesByID[nodeID] = CanvasNode(
-                    id: node.id,
-                    kind: node.kind,
-                    text: node.text,
-                    attachments: node.attachments,
-                    bounds: translate(node.bounds, dx: translation.dx, dy: translation.dy),
-                    metadata: node.metadata,
-                    markdownStyleEnabled: node.markdownStyleEnabled
-                )
-            }
-        }
-
-        return CanvasGraph(
-            nodesByID: nodesByID,
-            edgesByID: graph.edgesByID,
-            focusedNodeID: graph.focusedNodeID,
-            selectedNodeIDs: graph.selectedNodeIDs,
-            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
-            areasByID: graph.areasByID
-        )
-    }
-
     /// Translates bounds by a delta on both axes.
     /// - Parameters:
     ///   - bounds: Source bounds.
@@ -96,18 +36,6 @@ extension ApplyCanvasCommandsUseCase {
             width: bounds.width,
             height: bounds.height
         )
-    }
-
-    /// Returns nodes sorted by top-to-bottom and then left-to-right order.
-    /// - Parameter graph: Current canvas graph.
-    /// - Returns: Sorted nodes.
-    func sortedNodes(in graph: CanvasGraph) -> [CanvasNode] {
-        graph.nodesByID.values.sorted { lhs, rhs in
-            if lhs.bounds.y == rhs.bounds.y {
-                return lhs.bounds.x < rhs.bounds.x
-            }
-            return lhs.bounds.y < rhs.bounds.y
-        }
     }
 
     /// Computes the geometric center of a node.

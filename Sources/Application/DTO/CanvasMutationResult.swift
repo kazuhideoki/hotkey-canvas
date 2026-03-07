@@ -3,14 +3,14 @@
 import Domain
 
 /// Application-layer DTO representing command mutation output before pipeline stages.
-public struct CanvasMutationResult: Equatable, Sendable {
-    public let graphBeforeMutation: CanvasGraph
-    public let graphAfterMutation: CanvasGraph
-    public let effects: CanvasMutationEffects
-    public let areaLayoutSeedNodeID: CanvasNodeID?
-    public let diagramAlignmentConstraint: CanvasDiagramAlignmentConstraint?
+struct CanvasMutationResult: Equatable, Sendable {
+    let graphBeforeMutation: CanvasGraph
+    let graphAfterMutation: CanvasGraph
+    let effects: CanvasMutationEffects
+    let areaLayoutSeedNodeID: CanvasNodeID?
+    let diagramAlignmentConstraint: CanvasDiagramAlignmentConstraint?
 
-    public init(
+    init(
         graphBeforeMutation: CanvasGraph,
         graphAfterMutation: CanvasGraph,
         effects: CanvasMutationEffects,

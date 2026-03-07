@@ -14,22 +14,6 @@ public enum CanvasShortcutCatalogService {
         defaultDefinitionsStorage.filter(\.isVisibleInCommandPalette)
     }
     /// Returns command-palette visible shortcuts for a runtime context.
-    /// - Parameter context: Runtime context used for label adaptation and fallback filtering.
-    /// - Returns: Shortcut entries visible to command palette UI.
-    public static func commandPaletteDefinitions(
-        context: CanvasCommandPaletteContext
-    ) -> [CanvasShortcutDefinition] {
-        commandPaletteDefinitions(
-            context: context,
-            executionContext: KeymapExecutionContext(
-                editingMode: context.activeEditingMode,
-                operationTargetKind: .node,
-                hasFocusedNode: context.hasFocusedNode
-            )
-        )
-    }
-
-    /// Returns command-palette visible shortcuts for a runtime context.
     /// - Parameters:
     ///   - context: Runtime context used for label adaptation.
     ///   - executionContext: Runtime context used for execution-policy filtering.
@@ -147,6 +131,7 @@ extension CanvasShortcutCatalogService {
         ]
     }
 
+<<<<<<< HEAD
     private static func nodeEditingDefinitions() -> [CanvasShortcutDefinition] {
         baseNodeCreationDefinitions() + baseNodeMutationDefinitions() + clipboardNodeEditingDefinitions()
     }
@@ -232,6 +217,8 @@ extension CanvasShortcutCatalogService {
         ]
     }
 
+=======
+>>>>>>> main
     private static func navigationDefinitions() -> [CanvasShortcutDefinition] {
         focusNavigationDefinitions()
             + nodeNavigationDefinitions()
@@ -358,4 +345,39 @@ extension CanvasShortcutCatalogService {
         )
     }
 
+<<<<<<< HEAD
+=======
+    private static func historyDefinitions() -> [CanvasShortcutDefinition] {
+        [
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "undo"),
+                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "History", verb: "Undo"),
+                gesture: CanvasShortcutGesture(key: .character("z"), modifiers: [.command]),
+                action: .undo,
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("z"), modifiers: [.command])
+                )
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "redo.commandShiftZ"),
+                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "History", verb: "Redo"),
+                gesture: CanvasShortcutGesture(key: .character("z"), modifiers: [.command, .shift]),
+                action: .redo,
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("z"), modifiers: [.command, .shift])
+                )
+            ),
+            CanvasShortcutDefinition(
+                id: CanvasShortcutID(rawValue: "redo.commandY"),
+                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "History", verb: "Redo"),
+                gesture: CanvasShortcutGesture(key: .character("y"), modifiers: [.command]),
+                action: .redo,
+                shortcutLabel: shortcutLabel(
+                    for: CanvasShortcutGesture(key: .character("y"), modifiers: [.command])
+                )
+            ),
+        ]
+    }
+
+>>>>>>> main
 }

@@ -18,25 +18,38 @@ extension ApplyCanvasCommandsUseCase {
         areaID: CanvasAreaID,
         direction: CanvasFocusDirection
     ) -> CanvasMutationResult {
+<<<<<<< HEAD
         guard let targetNodeIDs = movableAreaNodeIDs(in: graph, areaID: areaID) else {
             return noOpMutationResult(for: graph)
         }
 
+=======
+>>>>>>> main
         let translation = areaMoveTranslation(for: direction)
         guard translation.dx != 0 || translation.dy != 0 else {
             return noOpMutationResult(for: graph)
         }
+<<<<<<< HEAD
 
         guard
             let graphAfterMove = translatedAreaGraph(
                 from: graph,
                 targetNodeIDs: targetNodeIDs,
+=======
+        guard
+            let graphAfterMove = graphByTranslatingArea(
+                areaID: areaID,
+                in: graph,
+>>>>>>> main
                 translation: translation
             )
         else {
             return noOpMutationResult(for: graph)
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
         let nextGraph = resolveAreaOverlapsAfterAreaMove(
             in: graphAfterMove,
             movedAreaID: areaID
@@ -200,6 +213,66 @@ extension ApplyCanvasCommandsUseCase {
         )
     }
 
+    private func graphByTranslatingArea(
+        areaID: CanvasAreaID,
+        in graph: CanvasGraph,
+        translation: (dx: Double, dy: Double)
+    ) -> CanvasGraph? {
+        guard let area = graph.areasByID[areaID] else {
+            return nil
+        }
+        let targetNodeIDs = area.nodeIDs
+            .filter { graph.nodesByID[$0] != nil }
+            .sorted(by: { $0.rawValue < $1.rawValue })
+        guard !targetNodeIDs.isEmpty else {
+            return nil
+        }
+
+        var nodesByID = graph.nodesByID
+        var didTranslateAnyNode = false
+        for nodeID in targetNodeIDs {
+            guard let node = nodesByID[nodeID] else {
+                continue
+            }
+            nodesByID[nodeID] = translatedNode(node, by: translation)
+            didTranslateAnyNode = true
+        }
+        guard didTranslateAnyNode else {
+            return nil
+        }
+
+        return CanvasGraph(
+            nodesByID: nodesByID,
+            edgesByID: graph.edgesByID,
+            focusedNodeID: graph.focusedNodeID,
+            focusedElement: graph.focusedElement,
+            selectedNodeIDs: graph.selectedNodeIDs,
+            selectedEdgeIDs: graph.selectedEdgeIDs,
+            collapsedRootNodeIDs: graph.collapsedRootNodeIDs,
+            areasByID: graph.areasByID
+        )
+    }
+
+    private func translatedNode(
+        _ node: CanvasNode,
+        by translation: (dx: Double, dy: Double)
+    ) -> CanvasNode {
+        CanvasNode(
+            id: node.id,
+            kind: node.kind,
+            text: node.text,
+            attachments: node.attachments,
+            bounds: CanvasBounds(
+                x: node.bounds.x + translation.dx,
+                y: node.bounds.y + translation.dy,
+                width: node.bounds.width,
+                height: node.bounds.height
+            ),
+            metadata: node.metadata,
+            markdownStyleEnabled: node.markdownStyleEnabled
+        )
+    }
+
     private func areaOutlineSnapshots(in graph: CanvasGraph) -> [AreaOutlineSnapshot] {
         graph.areasByID.values
             .sorted(by: { $0.id.rawValue < $1.id.rawValue })
@@ -211,7 +284,6 @@ extension ApplyCanvasCommandsUseCase {
                 }
                 let layoutAreaID = CanvasNodeID(rawValue: "area-\(area.id.rawValue)")
                 return AreaOutlineSnapshot(
-                    areaID: area.id,
                     nodeIDs: nodeIDs,
                     layoutArea: CanvasNodeArea(
                         id: layoutAreaID,
@@ -247,7 +319,6 @@ extension ApplyCanvasCommandsUseCase {
 
 extension ApplyCanvasCommandsUseCase {
     private struct AreaOutlineSnapshot {
-        let areaID: CanvasAreaID
         let nodeIDs: Set<CanvasNodeID>
         let layoutArea: CanvasNodeArea
     }
