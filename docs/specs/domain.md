@@ -85,8 +85,10 @@
 - コマンド
   - `CanvasCommand`
   - `CanvasNodeMoveDirection`
+  - `CanvasNodeAlignmentAxis`
   - `CanvasNodeScaleDirection`
   - `CanvasCommand.nudgeNode`
+  - `CanvasCommand.alignSelectedNodes`
   - `CanvasCommand.scaleSelectedNodes`
   - `CanvasCommand.connectNodes(fromNodeID:toNodeID:)`
   - `CanvasSiblingNodePosition`
@@ -612,6 +614,7 @@
     - Diagram エリアでは `nudgeNode` 適用後も `moveNode` と同様に area layout を実行し、同一エリア内のノード重なりを即時解消する。
     - `scaleSelectedNodes` はフォーカスではなく `selectedNodeIDs` を対象に実行する。Tree では基準長（幅 `220` / 高さ `41`）に対する `10%` を1ステップとして加減算し、最小値を基準長の `50%` に制限する。Diagram では正方形を維持したまま辺長を `220 * 10%` ずつ加減算し、`110...330` の範囲へ正規化する。
     - `alignAllAreasVertically` は Tree/Diagram の両モードで実行可能とし、フォーカス有無で実行可否を判定しつつ、処理対象はキャンバス内の全エリアとする。各エリアの外接矩形を単位に、全エリアの最左 `x` へ揃え、`y` は上から順に重なりが解消される位置へ再配置する。ノード移動はエリア単位の一括平行移動で行い、各エリア内の相対配置は維持する。
+    - `alignSelectedNodes(.horizontal/.vertical)` は Diagram エリア専用とし、フォーカスノードを含む同一エリア内の複数選択ノードを対象にする。`horizontal` は全選択ノードの中心 `y` をフォーカスノード中心 `y` へ、`vertical` は中心 `x` をフォーカスノード中心 `x` へ揃える。各ノードのサイズと非整列軸座標は保持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddNode.swift`
     - Diagram エリアでは `addNode` 実行時、フォーカスノードが存在する場合に `relationType = .normal` のエッジで新規ノードと接続する。
     - Diagram エリアで新規作成されるノードは、Tree ノード横幅（`220`）を一辺とする正方形で生成する。
@@ -619,6 +622,8 @@
     - Diagram エリアでは `setNodeText` 実行時に入力高さを採用せず、ノード寸法を正方形へ正規化する。辺長は `110...330` の範囲で現在辺長を維持する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+ScaleSelectedNodes.swift`
     - `scaleSelectedNodes` 実行時に、選択ノード群をモード別ルール（Tree: 幅/高さを比率ステップ、Diagram: 正方形辺長を比率ステップ）で一括更新する。
+  - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AlignSelectedNodes.swift`
+    - `alignSelectedNodes` 実行時に、Diagram 内の複数選択ノードを focused node 基準の水平線または垂直線へ整列させる。
   - `Sources/Application/Coordinator/CanvasCommandPipelineCoordinator.swift`
     - グラフ変更後に Diagram エリア所属ノードの寸法を正方形へ正規化する。既存 Diagram ノードは `110...330` を維持し、`convertFocusedAreaMode` / `createArea` / `assignNodesToArea` で Diagram へ新規所属したノードは辺長 `220` へ初期化する。
   - `Sources/Application/UseCase/ApplyCanvasCommands/ApplyCanvasCommandsUseCase+AddChildNode.swift`
@@ -740,3 +745,4 @@
 - 2026-03-02: `CanvasCommand.moveFocusAcrossAreasToRoot` と `cmd+opt+←/→` を追加し、node/area target のまま左右隣接エリアへ高速移動できるよう更新。遷移先アンカーは Tree で root node、Diagram で `CanvasNode.metadata["createdOrder"]` 最小 node を採用し、端では反対端へループする仕様を追加した。
 - 2026-03-03: `CanvasCommand.moveArea` を追加し、area target 時の `cmd+矢印` をエリア単位移動に割り当てた。移動後は `CanvasAreaLayoutService` によるエリア衝突解消を適用する仕様へ更新した。
 - 2026-03-04: `CanvasCommand.setEdgeLabel` を追加し、edge ターゲットのインライン入力（`ctrl+a` / `ctrl+e` / 直接文字入力）でラベル編集できるよう更新。表示側はラベルがある edge の中央に最小枠を描画する仕様を追加した。
+- 2026-03-07: `CanvasCommand.alignSelectedNodes(.horizontal/.vertical)` を追加し、Command Palette から Diagram エリア内の複数選択ノードを focused node 基準で横整列・縦整列できるよう更新。キーマップは割り当てず、Command Palette 専用コマンドとして扱う。
