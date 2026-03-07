@@ -411,6 +411,10 @@ final class NodeImageCache {
 private struct NodeImageFileSignature: Equatable {
     let modifiedAt: Date
     let fileSize: Int
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.modifiedAt == rhs.modifiedAt && lhs.fileSize == rhs.fileSize
+    }
 }
 
 private final class NodeImageCacheEntry {

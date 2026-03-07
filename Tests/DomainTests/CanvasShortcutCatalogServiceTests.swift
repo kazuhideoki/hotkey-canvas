@@ -93,7 +93,7 @@ func test_commandPaletteDefinitions_useSymbolShortcutLabels() {
     #expect(labelsByID["extendSelectionUp"] == "⇧↑")
     #expect(labelsByID["centerFocusedNode"] == "⌃L")
     #expect(labelsByID["toggleFoldFocusedSubtree"] == "⌥.")
-    #expect(labelsByID["zoomIn.commandShiftEquals"] == "⌘+")
+    #expect(labelsByID["zoomIn.commandShiftEquals"] == "⌘⇧+")
 }
 
 @Test("Shortcut catalog: command palette titles use noun-colon-verb format")

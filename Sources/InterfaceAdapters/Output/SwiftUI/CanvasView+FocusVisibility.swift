@@ -185,17 +185,4 @@ extension CanvasView {
             height: node.bounds.height
         )
     }
-
-    func focusRectOnScreen(
-        for node: CanvasNode,
-        viewportSize: CGSize,
-        effectiveOffset: CGSize
-    ) -> CGRect {
-        CanvasViewportTransform.rectOnScreen(
-            worldRect: focusRect(for: node),
-            viewportSize: viewportSize,
-            zoomScale: zoomScale,
-            effectiveOffset: effectiveOffset
-        )
-    }
 }

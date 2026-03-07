@@ -5,6 +5,7 @@ import Domain
 extension ApplyCanvasCommandsUseCase {
     /// Dispatches one command to its mutation handler and returns stage effects with the result graph.
     func applyMutation(command: CanvasCommand, to graph: CanvasGraph) throws -> CanvasMutationResult {
+<<<<<<< HEAD
         try CanvasAreaMembershipService.validate(in: graph).get()
         let resolvedContext = try resolvedCommandContext(for: command, in: graph)
         guard isCommandSupported(resolvedContext.command, supportedIn: resolvedContext.area.editingMode) else {
@@ -19,12 +20,58 @@ extension ApplyCanvasCommandsUseCase {
 
         if Self.isAreaManagementCommand(resolvedContext.command) {
             return try applyAreaManagementCommand(command: resolvedContext.command, to: graph)
+=======
+        let dispatchContext = try makeDispatchContext(
+            command: command,
+            in: graph,
+        )
+        guard isCommandSupported(dispatchContext.command, supportedIn: dispatchContext.area.editingMode) else {
+            throw CanvasAreaPolicyError.unsupportedCommandInMode(
+                mode: dispatchContext.area.editingMode,
+                command: dispatchContext.command
+            )
+        }
+        guard isCommandExecutionAllowed(dispatchContext.command, context: dispatchContext.executionContext) else {
+            return noOpMutationResult(for: graph)
+        }
+
+        switch dispatchContext.command {
+        case .toggleFocusedAreaEdgeShapeStyle, .convertFocusedAreaMode, .createArea, .assignNodesToArea:
+            return try applyAreaManagementCommand(command: dispatchContext.command, to: graph)
+        default:
+            return try applyGraphEditingCommand(
+                command: dispatchContext.command,
+                to: graph,
+                resolvedAreaID: dispatchContext.area.id,
+                resolvedAreaMode: dispatchContext.area.editingMode
+            )
+>>>>>>> main
         }
         return try applyGraphEditingCommand(
             command: resolvedContext.command,
             to: graph,
             resolvedAreaID: resolvedContext.areaID,
             resolvedAreaMode: resolvedContext.area.editingMode
+        )
+    }
+
+    private func makeDispatchContext(
+        command: CanvasCommand,
+        in graph: CanvasGraph
+    ) throws -> CommandDispatchContext {
+        try CanvasAreaMembershipService.validate(in: graph).get()
+        let normalizedCommand = normalize(command: command, in: graph)
+        let resolvedAreaID = try resolveAreaID(for: normalizedCommand, in: graph).get()
+        let resolvedArea = try CanvasAreaMembershipService.area(withID: resolvedAreaID, in: graph).get()
+        let executionContext = makeExecutionContext(
+            for: normalizedCommand,
+            in: graph,
+            editingMode: resolvedArea.editingMode
+        )
+        return CommandDispatchContext(
+            command: normalizedCommand,
+            area: resolvedArea,
+            executionContext: executionContext
         )
     }
 
@@ -37,7 +84,34 @@ extension ApplyCanvasCommandsUseCase {
         if let focusCommandResult = applyFocusCommand(command: command, to: graph) {
             return focusCommandResult
         }
+<<<<<<< HEAD
         if Self.isNodeStructureCommand(command) {
+=======
+        if let movementResult = try applyMovementOrViewportCommand(
+            command: command,
+            to: graph,
+            resolvedAreaID: resolvedAreaID,
+            resolvedAreaMode: resolvedAreaMode
+        ) {
+            return movementResult
+        }
+        return try applyRemainingGraphEditingCommand(
+            command: command,
+            to: graph,
+            resolvedAreaID: resolvedAreaID,
+            resolvedAreaMode: resolvedAreaMode
+        )
+    }
+
+    private func applyRemainingGraphEditingCommand(
+        command: CanvasCommand,
+        to graph: CanvasGraph,
+        resolvedAreaID: CanvasAreaID,
+        resolvedAreaMode: CanvasEditingMode
+    ) throws -> CanvasMutationResult {
+        switch command {
+        case .addNode, .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .connectNodes:
+>>>>>>> main
             return try applyNodeStructureCommand(
                 command: command,
                 to: graph,
@@ -106,6 +180,7 @@ extension ApplyCanvasCommandsUseCase {
                 resolvedAreaID: resolvedAreaID,
                 resolvedAreaMode: resolvedAreaMode
             )
+<<<<<<< HEAD
         case .centerFocusedNode:
             return noOpMutationResult(for: graph)
         default:
@@ -124,11 +199,44 @@ extension ApplyCanvasCommandsUseCase {
             return try cutSelectionOrFocusedSubtree(in: graph)
         case .pasteClipboardAtFocusedNode:
             return try pasteClipboardAtFocusedNode(in: graph)
+=======
+        case .copySelectionOrFocusedSubtree, .cutSelectionOrFocusedSubtree, .pasteClipboardAtFocusedNode:
+            return try applyClipboardCommand(command: command, to: graph)
+>>>>>>> main
         case .setNodeText, .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .scaleSelectedNodes:
             return try applyNodeContentCommand(command: command, to: graph)
         case .setEdgeLabel(let edgeID, let label):
             return setEdgeLabel(in: graph, edgeID: edgeID, label: label)
         default:
+<<<<<<< HEAD
+=======
+            return noOpMutationResult(for: graph)
+        }
+    }
+
+    private func applyMovementOrViewportCommand(
+        command: CanvasCommand,
+        to graph: CanvasGraph,
+        resolvedAreaID: CanvasAreaID,
+        resolvedAreaMode: CanvasEditingMode
+    ) throws -> CanvasMutationResult? {
+        switch command {
+        case .alignAllAreasVertically:
+            return alignAllAreasVertically(in: graph, areaID: resolvedAreaID)
+        case .moveArea(let direction):
+            return moveArea(in: graph, areaID: resolvedAreaID, direction: direction)
+        case .moveNode(let direction):
+            return try moveNode(in: graph, direction: direction, areaMode: resolvedAreaMode)
+        case .nudgeNode(let direction):
+            return nudgeNode(in: graph, direction: direction, areaMode: resolvedAreaMode)
+        case .alignSelectedNodes(let axis):
+            return try alignSelectedNodes(in: graph, axis: axis, areaMode: resolvedAreaMode)
+        case .toggleFoldFocusedSubtree:
+            return toggleFoldFocusedSubtree(in: graph)
+        case .centerFocusedNode:
+            return noOpMutationResult(for: graph)
+        default:
+>>>>>>> main
             return nil
         }
     }
@@ -203,6 +311,22 @@ extension ApplyCanvasCommandsUseCase {
             .convertFocusedAreaMode,
             .createArea,
             .assignNodesToArea:
+            return noOpMutationResult(for: graph)
+        }
+    }
+
+    private func applyClipboardCommand(
+        command: CanvasCommand,
+        to graph: CanvasGraph
+    ) throws -> CanvasMutationResult {
+        switch command {
+        case .copySelectionOrFocusedSubtree:
+            return copySelectionOrFocusedSubtree(in: graph)
+        case .cutSelectionOrFocusedSubtree:
+            return try cutSelectionOrFocusedSubtree(in: graph)
+        case .pasteClipboardAtFocusedNode:
+            return try pasteClipboardAtFocusedNode(in: graph)
+        default:
             return noOpMutationResult(for: graph)
         }
     }
@@ -432,6 +556,7 @@ extension ApplyCanvasCommandsUseCase {
             selectedEdgeCount: graph.selectedEdgeIDs.count
         )
     }
+<<<<<<< HEAD
 
     private func operationTargetKind(
         for command: CanvasCommand,
@@ -475,4 +600,6 @@ extension ApplyCanvasCommandsUseCase {
         }
     }
 
+=======
+>>>>>>> main
 }

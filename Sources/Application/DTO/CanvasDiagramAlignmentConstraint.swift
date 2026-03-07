@@ -3,13 +3,13 @@
 import Domain
 
 /// Constraint used by the pipeline to preserve a diagram alignment axis during overlap resolution.
-public struct CanvasDiagramAlignmentConstraint: Equatable, Sendable {
-    public let axis: CanvasNodeAlignmentAxis
-    public let fixedNodeID: CanvasNodeID
-    public let targetNodeIDs: Set<CanvasNodeID>
-    public let minimumSpacing: Double
+struct CanvasDiagramAlignmentConstraint: Equatable, Sendable {
+    let axis: CanvasNodeAlignmentAxis
+    let fixedNodeID: CanvasNodeID
+    let targetNodeIDs: Set<CanvasNodeID>
+    let minimumSpacing: Double
 
-    public init(
+    init(
         axis: CanvasNodeAlignmentAxis,
         fixedNodeID: CanvasNodeID,
         targetNodeIDs: Set<CanvasNodeID>,

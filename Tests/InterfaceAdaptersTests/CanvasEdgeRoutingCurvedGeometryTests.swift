@@ -23,8 +23,13 @@ func test_curvedGeometry_verticalRoute_positiveLaneBulgesOutwardForBothDirection
     )
 
     let downwardCurve = CanvasEdgeRouting.curvedGeometry(
-        routeGeometry: downward, laneOffsets: .init(start: 10, end: 10))
-    let upwardCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: upward, laneOffsets: .init(start: 10, end: 10))
+        routeGeometry: downward,
+        laneOffsets: .init(start: 10, end: 10)
+    )
+    let upwardCurve = CanvasEdgeRouting.curvedGeometry(
+        routeGeometry: upward,
+        laneOffsets: .init(start: 10, end: 10)
+    )
 
     #expect(downwardCurve.control1.x > downward.startX)
     #expect(downwardCurve.control2.x > downward.endX)
@@ -43,8 +48,14 @@ func test_curvedGeometry_largerLaneOffsetIncreasesBulge() {
         endY: 220
     )
 
-    let nearCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffsets: .init(start: 7, end: 7))
-    let farCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffsets: .init(start: 21, end: 21))
+    let nearCurve = CanvasEdgeRouting.curvedGeometry(
+        routeGeometry: geometry,
+        laneOffsets: .init(start: 7, end: 7)
+    )
+    let farCurve = CanvasEdgeRouting.curvedGeometry(
+        routeGeometry: geometry,
+        laneOffsets: .init(start: 21, end: 21)
+    )
 
     #expect(farCurve.control1.y - geometry.startY > nearCurve.control1.y - geometry.startY)
     #expect(farCurve.control2.y - geometry.endY > nearCurve.control2.y - geometry.endY)
@@ -61,7 +72,10 @@ func test_curvedGeometry_withDistinctStartAndEndLanes_followsEachEndpointLane() 
         endY: 220
     )
 
-    let splitCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffsets: .init(start: -21, end: 21))
+    let splitCurve = CanvasEdgeRouting.curvedGeometry(
+        routeGeometry: geometry,
+        laneOffsets: .init(start: -21, end: 21)
+    )
 
     #expect(splitCurve.control1.y < geometry.startY)
     #expect(splitCurve.control2.y > geometry.endY)

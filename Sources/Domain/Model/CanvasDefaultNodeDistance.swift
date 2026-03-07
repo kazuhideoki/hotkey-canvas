@@ -48,9 +48,6 @@ public enum CanvasDefaultNodeDistance {
     /// Keep this as one quarter of semantic move to preserve a 4:1 ratio.
     public static let diagramNudgeStepMultiplier: Double = 0.25
 
-    /// Backward-compatible alias for tree horizontal distance.
-    public static let horizontal: Double = treeHorizontal
-
     /// Returns default vertical distance for a specific editing mode.
     /// - Parameter mode: Canvas editing mode.
     /// - Returns: Mode-specific default vertical distance.
