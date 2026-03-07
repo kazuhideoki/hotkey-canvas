@@ -37,25 +37,6 @@ extension CanvasView {
     ) -> some View {
         let isEditing = edgeEditingContext?.edgeID == edge.id
         let label = isEditing ? (edgeEditingContext?.label ?? "") : (edge.label ?? "")
-<<<<<<< HEAD
-        if isEditing || !label.isEmpty,
-            let labelCenter = edgeLabelScreenCenter(edge: edge, context: context)
-        {
-            let fieldWidth = edgeLabelWidth(for: label, zoomScale: context.zoomScale)
-            if isEditing {
-                edgeLabelEditorOverlay(
-                    edgeID: edge.id,
-                    context: context,
-                    fieldWidth: fieldWidth,
-                    labelCenter: labelCenter
-                )
-            } else {
-                edgeLabelTextOverlay(
-                    label: label,
-                    context: context,
-                    fieldWidth: fieldWidth,
-                    labelCenter: labelCenter
-=======
         if isEditing || !label.isEmpty, let labelCenter = placementCenter {
             let fieldWidth = edgeLabelWidth(for: label, zoomScale: context.zoomScale)
             if isEditing {
@@ -71,7 +52,6 @@ extension CanvasView {
                     context: context,
                     labelCenter: labelCenter,
                     fieldWidth: fieldWidth
->>>>>>> main
                 )
             }
         } else {
@@ -82,84 +62,7 @@ extension CanvasView {
 
 extension CanvasView {
     @ViewBuilder
-<<<<<<< HEAD
-    private func edgeLabelEditorOverlay(
-        edgeID: CanvasEdgeID,
-        context: EdgeRenderContext,
-        fieldWidth: CGFloat,
-        labelCenter: CGPoint
-    ) -> some View {
-        NodeTextEditor(
-            text: editingEdgeLabelBinding(for: edgeID),
-            nodeWidth: fieldWidth,
-            zoomScale: context.zoomScale,
-            contentScale: edgeLabelEditorContentScale(zoomScale: context.zoomScale),
-            style: nodeTextStyle,
-            contentAlignment: .topLeading,
-            selectAllOnFirstFocus: false,
-            initialCursorPlacement: edgeEditingContext?.initialCursorPlacement ?? .end,
-            initialTypingEvent: edgeEditingContext?.initialTypingEvent,
-            onLayoutMetricsChange: { metrics in
-                updateEdgeEditingLayout(for: edgeID, metrics: metrics)
-            },
-            onCommit: {
-                commitEdgeEditingIfNeeded()
-            },
-            onCancel: {
-                cancelEdgeEditing()
-            }
-        )
-        .frame(
-            width: fieldWidth,
-            height: CGFloat(
-                edgeEditingContext?.editorHeight ?? edgeLabelEditorHeight(zoomScale: context.zoomScale))
-        )
-        .padding(.horizontal, Self.edgeLabelHorizontalPadding)
-        .padding(.vertical, Self.edgeLabelVerticalPadding)
-        .background(styleColor(.textBackground))
-        .overlay(
-            RoundedRectangle(cornerRadius: Self.edgeLabelCornerRadius)
-                .stroke(styleColor(.separator), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: Self.edgeLabelCornerRadius))
-        .position(labelCenter)
-        .zIndex(5)
-    }
-
-    @ViewBuilder
-    private func edgeLabelTextOverlay(
-        label: String,
-        context: EdgeRenderContext,
-        fieldWidth: CGFloat,
-        labelCenter: CGPoint
-    ) -> some View {
-        Text(label)
-            .font(
-                .system(
-                    size: max(11 * CGFloat(context.zoomScale), 9),
-                    weight: .medium
-                )
-            )
-            .lineLimit(nil)
-            .multilineTextAlignment(.leading)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(width: fieldWidth, alignment: .leading)
-            .padding(.horizontal, Self.edgeLabelHorizontalPadding)
-            .padding(.vertical, Self.edgeLabelVerticalPadding)
-            .background(styleColor(.textBackground))
-            .overlay(
-                RoundedRectangle(cornerRadius: Self.edgeLabelCornerRadius)
-                    .stroke(styleColor(.separator), lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: Self.edgeLabelCornerRadius))
-            .position(labelCenter)
-            .zIndex(4)
-    }
-
-    private func edgeLabelScreenCenter(
-=======
     private func editingEdgeLabelOverlay(
->>>>>>> main
         edge: CanvasEdge,
         context: EdgeRenderContext,
         labelCenter: CGPoint,

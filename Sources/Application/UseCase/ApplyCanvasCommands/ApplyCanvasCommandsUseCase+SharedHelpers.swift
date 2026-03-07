@@ -480,24 +480,4 @@ extension ApplyCanvasCommandsUseCase {
         return (0, deltaY >= 0 ? 1 : -1)
     }
 
-    /// Returns deterministic edge priority for placement anchor selection.
-    private func isPreferredPlacementAnchorEdge(_ lhs: CanvasEdge, _ rhs: CanvasEdge) -> Bool {
-        let lhsPriority = edgePriorityForPlacementAnchor(lhs)
-        let rhsPriority = edgePriorityForPlacementAnchor(rhs)
-        if lhsPriority != rhsPriority {
-            return lhsPriority < rhsPriority
-        }
-        return lhs.id.rawValue < rhs.id.rawValue
-    }
-
-    /// Defines edge priority so normal links are used before structural links.
-    private func edgePriorityForPlacementAnchor(_ edge: CanvasEdge) -> Int {
-        if edge.relationType == .normal {
-            return 0
-        }
-        if edge.relationType == .parentChild {
-            return 1
-        }
-        return 2
-    }
 }

@@ -52,6 +52,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
