@@ -76,7 +76,13 @@ extension CanvasView {
             return
         }
         let candidates = connectNodeSelectionCandidates(in: sourceAreaID, excluding: sourceNodeID)
-        guard let initialTargetNodeID = candidates.first?.id else {
+        guard
+            let sourceNode = viewModel.nodes.first(where: { $0.id == sourceNodeID }),
+            let initialTargetNodeID = Self.initialConnectNodeSelectionTargetID(
+                sourceNode: sourceNode,
+                candidates: candidates
+            )
+        else {
             return
         }
 
@@ -207,5 +213,46 @@ extension CanvasView {
                 }
                 return lhs.id.rawValue < rhs.id.rawValue
             }
+    }
+
+    static func initialConnectNodeSelectionTargetID(
+        sourceNode: CanvasNode,
+        candidates: [CanvasNode]
+    ) -> CanvasNodeID? {
+        let sourceCenter = connectNodeSelectionCenter(for: sourceNode)
+
+        return candidates.min { lhs, rhs in
+            let lhsCenter = connectNodeSelectionCenter(for: lhs)
+            let rhsCenter = connectNodeSelectionCenter(for: rhs)
+            let lhsDistance = connectNodeSelectionSquaredDistance(from: sourceCenter, to: lhsCenter)
+            let rhsDistance = connectNodeSelectionSquaredDistance(from: sourceCenter, to: rhsCenter)
+
+            if lhsDistance != rhsDistance {
+                return lhsDistance < rhsDistance
+            }
+            if lhs.bounds.y != rhs.bounds.y {
+                return lhs.bounds.y < rhs.bounds.y
+            }
+            if lhs.bounds.x != rhs.bounds.x {
+                return lhs.bounds.x < rhs.bounds.x
+            }
+            return lhs.id.rawValue < rhs.id.rawValue
+        }?.id
+    }
+
+    private static func connectNodeSelectionCenter(for node: CanvasNode) -> (x: Double, y: Double) {
+        (
+            x: node.bounds.x + (node.bounds.width / 2),
+            y: node.bounds.y + (node.bounds.height / 2)
+        )
+    }
+
+    private static func connectNodeSelectionSquaredDistance(
+        from source: (x: Double, y: Double),
+        to target: (x: Double, y: Double)
+    ) -> Double {
+        let deltaX = target.x - source.x
+        let deltaY = target.y - source.y
+        return (deltaX * deltaX) + (deltaY * deltaY)
     }
 }
