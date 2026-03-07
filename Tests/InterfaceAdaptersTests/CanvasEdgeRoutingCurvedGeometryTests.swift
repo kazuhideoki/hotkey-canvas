@@ -23,7 +23,6 @@ func test_curvedGeometry_verticalRoute_positiveLaneBulgesOutwardForBothDirection
     )
 
     let downwardCurve = CanvasEdgeRouting.curvedGeometry(
-<<<<<<< HEAD
         routeGeometry: downward,
         laneOffsets: .init(start: 10, end: 10)
     )
@@ -31,10 +30,6 @@ func test_curvedGeometry_verticalRoute_positiveLaneBulgesOutwardForBothDirection
         routeGeometry: upward,
         laneOffsets: .init(start: 10, end: 10)
     )
-=======
-        routeGeometry: downward, laneOffsets: .init(start: 10, end: 10))
-    let upwardCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: upward, laneOffsets: .init(start: 10, end: 10))
->>>>>>> main
 
     #expect(downwardCurve.control1.x > downward.startX)
     #expect(downwardCurve.control2.x > downward.endX)
@@ -53,7 +48,6 @@ func test_curvedGeometry_largerLaneOffsetIncreasesBulge() {
         endY: 220
     )
 
-<<<<<<< HEAD
     let nearCurve = CanvasEdgeRouting.curvedGeometry(
         routeGeometry: geometry,
         laneOffsets: .init(start: 7, end: 7)
@@ -62,10 +56,6 @@ func test_curvedGeometry_largerLaneOffsetIncreasesBulge() {
         routeGeometry: geometry,
         laneOffsets: .init(start: 21, end: 21)
     )
-=======
-    let nearCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffsets: .init(start: 7, end: 7))
-    let farCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffsets: .init(start: 21, end: 21))
->>>>>>> main
 
     #expect(farCurve.control1.y - geometry.startY > nearCurve.control1.y - geometry.startY)
     #expect(farCurve.control2.y - geometry.endY > nearCurve.control2.y - geometry.endY)
@@ -82,14 +72,10 @@ func test_curvedGeometry_withDistinctStartAndEndLanes_followsEachEndpointLane() 
         endY: 220
     )
 
-<<<<<<< HEAD
     let splitCurve = CanvasEdgeRouting.curvedGeometry(
         routeGeometry: geometry,
         laneOffsets: .init(start: -21, end: 21)
     )
-=======
-    let splitCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffsets: .init(start: -21, end: 21))
->>>>>>> main
 
     #expect(splitCurve.control1.y < geometry.startY)
     #expect(splitCurve.control2.y > geometry.endY)
@@ -107,18 +93,6 @@ func test_edgeTipAndVector_verticalCurvedRoute_withDistinctLanes_tracksEndLaneDi
         relationType: .normal,
         directionality: .fromTo
     )
-<<<<<<< HEAD
-    let nodesByID: [CanvasNodeID: CanvasNode] = [
-        parentID: makeNode(id: parentID, x: 240, y: 120, width: 220, height: 56),
-        childID: makeNode(id: childID, x: 280, y: 420, width: 220, height: 56),
-    ]
-    let branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double] = [
-        CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .vertical, direction: 1): 320
-    ]
-    let laneOffsetsByEdgeID: [CanvasEdgeID: CanvasEdgeRouting.EdgeLaneOffsets] = [
-        edgeID: .init(start: -21, end: 21)
-    ]
-=======
     let nodesByID = Dictionary(uniqueKeysWithValues: [
         makeCurvedGeometryNode(id: parentID, x: 240, y: 120, width: 220, height: 56),
         makeCurvedGeometryNode(id: childID, x: 280, y: 420, width: 220, height: 56),
@@ -127,7 +101,6 @@ func test_edgeTipAndVector_verticalCurvedRoute_withDistinctLanes_tracksEndLaneDi
         CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .vertical, direction: 1): 320
     ]
     let laneOffsetsByEdgeID: [CanvasEdgeID: CanvasEdgeRouting.EdgeLaneOffsets] = [edgeID: .init(start: -21, end: 21)]
->>>>>>> main
 
     let tipAndVector = try #require(
         CanvasEdgeRouting.edgeTipAndVector(
@@ -144,24 +117,12 @@ func test_edgeTipAndVector_verticalCurvedRoute_withDistinctLanes_tracksEndLaneDi
     #expect(tipAndVector.vector.dy > 0)
 }
 
-<<<<<<< HEAD
-private func makeNode(
-=======
 private func makeCurvedGeometryNode(
->>>>>>> main
     id: CanvasNodeID,
     x: Double,
     y: Double,
     width: Double,
     height: Double
-<<<<<<< HEAD
-) -> CanvasNode {
-    CanvasNode(
-        id: id,
-        kind: .text,
-        text: nil,
-        bounds: CanvasBounds(x: x, y: y, width: width, height: height)
-=======
 ) -> (CanvasNodeID, CanvasNode) {
     (
         id,
@@ -171,6 +132,5 @@ private func makeCurvedGeometryNode(
             text: nil,
             bounds: CanvasBounds(x: x, y: y, width: width, height: height)
         )
->>>>>>> main
     )
 }
