@@ -465,6 +465,7 @@ actor DelayedCanvasEditingInputPort: CanvasEditingInputPort {
                 .focusNode, .focusArea,
                 .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
+                .alignSelectedNodes,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
@@ -627,6 +628,7 @@ extension OverlappingFailureCanvasEditingInputPort {
                 .focusNode, .focusArea,
                 .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
+                .alignSelectedNodes,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
@@ -852,7 +854,7 @@ actor StaticCanvasEditingInputPort: CanvasEditingInputPort {
                 .moveFocusAcrossAreasToRoot, .focusNode,
                 .focusArea,
                 .extendSelection,
-                .moveArea, .moveNode, .nudgeNode,
+                .moveArea, .moveNode, .nudgeNode, .alignSelectedNodes,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree, .centerFocusedNode, .cycleFocusedEdgeDirectionality,
                 .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges,
@@ -1091,6 +1093,7 @@ actor DiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 .focusNode, .focusArea,
                 .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
+                .alignSelectedNodes,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
@@ -1200,6 +1203,7 @@ actor TreeModeSelectionFromDiagramCanvasEditingInputPort: CanvasEditingInputPort
                 .focusNode, .focusArea,
                 .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
+                .alignSelectedNodes,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
@@ -1308,6 +1312,7 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
                 .focusNode, .focusArea,
                 .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
+                .alignSelectedNodes,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
@@ -1394,6 +1399,7 @@ actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {
                 .focusNode, .focusArea,
                 .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
+                .alignSelectedNodes,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
@@ -1513,6 +1519,7 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
                 .focusNode, .focusArea,
                 .extendSelection, .moveArea, .moveNode,
                 .nudgeNode,
+                .alignSelectedNodes,
                 .scaleSelectedNodes,
                 .toggleFoldFocusedSubtree,
                 .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
@@ -1545,3 +1552,134 @@ actor EmptyBootstrapCanvasEditingInputPort: CanvasEditingInputPort {
         ApplyResult(newState: graph)
     }
 }
+<<<<<<< HEAD
+=======
+actor OverlappingInitialNodeCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+    private var getCurrentResultCallCount: Int = 0
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        var nextGraph = graph
+        for command in commands {
+            switch command {
+            case .addNode:
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                let nodeID = CanvasNodeID(rawValue: "node-\(nextGraph.nodesByID.count + 1)")
+                let node = CanvasNode(
+                    id: nodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+                nextGraph = try CanvasGraphCRUDService.createNode(node, in: nextGraph).get()
+                nextGraph = CanvasGraph(
+                    nodesByID: nextGraph.nodesByID,
+                    edgesByID: nextGraph.edgesByID,
+                    focusedNodeID: nodeID
+                )
+            case .addChildNode, .addSiblingNode, .duplicateSelectionAsSibling, .moveFocus, .moveFocusAcrossAreasToRoot,
+                .focusNode, .focusArea,
+                .extendSelection, .moveArea, .moveNode,
+                .nudgeNode,
+                .alignSelectedNodes,
+                .scaleSelectedNodes,
+                .toggleFoldFocusedSubtree,
+                .centerFocusedNode, .cycleFocusedEdgeDirectionality, .setEdgeLabel, .copySelectionOrFocusedSubtree,
+                .cutSelectionOrFocusedSubtree,
+                .pasteClipboardAtFocusedNode, .setNodeText,
+                .upsertNodeAttachment, .toggleFocusedNodeMarkdownStyle, .toggleFocusedAreaEdgeShapeStyle,
+                .deleteSelectedOrFocusedNodes, .deleteSelectedOrFocusedEdges,
+                .convertFocusedAreaMode, .createArea, .assignNodesToArea, .connectNodes,
+                .alignAllAreasVertically:
+                continue
+            }
+        }
+        graph = nextGraph
+        return ApplyResult(newState: nextGraph)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        getCurrentResultCallCount += 1
+        if getCurrentResultCallCount == 1 {
+            let snapshot = graph
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            return ApplyResult(newState: snapshot)
+        }
+        return ApplyResult(newState: graph)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func nodeCount() -> Int {
+        graph.nodesByID.count
+    }
+}
+
+actor StaleBootstrapApplyCanvasEditingInputPort: CanvasEditingInputPort {
+    private var graph: CanvasGraph = .empty
+    private var applyCallCount: Int = 0
+    private var firstApplyContinuation: CheckedContinuation<Void, Never>?
+
+    func apply(commands: [CanvasCommand]) async throws -> ApplyResult {
+        applyCallCount += 1
+        if applyCallCount == 1 {
+            await withCheckedContinuation { continuation in
+                firstApplyContinuation = continuation
+            }
+            graph = makeSingleNodeGraph()
+            return ApplyResult(newState: graph)
+        }
+
+        return ApplyResult(newState: .empty)
+    }
+
+    func getCurrentGraph() async -> CanvasGraph {
+        graph
+    }
+
+    func getCurrentResult() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func undo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func redo() async -> ApplyResult {
+        ApplyResult(newState: graph)
+    }
+
+    func releaseFirstApply() {
+        firstApplyContinuation?.resume()
+        firstApplyContinuation = nil
+    }
+}
+
+extension StaleBootstrapApplyCanvasEditingInputPort {
+    private func makeSingleNodeGraph() -> CanvasGraph {
+        let nodeID = CanvasNodeID(rawValue: "node-1")
+        return CanvasGraph(
+            nodesByID: [
+                nodeID: CanvasNode(
+                    id: nodeID,
+                    kind: .text,
+                    text: nil,
+                    bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
+                )
+            ],
+            edgesByID: [:],
+            focusedNodeID: nodeID
+        )
+    }
+}
+>>>>>>> main

@@ -189,6 +189,7 @@ extension CanvasViewModel {
             .connectNodes,
             .moveFocus, .moveFocusAcrossAreasToRoot, .focusNode, .focusArea, .extendSelection, .moveArea, .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,

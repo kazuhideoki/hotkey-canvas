@@ -77,6 +77,39 @@ extension ApplyCanvasCommandsUseCase {
                 to: graph,
                 resolvedAreaID: resolvedAreaID
             )
+<<<<<<< HEAD
+=======
+        case .alignAllAreasVertically:
+            return alignAllAreasVertically(in: graph, areaID: resolvedAreaID)
+        case .moveArea(let direction):
+            return moveArea(
+                in: graph,
+                areaID: resolvedAreaID,
+                direction: direction
+            )
+        case .moveNode(let direction):
+            return try moveNode(
+                in: graph,
+                direction: direction,
+                areaMode: resolvedAreaMode
+            )
+        case .nudgeNode(let direction):
+            return nudgeNode(
+                in: graph,
+                direction: direction,
+                areaMode: resolvedAreaMode
+            )
+        case .alignSelectedNodes(let axis):
+            return try alignSelectedNodes(
+                in: graph,
+                axis: axis,
+                areaMode: resolvedAreaMode
+            )
+        case .toggleFoldFocusedSubtree:
+            return toggleFoldFocusedSubtree(in: graph)
+        case .centerFocusedNode:
+            return noOpMutationResult(for: graph)
+>>>>>>> main
         case .cycleFocusedEdgeDirectionality(let focusedEdge, let selectedEdgeIDs):
             return cycleFocusedEdgeDirectionality(
                 in: graph,
@@ -195,6 +228,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
@@ -242,6 +276,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
@@ -299,6 +334,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
             .cycleFocusedEdgeDirectionality,
@@ -358,6 +394,7 @@ extension ApplyCanvasCommandsUseCase {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .scaleSelectedNodes,
             .toggleFoldFocusedSubtree,
             .centerFocusedNode,
@@ -478,9 +515,112 @@ extension ApplyCanvasCommandsUseCase {
         }
     }
 
+<<<<<<< HEAD
     private struct CommandDispatchContext {
         let command: CanvasCommand
         let area: CanvasArea
         let executionContext: KeymapExecutionContext
+=======
+    private func resolveAreaID(
+        for command: CanvasCommand,
+        in graph: CanvasGraph
+    ) -> Result<CanvasAreaID, CanvasAreaPolicyError> {
+        switch command {
+        case .addNode:
+            if let focusedNodeID = graph.focusedNodeID, graph.nodesByID[focusedNodeID] != nil {
+                return CanvasAreaMembershipService.areaID(containing: focusedNodeID, in: graph)
+            }
+            let sortedAreaIDs = graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue })
+            if sortedAreaIDs.count == 1, let areaID = sortedAreaIDs.first {
+                return .success(areaID)
+            }
+            if sortedAreaIDs.count > 1 {
+                return .failure(.areaResolutionAmbiguousForAddNode)
+            }
+            return .failure(.focusedNodeNotFound)
+        case .setNodeText(let nodeID, _, _):
+            return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
+        case .upsertNodeAttachment(let nodeID, _, _, _):
+            return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
+        case .setEdgeLabel(let edgeID, _):
+            guard let edge = graph.edgesByID[edgeID] else {
+                return CanvasAreaMembershipService.focusedAreaID(in: graph)
+            }
+            return CanvasAreaMembershipService.areaID(containing: edge.fromNodeID, in: graph)
+        case .focusNode(let nodeID):
+            return CanvasAreaMembershipService.areaID(containing: nodeID, in: graph)
+        case .focusArea(let areaID):
+            if graph.areasByID[areaID] != nil {
+                return .success(areaID)
+            }
+            return .failure(.areaNotFound(areaID))
+        case .connectNodes(let fromNodeID, _):
+            return CanvasAreaMembershipService.areaID(containing: fromNodeID, in: graph)
+        case .deleteSelectedOrFocusedEdges(let focusedEdge, _):
+            return CanvasAreaMembershipService.areaID(containing: focusedEdge.originNodeID, in: graph)
+        case .cycleFocusedEdgeDirectionality(let focusedEdge, _):
+            return CanvasAreaMembershipService.areaID(containing: focusedEdge.originNodeID, in: graph)
+        case .addChildNode,
+            .addSiblingNode,
+            .duplicateSelectionAsSibling,
+            .alignAllAreasVertically,
+            .moveFocus,
+            .moveFocusAcrossAreasToRoot,
+            .extendSelection,
+            .moveArea,
+            .moveNode,
+            .nudgeNode,
+            .alignSelectedNodes,
+            .scaleSelectedNodes,
+            .toggleFoldFocusedSubtree,
+            .centerFocusedNode,
+            .deleteSelectedOrFocusedNodes,
+            .copySelectionOrFocusedSubtree,
+            .cutSelectionOrFocusedSubtree,
+            .pasteClipboardAtFocusedNode,
+            .toggleFocusedNodeMarkdownStyle,
+            .toggleFocusedAreaEdgeShapeStyle,
+            .convertFocusedAreaMode,
+            .createArea,
+            .assignNodesToArea:
+            return CanvasAreaMembershipService.focusedAreaID(in: graph)
+        }
+    }
+
+    private func normalize(
+        command: CanvasCommand,
+        in graph: CanvasGraph
+    ) -> CanvasCommand {
+        guard case .addChildNode = command else {
+            return command
+        }
+        guard
+            let focusedNodeID = graph.focusedNodeID,
+            graph.nodesByID[focusedNodeID] != nil
+        else {
+            let sortedAreaIDs = graph.areasByID.keys.sorted(by: { $0.rawValue < $1.rawValue })
+            guard sortedAreaIDs.count == 1, let areaID = sortedAreaIDs.first else {
+                return command
+            }
+            switch CanvasAreaMembershipService.area(withID: areaID, in: graph) {
+            case .success(let area):
+                return area.editingMode == .diagram ? .addNode : command
+            case .failure:
+                return command
+            }
+        }
+
+        switch CanvasAreaMembershipService.areaID(containing: focusedNodeID, in: graph) {
+        case .success(let areaID):
+            switch CanvasAreaMembershipService.area(withID: areaID, in: graph) {
+            case .success(let area):
+                return area.editingMode == .diagram ? .addNode : command
+            case .failure:
+                return command
+            }
+        case .failure:
+            return command
+        }
+>>>>>>> main
     }
 }

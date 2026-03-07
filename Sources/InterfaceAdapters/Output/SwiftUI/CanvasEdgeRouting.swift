@@ -602,5 +602,6 @@ extension CanvasEdgeRouting {
             return CGPoint(x: routeGeometry.endX, y: routeGeometry.branchCoordinate)
         }
     }
+
 }
 // swiftlint:enable file_length

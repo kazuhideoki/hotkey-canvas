@@ -19,6 +19,7 @@ enum DiagramAreaPolicyService {
             .moveArea,
             .moveNode,
             .nudgeNode,
+            .alignSelectedNodes,
             .scaleSelectedNodes,
             .centerFocusedNode,
             .cycleFocusedEdgeDirectionality,

@@ -13,6 +13,7 @@ public enum CanvasCommand: Equatable, Sendable {
     case moveArea(CanvasFocusDirection)
     case moveNode(CanvasNodeMoveDirection)
     case nudgeNode(CanvasNodeMoveDirection)
+    case alignSelectedNodes(CanvasNodeAlignmentAxis)
     case scaleSelectedNodes(CanvasNodeScaleDirection)
     case toggleFoldFocusedSubtree
     case centerFocusedNode
@@ -68,4 +69,10 @@ public enum CanvasNodeMoveDirection: Equatable, Sendable {
 public enum CanvasNodeScaleDirection: Equatable, Sendable {
     case up
     case down
+}
+
+/// Axis used to align selected diagram nodes.
+public enum CanvasNodeAlignmentAxis: Equatable, Sendable {
+    case horizontal
+    case vertical
 }
