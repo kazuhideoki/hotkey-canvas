@@ -5,6 +5,7 @@ import Foundation
 // Responsibility: Duplicate selected subtree roots as siblings under their current parents in tree areas.
 extension ApplyCanvasCommandsUseCase {
     private struct DuplicateTraversalState {
+        let sourceGraph: CanvasGraph
         var insertedNodeIDs: Set<CanvasNodeID>
         var activeSourcePathNodeIDs: Set<CanvasNodeID>
         var duplicatedNodeIDBySourceNodeID: [CanvasNodeID: CanvasNodeID]
@@ -157,6 +158,7 @@ extension ApplyCanvasCommandsUseCase {
             in: graphAfterMutation
         ).get()
         var traversalState = DuplicateTraversalState(
+            sourceGraph: sourceGraph,
             insertedNodeIDs: [duplicateRootNode.id],
             activeSourcePathNodeIDs: [],
             duplicatedNodeIDBySourceNodeID: [sourceRootNodeID: duplicateRootNode.id]
@@ -164,7 +166,6 @@ extension ApplyCanvasCommandsUseCase {
         graphAfterMutation = try duplicateChildSubtrees(
             fromSourceNodeID: sourceRootNodeID,
             toDuplicatedParentNodeID: duplicateRootNode.id,
-            sourceGraph: sourceGraph,
             into: graphAfterMutation,
             traversalState: &traversalState,
             nextCreatedOrder: &nextCreatedOrder
@@ -273,7 +274,6 @@ extension ApplyCanvasCommandsUseCase {
     private func duplicateChildSubtrees(
         fromSourceNodeID sourceNodeID: CanvasNodeID,
         toDuplicatedParentNodeID duplicatedParentNodeID: CanvasNodeID,
-        sourceGraph: CanvasGraph,
         into graph: CanvasGraph,
         traversalState: inout DuplicateTraversalState,
         nextCreatedOrder: inout Int
@@ -283,7 +283,7 @@ extension ApplyCanvasCommandsUseCase {
         defer {
             traversalState.activeSourcePathNodeIDs.remove(sourceNodeID)
         }
-        let sourceChildren = childNodes(of: sourceNodeID, in: sourceGraph)
+        let sourceChildren = childNodes(of: sourceNodeID, in: traversalState.sourceGraph)
 
         for sourceChildNode in sourceChildren {
             if let duplicatedSourceChildNodeID = traversalState.duplicatedNodeIDBySourceNodeID[sourceChildNode.id] {
@@ -315,7 +315,6 @@ extension ApplyCanvasCommandsUseCase {
             nextGraph = try duplicateChildSubtrees(
                 fromSourceNodeID: sourceChildNode.id,
                 toDuplicatedParentNodeID: duplicatedChildNode.id,
-                sourceGraph: sourceGraph,
                 into: nextGraph,
                 traversalState: &traversalState,
                 nextCreatedOrder: &nextCreatedOrder
