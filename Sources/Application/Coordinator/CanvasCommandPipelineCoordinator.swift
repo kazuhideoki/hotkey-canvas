@@ -72,6 +72,14 @@ extension CanvasCommandPipelineCoordinator {
                 graphBeforeMutation: graphBeforeMutation
             )
         }
+        if effects.didMutateGraph,
+            let alignmentConstraint = mutationResult.diagramAlignmentConstraint
+        {
+            graph = runDiagramAlignmentConstraintStage(
+                on: graph,
+                constraint: alignmentConstraint
+            )
+        }
         if effects.didMutateGraph {
             graph = runCollapsedRootNormalizationStage(on: graph)
         }
