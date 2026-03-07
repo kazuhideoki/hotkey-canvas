@@ -34,8 +34,10 @@ extension ApplyCanvasCommandsUseCase {
             return noOpMutationResult(for: graph)
         }
 
-        let anchorCenterX = normalizedFocusedBounds.x + (normalizedFocusedBounds.width / 2)
-        let anchorCenterY = normalizedFocusedBounds.y + (normalizedFocusedBounds.height / 2)
+        let anchorCenter = (
+            x: normalizedFocusedBounds.x + (normalizedFocusedBounds.width / 2),
+            y: normalizedFocusedBounds.y + (normalizedFocusedBounds.height / 2)
+        )
         var nextGraph = graph
         var didMutate = false
 
@@ -46,8 +48,8 @@ extension ApplyCanvasCommandsUseCase {
             let alignedBounds = alignedDiagramBounds(
                 for: node,
                 axis: axis,
-                anchorCenterX: anchorCenterX,
-                anchorCenterY: anchorCenterY
+                anchorCenterX: anchorCenter.x,
+                anchorCenterY: anchorCenter.y
             )
 
             guard alignedBounds != node.bounds else {
@@ -71,16 +73,37 @@ extension ApplyCanvasCommandsUseCase {
             return noOpMutationResult(for: graph)
         }
 
-        return CanvasMutationResult(
+        return alignmentMutationResult(
             graphBeforeMutation: graph,
             graphAfterMutation: nextGraph,
+            axis: axis,
+            focusedNodeID: focusedNodeID,
+            selectedNodeIDs: selectedNodeIDs
+        )
+    }
+
+    private func alignmentMutationResult(
+        graphBeforeMutation: CanvasGraph,
+        graphAfterMutation: CanvasGraph,
+        axis: CanvasNodeAlignmentAxis,
+        focusedNodeID: CanvasNodeID,
+        selectedNodeIDs: [CanvasNodeID]
+    ) -> CanvasMutationResult {
+        return CanvasMutationResult(
+            graphBeforeMutation: graphBeforeMutation,
+            graphAfterMutation: graphAfterMutation,
             effects: CanvasMutationEffects(
                 didMutateGraph: true,
                 needsTreeLayout: false,
                 needsAreaLayout: false,
                 needsFocusNormalization: false
             ),
-            areaLayoutSeedNodeID: focusedNodeID
+            areaLayoutSeedNodeID: focusedNodeID,
+            diagramAlignmentConstraint: CanvasDiagramAlignmentConstraint(
+                axis: axis,
+                fixedNodeID: focusedNodeID,
+                targetNodeIDs: Set(selectedNodeIDs)
+            )
         )
     }
 
