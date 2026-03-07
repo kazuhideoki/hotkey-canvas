@@ -209,6 +209,12 @@ extension CanvasView {
             return .all([.targetKinds([.area]), .requiresFocusedNode])
         case .alignAllAreasVertically:
             return .all([.targetKinds([.node, .area]), .requiresFocusedNode])
+        case .alignSelectedNodes:
+            return .all([
+                .targetKinds([.node]),
+                .requiresFocusedNode,
+                .requiredModes([.diagram]),
+            ])
         case .toggleFocusedNodeMarkdownStyle:
             return .all([.targetKinds([.node]), .requiresFocusedNode])
         default:

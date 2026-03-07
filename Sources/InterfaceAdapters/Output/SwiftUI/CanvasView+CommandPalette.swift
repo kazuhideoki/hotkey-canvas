@@ -152,6 +152,7 @@ extension CanvasView {
         if let alignAllAreasItem = alignAllAreasVerticallyCommandPaletteItem() {
             items.append(alignAllAreasItem)
         }
+        items.append(contentsOf: alignSelectedNodesCommandPaletteItems())
         return items
     }
 
@@ -202,6 +203,66 @@ extension CanvasView {
             ),
             action: .shortcut(.apply(commands: [.alignAllAreasVertically]))
         )
+    }
+
+    private func alignSelectedNodesCommandPaletteItems() -> [CommandPaletteItem] {
+        let selectedNodeIDsInFocusedArea = selectedNodeIDsInFocusedAreaForCommandPalette()
+        guard selectedNodeIDsInFocusedArea.count > 1 else {
+            return []
+        }
+
+        let commandContext = keymapExecutionContextForCommandPalette()
+        let horizontalCommand: CanvasCommand = .alignSelectedNodes(.horizontal)
+        let verticalCommand: CanvasCommand = .alignSelectedNodes(.vertical)
+        guard
+            Self.isActionEnabled(.apply(commands: [horizontalCommand]), context: commandContext),
+            Self.isActionEnabled(.apply(commands: [verticalCommand]), context: commandContext)
+        else {
+            return []
+        }
+
+        return [
+            CommandPaletteItem(
+                id: "alignSelectedNodesHorizontally",
+                title: "Node: Align Selected Horizontally",
+                shortcutLabel: "Selected Nodes",
+                hasShortcutBinding: false,
+                searchText: Self.commandPaletteSearchText(
+                    title: "Node: Align Selected Horizontally",
+                    shortcutLabel: "Selected Nodes",
+                    searchTokens: [
+                        "align", "selected", "nodes", "horizontal", "same", "row", "line",
+                    ]
+                ),
+                action: .shortcut(.apply(commands: [horizontalCommand]))
+            ),
+            CommandPaletteItem(
+                id: "alignSelectedNodesVertically",
+                title: "Node: Align Selected Vertically",
+                shortcutLabel: "Selected Nodes",
+                hasShortcutBinding: false,
+                searchText: Self.commandPaletteSearchText(
+                    title: "Node: Align Selected Vertically",
+                    shortcutLabel: "Selected Nodes",
+                    searchTokens: [
+                        "align", "selected", "nodes", "vertical", "same", "column", "line",
+                    ]
+                ),
+                action: .shortcut(.apply(commands: [verticalCommand]))
+            ),
+        ]
+    }
+
+    private func selectedNodeIDsInFocusedAreaForCommandPalette() -> [CanvasNodeID] {
+        guard let focusedNodeID = viewModel.focusedNodeID else {
+            return []
+        }
+        guard let focusedAreaID = viewModel.areaIDByNodeID[focusedNodeID] else {
+            return []
+        }
+        return viewModel.selectedNodeIDs
+            .filter { viewModel.areaIDByNodeID[$0] == focusedAreaID }
+            .sorted(by: { $0.rawValue < $1.rawValue })
     }
 
     private func edgeDeletionCommandPaletteItem() -> CommandPaletteItem? {
