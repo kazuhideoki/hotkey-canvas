@@ -1375,24 +1375,6 @@ actor DiagramAreaCollisionInputPort: CanvasEditingInputPort {
     func createAreaIDs() -> [CanvasAreaID] {
         requestedCreateAreaIDs
     }
-
-    private func addNode(to graph: CanvasGraph) throws -> CanvasGraph {
-        let nodeID = CanvasNodeID(rawValue: "node-\(graph.nodesByID.count + 1)")
-        let node = CanvasNode(
-            id: nodeID,
-            kind: .text,
-            text: nil,
-            bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 100)
-        )
-        let createdGraph = try CanvasGraphCRUDService.createNode(node, in: graph).get()
-        return CanvasGraph(
-            nodesByID: createdGraph.nodesByID,
-            edgesByID: createdGraph.edgesByID,
-            focusedNodeID: nodeID,
-            collapsedRootNodeIDs: createdGraph.collapsedRootNodeIDs,
-            areasByID: createdGraph.areasByID
-        )
-    }
 }
 
 actor StaleDiagramModeSelectionCanvasEditingInputPort: CanvasEditingInputPort {

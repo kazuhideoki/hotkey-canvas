@@ -361,8 +361,6 @@ extension ApplyCanvasCommandsUseCase {
     }
 
     /// Chooses the insertion anchor for top-level node creation from the bottom-most area.
-<<<<<<< HEAD
-=======
     /// - Parameter graph: Current canvas graph.
     /// - Returns: Parent node and area used for placement, or `nil` when graph is empty.
     private func addNodePlacementAnchor(in graph: CanvasGraph) -> (parentNode: CanvasNode, area: CanvasNodeArea)? {
@@ -481,6 +479,4 @@ extension ApplyCanvasCommandsUseCase {
         }
         return (0, deltaY >= 0 ? 1 : -1)
     }
-
->>>>>>> main
 }

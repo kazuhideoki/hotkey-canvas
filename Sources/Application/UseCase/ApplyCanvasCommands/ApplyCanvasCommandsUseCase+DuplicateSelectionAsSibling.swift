@@ -5,7 +5,6 @@ import Foundation
 // Responsibility: Duplicate selected subtree roots as siblings under their current parents in tree areas.
 extension ApplyCanvasCommandsUseCase {
     private struct DuplicateTraversalState {
-        let sourceGraph: CanvasGraph
         var insertedNodeIDs: Set<CanvasNodeID>
         var activeSourcePathNodeIDs: Set<CanvasNodeID>
         var duplicatedNodeIDBySourceNodeID: [CanvasNodeID: CanvasNodeID]
@@ -151,19 +150,11 @@ extension ApplyCanvasCommandsUseCase {
             makeParentChildEdge(from: parentID, to: duplicateRootNode.id, order: rootOrder),
             in: graphAfterMutation
         ).get()
-<<<<<<< HEAD
-        var traversalState = DuplicateTraversalState(
-            sourceGraph: sourceGraph,
-            insertedNodeIDs: [duplicateRootNode.id],
-            activeSourcePathNodeIDs: [],
-            duplicatedNodeIDBySourceNodeID: [sourceRootNodeID: duplicateRootNode.id]
-=======
         var traversalSession = makeTraversalSession(
             sourceGraph: sourceGraph,
             sourceRootNodeID: sourceRootNodeID,
             duplicateRootNodeID: duplicateRootNode.id,
             nextCreatedOrder: nextCreatedOrder
->>>>>>> main
         )
         graphAfterMutation = try duplicateChildSubtrees(
             fromSourceNodeID: sourceRootNodeID,
@@ -327,11 +318,7 @@ extension ApplyCanvasCommandsUseCase {
         defer {
             session.state.activeSourcePathNodeIDs.remove(sourceNodeID)
         }
-<<<<<<< HEAD
-        let sourceChildren = childNodes(of: sourceNodeID, in: traversalState.sourceGraph)
-=======
         let sourceChildren = childNodes(of: sourceNodeID, in: session.sourceGraph)
->>>>>>> main
 
         for sourceChildNode in sourceChildren {
             if let duplicatedSourceChildNodeID = session.state.duplicatedNodeIDBySourceNodeID[sourceChildNode.id] {

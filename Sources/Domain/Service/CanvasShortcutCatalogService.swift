@@ -131,94 +131,6 @@ extension CanvasShortcutCatalogService {
         ]
     }
 
-<<<<<<< HEAD
-    private static func nodeEditingDefinitions() -> [CanvasShortcutDefinition] {
-        baseNodeCreationDefinitions() + baseNodeMutationDefinitions() + clipboardNodeEditingDefinitions()
-    }
-
-    private static func baseNodeMutationDefinitions() -> [CanvasShortcutDefinition] {
-        [
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "deleteSelectedOrFocusedNodes"),
-                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "Node", verb: "Delete Selected"),
-                gesture: CanvasShortcutGesture(key: .deleteBackward, modifiers: []),
-                action: .apply(commands: [.deleteSelectedOrFocusedNodes]),
-                shortcutLabel: shortcutLabel(
-                    for: CanvasShortcutGesture(key: .deleteBackward, modifiers: [])
-                ),
-                commandPaletteVisibility: .requiresFocusedNode,
-                executionCondition: nodeOrEdgeExecutionCondition(for: .requiresFocusedNode),
-                executionRoute: .edgeAware
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "duplicateSelectionAsSibling"),
-                commandPaletteLabel: CanvasCommandPaletteLabel(
-                    noun: "Node",
-                    verb: "Duplicate Selection As Sibling"
-                ),
-                gesture: CanvasShortcutGesture(key: .character("d"), modifiers: [.command]),
-                action: .apply(commands: [.duplicateSelectionAsSibling]),
-                shortcutLabel: shortcutLabel(
-                    for: CanvasShortcutGesture(key: .character("d"), modifiers: [.command])
-                ),
-                searchTokens: ["duplicate", "selection", "sibling", "tree"],
-                commandPaletteVisibility: .requiresFocusedNodeAndMode([.tree]),
-                executionCondition: nodeTargetCondition(
-                    combinedWith: .all([
-                        .requiresFocusedNode,
-                        .requiredModes([.tree]),
-                    ])
-                )
-            ),
-        ]
-    }
-
-    private static func clipboardNodeEditingDefinitions() -> [CanvasShortcutDefinition] {
-        [
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "copySelectionOrFocusedSubtree"),
-                commandPaletteLabel: CanvasCommandPaletteLabel(
-                    noun: "Node",
-                    verb: "Copy Selected"
-                ),
-                gesture: CanvasShortcutGesture(key: .character("c"), modifiers: [.command]),
-                action: .apply(commands: [.copySelectionOrFocusedSubtree]),
-                shortcutLabel: shortcutLabel(
-                    for: CanvasShortcutGesture(key: .character("c"), modifiers: [.command])
-                ),
-                searchTokens: ["copy", "selected", "subtree", "node"],
-                commandPaletteVisibility: .requiresFocusedNode,
-                executionCondition: nodeExecutionCondition(for: .requiresFocusedNode)
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "cutSelectionOrFocusedSubtree"),
-                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "Node", verb: "Cut Selected"),
-                gesture: CanvasShortcutGesture(key: .character("x"), modifiers: [.command]),
-                action: .apply(commands: [.cutSelectionOrFocusedSubtree]),
-                shortcutLabel: shortcutLabel(
-                    for: CanvasShortcutGesture(key: .character("x"), modifiers: [.command])
-                ),
-                searchTokens: ["cut", "selected", "subtree", "node"],
-                commandPaletteVisibility: .requiresFocusedNode,
-                executionCondition: nodeExecutionCondition(for: .requiresFocusedNode)
-            ),
-            CanvasShortcutDefinition(
-                id: CanvasShortcutID(rawValue: "pasteClipboardAtFocusedNode"),
-                commandPaletteLabel: CanvasCommandPaletteLabel(noun: "Node", verb: "Paste"),
-                gesture: CanvasShortcutGesture(key: .character("v"), modifiers: [.command]),
-                action: .apply(commands: [.pasteClipboardAtFocusedNode]),
-                shortcutLabel: shortcutLabel(
-                    for: CanvasShortcutGesture(key: .character("v"), modifiers: [.command])
-                ),
-                searchTokens: ["paste", "selected", "subtree", "child", "node"],
-                commandPaletteVisibility: .requiresFocusedNode,
-                executionCondition: nodeExecutionCondition(for: .requiresFocusedNode)
-            ),
-        ]
-    }
-
-=======
->>>>>>> main
     private static func navigationDefinitions() -> [CanvasShortcutDefinition] {
         focusNavigationDefinitions()
             + nodeNavigationDefinitions()
@@ -345,8 +257,6 @@ extension CanvasShortcutCatalogService {
         )
     }
 
-<<<<<<< HEAD
-=======
     private static func historyDefinitions() -> [CanvasShortcutDefinition] {
         [
             CanvasShortcutDefinition(
@@ -378,6 +288,4 @@ extension CanvasShortcutCatalogService {
             ),
         ]
     }
-
->>>>>>> main
 }
