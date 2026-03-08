@@ -255,6 +255,35 @@ func test_edgeTipAndVector_verticalCurvedRoute_withDistinctLanes_tracksEndLaneDi
     #expect(tipAndVector.vector.dy > 0)
 }
 
+@Test("CanvasEdgeRouting: curved route avoids a terminal blocker by rerouting to another side")
+func test_resolvedCurvedGeometry_withTerminalBlocker_avoidsByChangingAnchors() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let blockerID = CanvasNodeID(rawValue: "blocker")
+    let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID = Dictionary(uniqueKeysWithValues: [
+        makeCurvedGeometryNode(id: parentID, x: 40, y: 180, width: 220, height: 220),
+        makeCurvedGeometryNode(id: childID, x: 760, y: 180, width: 220, height: 220),
+        makeCurvedGeometryNode(id: blockerID, x: 300, y: 140, width: 220, height: 220),
+    ])
+    let blockerNode = try #require(nodesByID[blockerID])
+    let geometry = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: edge,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:]
+        )
+    )
+    let curve = CanvasEdgeRouting.resolvedCurvedGeometry(
+        for: edge,
+        routeGeometry: geometry,
+        nodesByID: nodesByID,
+        laneOffsets: .zero
+    )
+
+    #expect(!curvedRouteIntersectsNode(curve, geometry: geometry, node: blockerNode, padding: 18))
+}
+
 private func makeCurvedGeometryNode(
     id: CanvasNodeID,
     x: Double,

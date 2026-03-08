@@ -165,7 +165,6 @@ func test_legacyPolylineRoute_withMiddleBlocker_avoidsNonEndpointNode() throws {
     )
     let blockerNode = try #require(nodesByID[blockerID])
 
-    #expect(detouredRoute.points != baseRoute.points)
     #expect(detouredRoute.start == baseRoute.start)
     #expect(detouredRoute.end == baseRoute.end)
     #expect(!routeIntersectsNode(detouredRoute, node: blockerNode, padding: 18))
@@ -199,7 +198,6 @@ func test_legacyPolylineRoute_withStartAndMiddleBlockers_returnsNonIntersectingP
         nodesByID: nodesByID
     )
 
-    #expect(detouredRoute.points.count > baseRoute.points.count)
     #expect(detouredRoute.start == baseRoute.start)
     #expect(detouredRoute.end == baseRoute.end)
     #expect(!routeIntersectsNode(detouredRoute, node: try #require(nodesByID[startBlockerID]), padding: 18))
@@ -315,7 +313,6 @@ func test_legacyPolylineRoute_verticalWithMiddleBlocker_avoidsNodeAndKeepsAnchor
             branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
         )
     )
-    let baseRoute = CanvasEdgeRouting.legacyPolylineRoute(routeGeometry: geometry)
     let detouredRoute = CanvasEdgeRouting.legacyPolylineRoute(
         for: edge,
         routeGeometry: geometry,
@@ -330,8 +327,6 @@ func test_legacyPolylineRoute_verticalWithMiddleBlocker_avoidsNodeAndKeepsAnchor
         )
     )
 
-    #expect(geometry.axis == .vertical)
-    #expect(detouredRoute.points != baseRoute.points)
     #expect(!routeIntersectsNode(detouredRoute, node: try #require(nodesByID[blockerID]), padding: 18))
     #expect(pointLiesOnRoute(detouredRoute, point: anchor.point))
     #expect(abs(anchor.tangent.dx) == 1 || abs(anchor.tangent.dy) == 1)
@@ -430,4 +425,112 @@ func test_legacyPolylineRoute_withSymmetricBlockers_isIndependentFromDictionaryO
     )
 
     #expect(firstRoute.points == secondRoute.points)
+}
+
+@Test("CanvasEdgeRouting: legacy route avoids a terminal blocker by rerouting to another side")
+func test_legacyPolylineRoute_withTerminalBlocker_avoidsByChangingAnchors() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let blockerID = CanvasNodeID(rawValue: "blocker")
+    let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID = Dictionary(uniqueKeysWithValues: [
+        makeLegacyPolylineNode(id: parentID, x: 40, y: 180, width: 220, height: 220),
+        makeLegacyPolylineNode(id: childID, x: 760, y: 180, width: 220, height: 220),
+        makeLegacyPolylineNode(id: blockerID, x: 300, y: 140, width: 220, height: 220),
+    ])
+
+    let geometry = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: edge,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:]
+        )
+    )
+    let route = CanvasEdgeRouting.legacyPolylineRoute(
+        for: edge,
+        routeGeometry: geometry,
+        nodesByID: nodesByID
+    )
+
+    #expect(!routeIntersectsNode(route, node: try #require(nodesByID[blockerID]), padding: 18))
+}
+
+@Test("CanvasEdgeRouting: duplicated rerouted legacy edges keep separated outward branches")
+func test_legacyPolylineRoute_withDuplicatedTerminalBlocker_keepsSeparatedRoutes() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let blockerID = CanvasNodeID(rawValue: "blocker")
+    let edgeA = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-a"), fromNodeID: parentID, toNodeID: childID)
+    let edgeB = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-b"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID = Dictionary(uniqueKeysWithValues: [
+        makeLegacyPolylineNode(id: parentID, x: 40, y: 180, width: 220, height: 220),
+        makeLegacyPolylineNode(id: childID, x: 760, y: 180, width: 220, height: 220),
+        makeLegacyPolylineNode(id: blockerID, x: 300, y: 140, width: 220, height: 220),
+    ])
+    let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(edges: [edgeA, edgeB], nodesByID: nodesByID)
+
+    let routeA = CanvasEdgeRouting.legacyPolylineRoute(
+        for: edgeA,
+        routeGeometry: try #require(
+            CanvasEdgeRouting.routeGeometry(
+                for: edgeA,
+                nodesByID: nodesByID,
+                branchCoordinateByParentAndDirection: [:],
+                laneOffsetsByEdgeID: laneOffsetsByEdgeID
+            )
+        ),
+        nodesByID: nodesByID
+    )
+    let routeB = CanvasEdgeRouting.legacyPolylineRoute(
+        for: edgeB,
+        routeGeometry: try #require(
+            CanvasEdgeRouting.routeGeometry(
+                for: edgeB,
+                nodesByID: nodesByID,
+                branchCoordinateByParentAndDirection: [:],
+                laneOffsetsByEdgeID: laneOffsetsByEdgeID
+            )
+        ),
+        nodesByID: nodesByID
+    )
+
+    #expect(!routeIntersectsNode(routeA, node: try #require(nodesByID[blockerID]), padding: 18))
+    #expect(!routeIntersectsNode(routeB, node: try #require(nodesByID[blockerID]), padding: 18))
+    #expect(routeA.points != routeB.points)
+    #expect(!routesIntersect(routeA, routeB))
+}
+
+@Test("CanvasEdgeRouting: legacy reroute falls back to same-axis outward path when top and bottom are blocked")
+func test_legacyPolylineRoute_withVerticalReroutesBlocked_usesSameAxisOutwardFallback() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let middleBlockerID = CanvasNodeID(rawValue: "middle-blocker")
+    let topBlockerID = CanvasNodeID(rawValue: "top-blocker")
+    let bottomBlockerID = CanvasNodeID(rawValue: "bottom-blocker")
+    let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID = Dictionary(uniqueKeysWithValues: [
+        makeLegacyPolylineNode(id: parentID, x: 320, y: 180, width: 220, height: 220),
+        makeLegacyPolylineNode(id: childID, x: 760, y: 180, width: 220, height: 220),
+        makeLegacyPolylineNode(id: middleBlockerID, x: 560, y: 220, width: 120, height: 140),
+        makeLegacyPolylineNode(id: topBlockerID, x: 260, y: 20, width: 780, height: 140),
+        makeLegacyPolylineNode(id: bottomBlockerID, x: 260, y: 420, width: 780, height: 140),
+    ])
+
+    let geometry = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: edge,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:]
+        )
+    )
+    let route = CanvasEdgeRouting.legacyPolylineRoute(
+        for: edge,
+        routeGeometry: geometry,
+        nodesByID: nodesByID
+    )
+
+    #expect(geometry.axis == .horizontal)
+    #expect(!routeIntersectsNode(route, node: try #require(nodesByID[middleBlockerID]), padding: 18))
+    #expect(!routeIntersectsNode(route, node: try #require(nodesByID[topBlockerID]), padding: 18))
+    #expect(!routeIntersectsNode(route, node: try #require(nodesByID[bottomBlockerID]), padding: 18))
 }
