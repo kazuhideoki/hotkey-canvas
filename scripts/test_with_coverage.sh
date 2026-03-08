@@ -2,6 +2,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+threshold_config_path="$repo_root/scripts/test_with_coverage_threshold.json"
 test_filter=""
 focus_sources=()
 changed_since_ref=""
@@ -21,6 +22,8 @@ Options:
   --focus-source <path>     Report focused coverage for matching source path.
                             Repeatable. Match is done against `Sources/...`.
   --changed-since <git-ref> Focus coverage on source files changed since <git-ref>.
+                            When focus targets are present, coverage thresholds
+                            are evaluated per focused source file.
   --help                    Show this help.
 
 Examples:
@@ -139,16 +142,23 @@ if [[ ! -f "$json_path" ]]; then
     exit 1
 fi
 
-python3 - "$json_path" "$focus_requested" "${focus_sources[@]-}" <<'PY'
+if [[ ! -f "$threshold_config_path" ]]; then
+    echo "Coverage threshold config was not found: $threshold_config_path" >&2
+    exit 1
+fi
+
+python3 - "$json_path" "$threshold_config_path" "$focus_requested" "${focus_sources[@]-}" <<'PY'
 import json
 import sys
 from pathlib import Path
 from collections import defaultdict
 
 json_path = Path(sys.argv[1])
-focus_requested = sys.argv[2] == "1"
-focus_inputs = [value for value in sys.argv[3:] if value]
+threshold_config_path = Path(sys.argv[2])
+focus_requested = sys.argv[3] == "1"
+focus_inputs = [value for value in sys.argv[4:] if value]
 payload = json.loads(json_path.read_text())
+threshold_config = json.loads(threshold_config_path.read_text())
 
 source_totals = {
     "covered": 0,
@@ -161,6 +171,19 @@ focus_totals = {
 }
 focus_files = []
 
+threshold_rules = [
+    (
+        item["path_prefix"],
+        float(item["minimum_line_coverage"]),
+    )
+    for item in threshold_config.get("focus_file_thresholds", [])
+]
+
+layer_thresholds = {
+    layer_name: float(minimum_line_coverage)
+    for layer_name, minimum_line_coverage in threshold_config.get("layer_thresholds", {}).items()
+}
+
 def normalize_focus_path(raw: str) -> str:
     value = raw.strip()
     marker = "Sources/"
@@ -170,6 +193,15 @@ def normalize_focus_path(raw: str) -> str:
 
 normalized_focus_inputs = [normalize_focus_path(value) for value in focus_inputs]
 normalized_focus_inputs = list(dict.fromkeys(normalized_focus_inputs))
+
+def percent(covered: int, count: int) -> float:
+    return (covered / count * 100) if count else 0.0
+
+def matching_threshold(path: str):
+    for prefix, threshold in threshold_rules:
+        if path.startswith(prefix):
+            return prefix, threshold
+    return None
 
 for datum in payload.get("data", []):
     for file_payload in datum.get("files", []):
@@ -194,16 +226,20 @@ for datum in payload.get("data", []):
             focus_totals["count"] += count
             focus_files.append((f"Sources/{relative_path}", covered, count))
 
-rate = (source_totals["covered"] / source_totals["count"] * 100) if source_totals["count"] else 0.0
+rate = percent(source_totals["covered"], source_totals["count"])
 
 print(f"COVERAGE_JSON={json_path}")
+print(f"COVERAGE_THRESHOLD_CONFIG={threshold_config_path}")
 print(f"TOTAL_REPORTED_SOURCE_LINE_COVERAGE={rate:.2f}% ({source_totals['covered']}/{source_totals['count']})")
 
 for name in sorted(layer_totals):
     covered = layer_totals[name]["covered"]
     count = layer_totals[name]["count"]
-    layer_rate = (covered / count * 100) if count else 0.0
+    layer_rate = percent(covered, count)
     print(f"LAYER {name}: {layer_rate:.2f}% ({covered}/{count})")
+
+coverage_failures = []
+coverage_checks = []
 
 if focus_requested:
     if normalized_focus_inputs:
@@ -212,11 +248,50 @@ if focus_requested:
         print("FOCUS_MATCHERS=NO_MATCH")
 
     if focus_files:
-        focus_rate = (focus_totals["covered"] / focus_totals["count"] * 100) if focus_totals["count"] else 0.0
+        focus_rate = percent(focus_totals["covered"], focus_totals["count"])
         print(f"FOCUSED_SOURCE_LINE_COVERAGE={focus_rate:.2f}% ({focus_totals['covered']}/{focus_totals['count']})")
         for path, covered, count in sorted(focus_files):
-            file_rate = (covered / count * 100) if count else 0.0
+            file_rate = percent(covered, count)
             print(f"FOCUS {path}: {file_rate:.2f}% ({covered}/{count})")
+            matched_rule = matching_threshold(path)
+            if matched_rule is None:
+                continue
+            prefix, threshold = matched_rule
+            passed = file_rate >= threshold
+            status = "PASS" if passed else "FAIL"
+            message = (
+                f"CHECK {status} {path}: {file_rate:.2f}% >= {threshold:.2f}% "
+                f"(rule: {prefix})"
+            )
+            coverage_checks.append(message)
+            if not passed:
+                coverage_failures.append(message)
     else:
         print("FOCUSED_SOURCE_LINE_COVERAGE=NO_MATCH")
+else:
+    for name in sorted(layer_totals):
+        threshold = layer_thresholds.get(name)
+        if threshold is None:
+            continue
+        covered = layer_totals[name]["covered"]
+        count = layer_totals[name]["count"]
+        layer_rate = percent(covered, count)
+        passed = layer_rate >= threshold
+        status = "PASS" if passed else "FAIL"
+        message = f"CHECK {status} LAYER {name}: {layer_rate:.2f}% >= {threshold:.2f}%"
+        coverage_checks.append(message)
+        if not passed:
+            coverage_failures.append(message)
+
+if coverage_checks:
+    for message in coverage_checks:
+        print(message)
+else:
+    print("CHECK PASS: no threshold rules matched")
+
+if coverage_failures:
+    print("COVERAGE_CHECK=FAIL")
+    sys.exit(1)
+
+print("COVERAGE_CHECK=PASS")
 PY

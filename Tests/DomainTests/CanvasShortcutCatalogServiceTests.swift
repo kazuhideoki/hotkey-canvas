@@ -468,8 +468,8 @@ func test_commandPaletteDefinitions_withoutFocus_hidesFocusRequiredDefinitions()
     #expect(!ids.contains("centerFocusedNode"))
 }
 
-@Test("Shortcut catalog: area target hides node-target command palette definitions")
-func test_commandPaletteDefinitions_areaTarget_hidesNodeTargetDefinitions() {
+@Test("Shortcut catalog: area target hides node-target command palette definitions except add-node mode selection")
+func test_commandPaletteDefinitions_areaTarget_hidesNodeTargetDefinitionsExceptAddNodeModeSelection() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true),
         executionContext: KeymapExecutionContext(
@@ -480,7 +480,7 @@ func test_commandPaletteDefinitions_areaTarget_hidesNodeTargetDefinitions() {
     )
     let ids = Set(definitions.map(\.id.rawValue))
 
-    #expect(!ids.contains("addNode"))
+    #expect(ids.contains("addNode"))
     #expect(!ids.contains("addChildNode"))
     #expect(!ids.contains("moveNodeUp"))
     #expect(ids.contains("undo"))
