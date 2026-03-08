@@ -29,6 +29,7 @@ public struct CanvasView: View {
     @State var searchQueryDraftBeforeHistoryNavigation: String = ""
     @State var isAddNodeModePopupPresented = false
     @State var selectedAddNodeMode: CanvasEditingMode = .tree
+    @State var shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit = false
     @State var hasInitializedCameraAnchor = false
     @State var cameraAnchorPoint: CGPoint = .zero
     @State var manualPanOffset: CGSize = .zero
@@ -394,7 +395,8 @@ public struct CanvasView: View {
                     handleCanvasHotkeyEvent(
                         event,
                         displayNodes: displayNodes,
-                        displayEdges: displayEdges
+                        displayEdges: displayEdges,
+                        viewportSize: viewportSize
                     )
                 }
                 .frame(width: 1, height: 1)
@@ -501,6 +503,14 @@ public struct CanvasView: View {
                         return
                     }
                     if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
+                        let transition = Self.pendingAddNodeEditingTransition(
+                            currentTargetKind: operationTargetKind,
+                            shouldSwitchToNodeTargetAfterCommit: shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit,
+                            hasResolvedPendingEditingNode: true
+                        )
+                        operationTargetKind = transition.targetKind
+                        shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit =
+                            transition.shouldSwitchToNodeTargetAfterCommit
                         let contentScale = nodeContentScale(for: node)
                         let measuredLayout = measuredNodeLayout(
                             text: node.text ?? "",
@@ -539,6 +549,14 @@ public struct CanvasView: View {
                 guard pendingEditingRequestID == requestID else {
                     return
                 }
+                let transition = Self.pendingAddNodeEditingTransition(
+                    currentTargetKind: operationTargetKind,
+                    shouldSwitchToNodeTargetAfterCommit: shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit,
+                    hasResolvedPendingEditingNode: false
+                )
+                operationTargetKind = transition.targetKind
+                shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit =
+                    transition.shouldSwitchToNodeTargetAfterCommit
                 guard viewModel.pendingEditingNodeID == nodeID else {
                     return
                 }

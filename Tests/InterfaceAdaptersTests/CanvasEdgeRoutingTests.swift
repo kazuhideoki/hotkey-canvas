@@ -377,6 +377,31 @@ func test_routeGeometry_relativelyVertical_prefersVerticalRouting() {
     #expect(geometry?.endY == 310)  // child top edge
 }
 
+@Test("CanvasEdgeRouting: terminal blocker near a horizontal edge switches to an outward reroute")
+func test_routeGeometry_withTerminalBlocker_switchesToOutwardVerticalReroute() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let blockerID = CanvasNodeID(rawValue: "blocker")
+    let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 40, y: 180, width: 220, height: 220),
+        childID: makeNode(id: childID, x: 760, y: 180, width: 220, height: 220),
+        blockerID: makeNode(id: blockerID, x: 300, y: 140, width: 220, height: 220),
+    ]
+
+    let geometry = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: edge,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:]
+        )
+    )
+
+    #expect(geometry.axis == .vertical)
+    #expect(geometry.startY == 180 || geometry.startY == 400)
+    #expect(geometry.endY == 180 || geometry.endY == 400)
+}
+
 private func makeNode(
     id: CanvasNodeID,
     x: Double,

@@ -33,7 +33,8 @@ extension CanvasView {
     func handleCanvasHotkeyEvent(
         _ event: NSEvent,
         displayNodes: [CanvasNode],
-        displayEdges: [CanvasEdge]
+        displayEdges: [CanvasEdge],
+        viewportSize: CGSize
     ) -> Bool {
         if isConnectNodeSelectionActive() {
             return handleConnectNodeSelectionHotkey(event)
@@ -53,7 +54,7 @@ extension CanvasView {
 
         switch route {
         case .global(let action):
-            return handleGlobalRoute(action)
+            return handleGlobalRoute(action, viewportSize: viewportSize)
         case .primitive(let intent):
             let contextAction = keymapContextActionResolver.resolve(primitiveIntent: intent)
             return handlePrimitiveContextAction(contextAction)
@@ -64,8 +65,35 @@ extension CanvasView {
 }
 
 extension CanvasView {
-    private func handleGlobalRoute(_ action: KeymapGlobalAction) -> Bool {
-        if !Self.isActionEnabled(action, context: keymapExecutionContext()) {
+    enum BeginConnectAreaBehavior: Equatable {
+        case enterConnectMode
+        case recenterFocusedArea
+    }
+
+    static func beginConnectAreaBehavior(
+        context: KeymapExecutionContext,
+        focusedAreaID: CanvasAreaID?
+    ) -> BeginConnectAreaBehavior {
+        if context.operationTargetKind == .area, focusedAreaID != nil {
+            return .recenterFocusedArea
+        }
+        return .enterConnectMode
+    }
+
+    private func handleGlobalRoute(_ action: KeymapGlobalAction, viewportSize: CGSize) -> Bool {
+        let context = keymapExecutionContext()
+        if action == .beginConnectNodeSelection,
+            Self.beginConnectAreaBehavior(
+                context: context,
+                focusedAreaID: currentFocusedAreaID()
+            )
+                == .recenterFocusedArea
+        {
+            recenterFocusedShape(viewportSize: viewportSize)
+            return true
+        }
+
+        if !Self.isActionEnabled(action, context: context) {
             return true
         }
         switch action {
@@ -159,8 +187,12 @@ extension CanvasView {
                 context: context
             )
         case .presentAddNodeModeSelection:
-            return isCommandEnabled(.addNode, context: context)
+            return isAddNodeModeSelectionEnabled(context: context)
         }
+    }
+
+    static func isAddNodeModeSelectionEnabled(context: KeymapExecutionContext) -> Bool {
+        context.operationTargetKind != .edge
     }
 
     private static func shortcutAction(for action: KeymapGlobalAction) -> CanvasShortcutAction? {

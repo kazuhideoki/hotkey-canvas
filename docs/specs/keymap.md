@@ -13,7 +13,7 @@
 | `cmd+shift+z` / `cmd+y` | `global.redo` | Redo | なし |
 | `cmd+=` / `cmd+shift+=` / `cmd+shift+;` / `cmd+テンキー+` | `global.zoomIn` | Zoom In | なし |
 | `cmd+-` | `global.zoomOut` | Zoom Out | なし |
-| `cmd+l` | `global.beginConnectNodeSelection` | Connect Mode を開始 | Tree は実質 no-op / Diagram で有効 |
+| `cmd+l` | `global.beginConnectNodeSelection` | node/edge target では Connect Mode を開始。area target では focused area を画面中央へ寄せ、必要ならズームアウトして全体を表示 | area target での再センタリングは mode 非依存 |
 | `ctrl+l` | `global.centerFocusedNode` | Focused Node を中央へ移動 | なし（フォーカス必須） |
 
 ## Primitive（EditMode差分）
@@ -23,7 +23,7 @@
 | `add(.primary)` | `enter` | 兄弟ノードを下に追加 | 非対応 | |
 | `add(.alternate)` | `opt+enter` | 兄弟ノードを上に追加 | 非対応 | |
 | `add(.hierarchical)` | `cmd+enter` | 子ノード追加 | `addNode` に正規化して追加 | node target のみ有効（edge/area target では無効） |
-| `add(.modeSelect)` | `shift+enter` | Add Node Mode 選択ポップアップを開く | Add Node Mode 選択ポップアップを開く | node target のみ有効（edge/area target では無効）。`t` / `d` / `enter` で確定 |
+| `add(.modeSelect)` | `shift+enter` | Add Node Mode 選択ポップアップを開く | Add Node Mode 選択ポップアップを開く | node/area target で有効、edge target では無効。area target で確定した場合は新規 area 作成後に node target へ切り替えて編集開始。`t` / `d` / `enter` で確定 |
 | `delete` | `delete` | 選択/フォーカスノードを削除 | node対象: 選択/フォーカスノードを削除 / edge対象: 選択/フォーカスedgeを削除 | edge対象で focused edge を含む複数選択時は一括削除 |
 | `duplicate` | `cmd+d` | 兄弟として複製 | 非対応 | |
 | `edit.copySelectionOrFocusedSubtree` | `cmd+c` | 複数選択時は選択集合、単一/未選択時は focused subtree をコピー | 複数選択時は選択集合、単一/未選択時は focused subtree をコピー | node target のみ有効 |
@@ -41,10 +41,10 @@
 ## 補足
 
 - `modal`（Command Palette / Add Node Mode Selection / Connect Mode 内操作）は本表の対象外です。
-- `operation target = area` のときは、area 操作と直接関係しない node/edge 対象ショートカットを無効化する。  
-  例: `enter` / `opt+enter` / `cmd+enter` / `shift+enter` / `delete` / `cmd+d` / `cmd+c` / `cmd+x` / `cmd+v` / `shift+arrow` / `cmd+shift+arrow` / `cmd+opt++` / `cmd+opt+=` / `cmd+opt+shift+=` / `cmd+opt+shift+;` / `cmd+opt+-` / `opt+.` / `cmd+l` / `cmd+;` / `ctrl+l`
+- `operation target = area` のときは、area 操作と直接関係しない node/edge 対象ショートカットを無効化する。`shift+enter` は例外で Add Node Mode 選択ポップアップを開き、確定後は新規 area 内の node 編集へ遷移する。`esc` キャンセル時は area target を維持する。`cmd+l` だけは Connect Mode には入らず focused area の再センタリングに使う。  
+  例: `enter` / `opt+enter` / `cmd+enter` / `delete` / `cmd+d` / `cmd+c` / `cmd+x` / `cmd+v` / `shift+arrow` / `cmd+shift+arrow` / `cmd+opt++` / `cmd+opt+=` / `cmd+opt+shift+=` / `cmd+opt+shift+;` / `cmd+opt+-` / `opt+.` / `cmd+l` / `cmd+;` / `ctrl+l`
 - `operation target = area` での `cmd+arrow` は `moveArea` として扱い、フォーカス中エリアを上下左右へ移動する。移動後にエリア衝突があれば area layout で解消する。
-- Command Palette のカタログ項目は、`openCommandPalette` トリガーを除き「ショートカット定義がある項目」を表示対象にする。表示可否は直接ショートカットと同じ `executionCondition` で判定する。
+- Command Palette のカタログ項目は、`openCommandPalette` トリガーを除き「ショートカット定義がある項目」を表示対象にする。表示可否は原則として直接ショートカットと同じ `executionCondition` で判定し、`shift+enter` の add-node mode selection だけは area target 例外を共有する。
 - edge 対象で `moveFocus` / `extendSelection` / `deleteSelectedOrFocusedNodes` を使う場合は、`KeymapExecutionRoute: .edgeAware` として同一入力を edge ハンドリングへ委譲する。
 - edge 対象では `ctrl+a` / `ctrl+e` / 直接文字入力で edge ラベルのインライン編集を開始できる。`ctrl+a` はカーソル先頭、`ctrl+e` はカーソル末尾で開始する。
 - edge 対象では node 追加系（`cmd+enter` / `shift+enter`）を無効化し、誤ってノード追加に流れないようにする。

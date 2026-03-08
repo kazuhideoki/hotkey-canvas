@@ -336,10 +336,6 @@ extension CanvasView {
         switch shortcutAction {
         case .apply(let commands):
             let commandContext = keymapExecutionContextForCommandPalette()
-            let commandAction: KeymapContextAction = .apply(commands: commands)
-            guard Self.isActionEnabled(commandAction, context: commandContext) else {
-                return true
-            }
             // Keep add-node behavior aligned with the shortcut route (mode-selection popup).
             if commands.count == 1, commands[0] == .addNode {
                 let addNodeAction: KeymapContextAction = .presentAddNodeModeSelection
@@ -347,6 +343,10 @@ extension CanvasView {
                     return true
                 }
                 presentAddNodeModeSelectionPopup()
+                return true
+            }
+            let commandAction: KeymapContextAction = .apply(commands: commands)
+            guard Self.isActionEnabled(commandAction, context: commandContext) else {
                 return true
             }
             if Self.shouldExecuteCommandViaEdgeTarget(commands: commands, context: commandContext) {

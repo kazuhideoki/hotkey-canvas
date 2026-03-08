@@ -11,6 +11,8 @@ enum CanvasEdgeRouting {
     static let verticalPreferenceRatio: Double = 0.9
     static let parallelLaneSpacing: Double = 14
     static let minimumAnchorInset: Double = 4
+    static let routeSelectionNodeAvoidancePadding: Double = 18
+    static let rerouteOutwardBranchOffsets: [Double] = [24, 48, 80, 120, 180, 260, 360]
     static let curvedBaseOffset: Double = 14
     static let curvedOffsetPerLaneLevel: Double = 11
     static let curvedLaneGrowthExponent: Double = 1.35
@@ -21,6 +23,14 @@ enum CanvasEdgeRouting {
     enum RouteAxis: Hashable {
         case horizontal
         case vertical
+    }
+
+    /// One candidate anchor side on a node boundary.
+    enum AnchorSide: Hashable {
+        case left
+        case right
+        case top
+        case bottom
     }
 
     /// Geometric route information used to build a rounded edge path.
@@ -210,12 +220,18 @@ enum CanvasEdgeRouting {
             path.move(to: start)
             switch edgeShapeStyle {
             case .legacy:
-                addLegacyPathSegments(path: &path, geometry: geometry, end: end)
+                let legacyRoute = legacyPolylineRoute(for: edge, routeGeometry: geometry, nodesByID: nodesByID)
+                addPolylinePathSegments(path: &path, route: legacyRoute)
             case .straight:
                 path.addLine(to: end)
             case .curved:
                 let laneOffsets = curveLaneOffsets(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
-                let curve = curvedGeometry(routeGeometry: geometry, laneOffsets: laneOffsets)
+                let curve = resolvedCurvedGeometry(
+                    for: edge,
+                    routeGeometry: geometry,
+                    nodesByID: nodesByID,
+                    laneOffsets: laneOffsets
+                )
                 path.addCurve(to: end, control1: curve.control1, control2: curve.control2)
             }
         }
@@ -242,12 +258,18 @@ enum CanvasEdgeRouting {
 
         switch edgeShapeStyle {
         case .legacy:
-            return legacyEdgeTipAndVector(edge: edge, routeGeometry: geometry)
+            let legacyRoute = legacyPolylineRoute(for: edge, routeGeometry: geometry, nodesByID: nodesByID)
+            return legacyEdgeTipAndVector(edge: edge, polylineRoute: legacyRoute)
         case .straight:
             return straightEdgeTipAndVector(edge: edge, routeGeometry: geometry)
         case .curved:
             let laneOffsets = curveLaneOffsets(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
-            let curve = curvedGeometry(routeGeometry: geometry, laneOffsets: laneOffsets)
+            let curve = resolvedCurvedGeometry(
+                for: edge,
+                routeGeometry: geometry,
+                nodesByID: nodesByID,
+                laneOffsets: laneOffsets
+            )
             return curvedEdgeTipAndVector(edge: edge, routeGeometry: geometry, curve: curve)
         }
     }
@@ -273,37 +295,39 @@ enum CanvasEdgeRouting {
 
         let axis = routeAxis(parentNode: parentNode, childNode: childNode)
         let direction = directionSign(for: axis, parentNode: parentNode, childNode: childNode)
-        let directionKey = BranchKey(
-            parentNodeID: edge.fromNodeID,
-            axis: axis,
-            direction: direction > 0 ? 1 : -1
-        )
         let laneOffsets = laneOffsetsByEdgeID[edge.id] ?? .zero
-        let endpoints = routeEndpoints(
-            axis: axis,
-            direction: direction,
-            parentNode: parentNode,
-            childNode: childNode,
-            laneOffsets: laneOffsets
-        )
-        let startCoordinate = axis == .horizontal ? endpoints.startX : endpoints.startY
-        let endCoordinate = axis == .horizontal ? endpoints.endX : endpoints.endY
-        let branchLaneOffset = laneOffsets.start
-        let branchCoordinate = constrainBranchCoordinate(
-            (branchCoordinateByParentAndDirection[directionKey]
-                ?? (startCoordinate + ((endCoordinate - startCoordinate) / 2))) + branchLaneOffset,
-            start: startCoordinate,
-            end: endCoordinate
-        )
+        let defaultTemplate = defaultRouteTemplate(axis: axis, direction: direction)
+        guard
+            let defaultGeometry = routeGeometry(
+                edge: edge,
+                parentNode: parentNode,
+                childNode: childNode,
+                template: defaultTemplate,
+                laneOffsets: laneOffsets,
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
+            )
+        else {
+            return nil
+        }
 
-        return RouteGeometry(
-            axis: axis,
-            startX: endpoints.startX,
-            startY: endpoints.startY,
-            branchCoordinate: branchCoordinate,
-            endX: endpoints.endX,
-            endY: endpoints.endY
-        )
+        let blockers = routingNodeBlockers(for: edge, nodesByID: nodesByID)
+        guard blockerHitCount(for: legacyPolylineRoute(routeGeometry: defaultGeometry), blockers: blockers) > 0 else {
+            return defaultGeometry
+        }
+
+        let candidates = rerouteTemplates(defaultAxis: axis, defaultDirection: direction).flatMap { template in
+            routeCandidates(
+                edge: edge,
+                parentNode: parentNode,
+                childNode: childNode,
+                template: template,
+                laneOffsets: laneOffsets,
+                blockers: blockers,
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
+            )
+        }
+
+        return candidates.min(by: isRouteCandidateBetter)?.geometry ?? defaultGeometry
     }
 }
 
@@ -322,6 +346,25 @@ extension CanvasEdgeRouting.BranchKey {
 }
 
 extension CanvasEdgeRouting {
+    private struct RoutingNodeBlocker {
+        let bounds: CanvasRect
+    }
+
+    private struct RouteTemplate {
+        let axis: RouteAxis
+        let startSide: AnchorSide
+        let endSide: AnchorSide
+        let preferencePenalty: Double
+        let branchLookupDirection: Int?
+    }
+
+    private struct RouteCandidate {
+        let geometry: RouteGeometry
+        let route: PolylineRoute
+        let blockerHitCount: Int
+        let cost: Double
+    }
+
     private enum AnchorEdgeKind {
         case start
         case end
@@ -331,6 +374,56 @@ extension CanvasEdgeRouting {
         let edgeID: CanvasEdgeID
         let kind: AnchorEdgeKind
         let counterpartCoordinate: Double
+    }
+
+    private static func routingNodeBlockers(
+        for edge: CanvasEdge,
+        nodesByID: [CanvasNodeID: CanvasNode]
+    ) -> [RoutingNodeBlocker] {
+        nodesByID.compactMap { nodeID, node in
+            guard nodeID != edge.fromNodeID, nodeID != edge.toNodeID else {
+                return nil
+            }
+            return RoutingNodeBlocker(
+                bounds: CanvasRect(
+                    minX: node.bounds.x - routeSelectionNodeAvoidancePadding,
+                    minY: node.bounds.y - routeSelectionNodeAvoidancePadding,
+                    width: node.bounds.width + (routeSelectionNodeAvoidancePadding * 2),
+                    height: node.bounds.height + (routeSelectionNodeAvoidancePadding * 2)
+                )
+            )
+        }
+    }
+
+    private static func routeGeometry(
+        edge: CanvasEdge,
+        parentNode: CanvasNode,
+        childNode: CanvasNode,
+        template: RouteTemplate,
+        laneOffsets: EdgeLaneOffsets,
+        branchCoordinateByParentAndDirection: [BranchKey: Double]
+    ) -> RouteGeometry? {
+        let endpoints = routeEndpoints(
+            startSide: template.startSide,
+            endSide: template.endSide,
+            parentNode: parentNode,
+            childNode: childNode,
+            laneOffsets: laneOffsets
+        )
+        return RouteGeometry(
+            axis: template.axis,
+            startX: endpoints.startX,
+            startY: endpoints.startY,
+            branchCoordinate: templateBranchCoordinate(
+                edge: edge,
+                template: template,
+                endpoints: endpoints,
+                laneOffsets: laneOffsets,
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
+            ),
+            endX: endpoints.endX,
+            endY: endpoints.endY
+        )
     }
 
     private static func isAnchorBundleKeyOrdered(_ lhs: AnchorBundleKey, _ rhs: AnchorBundleKey) -> Bool {
@@ -402,8 +495,8 @@ extension CanvasEdgeRouting {
     }
 
     private static func routeEndpoints(
-        axis: RouteAxis,
-        direction: Double,
+        startSide: AnchorSide,
+        endSide: AnchorSide,
         parentNode: CanvasNode,
         childNode: CanvasNode,
         laneOffsets: EdgeLaneOffsets
@@ -413,28 +506,49 @@ extension CanvasEdgeRouting {
         let childCenterX = childNode.bounds.x + (childNode.bounds.width / 2)
         let childCenterY = childNode.bounds.y + (childNode.bounds.height / 2)
 
-        let startX =
-            axis == .horizontal
-            ? edgeExitCoordinate(for: parentNode, axis: axis, direction: direction)
-            : laneAdjustedCoordinate(
-                for: parentNode, axis: axis, baseCoordinate: parentCenterX, laneOffset: laneOffsets.start)
-        let startY =
-            axis == .horizontal
-            ? laneAdjustedCoordinate(
-                for: parentNode, axis: axis, baseCoordinate: parentCenterY, laneOffset: laneOffsets.start)
-            : edgeExitCoordinate(for: parentNode, axis: axis, direction: direction)
-        let endX =
-            axis == .horizontal
-            ? edgeEntryCoordinate(for: childNode, axis: axis, direction: direction)
-            : laneAdjustedCoordinate(
-                for: childNode, axis: axis, baseCoordinate: childCenterX, laneOffset: laneOffsets.end)
-        let endY =
-            axis == .horizontal
-            ? laneAdjustedCoordinate(
-                for: childNode, axis: axis, baseCoordinate: childCenterY, laneOffset: laneOffsets.end)
-            : edgeEntryCoordinate(for: childNode, axis: axis, direction: direction)
+        let startX = anchorX(for: startSide, node: parentNode, centerX: parentCenterX, laneOffset: laneOffsets.start)
+        let startY = anchorY(for: startSide, node: parentNode, centerY: parentCenterY, laneOffset: laneOffsets.start)
+        let endX = anchorX(for: endSide, node: childNode, centerX: childCenterX, laneOffset: laneOffsets.end)
+        let endY = anchorY(for: endSide, node: childNode, centerY: childCenterY, laneOffset: laneOffsets.end)
 
         return RouteEndpoints(startX: startX, startY: startY, endX: endX, endY: endY)
+    }
+
+    private static func anchorX(
+        for side: AnchorSide,
+        node: CanvasNode,
+        centerX: Double,
+        laneOffset: Double
+    ) -> Double {
+        switch side {
+        case .left:
+            return node.bounds.x
+        case .right:
+            return node.bounds.x + node.bounds.width
+        case .top, .bottom:
+            return laneAdjustedCoordinate(for: node, axis: .vertical, baseCoordinate: centerX, laneOffset: laneOffset)
+        }
+    }
+
+    private static func anchorY(
+        for side: AnchorSide,
+        node: CanvasNode,
+        centerY: Double,
+        laneOffset: Double
+    ) -> Double {
+        switch side {
+        case .top:
+            return node.bounds.y
+        case .bottom:
+            return node.bounds.y + node.bounds.height
+        case .left, .right:
+            return laneAdjustedCoordinate(
+                for: node,
+                axis: .horizontal,
+                baseCoordinate: centerY,
+                laneOffset: laneOffset
+            )
+        }
     }
 
     private static func routeAxis(
@@ -469,6 +583,269 @@ extension CanvasEdgeRouting {
         case .vertical:
             return childCenterY >= parentCenterY ? 1 : -1
         }
+    }
+
+    private static func defaultRouteTemplate(axis: RouteAxis, direction: Double) -> RouteTemplate {
+        switch axis {
+        case .horizontal:
+            return direction >= 0
+                ? RouteTemplate(
+                    axis: .horizontal, startSide: .right, endSide: .left, preferencePenalty: 0,
+                    branchLookupDirection: 1)
+                : RouteTemplate(
+                    axis: .horizontal, startSide: .left, endSide: .right, preferencePenalty: 0,
+                    branchLookupDirection: -1)
+        case .vertical:
+            return direction >= 0
+                ? RouteTemplate(
+                    axis: .vertical, startSide: .bottom, endSide: .top, preferencePenalty: 0,
+                    branchLookupDirection: 1)
+                : RouteTemplate(
+                    axis: .vertical, startSide: .top, endSide: .bottom, preferencePenalty: 0,
+                    branchLookupDirection: -1)
+        }
+    }
+
+    private static func rerouteTemplates(defaultAxis: RouteAxis, defaultDirection: Double) -> [RouteTemplate] {
+        let defaultTemplate = defaultRouteTemplate(axis: defaultAxis, direction: defaultDirection)
+        let reverseTemplate = defaultRouteTemplate(axis: defaultAxis, direction: -defaultDirection)
+        let horizontalSameSideTemplates = [
+            RouteTemplate(
+                axis: .horizontal, startSide: .left, endSide: .left, preferencePenalty: 40,
+                branchLookupDirection: nil),
+            RouteTemplate(
+                axis: .horizontal, startSide: .right, endSide: .right, preferencePenalty: 40,
+                branchLookupDirection: nil),
+        ]
+        let verticalSameSideTemplates = [
+            RouteTemplate(
+                axis: .vertical, startSide: .top, endSide: .top, preferencePenalty: 30,
+                branchLookupDirection: nil),
+            RouteTemplate(
+                axis: .vertical, startSide: .bottom, endSide: .bottom, preferencePenalty: 30,
+                branchLookupDirection: nil),
+        ]
+
+        let orderedSameSideTemplates =
+            switch defaultAxis {
+            case .horizontal:
+                verticalSameSideTemplates + horizontalSameSideTemplates
+            case .vertical:
+                horizontalSameSideTemplates + verticalSameSideTemplates
+            }
+
+        return [defaultTemplate] + orderedSameSideTemplates + [
+            RouteTemplate(
+                axis: reverseTemplate.axis,
+                startSide: reverseTemplate.startSide,
+                endSide: reverseTemplate.endSide,
+                preferencePenalty: 80,
+                branchLookupDirection: reverseTemplate.branchLookupDirection
+            )
+        ]
+    }
+
+    private static func routeCandidates(
+        edge: CanvasEdge,
+        parentNode: CanvasNode,
+        childNode: CanvasNode,
+        template: RouteTemplate,
+        laneOffsets: EdgeLaneOffsets,
+        blockers: [RoutingNodeBlocker],
+        branchCoordinateByParentAndDirection: [BranchKey: Double]
+    ) -> [RouteCandidate] {
+        routeGeometries(
+            edge: edge,
+            parentNode: parentNode,
+            childNode: childNode,
+            template: template,
+            laneOffsets: laneOffsets,
+            branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
+        ).map { geometry in
+            let route = legacyPolylineRoute(routeGeometry: geometry)
+            let blockerHitCount = blockerHitCount(for: route, blockers: blockers)
+            return RouteCandidate(
+                geometry: geometry,
+                route: route,
+                blockerHitCount: blockerHitCount,
+                cost: Double(blockerHitCount) * 10_000
+                    + template.preferencePenalty
+                    + sameSideTemplateBiasPenalty(template: template, laneOffsets: laneOffsets)
+                    + polylineLength(route)
+            )
+        }
+    }
+
+    private static func routeGeometries(
+        edge: CanvasEdge,
+        parentNode: CanvasNode,
+        childNode: CanvasNode,
+        template: RouteTemplate,
+        laneOffsets: EdgeLaneOffsets,
+        branchCoordinateByParentAndDirection: [BranchKey: Double]
+    ) -> [RouteGeometry] {
+        guard
+            let baseGeometry = routeGeometry(
+                edge: edge,
+                parentNode: parentNode,
+                childNode: childNode,
+                template: template,
+                laneOffsets: laneOffsets,
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
+            )
+        else {
+            return []
+        }
+        guard template.startSide == template.endSide else {
+            return [baseGeometry]
+        }
+        return rerouteOutwardBranchOffsets.map { offset in
+            RouteGeometry(
+                axis: baseGeometry.axis,
+                startX: baseGeometry.startX,
+                startY: baseGeometry.startY,
+                branchCoordinate: outwardBranchCoordinate(
+                    for: template.startSide,
+                    geometry: baseGeometry,
+                    offset: offset + laneOffsetForSameSideBranch(laneOffsets: laneOffsets)
+                ),
+                endX: baseGeometry.endX,
+                endY: baseGeometry.endY
+            )
+        }
+    }
+
+    private static func templateBranchCoordinate(
+        edge: CanvasEdge,
+        template: RouteTemplate,
+        endpoints: RouteEndpoints,
+        laneOffsets: EdgeLaneOffsets,
+        branchCoordinateByParentAndDirection: [BranchKey: Double]
+    ) -> Double {
+        if let direction = template.branchLookupDirection {
+            let directionKey = BranchKey(
+                parentNodeID: edge.fromNodeID,
+                axis: template.axis,
+                direction: direction
+            )
+            let startCoordinate = template.axis == .horizontal ? endpoints.startX : endpoints.startY
+            let endCoordinate = template.axis == .horizontal ? endpoints.endX : endpoints.endY
+            return constrainBranchCoordinate(
+                (branchCoordinateByParentAndDirection[directionKey]
+                    ?? (startCoordinate + ((endCoordinate - startCoordinate) / 2))) + laneOffsets.start,
+                start: startCoordinate,
+                end: endCoordinate
+            )
+        }
+
+        return outwardBranchCoordinate(
+            for: template.startSide,
+            geometry: RouteGeometry(
+                axis: template.axis,
+                startX: endpoints.startX,
+                startY: endpoints.startY,
+                branchCoordinate: 0,
+                endX: endpoints.endX,
+                endY: endpoints.endY
+            ),
+            offset: rerouteOutwardBranchOffsets[0] + laneOffsetForSameSideBranch(laneOffsets: laneOffsets)
+        )
+    }
+
+    private static func laneOffsetForSameSideBranch(laneOffsets: EdgeLaneOffsets) -> Double {
+        laneOffsets.start
+    }
+
+    private static func sameSideTemplateBiasPenalty(
+        template: RouteTemplate,
+        laneOffsets: EdgeLaneOffsets
+    ) -> Double {
+        let laneBias = laneOffsets.start + laneOffsets.end
+        guard laneBias != 0 else {
+            return 0
+        }
+
+        switch template.startSide {
+        case .top:
+            return laneBias < 0 ? 0 : 240
+        case .bottom:
+            return laneBias > 0 ? 0 : 240
+        case .left:
+            return laneBias < 0 ? 0 : 240
+        case .right:
+            return laneBias > 0 ? 0 : 240
+        }
+    }
+
+    private static func outwardBranchCoordinate(
+        for side: AnchorSide,
+        geometry: RouteGeometry,
+        offset: Double
+    ) -> Double {
+        switch side {
+        case .left:
+            return min(geometry.startX, geometry.endX) - offset
+        case .right:
+            return max(geometry.startX, geometry.endX) + offset
+        case .top:
+            return min(geometry.startY, geometry.endY) - offset
+        case .bottom:
+            return max(geometry.startY, geometry.endY) + offset
+        }
+    }
+
+    private static func blockerHitCount(
+        for route: PolylineRoute,
+        blockers: [RoutingNodeBlocker]
+    ) -> Int {
+        blockers.reduce(into: 0) { count, blocker in
+            if routeIntersectsBlocker(route: route, blocker: blocker) {
+                count += 1
+            }
+        }
+    }
+
+    private static func routeIntersectsBlocker(
+        route: PolylineRoute,
+        blocker: RoutingNodeBlocker
+    ) -> Bool {
+        let points = route.points
+        guard points.count >= 2 else {
+            return false
+        }
+        for index in 0..<(points.count - 1)
+        where segmentIntersectsRect(start: points[index], end: points[index + 1], rect: blocker.bounds) {
+            return true
+        }
+        return false
+    }
+
+    private static func polylineLength(_ route: PolylineRoute) -> Double {
+        let points = route.points
+        guard points.count >= 2 else {
+            return 0
+        }
+        return (1..<points.count).reduce(into: 0.0) { length, index in
+            length += abs(Double(points[index].x - points[index - 1].x))
+            length += abs(Double(points[index].y - points[index - 1].y))
+        }
+    }
+
+    private static func isRouteCandidateBetter(_ lhs: RouteCandidate, _ rhs: RouteCandidate) -> Bool {
+        if lhs.cost != rhs.cost {
+            return lhs.cost < rhs.cost
+        }
+        if lhs.blockerHitCount != rhs.blockerHitCount {
+            return lhs.blockerHitCount < rhs.blockerHitCount
+        }
+        return polylineSignature(lhs.route) < polylineSignature(rhs.route)
+    }
+
+    private static func polylineSignature(_ route: PolylineRoute) -> String {
+        route.points.map { point in
+            "\(point.x),\(point.y)"
+        }
+        .joined(separator: "|")
     }
 
     private static func branchCoordinate(
@@ -551,57 +928,28 @@ extension CanvasEdgeRouting {
         return min(max(branch, lower), upper)
     }
 
-    private static func addLegacyPathSegments(path: inout Path, geometry: RouteGeometry, end: CGPoint) {
-        switch geometry.axis {
-        case .horizontal:
-            path.addLine(to: CGPoint(x: geometry.branchCoordinate, y: geometry.startY))
-            path.addLine(to: CGPoint(x: geometry.branchCoordinate, y: geometry.endY))
-            path.addLine(to: end)
-        case .vertical:
-            path.addLine(to: CGPoint(x: geometry.startX, y: geometry.branchCoordinate))
-            path.addLine(to: CGPoint(x: geometry.endX, y: geometry.branchCoordinate))
-            path.addLine(to: end)
+    private static func segmentIntersectsRect(
+        start: CGPoint,
+        end: CGPoint,
+        rect: CanvasRect
+    ) -> Bool {
+        if start.x == end.x {
+            let x = Double(start.x)
+            guard x > rect.minX, x < rect.maxX else {
+                return false
+            }
+            let minY = min(Double(start.y), Double(end.y))
+            let maxY = max(Double(start.y), Double(end.y))
+            return max(minY, rect.minY) < min(maxY, rect.maxY)
         }
-    }
 
-    private static func legacyEdgeTipAndVector(
-        edge: CanvasEdge,
-        routeGeometry: RouteGeometry
-    ) -> EdgeTipVector {
-        let start = CGPoint(x: routeGeometry.startX, y: routeGeometry.startY)
-        let end = CGPoint(x: routeGeometry.endX, y: routeGeometry.endY)
-        if edge.directionality == .fromTo {
-            let previousPoint = legacyPreviousPointBeforeEnd(routeGeometry: routeGeometry)
-            return EdgeTipVector(
-                tip: end,
-                vector: CGVector(dx: end.x - previousPoint.x, dy: end.y - previousPoint.y)
-            )
+        let y = Double(start.y)
+        guard y > rect.minY, y < rect.maxY else {
+            return false
         }
-        if edge.directionality == .toFrom {
-            let nextPoint = legacyNextPointAfterStart(routeGeometry: routeGeometry)
-            return EdgeTipVector(
-                tip: start,
-                vector: CGVector(dx: start.x - nextPoint.x, dy: start.y - nextPoint.y)
-            )
-        }
-        return EdgeTipVector(tip: end, vector: CGVector(dx: 0, dy: 0))
+        let minX = min(Double(start.x), Double(end.x))
+        let maxX = max(Double(start.x), Double(end.x))
+        return max(minX, rect.minX) < min(maxX, rect.maxX)
     }
-    private static func legacyNextPointAfterStart(routeGeometry: RouteGeometry) -> CGPoint {
-        switch routeGeometry.axis {
-        case .horizontal:
-            return CGPoint(x: routeGeometry.branchCoordinate, y: routeGeometry.startY)
-        case .vertical:
-            return CGPoint(x: routeGeometry.startX, y: routeGeometry.branchCoordinate)
-        }
-    }
-    private static func legacyPreviousPointBeforeEnd(routeGeometry: RouteGeometry) -> CGPoint {
-        switch routeGeometry.axis {
-        case .horizontal:
-            return CGPoint(x: routeGeometry.branchCoordinate, y: routeGeometry.endY)
-        case .vertical:
-            return CGPoint(x: routeGeometry.endX, y: routeGeometry.branchCoordinate)
-        }
-    }
-
 }
 // swiftlint:enable file_length

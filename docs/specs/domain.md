@@ -444,6 +444,7 @@
 - Intent は修飾キーを保持しない。
 - 同一プリミティブ内の意味差分は Intent variant で扱う（例: `add` の追加位置差分）。
 - `area target` 時の `cmd+arrow` は `moveNode` Intent を `CanvasCommand.moveArea` へ再解釈して実行する。
+- `area target` 時の `shift+enter` は `add(.modeSelect)` を許可し、確定時は新規 area 作成後に追加 node へフォーカスして node target へ遷移する。`esc` キャンセル時は area target を維持する。
 
 #### KeyTrigger 対応表（primitive 対象のみ）
 
