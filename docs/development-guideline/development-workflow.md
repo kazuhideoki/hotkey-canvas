@@ -33,7 +33,8 @@ Canonical commands:
 - Keep domain logic pure in `Domain/`; keep framework/API details in adapters.
 - Naming rules are defined in `docs/specs/architecture.md`.
 - Language policy:
-  - Source code comments in `.swift` files must be written in English.
+  - Source code comments in `.swift` files must be written in Japanese.
+  - Existing English comments do not need bulk conversion, but when a related feature is added or modified, update the touched comments to Japanese in the same change whenever practical.
   - Documentation under `docs/` must be written in Japanese.
 - Lint/type safety rules:
   - `Any` is prohibited (SwiftLint `custom_rules.no_any_type` as `error`).
@@ -56,7 +57,10 @@ Canonical commands:
 - Add `///` on functions with purpose plus `- Parameters`, `- Returns`, `- Throws` when relevant.
 - Add `///` on stored properties only when intent is not obvious from naming.
 - Use `// MARK: ...` for logical sections in larger files.
-- Keep comments short and maintainable; avoid comments that merely restate the code.
+- Comments should explain intent, background, and why the current design or branch is necessary, not only what the code does.
+- For complex processing, add line-level comments so the reader can follow each important step, branch, or invariant check without reconstructing the intent from code alone.
+- Keep comments maintainable, but prefer preserving design context over aggressively minimizing comment volume.
+- Avoid comments that merely restate self-evident code with no additional rationale.
 
 ## Testing Guidelines
 
