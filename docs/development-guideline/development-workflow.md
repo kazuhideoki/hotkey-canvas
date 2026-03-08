@@ -19,6 +19,7 @@ Follow `docs/specs/architecture.md` for layer boundaries, dependency rules, and 
 Canonical commands:
 
 - `cat docs/specs/architecture.md`: review constraints before coding.
+- `cat docs/development-guideline/vm-ui-testing.md`: review the isolated macOS VM UI testing flow when working on GUI verification.
 - `swift build`
 - `swift test`
 - `./scripts/bootstrap_periphery.sh`

@@ -8,17 +8,17 @@ endpoint="${1:-/debug/v1/health}"
 output_path="${2:-}"
 
 vm_require_command tart
-vm_wait_for_ssh
+vm_wait_for_guest
 
 if [[ -n "${output_path}" ]]; then
     mkdir -p "$(dirname "${output_path}")"
-    vm_ssh /usr/bin/curl -fsS \
+    vm_tart_exec /usr/bin/curl -fsS \
         -H "Authorization: Bearer ${HOTKEY_VM_DEBUG_STATE_TOKEN}" \
         "$(vm_debug_state_url "${endpoint}")" > "${output_path}"
     vm_log "Saved ${endpoint} -> ${output_path}"
     exit 0
 fi
 
-vm_ssh /usr/bin/curl -fsS \
+vm_tart_exec /usr/bin/curl -fsS \
     -H "Authorization: Bearer ${HOTKEY_VM_DEBUG_STATE_TOKEN}" \
     "$(vm_debug_state_url "${endpoint}")"

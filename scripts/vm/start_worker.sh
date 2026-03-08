@@ -18,8 +18,8 @@ log_file="${HOTKEY_VM_LOCAL_HOST_LOG_DIR}/tart-run.log"
 
 if [[ -f "${pid_file}" ]] && kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
     vm_log "VM ${HOTKEY_VM_NAME} already has a running tart process"
-    vm_wait_for_ssh
-    vm_log "VM reachable at $(vm_guest_target)"
+    vm_wait_for_guest
+    vm_log "VM IP: $(vm_tart_ip)"
     exit 0
 fi
 
@@ -52,6 +52,6 @@ vm_log "Starting ${HOTKEY_VM_NAME}"
 nohup tart run "${run_args[@]}" "${HOTKEY_VM_NAME}" >"${log_file}" 2>&1 &
 echo "$!" > "${pid_file}"
 
-vm_wait_for_ssh
-vm_log "VM reachable at $(vm_guest_target)"
+vm_wait_for_guest
+vm_log "VM IP: $(vm_tart_ip)"
 vm_log "Display mode: ${HOTKEY_VM_DISPLAY_MODE}"

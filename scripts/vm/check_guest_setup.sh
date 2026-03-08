@@ -5,6 +5,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${script_dir}/common.sh"
 
 vm_require_command tart
+vm_wait_for_guest
 
 remote_script="$(cat <<'EOF'
 set -euo pipefail
@@ -56,4 +57,4 @@ EOF
 )"
 
 vm_log "Checking guest UI automation prerequisites"
-tart exec "${HOTKEY_VM_NAME}" /bin/zsh -lc "${remote_script}"
+vm_tart_exec /bin/zsh -lc "${remote_script}"

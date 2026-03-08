@@ -36,10 +36,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 vm_require_command tart
+vm_wait_for_guest
 
 remote_script="$(cat <<EOF
 set -euo pipefail
-mkdir -p '${HOTKEY_VM_GUEST_WORKSPACE}' '${HOTKEY_VM_GUEST_ARTIFACTS_DIR}' '${HOTKEY_VM_GUEST_LOG_DIR}'
+mkdir -p '$(vm_guest_workspace_dir)' '${HOTKEY_VM_GUEST_ARTIFACTS_DIR}' '${HOTKEY_VM_GUEST_LOG_DIR}'
 echo '[guest] directories prepared'
 
 if command -v brew >/dev/null 2>&1; then
@@ -68,11 +69,10 @@ cat <<'MANUAL_STEPS'
 [guest] manual steps still required:
   1. Install full Xcode and launch it once.
   2. Grant Accessibility / Screen Recording / Automation permissions for the tools that will drive the UI.
-  3. If you plan to use VNC, confirm Screen Sharing / Remote Login settings as needed.
-  4. Re-run scripts/vm/check_guest_setup.sh after completing these steps.
+  3. Re-run scripts/vm/check_guest_setup.sh after completing these steps.
 MANUAL_STEPS
 EOF
 )"
 
 vm_log "Preparing guest image"
-tart exec "${HOTKEY_VM_NAME}" /bin/zsh -lc "${remote_script}"
+vm_tart_exec /bin/zsh -lc "${remote_script}"

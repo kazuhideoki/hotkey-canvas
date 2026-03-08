@@ -29,21 +29,20 @@
 
 ### 4.2 隔離ポリシー
 
-- UI 入力、アクセシビリティ操作、スクリーンショット、録画はすべて guest VM 内で完結させる。
-- ホスト側では Codex CLI が VM の起動、停止、同期、アーティファクト回収のみを行う。
+- UI 入力とスクリーンショットは VNC 経由で guest display にだけ流す。
+- ホスト側では Codex CLI が VM の起動、停止、VNC 操作、debug-state 取得を行う。
 - ホストのマウス、キーボード、アクティブアプリ、アクセシビリティ権限を UI 検証のために利用しない。
 
 ### 4.3 作業コピー方針
 
-- ホストの作業ツリーを guest に read-write 共有してそのままビルドしない。
-- guest 内に専用の working copy を持ち、`rsync`、`git worktree` 相当の複製、または Cirrus CLI で同期する。
-- 共有ディレクトリを使う場合も、主用途は成果物受け渡しか初期投入に限定し、実ビルドは guest-local な作業コピーで行う。
+- 現在の最小実装では、ホストの作業ツリーを `virtiofs` 共有し、guest から直接参照して起動する。
+- 将来 guest-local working copy に寄せる余地はあるが、現時点の repo scripts は共有 repo 直参照を正本とする。
 
 ### 4.4 検証方針
 
-- 視覚的な UI 操作と観測は `Appium Mac2` を主経路にする。
-- 安定した回帰シナリオは `XCUITest` を併用する。
+- 視覚的な UI 操作と観測は `VNC + vncdotool` を主経路にする。
 - 内部状態の真偽確認は既存の debug-state API を併用し、見た目確認と状態確認を分離する。
+- `Appium Mac2` は将来の拡張経路として扱い、現時点の最小運用には含めない。
 
 ## 5. 候補比較
 
@@ -169,25 +168,24 @@
   - `scripts/vm/create_golden_image.sh`
   - `scripts/vm/clone_worker.sh`
   - `scripts/vm/start_worker.sh`
+  - `scripts/vm/stop_worker.sh`
   - `scripts/vm/prepare_guest_image.sh`
   - `scripts/vm/check_guest_setup.sh`
-  - `scripts/vm/sync_workspace.sh`
-  - `scripts/vm/run_appium_session.sh`
+  - `scripts/vm/start_hotkey_canvas_debug.sh`
+  - `scripts/vm/fetch_debug_state.sh`
   - `scripts/vm/capture_screen.sh`
-  - `scripts/vm/collect_artifacts.sh`
 - guest 側のディレクトリ規約を決める。
-  - `/Users/agent/workspace`
-  - `/Users/agent/artifacts`
-  - `/Users/agent/logs`
-- debug-state API のポート、認証トークン受け渡し、Appium endpoint の公開方法を決める。
+  - shared repo: `/Volumes/My Shared Files/repo`
+  - `/Users/admin/artifacts`
+  - `/Users/admin/logs`
+- debug-state API のポート、認証トークン受け渡し方法を決める。
 
 ### Phase 3: 最小実装
 
 - 1 台の VM を Codex CLI から起動できる。
 - VNC-backed display で guest 画面を保存できる。
-- guest へコード同期できる。
-- HotkeyCanvas を guest 内で起動できる。
-- Appium Mac2 で 1 つの簡単な UI シナリオを実行できる。
+- shared repo を guest から参照して HotkeyCanvas を起動できる。
+- VNC 入力と debug-state API を併用して 1 つの簡単な UI シナリオを実行できる。
 - debug-state API を取得してアサーションできる。
 - スクリーンショットを回収できる。
 
