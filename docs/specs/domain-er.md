@@ -1,4 +1,4 @@
-# HotkeyCanvas Domain ER図
+# HotkeyCanvas ドメイン ER 図
 
 ## 1. 目的
 

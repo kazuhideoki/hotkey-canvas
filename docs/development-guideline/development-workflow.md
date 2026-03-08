@@ -1,73 +1,73 @@
-# Repository Guidelines
+# リポジトリガイドライン
 
-## Architecture Reference
+## アーキテクチャ参照
 
-`docs/specs/architecture.md` is the single source of truth for layer responsibilities, dependency direction, directory placement, naming conventions, and UI display flow rules.
+`docs/specs/architecture.md` は、レイヤー責務、依存方向、ディレクトリ配置、命名規則、UI 表示フロー規約の正本です。
 
-## Domain Documentation
+## ドメイン文書
 
-- `docs/specs/domain.md` documents domain-by-domain structure, services, usage, and invariants.
-- When adding or changing domain models/services/commands/errors under `Sources/Domain/`, update `docs/specs/domain.md` in the same change.
-- When changing application behavior that affects how domain services are used (for example command dispatch or service call flow), update the relevant usage sections in `docs/specs/domain.md`.
+- `docs/specs/domain.md` は、ドメインごとの構造、サービス、利用箇所、不変条件を整理した正本です。
+- `Sources/Domain/` 配下の model / service / command / error を追加・変更した場合は、同じ変更で `docs/specs/domain.md` を更新すること。
+- アプリケーション挙動の変更により Domain サービスの使われ方が変わる場合は、`docs/specs/domain.md` の関連利用節も更新すること。
 
-## Project Structure & Module Organization
+## プロジェクト構造とモジュール構成
 
-Follow `docs/specs/architecture.md` for layer boundaries, dependency rules, and placement decisions.
+レイヤー境界、依存ルール、配置判断は `docs/specs/architecture.md` に従うこと。
 
-## Build, Test, and Development Commands
+## ビルド・テスト・開発コマンド
 
-Canonical commands:
+基本コマンド:
 
-- `cat docs/specs/architecture.md`: review constraints before coding.
-- `cat docs/development-guideline/vm-ui-testing.md`: review the isolated macOS VM UI testing flow when working on GUI verification.
+- `cat docs/specs/architecture.md`: 実装前に設計制約を確認する。
+- `cat docs/development-guideline/vm-ui-testing.md`: GUI 検証時の隔離 macOS VM UI テスト運用を確認する。
 - `swift build`
 - `swift test`
 - `./scripts/bootstrap_periphery.sh`
-- `git log --oneline`: inspect prior commit style.
-- `find . -maxdepth 3 -type f`: verify expected scaffold files.
+- `git log --oneline`: 既存コミットの要約スタイルを確認する。
+- `find . -maxdepth 3 -type f`: 想定どおりにファイルが配置されているか確認する。
 
-## Coding Style & Naming Conventions
+## コーディングスタイルと命名規則
 
-- Language target: Swift.
-- Use 4-space indentation and keep one primary type per file.
-- Keep domain logic pure in `Domain/`; keep framework/API details in adapters.
-- Naming rules are defined in `docs/specs/architecture.md`.
-- Language policy:
-  - Source code comments in `.swift` files must be written in Japanese.
-  - Existing English comments do not need bulk conversion, but when a related feature is added or modified, update the touched comments to Japanese in the same change whenever practical.
-  - Documentation under `docs/` must be written in Japanese.
-- Lint/type safety rules:
-  - `Any` is prohibited (SwiftLint `custom_rules.no_any_type` as `error`).
-  - Prefer concrete types, generics, or `any Protocol`.
-  - Run lint with `./scripts/lint_and_format.sh` (Swift Package Plugin based; no global SwiftLint required).
-  - `./scripts/lint_and_format.sh` also runs Periphery to detect unused declarations and redundant `public` accessibility.
-  - Periphery is invoked with `--retain-codable-properties` to avoid flagging properties that are only used through synthesized `Codable` behavior.
-  - Periphery is provisioned as a repo-local tool under `.tools/` via `./scripts/bootstrap_periphery.sh`, so contributors do not need a global `brew`/`mint` installation and local/CI can share the same fixed version.
-  - The first bootstrap downloads Periphery from GitHub Releases, so `curl`, `unzip`, and network access are required once.
-  - `./scripts/lint_and_format.sh` is a fix-and-verify command: it auto-formats what can be fixed mechanically, then exits non-zero only for remaining manual issues.
-  - When CI uses `./scripts/lint_and_format.sh`, also verify that no diff remains after execution so auto-fixed changes do not silently pass without being committed.
+- 対象言語は Swift。
+- インデントは 4 スペースとし、1 ファイル 1 主体型を基本とする。
+- Domain ロジックは `Domain/` に純粋に保ち、フレームワークや API の詳細は adapter 側へ隔離する。
+- 命名規則は `docs/specs/architecture.md` に従う。
+- 言語方針:
+  - `.swift` ファイル内のコメントは日本語で記述する。
+  - 既存の英語コメントは一括変換を必須としないが、関連機能の追加・修正時に触れた箇所は可能な限り同じ変更で日本語へ更新する。
+  - `docs/` 配下のドキュメントは日本語で記述する。
+- Lint / 型安全ルール:
+  - `Any` の使用は禁止する（SwiftLint `custom_rules.no_any_type` を `error` 扱い）。
+  - 抽象化が必要な場合も、具体型、ジェネリクス、`any Protocol` を優先する。
+  - lint は `./scripts/lint_and_format.sh` を使う（Swift Package Plugin ベースで、グローバルな SwiftLint は不要）。
+  - `./scripts/lint_and_format.sh` は Periphery も実行し、未使用宣言や冗長な `public` アクセス指定を検出する。
+  - Periphery には `--retain-codable-properties` を付け、合成 `Codable` だけで使われるプロパティの誤検出を防ぐ。
+  - Periphery は `./scripts/bootstrap_periphery.sh` により `.tools/` 配下へ repo ローカルに導入する。これにより、開発者はグローバルな `brew` / `mint` を前提にせず、CI と同じ固定バージョンを使える。
+  - 初回 bootstrap では GitHub Releases から Periphery をダウンロードするため、`curl`、`unzip`、ネットワーク接続が一度だけ必要になる。
+  - `./scripts/lint_and_format.sh` は fix-and-verify 型のコマンドであり、機械的に直せる箇所は自動整形したうえで、手修正が必要な問題だけを非ゼロ終了で返す。
+  - CI で `./scripts/lint_and_format.sh` を使う場合は、実行後に差分が残っていないことも確認し、自動修正分が未コミットのまま通過しないようにする。
 
-## Comment Policy
+## コメント方針
 
-- Use `///` doc comments for symbols that should surface in LSP/Quick Help.
-- Add a short file-header comment at the top of each Swift file describing:
-  - Why the file exists (background/context).
-  - What responsibility the file owns.
-- Add `///` on public/internal types with a one-line responsibility summary.
-- Add `///` on functions with purpose plus `- Parameters`, `- Returns`, `- Throws` when relevant.
-- Add `///` on stored properties only when intent is not obvious from naming.
-- Use `// MARK: ...` for logical sections in larger files.
-- Comments should explain intent, background, and why the current design or branch is necessary, not only what the code does.
-- For complex processing, add line-level comments so the reader can follow each important step, branch, or invariant check without reconstructing the intent from code alone.
-- Keep comments maintainable, but prefer preserving design context over aggressively minimizing comment volume.
-- Avoid comments that merely restate self-evident code with no additional rationale.
+- LSP / Quick Help に出すべきシンボルには `///` の doc comment を付ける。
+- 各 Swift ファイルの先頭には、そのファイルについて短いヘッダーコメントを置く。
+  - なぜそのファイルが存在するのか（背景・文脈）
+  - どの責務を担当するのか
+- `public` / `internal` の型には、責務を 1 行で要約する `///` を付ける。
+- 関数には、目的に加えて必要に応じて `- Parameters`、`- Returns`、`- Throws` を含む `///` を付ける。
+- 保存プロパティには、名前だけでは意図が読み取りづらい場合に限って `///` を付ける。
+- 大きめのファイルでは論理区切りとして `// MARK: ...` を使う。
+- コメントは処理内容の説明だけでなく、意図、背景、その設計や分岐が必要な理由まで説明すること。
+- 複雑な処理では、読み手が意図をコードから逆算しなくて済むように、重要な手順、分岐、不変条件の確認ごとに行レベルコメントを入れること。
+- コメント量を機械的に減らすより、設計意図や背景を保つことを優先する。ただし保守不能な長文化は避ける。
+- 自明なコードをそのまま言い換えるだけで、追加の意図や理由を含まないコメントは避ける。
 
-## Testing Guidelines
+## テスト方針
 
-- Test placement and naming rules are defined in `docs/specs/architecture.md`.
-- Prioritize domain invariants and use-case behavior first, then adapter mapping and integration flows.
-- For UI-like regression scenarios on `swift test`, add/update `Tests/InterfaceAdaptersTests/*UITests.swift` to cover input-to-UI-state behavior changes.
-- Add regression tests with each bug fix.
+- テスト配置と命名規則は `docs/specs/architecture.md` に従う。
+- まず Domain の不変条件と UseCase の振る舞いを優先し、その後に adapter の変換と統合フローを確認する。
+- `swift test` で再現できる UI 相当の回帰は、`Tests/InterfaceAdaptersTests/*UITests.swift` を追加・更新して、入力から UI 状態までの変化を検証する。
+- バグ修正には必ず回帰テストを添える。
 - テストカバレッジの確認には `./scripts/test_with_coverage.sh` を使う。
 - `./scripts/test_with_coverage.sh` は通常はそのまま `swift test --enable-code-coverage` を実行し、coverage JSON に載っている `Sources/` の line coverage を集計する。
 - ビルド成果物や module cache が怪しい場合のみ `--clean` を付けて `swift package clean` を先に実行する。
@@ -94,30 +94,30 @@ Canonical commands:
 - 当面の目安は、`Domain` は `80%` 以上、`Application` は `70%` 前後以上を維持対象として扱い、`InterfaceAdapters` は UI 相当の変更点に対する回帰テスト追加を優先する。
 - CI に組み込む場合も、最初は coverage の表示と記録のみに留め、運用が安定してから warning や gate を段階的に検討する。
 
-## Debug State API (Local Development)
+## Debug State API（ローカル開発）
 
-Use the debug-state API to fetch live application state from external tools (for example Codex CLI) during local development.
+ローカル開発時に、Codex CLI などの外部ツールからアプリの現在状態を取得するために debug-state API を使う。
 
-- Enable API at launch (DEBUG build only):
+- 起動時に API を有効化する（DEBUG build のみ）:
   - `swift run HotkeyCanvasApp -- --enable-debug-state-api --debug-state-port=8750 --debug-state-token=codex-demo-token`
-- Notes:
-  - API binds to `127.0.0.1` only.
-  - If `--debug-state-token` is omitted, a random token is generated and printed to app logs.
-  - Startup now waits for listener readiness; port conflicts are reported as startup failure.
+- 注意:
+  - API は `127.0.0.1` にのみ bind する。
+  - `--debug-state-token` を省略すると、ランダムトークンを生成して app log に出力する。
+  - 起動処理は listener の ready を待つ。ポート競合がある場合は起動失敗として扱う。
 
-Endpoints (all require `Authorization: Bearer <token>`):
+エンドポイント一覧（すべて `Authorization: Bearer <token>` が必要）:
 
-- Health:
+- ヘルスチェック:
   - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/health`
-- Session list:
+- セッション一覧:
   - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/sessions`
-- Single session state:
+- 単一セッションの状態:
   - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/sessions/<session-id>/state`
-- Domain catalog for a session:
+- セッションごとのドメイン一覧:
   - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/sessions/<session-id>/domains`
-- Domain-specific state:
+- ドメイン別状態:
   - `curl -s -H 'Authorization: Bearer codex-demo-token' http://127.0.0.1:8750/debug/v1/sessions/<session-id>/domains/<domain-id>`
-  - Available `domain-id` values:
+  - 利用可能な `domain-id`:
     - `d1-canvas-graph-editing`
     - `d2-focus-and-selection`
     - `d3-area-layout`
@@ -126,10 +126,10 @@ Endpoints (all require `Authorization: Bearer <token>`):
     - `d6-fold-visibility`
     - `d7-area-mode-membership`
 
-Typical workflow:
+典型的な利用手順:
 
-1. Start app with `--enable-debug-state-api`.
-2. Call `/debug/v1/sessions` to get active `sessionID`.
-3. Call `/debug/v1/sessions/<session-id>/domains` to discover domain endpoints.
-4. Call `/debug/v1/sessions/<session-id>/domains/<domain-id>` for target domain state.
-5. Call `/debug/v1/sessions/<session-id>/state` when full graph/UI snapshot is needed.
+1. `--enable-debug-state-api` を付けて app を起動する。
+2. `/debug/v1/sessions` を呼び、現在の `sessionID` を取得する。
+3. `/debug/v1/sessions/<session-id>/domains` を呼び、参照可能な domain endpoint を確認する。
+4. 対象 domain の状態が必要なら `/debug/v1/sessions/<session-id>/domains/<domain-id>` を呼ぶ。
+5. グラフ全体や UI 全体の snapshot が必要なら `/debug/v1/sessions/<session-id>/state` を使う。

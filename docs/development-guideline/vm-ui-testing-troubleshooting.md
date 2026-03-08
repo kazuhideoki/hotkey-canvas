@@ -1,4 +1,4 @@
-# VM UI テスト実測メモ
+# VM 上の UI テスト実測メモ
 
 ## 目的
 
@@ -8,27 +8,27 @@
 
 ## 先に結論
 
-- host 無干渉で進める標準は `Tart --no-graphics` に固定する
-- 画面取得と入力は guest VNC に寄せる
+- ホスト無干渉で進める標準は `Tart --no-graphics` に固定する
+- 画面取得と入力はゲスト VNC に寄せる
 - 状態確認は必ず debug-state API で併用する
 - `tart exec` 経由の入力自動化は `tart-guest-agent` の TCC を前提に考える
 - 空キャンバスでは最初の 1 手が特殊なので、Diagram シナリオでも Tree bootstrap node を経由する方が安定する
 - GUI 検証は最大化した window を前提に揃える
-- display 解像度も固定した方が host との差分を追いやすい
+- display 解像度も固定した方がホストとの差分を追いやすい
 
 ## 実際に詰まった点
 
-### 1. `--vnc` / `--vnc-experimental` は host 側 viewer を開く
+### 1. `--vnc` / `--vnc-experimental` はホスト側 viewer を開く
 
-- Tart の viewer や macOS Screen Sharing が host 前面に出る
-- 要件の「host 作業に干渉しない」と相性が悪い
+- Tart の viewer や macOS Screen Sharing がホスト前面に出る
+- 要件の「ホスト作業に干渉しない」と相性が悪い
 - 標準運用では使わず、`no-graphics + guest VNC` に寄せる
 
-### 2. `no-graphics` だけでは visual verification にならない
+### 2. `no-graphics` だけでは見た目確認にならない
 
-- app 自体は起動していても、guest display を取らない限り見た目を確認できない
-- guest の `screencapture` は TCC や tart guest agent の状態に左右されやすい
-- 実運用では host 側の `vncdotool capture` を正本にする
+- app 自体は起動していても、ゲスト display を取らない限り見た目を確認できない
+- ゲストの `screencapture` は TCC や tart guest agent の状態に左右されやすい
+- 実運用ではホスト側の `vncdotool capture` を正本にする
 
 ### 3. TCC の主体は `osascript` ではなく `tart-guest-agent`
 
@@ -49,7 +49,7 @@
 
 ### 6. canvas に click しないと key が入らないことがある
 
-- guest display 上で app window が見えていても、入力先が安定しないことがあった
+- ゲスト display 上で app window が見えていても、入力先が安定しないことがあった
 - `move:500:350` + `click:1` を先に入れると安定した
 
 ### 7. 空キャンバスでは `shift+enter` が期待通りの popup にならない
@@ -83,12 +83,12 @@
 - そのため成功時でも `total nodeCount = 3` になり得る
 - 判定は「Diagram area に属する node / edge 数」で見る方が正しい
 
-### 12. guest screenshot に VNC 由来のバナーが写ることがある
+### 12. ゲスト screenshot に VNC 由来のバナーが写ることがある
 
 - `Your screen is being controlled`
 - `Viewer has disconnected`
-- これは host 側 viewer を開いているのではなく、guest 側 Screen Sharing の状態表示
-- host 無干渉要件の破綻ではないが、見た目検証ではノイズになる
+- これはホスト側 viewer を開いているのではなく、ゲスト側 Screen Sharing の状態表示
+- ホスト無干渉要件の破綻ではないが、見た目検証ではノイズになる
 
 ### 13. app window は最大化を前提にした方が安定した
 
@@ -99,10 +99,10 @@
 
 ### 15. display 解像度も固定しておくと比較しやすい
 
-- VM display の初期値は `1024x768` で、host の実表示と差が大きい
+- VM display の初期値は `1024x768` で、ホストの実表示と差が大きい
 - screenshot の構図や popup の相対サイズが変わるので、視覚比較には不利だった
 - `Tart` は `tart set <vm> --display WIDTHxHEIGHT[pt|px]` を持つので、worker clone 時か起動前に固定できる
-- host を基準に寄せるなら `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` のように `px` 付きで明示する方が意図がずれにくい
+- ホストを基準に寄せるなら `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` のように `px` 付きで明示する方が意図がずれにくい
 
 ### 14. shared repo 上の `swift run` は不安定になることがある
 
@@ -169,7 +169,7 @@ pause:1.5
 
 - `check_guest_setup.sh` で `agent-appleevents`, `real-listenevent`, `real-postevent` が `ok` か確認する
 - `start_worker.sh` は `HOTKEY_VM_DISPLAY_MODE=no-graphics` を使う
-- 必要なら `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` を付けて host 相当の display に揃える
+- 必要なら `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` を付けてホスト相当の display に揃える
 - HotkeyCanvas 起動後、window が最大化されていることを最初の screenshot で確認する
 - 最初の入力前に canvas click を入れる
 - Diagram シナリオでも空キャンバスなら Tree bootstrap を前提にする
