@@ -22,18 +22,7 @@ relative_output_path="${1:-.tmp/vm-artifacts/guest-screen.png}"
 host_output_path="${VM_REPO_ROOT}/${relative_output_path}"
 
 resolve_vncdotool() {
-    if command -v vncdotool >/dev/null 2>&1; then
-        command -v vncdotool
-        return 0
-    fi
-
-    local candidate="${HOME}/Library/Python/3.9/bin/vncdotool"
-    if [[ -x "${candidate}" ]]; then
-        printf '%s' "${candidate}"
-        return 0
-    fi
-
-    vm_die "vncdotool not found. Install it with: python3 -m pip install --user vncdotool"
+    vm_resolve_vncdotool
 }
 
 vm_require_command tart

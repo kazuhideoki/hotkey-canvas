@@ -17,7 +17,7 @@ HOTKEY_VM_LOCAL_HOST_LOG_DIR="${HOTKEY_VM_LOCAL_HOST_LOG_DIR:-${HOTKEY_VM_LOCAL_
 HOTKEY_VM_LOCAL_ARTIFACTS_DIR="${HOTKEY_VM_LOCAL_ARTIFACTS_DIR:-${HOTKEY_VM_LOCAL_ROOT}/artifacts}"
 HOTKEY_VM_DEBUG_STATE_PORT="${HOTKEY_VM_DEBUG_STATE_PORT:-8750}"
 HOTKEY_VM_DEBUG_STATE_TOKEN="${HOTKEY_VM_DEBUG_STATE_TOKEN:-codex-vm-token}"
-HOTKEY_VM_DISPLAY_MODE="${HOTKEY_VM_DISPLAY_MODE:-vnc}"
+HOTKEY_VM_DISPLAY_MODE="${HOTKEY_VM_DISPLAY_MODE:-no-graphics}"
 HOTKEY_VM_TART_RUN_EXTRA_ARGS="${HOTKEY_VM_TART_RUN_EXTRA_ARGS:-}"
 HOTKEY_VM_SHARED_REPO_NAME="${HOTKEY_VM_SHARED_REPO_NAME:-repo}"
 HOTKEY_VM_SHARED_REPO_HOST_PATH="${HOTKEY_VM_SHARED_REPO_HOST_PATH:-${VM_REPO_ROOT}}"
@@ -152,4 +152,19 @@ vm_wait_for_http() {
     done
 
     vm_die "timed out waiting for ${url}"
+}
+
+vm_resolve_vncdotool() {
+    if command -v vncdotool >/dev/null 2>&1; then
+        command -v vncdotool
+        return 0
+    fi
+
+    local candidate="${HOME}/Library/Python/3.9/bin/vncdotool"
+    if [[ -x "${candidate}" ]]; then
+        printf '%s' "${candidate}"
+        return 0
+    fi
+
+    vm_die "vncdotool not found. Install it with: python3 -m pip install --user vncdotool"
 }

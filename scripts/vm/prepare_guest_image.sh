@@ -68,8 +68,11 @@ fi
 cat <<'MANUAL_STEPS'
 [guest] manual steps still required:
   1. Install full Xcode and launch it once.
-  2. Grant Accessibility / Screen Recording / Automation permissions for the tools that will drive the UI.
-  3. Re-run scripts/vm/check_guest_setup.sh after completing these steps.
+  2. Connect over VNC and seed tart-guest-agent approvals once:
+     - allow "tart-guest-agent" to control "System Events"
+     - if macOS opens Privacy & Security, enable tart-guest-agent for event injection there too
+  3. Run scripts/vm/bootstrap_tcc_permissions.sh to mirror the approved rows across the guest.
+  4. Re-run scripts/vm/check_guest_setup.sh after completing these steps.
 MANUAL_STEPS
 EOF
 )"

@@ -15,6 +15,7 @@ vm_validate_display_mode
 
 pid_file="${HOTKEY_VM_LOCAL_HOST_LOG_DIR}/tart-run.pid"
 log_file="${HOTKEY_VM_LOCAL_HOST_LOG_DIR}/tart-run.log"
+typescript_file="${HOTKEY_VM_LOCAL_HOST_LOG_DIR}/tart-run.typescript"
 
 if [[ -f "${pid_file}" ]] && kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
     vm_log "VM ${HOTKEY_VM_NAME} already has a running tart process"
@@ -49,7 +50,12 @@ if [[ -n "${HOTKEY_VM_TART_RUN_EXTRA_ARGS}" ]]; then
 fi
 
 vm_log "Starting ${HOTKEY_VM_NAME}"
-nohup tart run "${run_args[@]}" "${HOTKEY_VM_NAME}" >"${log_file}" 2>&1 &
+if [[ "${HOTKEY_VM_DISPLAY_MODE}" == "no-graphics" ]]; then
+    vm_require_command script
+    nohup script -q "${typescript_file}" tart run "${run_args[@]}" "${HOTKEY_VM_NAME}" >"${log_file}" 2>&1 &
+else
+    nohup tart run "${run_args[@]}" "${HOTKEY_VM_NAME}" >"${log_file}" 2>&1 &
+fi
 echo "$!" > "${pid_file}"
 
 vm_wait_for_guest
