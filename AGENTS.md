@@ -1,6 +1,7 @@
 # Repository Guidelines Index
 
-このファイルは目次です。実体のガイドラインは以下を参照してください。
+以下は本リポジトリにおけるドキュメントの目次です。
+関連作業やレビューに対象ファイルを参照すること。
 
 - 総合ガイドライン: `docs/development-guideline/development-workflow.md`
   - 最初に必ず確認すること
