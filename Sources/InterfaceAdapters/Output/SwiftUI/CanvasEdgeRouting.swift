@@ -610,15 +610,19 @@ extension CanvasEdgeRouting {
         let defaultTemplate = defaultRouteTemplate(axis: defaultAxis, direction: defaultDirection)
         let reverseTemplate = defaultRouteTemplate(axis: defaultAxis, direction: -defaultDirection)
         let horizontalSameSideTemplates = [
-            RouteTemplate(axis: .horizontal, startSide: .left, endSide: .left, preferencePenalty: 40,
+            RouteTemplate(
+                axis: .horizontal, startSide: .left, endSide: .left, preferencePenalty: 40,
                 branchLookupDirection: nil),
-            RouteTemplate(axis: .horizontal, startSide: .right, endSide: .right, preferencePenalty: 40,
+            RouteTemplate(
+                axis: .horizontal, startSide: .right, endSide: .right, preferencePenalty: 40,
                 branchLookupDirection: nil),
         ]
         let verticalSameSideTemplates = [
-            RouteTemplate(axis: .vertical, startSide: .top, endSide: .top, preferencePenalty: 30,
+            RouteTemplate(
+                axis: .vertical, startSide: .top, endSide: .top, preferencePenalty: 30,
                 branchLookupDirection: nil),
-            RouteTemplate(axis: .vertical, startSide: .bottom, endSide: .bottom, preferencePenalty: 30,
+            RouteTemplate(
+                axis: .vertical, startSide: .bottom, endSide: .bottom, preferencePenalty: 30,
                 branchLookupDirection: nil),
         ]
 

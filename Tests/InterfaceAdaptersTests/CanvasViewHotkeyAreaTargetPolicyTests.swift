@@ -20,6 +20,60 @@ func test_areaTarget_isActionEnabled_disablesGlobalNodeOrEdgeActions() {
     #expect(CanvasView.isActionEnabled(.undo, context: context))
 }
 
+@Test("CanvasView area target policy: command-l is repurposed to recenter focused area")
+func test_areaTarget_beginConnectAction_recentersFocusedAreaWhenAreaIsFocused() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .area,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 0
+    )
+
+    #expect(
+        CanvasView.beginConnectAreaBehavior(
+            context: context,
+            focusedAreaID: CanvasAreaID(rawValue: "focused-area")
+        )
+            == .recenterFocusedArea
+    )
+    #expect(
+        CanvasView.beginConnectAreaBehavior(
+            context: context,
+            focusedAreaID: nil
+        )
+            == .enterConnectMode
+    )
+}
+
+@Test("CanvasView node target policy: command-l does not recenter area")
+func test_nodeTarget_beginConnectAction_doesNotRecenterArea() {
+    let context = KeymapExecutionContext(
+        editingMode: .diagram,
+        operationTargetKind: .node,
+        hasFocusedNode: true,
+        selectedNodeCount: 1,
+        selectedEdgeCount: 0
+    )
+
+    #expect(
+        CanvasView.beginConnectAreaBehavior(
+            context: context,
+            focusedAreaID: CanvasAreaID(rawValue: "focused-area")
+        )
+            == .enterConnectMode
+    )
+}
+
+@Test("CanvasView focus visibility: recenter resets manual pan and camera anchor")
+func test_recenteredViewportState_resetsPanAndAnchor() {
+    let state = CanvasView.recenteredViewportState()
+
+    #expect(state.manualPanOffset == .zero)
+    #expect(!state.hasInitializedCameraAnchor)
+    #expect(state.cameraAnchorPoint == .zero)
+}
+
 @Test("CanvasView area target policy: disables node/edge command actions")
 func test_areaTarget_isActionEnabled_disablesNodeOrEdgeCommands() {
     let context = KeymapExecutionContext(

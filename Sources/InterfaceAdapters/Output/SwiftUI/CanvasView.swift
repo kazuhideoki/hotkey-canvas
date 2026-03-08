@@ -394,7 +394,8 @@ public struct CanvasView: View {
                     handleCanvasHotkeyEvent(
                         event,
                         displayNodes: displayNodes,
-                        displayEdges: displayEdges
+                        displayEdges: displayEdges,
+                        viewportSize: viewportSize
                     )
                 }
                 .frame(width: 1, height: 1)
