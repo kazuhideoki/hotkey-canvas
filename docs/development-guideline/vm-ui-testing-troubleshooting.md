@@ -14,7 +14,11 @@
 - `tart exec` 経由の入力自動化は `tart-guest-agent` の TCC を前提に考える
 - 空キャンバスでは最初の 1 手が特殊なので、Diagram シナリオでも Tree bootstrap node を経由する方が安定する
 - GUI 検証は最大化した window を前提に揃える
+<<<<<<< HEAD
 - display 解像度も固定した方がホストとの差分を追いやすい
+=======
+- display 解像度は標準値のまま使い、必要時だけ上書きする
+>>>>>>> vm_screen_size_default
 
 ## 実際に詰まった点
 
@@ -101,8 +105,13 @@
 
 - VM display の初期値は `1024x768` で、ホストの実表示と差が大きい
 - screenshot の構図や popup の相対サイズが変わるので、視覚比較には不利だった
+<<<<<<< HEAD
 - `Tart` は `tart set <vm> --display WIDTHxHEIGHT[pt|px]` を持つので、worker clone 時か起動前に固定できる
 - ホストを基準に寄せるなら `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` のように `px` 付きで明示する方が意図がずれにくい
+=======
+- `Tart` は `tart set <vm> --display WIDTHxHEIGHT[pt|px]` を持つので、worker clone 時か起動前に指定できる
+- 現在の VM scripts では標準で `1512x982px` を使い、必要時だけ `HOTKEY_VM_DISPLAY_RESOLUTION=...` で上書きする
+>>>>>>> vm_screen_size_default
 
 ### 14. shared repo 上の `swift run` は不安定になることがある
 
@@ -169,7 +178,11 @@ pause:1.5
 
 - `check_guest_setup.sh` で `agent-appleevents`, `real-listenevent`, `real-postevent` が `ok` か確認する
 - `start_worker.sh` は `HOTKEY_VM_DISPLAY_MODE=no-graphics` を使う
+<<<<<<< HEAD
 - 必要なら `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` を付けてホスト相当の display に揃える
+=======
+- 必要なら `HOTKEY_VM_DISPLAY_RESOLUTION=...` を付けて display サイズを上書きする
+>>>>>>> vm_screen_size_default
 - HotkeyCanvas 起動後、window が最大化されていることを最初の screenshot で確認する
 - 最初の入力前に canvas click を入れる
 - Diagram シナリオでも空キャンバスなら Tree bootstrap を前提にする
