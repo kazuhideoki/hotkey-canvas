@@ -7,18 +7,11 @@
 このガイドの対象は、2026-03-08 時点で実際に通った最小構成です。
 
 - VM: `Tart --no-graphics` で起動した macOS VM
-<<<<<<< HEAD
 - 画面操作: ホストからゲストの `VNC`
 - スクリーンショット: ホスト側 `vncdotool capture`
 - 内部状態確認: ゲスト内 `debug-state API`
 - アプリ起動: ゲスト内 `tart exec ... swift run HotkeyCanvasApp`
-- 解像度: 必要に応じて `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` のようにホストに合わせて固定
-=======
-- 画面操作: host から guest の `VNC`
-- スクリーンショット: host 側 `vncdotool capture`
-- 内部状態確認: guest 内 `debug-state API`
-- アプリ起動: guest 内 `tart exec ... swift run HotkeyCanvasApp`
->>>>>>> vm_screen_size_default
+- 解像度: 既定は `1512x982px`、必要時だけ `HOTKEY_VM_DISPLAY_RESOLUTION=...` で上書きする
 
 実際に詰まった点や回避策は `vm-ui-testing-troubleshooting.md` を参照。
 
@@ -122,10 +115,7 @@ scripts/vm/fetch_debug_state.sh /debug/v1/health
 ## ウィンドウサイズのルール
 
 VM 上での GUI 検証は、常に HotkeyCanvas window を最大化した状態で始める。
-<<<<<<< HEAD
-あわせて、VM display 自体もホストに寄せた固定解像度にしておく。
-=======
->>>>>>> vm_screen_size_default
+あわせて、VM display 自体も既定の固定解像度 `1512x982px` を前提にし、必要時だけ上書きする。
 
 - 理由:
   - ホストと近い表示密度で screenshot を比較しやすい
@@ -133,13 +123,8 @@ VM 上での GUI 検証は、常に HotkeyCanvas window を最大化した状態
   - クリック座標や popup 位置のブレを減らせる
   - 「狭い window 固有の崩れ」と「通常表示の崩れ」を混同しにくい
 - 現在の標準:
-<<<<<<< HEAD
-  - `start_worker.sh` / `clone_worker.sh` は `HOTKEY_VM_DISPLAY_RESOLUTION` が指定されていれば `tart set --display ...` を適用する
-  - ホストに寄せる時は `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` を使う
-=======
   - `start_worker.sh` / `clone_worker.sh` は既定で `1512x982px` を適用する
   - サイズを変えたい場合だけ `HOTKEY_VM_DISPLAY_RESOLUTION=...` を明示する
->>>>>>> vm_screen_size_default
   - `start_hotkey_canvas_debug.sh` は `HOTKEY_VM_AUTO_ZOOM_WINDOW=1` を既定値として app 起動時に window を拡大表示する
   - 無効化したい場合だけ `HOTKEY_VM_AUTO_ZOOM_WINDOW=0` を明示する
 
