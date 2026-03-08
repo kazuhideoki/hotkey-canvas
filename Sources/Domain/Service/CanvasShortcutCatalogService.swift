@@ -25,10 +25,7 @@ public enum CanvasShortcutCatalogService {
         defaultDefinitionsStorage.compactMap { definition in
             guard
                 definition.isVisibleInCommandPalette,
-                KeymapExecutionPolicyResolver.isEnabled(
-                    definition: definition,
-                    context: executionContext
-                )
+                isCommandPaletteDefinitionEnabled(definition, executionContext: executionContext)
             else {
                 return nil
             }
@@ -47,6 +44,19 @@ public enum CanvasShortcutCatalogService {
             }
             return commands.contains(where: { $0 == command })
         }
+    }
+
+    private static func isCommandPaletteDefinitionEnabled(
+        _ definition: CanvasShortcutDefinition,
+        executionContext: KeymapExecutionContext
+    ) -> Bool {
+        if definition.id.rawValue == "addNode", executionContext.operationTargetKind == .area {
+            return true
+        }
+        return KeymapExecutionPolicyResolver.isEnabled(
+            definition: definition,
+            context: executionContext
+        )
     }
 }
 

@@ -8,6 +8,47 @@ extension CanvasView {
     static let addNodeModeTreeOptionID = "tree"
     static let addNodeModeDiagramOptionID = "diagram"
 
+    struct PendingAddNodeEditingTransitionState: Equatable {
+        let targetKind: KeymapSwitchTargetKindIntentVariant
+        let shouldSwitchToNodeTargetAfterCommit: Bool
+    }
+
+    static func shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit(
+        currentTargetKind: KeymapSwitchTargetKindIntentVariant
+    ) -> Bool {
+        currentTargetKind == .area
+    }
+
+    static func operationTargetKindForPendingAddNodeEditing(
+        currentTargetKind: KeymapSwitchTargetKindIntentVariant,
+        shouldSwitchToNodeTargetAfterCommit: Bool
+    ) -> KeymapSwitchTargetKindIntentVariant {
+        if shouldSwitchToNodeTargetAfterCommit {
+            return .node
+        }
+        return currentTargetKind
+    }
+
+    static func pendingAddNodeEditingTransition(
+        currentTargetKind: KeymapSwitchTargetKindIntentVariant,
+        shouldSwitchToNodeTargetAfterCommit: Bool,
+        hasResolvedPendingEditingNode: Bool
+    ) -> PendingAddNodeEditingTransitionState {
+        if hasResolvedPendingEditingNode {
+            return PendingAddNodeEditingTransitionState(
+                targetKind: operationTargetKindForPendingAddNodeEditing(
+                    currentTargetKind: currentTargetKind,
+                    shouldSwitchToNodeTargetAfterCommit: shouldSwitchToNodeTargetAfterCommit
+                ),
+                shouldSwitchToNodeTargetAfterCommit: false
+            )
+        }
+        return PendingAddNodeEditingTransitionState(
+            targetKind: currentTargetKind,
+            shouldSwitchToNodeTargetAfterCommit: false
+        )
+    }
+
     func addNodeModeSelectionOptions() -> [SelectionPopupOption] {
         [
             SelectionPopupOption(
@@ -54,8 +95,22 @@ extension CanvasView {
 
     func commitAddNodeModeSelection(_ mode: CanvasEditingMode) {
         isAddNodeModePopupPresented = false
+        shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit =
+            Self.shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit(
+                currentTargetKind: operationTargetKind
+            )
         Task {
             await viewModel.addNodeFromModeSelection(mode: mode)
+            if viewModel.pendingEditingNodeID == nil {
+                let transition = Self.pendingAddNodeEditingTransition(
+                    currentTargetKind: operationTargetKind,
+                    shouldSwitchToNodeTargetAfterCommit: shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit,
+                    hasResolvedPendingEditingNode: false
+                )
+                operationTargetKind = transition.targetKind
+                shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit =
+                    transition.shouldSwitchToNodeTargetAfterCommit
+            }
         }
     }
 

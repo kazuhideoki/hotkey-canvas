@@ -187,8 +187,12 @@ extension CanvasView {
                 context: context
             )
         case .presentAddNodeModeSelection:
-            return isCommandEnabled(.addNode, context: context)
+            return isAddNodeModeSelectionEnabled(context: context)
         }
+    }
+
+    static func isAddNodeModeSelectionEnabled(context: KeymapExecutionContext) -> Bool {
+        context.operationTargetKind != .edge
     }
 
     private static func shortcutAction(for action: KeymapGlobalAction) -> CanvasShortcutAction? {

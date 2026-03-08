@@ -95,7 +95,7 @@ func test_areaTarget_isActionEnabled_disablesNodeOrEdgeCommands() {
     #expect(CanvasView.isActionEnabled(.apply(commands: [.moveFocus(.up)]), context: context))
     #expect(CanvasView.isActionEnabled(.switchTargetKind(variant: .node), context: context))
     #expect(!CanvasView.isActionEnabled(.cycleFocusedEdgeDirectionality, context: context))
-    #expect(!CanvasView.isActionEnabled(.presentAddNodeModeSelection, context: context))
+    #expect(CanvasView.isActionEnabled(.presentAddNodeModeSelection, context: context))
 }
 
 @Test("CanvasView hotkey policy: allows addChildNode in diagram node target")
@@ -261,7 +261,7 @@ func test_areaTarget_commandPaletteFiltersByExecutionPolicy() {
     )
     let visibleIds = Set(definitions.map(\.id.rawValue))
 
-    #expect(!visibleIds.contains("addNode"))
+    #expect(visibleIds.contains("addNode"))
     #expect(!visibleIds.contains("addChildNode"))
     #expect(!visibleIds.contains("addSiblingNodeAbove"))
     #expect(!visibleIds.contains("addSiblingNodeBelow"))
