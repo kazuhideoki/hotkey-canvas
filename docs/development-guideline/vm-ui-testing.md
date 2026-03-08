@@ -1,4 +1,4 @@
-# VM UI テスト運用ガイド
+# VM 上の UI テスト運用ガイド
 
 ## 目的
 
@@ -7,30 +7,30 @@
 このガイドの対象は、2026-03-08 時点で実際に通った最小構成です。
 
 - VM: `Tart --no-graphics` で起動した macOS VM
-- 画面操作: host から guest の `VNC`
-- スクリーンショット: host 側 `vncdotool capture`
-- 内部状態確認: guest 内 `debug-state API`
-- アプリ起動: guest 内 `tart exec ... swift run HotkeyCanvasApp`
-- 解像度: 必要に応じて `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` のように host に合わせて固定
+- 画面操作: ホストからゲストの `VNC`
+- スクリーンショット: ホスト側 `vncdotool capture`
+- 内部状態確認: ゲスト内 `debug-state API`
+- アプリ起動: ゲスト内 `tart exec ... swift run HotkeyCanvasApp`
+- 解像度: 必要に応じて `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` のようにホストに合わせて固定
 
 実際に詰まった点や回避策は `vm-ui-testing-troubleshooting.md` を参照。
 
 ## この構成を採る理由
 
-- host のキーボードやマウスには触れず、guest display にだけ入力を送れる
+- ホストのキーボードやマウスには触れず、ゲスト display にだけ入力を送れる
 - 見た目の確認と内部状態確認を分離できる
 - `Docker 上の macOS` のような非現実的な前提を置かずに済む
-- Tart 内蔵の `--vnc` 系が host 側 viewer を開く問題を避けられる
+- Tart 内蔵の `--vnc` 系がホスト側 viewer を開く問題を避けられる
 
 ## 前提
 
-- Apple silicon host
-- host に `tart`
-- host に `vncdotool`
+- Apple silicon ホスト
+- ホストに `tart`
+- ホストに `vncdotool`
 - base image または golden image がある
-- guest に `swift`, `curl`
-- guest の Screen Sharing / VNC login が有効
-- 実用運用では guest に full Xcode を入れ、必要な TCC 許可を事前付与する
+- ゲストに `swift`, `curl`
+- ゲストの Screen Sharing / VNC login が有効
+- 実用運用ではゲストに full Xcode を入れ、必要な TCC 許可を事前付与する
 
 ## 使用スクリプト
 
@@ -50,7 +50,7 @@
 
 ## 基本フロー
 
-### 1. golden image を作る
+### 1. golden image を作成する
 
 ```bash
 HOTKEY_VM_GOLDEN_IMAGE=hotkey-canvas-golden \
@@ -72,7 +72,7 @@ HOTKEY_VM_SHARED_REPO_MODE=rw \
 scripts/vm/start_worker.sh
 ```
 
-`HOTKEY_VM_SHARED_REPO_MODE=rw` を付けると、host の repo が guest に `virtiofs` 共有される。
+`HOTKEY_VM_SHARED_REPO_MODE=rw` を付けると、ホストの repo がゲストに `virtiofs` 共有される。
 既定では `guest workspace = /Volumes/My Shared Files/repo` として扱う。
 
 ### 3. guest を整備する
@@ -90,14 +90,14 @@ scripts/vm/check_guest_setup.sh
 
 Appium は将来の自動化経路として残しているが、最小フローでは必須ではない。
 
-`bootstrap_tcc_permissions.sh` の前に、guest へ VNC 接続した状態で一度だけ以下を完了させる。
+`bootstrap_tcc_permissions.sh` の前に、ゲストへ VNC 接続した状態で一度だけ以下を完了させる。
 
 - `tart-guest-agent` が `System Events` を制御しようとした時の `Allow`
 - Privacy & Security に誘導された場合の `tart-guest-agent` event injection 許可
 
 この seed が必要な理由は、`tart exec` で起動した入力処理の TCC subject が `osascript` や `swift` ではなく `tart-guest-agent` として評価されるため。
 
-### 4. HotkeyCanvas を guest 内で起動する
+### 4. HotkeyCanvas をゲスト内で起動する
 
 ```bash
 HOTKEY_VM_NAME=hotkey-canvas-agent \
@@ -116,16 +116,16 @@ scripts/vm/fetch_debug_state.sh /debug/v1/health
 ## ウィンドウサイズのルール
 
 VM 上での GUI 検証は、常に HotkeyCanvas window を最大化した状態で始める。
-あわせて、VM display 自体も host に寄せた固定解像度にしておく。
+あわせて、VM display 自体もホストに寄せた固定解像度にしておく。
 
 - 理由:
-  - host と近い表示密度で screenshot を比較しやすい
+  - ホストと近い表示密度で screenshot を比較しやすい
   - スクリーンショットの比較条件を揃えやすい
   - クリック座標や popup 位置のブレを減らせる
   - 「狭い window 固有の崩れ」と「通常表示の崩れ」を混同しにくい
 - 現在の標準:
   - `start_worker.sh` / `clone_worker.sh` は `HOTKEY_VM_DISPLAY_RESOLUTION` が指定されていれば `tart set --display ...` を適用する
-  - host に寄せる時は `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` を使う
+  - ホストに寄せる時は `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` を使う
   - `start_hotkey_canvas_debug.sh` は `HOTKEY_VM_AUTO_ZOOM_WINDOW=1` を既定値として app 起動時に window を拡大表示する
   - 無効化したい場合だけ `HOTKEY_VM_AUTO_ZOOM_WINDOW=0` を明示する
 
@@ -140,13 +140,13 @@ HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/capture_screen.sh .tmp/vm-artifacts/guest-screen.png
 ```
 
-このスクリプトは guest の `screencapture` を使わず、host 側の VNC capture を使う。
-そのため、host UI ではなく guest display だけを撮れる。
-標準では接続先は guest 自身の `$(tart ip <vm-name>):5900` になる。
+このスクリプトはゲストの `screencapture` を使わず、ホスト側の VNC capture を使う。
+そのため、ホスト UI ではなくゲスト display だけを撮れる。
+標準では接続先はゲスト自身の `$(tart ip <vm-name>):5900` になる。
 
 ### 任意入力の例
 
-`vncdotool` を直接使えば、guest display にだけ入力を流せる。
+`vncdotool` を直接使えば、ゲスト display にだけ入力を流せる。
 
 例: Add Node Mode Selection を開いて Tree node を追加する
 

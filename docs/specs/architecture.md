@@ -1,4 +1,4 @@
-# HotkeyCanvas Architecture
+# HotkeyCanvas アーキテクチャ
 
 ## 1. 目的と設計方針
 
@@ -16,13 +16,13 @@ HotkeyCanvas は、キーボードファーストでキャンバスを編集で�
 
 ## 2. レイヤー責務
 
-| Layer             | 責務                                           | 禁止事項                             |
-| ----------------- | ---------------------------------------------- | ------------------------------------ |
-| App               | 起動、DI 組み立て、依存配線                    | ビジネスロジック実装                 |
-| Domain            | モデル、不変条件、純粋な状態遷移               | UI/保存/外部API依存                  |
-| Application       | ユースケース実行、`apply` 調停、Undo/Redo 制御 | UIフレームワーク依存、永続化詳細実装 |
-| InterfaceAdapters | 入力変換、出力表示用変換、保存形式マッピング   | Domain/Application の責務侵食        |
-| Infrastructure    | ログ、メトリクス等の技術基盤                   | ドメイン判断ロジック                 |
+| レイヤー | 責務 | 禁止事項 |
+| --- | --- | --- |
+| App | 起動、DI 組み立て、依存配線 | ビジネスロジック実装 |
+| Domain | モデル、不変条件、純粋な状態遷移 | UI / 保存 / 外部 API 依存 |
+| Application | ユースケース実行、`apply` 調停、Undo / Redo 制御 | UI フレームワーク依存、永続化詳細実装 |
+| InterfaceAdapters | 入力変換、出力表示用変換、保存形式マッピング | Domain / Application の責務侵食 |
+| Infrastructure | ログ、メトリクス等の技術基盤 | ドメイン判断ロジック |
 
 ## 3. ディレクトリ責務マップ
 
@@ -91,7 +91,7 @@ InterfaceAdapters -> Domain (型参照のみ許容)
 Infrastructure -> (Application/InterfaceAdapters から利用)
 ```
 
-禁止:
+禁止事項:
 
 - `Domain` から `Application`/`InterfaceAdapters`/`Infrastructure` への依存
 - `Application` から SwiftUI/JSON 実装詳細への依存
@@ -121,10 +121,10 @@ struct ApplyResult {
 - `apply` はコマンド列の適用を一括で扱う。
 - Undo/Redo に必要な情報は `ApplyResult` に副産物として含める。
 
-## 7. 最小シーケンス（サンプル）
+## 7. 最小シーケンス例
 
 ```text
-Hotkey Input
+ホットキー入力
   -> Sources/InterfaceAdapters/Input/*Translator
   -> CanvasEditingInputPort.apply(commands)
   -> Sources/Application/UseCase/*UseCase
