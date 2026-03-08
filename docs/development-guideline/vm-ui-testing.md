@@ -11,6 +11,7 @@
 - スクリーンショット: host 側 `vncdotool capture`
 - 内部状態確認: guest 内 `debug-state API`
 - アプリ起動: guest 内 `tart exec ... swift run HotkeyCanvasApp`
+- 解像度: 必要に応じて `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` のように host に合わせて固定
 
 実際に詰まった点や回避策は `vm-ui-testing-troubleshooting.md` を参照。
 
@@ -61,10 +62,12 @@ scripts/vm/create_golden_image.sh
 ```bash
 HOTKEY_VM_GOLDEN_IMAGE=hotkey-canvas-golden \
 HOTKEY_VM_NAME=hotkey-canvas-agent \
+HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px \
 scripts/vm/clone_worker.sh
 
 HOTKEY_VM_NAME=hotkey-canvas-agent \
 HOTKEY_VM_DISPLAY_MODE=no-graphics \
+HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px \
 HOTKEY_VM_SHARED_REPO_MODE=rw \
 scripts/vm/start_worker.sh
 ```
@@ -109,6 +112,26 @@ scripts/vm/fetch_debug_state.sh /debug/v1/health
 ```
 
 ## VNC で UI を操作する
+
+## ウィンドウサイズのルール
+
+VM 上での GUI 検証は、常に HotkeyCanvas window を最大化した状態で始める。
+あわせて、VM display 自体も host に寄せた固定解像度にしておく。
+
+- 理由:
+  - host と近い表示密度で screenshot を比較しやすい
+  - スクリーンショットの比較条件を揃えやすい
+  - クリック座標や popup 位置のブレを減らせる
+  - 「狭い window 固有の崩れ」と「通常表示の崩れ」を混同しにくい
+- 現在の標準:
+  - `start_worker.sh` / `clone_worker.sh` は `HOTKEY_VM_DISPLAY_RESOLUTION` が指定されていれば `tart set --display ...` を適用する
+  - host に寄せる時は `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` を使う
+  - `start_hotkey_canvas_debug.sh` は `HOTKEY_VM_AUTO_ZOOM_WINDOW=1` を既定値として app 起動時に window を拡大表示する
+  - 無効化したい場合だけ `HOTKEY_VM_AUTO_ZOOM_WINDOW=0` を明示する
+
+確認用スクリーンショット例:
+
+- `.tmp/vm-artifacts/auto-zoom-window-final.png`
 
 ### スクリーンショット取得
 
@@ -196,6 +219,7 @@ scripts/vm/capture_diagram_multi_edge.sh \
 - `bootstrap_tcc_permissions.sh` は初回 seed の後追い整形であり、最初の macOS 許可操作そのものは置き換えられない
 - `--vnc` / `--vnc-experimental` は Tart が host 側 viewer を開くため、host 無干渉運用の標準にはしない
 - Appium/mac2 はこの repo ではまだ標準運用にしていない
+- shared repo を guest から `swift run` した時に plugin 解決が不安定になることがある。その場合は guest-local copy へ同期して起動する
 
 ## 後片付け
 

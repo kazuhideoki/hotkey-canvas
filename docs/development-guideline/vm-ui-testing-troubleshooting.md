@@ -13,6 +13,8 @@
 - 状態確認は必ず debug-state API で併用する
 - `tart exec` 経由の入力自動化は `tart-guest-agent` の TCC を前提に考える
 - 空キャンバスでは最初の 1 手が特殊なので、Diagram シナリオでも Tree bootstrap node を経由する方が安定する
+- GUI 検証は最大化した window を前提に揃える
+- display 解像度も固定した方が host との差分を追いやすい
 
 ## 実際に詰まった点
 
@@ -88,6 +90,27 @@
 - これは host 側 viewer を開いているのではなく、guest 側 Screen Sharing の状態表示
 - host 無干渉要件の破綻ではないが、見た目検証ではノイズになる
 
+### 13. app window は最大化を前提にした方が安定した
+
+- 非最大化だと screenshot の見え方や click 座標がぶれやすい
+- popup の見え方も相対的に狭くなり、操作再現性が落ちた
+- そのため VM 作業では「起動直後に最大化してから始める」を標準にした
+- 2026-03-08 時点では app 側の debug launch で `HOTKEY_CANVAS_AUTO_ZOOM_WINDOW=1` を使って起動時に zoom する運用にしている
+
+### 15. display 解像度も固定しておくと比較しやすい
+
+- VM display の初期値は `1024x768` で、host の実表示と差が大きい
+- screenshot の構図や popup の相対サイズが変わるので、視覚比較には不利だった
+- `Tart` は `tart set <vm> --display WIDTHxHEIGHT[pt|px]` を持つので、worker clone 時か起動前に固定できる
+- host を基準に寄せるなら `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` のように `px` 付きで明示する方が意図がずれにくい
+
+### 14. shared repo 上の `swift run` は不安定になることがある
+
+- `virtiofs` 共有上の repo を guest から直接 `swift run` すると、plugin 解決で詰まることがあった
+- 実測では `SwiftLintPlugins` 周りの解決エラーで app 起動まで進まないケースがあった
+- 緊急回避としては、repo を guest-local path に同期してそこで `swift run` する方が安定した
+- ただし通常運用の正本は shared repo のままなので、guest-local copy は workaround 扱いにする
+
 ## 安定した実行パターン
 
 空キャンバスから `Diagram 2 nodes + 3 edges` を作る時は、次の考え方が安定した。
@@ -146,6 +169,8 @@ pause:1.5
 
 - `check_guest_setup.sh` で `agent-appleevents`, `real-listenevent`, `real-postevent` が `ok` か確認する
 - `start_worker.sh` は `HOTKEY_VM_DISPLAY_MODE=no-graphics` を使う
+- 必要なら `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` を付けて host 相当の display に揃える
+- HotkeyCanvas 起動後、window が最大化されていることを最初の screenshot で確認する
 - 最初の入力前に canvas click を入れる
 - Diagram シナリオでも空キャンバスなら Tree bootstrap を前提にする
 - 成否は screenshot だけでなく debug-state でも確認する

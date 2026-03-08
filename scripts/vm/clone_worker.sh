@@ -18,5 +18,6 @@ vm_ensure_local_dirs
 
 vm_log "Cloning ${HOTKEY_VM_GOLDEN_IMAGE} -> ${HOTKEY_VM_NAME}"
 tart clone "${HOTKEY_VM_GOLDEN_IMAGE}" "${HOTKEY_VM_NAME}"
+vm_apply_display_resolution_if_configured
 
 vm_log "Worker VM is ready: ${HOTKEY_VM_NAME}"

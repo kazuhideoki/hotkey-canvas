@@ -31,6 +31,9 @@ SSH や guest-local workspace 前提の未検証ラッパーは置かず、実�
   - debug-state API bearer token
 - `HOTKEY_VM_DISPLAY_MODE`
   - `vnc`, `vnc-experimental`, `no-graphics`, `gui`
+- `HOTKEY_VM_DISPLAY_RESOLUTION`
+  - Tart の `WIDTHxHEIGHT[pt|px]` 形式で VM display を固定する
+  - host に合わせたい場合は `1512x982px` のように `px` 付きで明示する
 - `HOTKEY_VM_SHARED_REPO_MODE`
   - `ro` または `rw`
 - `HOTKEY_VM_BASE_IMAGE_SOURCE`
@@ -48,6 +51,7 @@ SSH や guest-local workspace 前提の未検証ラッパーは置かず、実�
 
 - golden image は `Xcode + Screen Sharing + TCC 許可済み` を前提にする
 - 起動は `HOTKEY_VM_DISPLAY_MODE=no-graphics` を標準にする
+- 見た目を host に寄せたい場合は `HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px` のように固定する
 - 画面接続は Tart 内蔵 viewer ではなく guest 側の VNC を使う
 - スクリーンショットは guest の `screencapture` ではなく、host 側の `vncdotool` を使う
 - `vnc` / `vnc-experimental` は Tart が host 側 viewer を開くため、通常運用では使わない
@@ -88,9 +92,11 @@ scripts/vm/check_guest_setup.sh
 ```bash
 HOTKEY_VM_GOLDEN_IMAGE=hotkey-canvas-golden \
 HOTKEY_VM_NAME=hotkey-canvas-agent \
+HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px \
 scripts/vm/clone_worker.sh
 
 HOTKEY_VM_DISPLAY_MODE=no-graphics \
+HOTKEY_VM_DISPLAY_RESOLUTION=1512x982px \
 HOTKEY_VM_SHARED_REPO_MODE=rw \
 HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/start_worker.sh

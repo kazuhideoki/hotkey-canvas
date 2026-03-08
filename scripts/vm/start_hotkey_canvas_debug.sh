@@ -4,6 +4,8 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${script_dir}/common.sh"
 
+HOTKEY_VM_AUTO_ZOOM_WINDOW="${HOTKEY_VM_AUTO_ZOOM_WINDOW:-1}"
+
 vm_require_command tart
 vm_wait_for_guest
 
@@ -22,6 +24,7 @@ if [[ -f "\${pid_file}" ]] && kill -0 "\$(cat "\${pid_file}")" 2>/dev/null; then
     exit 0
 fi
 cd "\${workspace_dir}"
+HOTKEY_CANVAS_AUTO_ZOOM_WINDOW='${HOTKEY_VM_AUTO_ZOOM_WINDOW}' \
 nohup swift run HotkeyCanvasApp -- --enable-debug-state-api --debug-state-port=${HOTKEY_VM_DEBUG_STATE_PORT} --debug-state-token='${HOTKEY_VM_DEBUG_STATE_TOKEN}' >"\${log_file}" 2>&1 &
 echo \$! > "\${pid_file}"
 EOF

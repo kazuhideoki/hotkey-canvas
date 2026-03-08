@@ -12,6 +12,7 @@ fi
 vm_require_command tart
 vm_ensure_local_dirs
 vm_validate_display_mode
+vm_apply_display_resolution_if_configured
 
 pid_file="${HOTKEY_VM_LOCAL_HOST_LOG_DIR}/tart-run.pid"
 log_file="${HOTKEY_VM_LOCAL_HOST_LOG_DIR}/tart-run.log"

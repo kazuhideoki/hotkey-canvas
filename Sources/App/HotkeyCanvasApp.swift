@@ -3,6 +3,14 @@
 import AppKit
 import SwiftUI
 
+private enum WindowLaunchBehavior {
+    static let autoZoomEnvironmentKey = "HOTKEY_CANVAS_AUTO_ZOOM_WINDOW"
+
+    static func shouldAutoZoomWindow() -> Bool {
+        ProcessInfo.processInfo.environment[autoZoomEnvironmentKey] == "1"
+    }
+}
+
 /// Bridges NSApplication lifecycle hooks that are needed at startup.
 final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Configures activation behavior for debug launches.
@@ -11,7 +19,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApplication.shared.setActivationPolicy(.regular)
             NSApplication.shared.activate(ignoringOtherApps: true)
             DispatchQueue.main.async {
-                NSApplication.shared.windows.first?.makeKeyAndOrderFront(nil)
+                guard let window = NSApplication.shared.windows.first else {
+                    return
+                }
+                window.makeKeyAndOrderFront(nil)
+                guard WindowLaunchBehavior.shouldAutoZoomWindow() else {
+                    return
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    window.zoom(nil)
+                }
             }
         #endif
     }
