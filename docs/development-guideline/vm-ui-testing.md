@@ -12,6 +12,8 @@
 - 内部状態確認: guest 内 `debug-state API`
 - アプリ起動: guest 内 `tart exec ... swift run HotkeyCanvasApp`
 
+実際に詰まった点や回避策は `vm-ui-testing-troubleshooting.md` を参照。
+
 ## この構成を採る理由
 
 - host のキーボードやマウスには触れず、guest display にだけ入力を送れる
