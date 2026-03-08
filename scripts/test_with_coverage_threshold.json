@@ -1,0 +1,32 @@
+{
+  "focus_file_thresholds": [
+    {
+      "path_prefix": "Sources/Domain/",
+      "minimum_line_coverage": 85.0
+    },
+    {
+      "path_prefix": "Sources/Application/",
+      "minimum_line_coverage": 75.0
+    },
+    {
+      "path_prefix": "Sources/InterfaceAdapters/Input/",
+      "minimum_line_coverage": 70.0
+    },
+    {
+      "path_prefix": "Sources/InterfaceAdapters/Persistence/",
+      "minimum_line_coverage": 70.0
+    },
+    {
+      "path_prefix": "Sources/InterfaceAdapters/Output/ViewModel/",
+      "minimum_line_coverage": 70.0
+    },
+    {
+      "path_prefix": "Sources/InterfaceAdapters/Output/DebugState/",
+      "minimum_line_coverage": 70.0
+    }
+  ],
+  "layer_thresholds": {
+    "Application": 70.0,
+    "Domain": 80.0
+  }
+}
