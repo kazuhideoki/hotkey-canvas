@@ -1,28 +1,24 @@
-# リポジトリガイドライン
+# 開発ワークフローと規約
 
-## アーキテクチャ参照
+この文書は、日常的な開発の進め方と、実装時に従うべき規約をまとめた正本です。
+関連文書の一覧、役割、参照タイミング、変更タイミングは `AGENTS.md` を参照すること。
 
-`docs/specs/architecture.md` は、レイヤー責務、依存方向、ディレクトリ配置、命名規則、UI 表示フロー規約の正本です。
+## 開発の進め方
 
-## ドメイン文書
-
-- `docs/specs/domain.md` は、ドメインごとの構造、サービス、利用箇所、不変条件を整理した正本です。
-- `Sources/Domain/` 配下の model / service / command / error を追加・変更した場合は、同じ変更で `docs/specs/domain.md` を更新すること。
-- アプリケーション挙動の変更により Domain サービスの使われ方が変わる場合は、`docs/specs/domain.md` の関連利用節も更新すること。
-
-## プロジェクト構造とモジュール構成
-
-レイヤー境界、依存ルール、配置判断は `docs/specs/architecture.md` に従うこと。
+- 実装前に、対象変更の影響範囲と必要なテストを整理する。
+- 設計や挙動に変更がある場合は、先にテスト追加・更新方針を決める。
+- バグ修正では、修正前に失敗する回帰テストを用意してから本実装へ進む。
+- 変更後は `swift build`、`./scripts/lint_and_format.sh`、`./scripts/test_with_coverage.sh` を通し、差分に必要な検証が揃っていることを確認する。
 
 ## ビルド・テスト・開発コマンド
 
 基本コマンド:
 
-- `cat docs/specs/architecture.md`: 実装前に設計制約を確認する。
-- `cat docs/development-guideline/vm-ui-testing.md`: GUI 検証時の隔離 macOS VM UI テスト運用を確認する。
 - `swift build`
 - `swift test`
 - `./scripts/bootstrap_periphery.sh`
+- `./scripts/lint_and_format.sh`
+- `./scripts/test_with_coverage.sh`
 - `git log --oneline`: 既存コミットの要約スタイルを確認する。
 - `find . -maxdepth 3 -type f`: 想定どおりにファイルが配置されているか確認する。
 
