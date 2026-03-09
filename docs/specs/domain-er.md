@@ -8,7 +8,7 @@
 
 ## 2. スコープ
 
-- 対象は Domain の主要エンティティ/値オブジェクトのうち、現時点で ER として可視化済みの領域（キャンバス編集コア、ショートカット解決）。
+- 対象は Domain の主要エンティティ/値オブジェクト、およびショートカット解決で中核となるサービス起点の型関係のうち、現時点で可視化済みの領域（キャンバス編集コア、ショートカット解決）。
 - サービス実装詳細（アルゴリズム）は対象外。
 
 ## 3. キャンバス編集コア ER
@@ -28,6 +28,7 @@ erDiagram
     CanvasEdge ||--o| CanvasEdgeFocus : "edgeID"
     CanvasNode ||--o| CanvasEdgeFocus : "originNodeID"
     CanvasFocusedElement ||--o| CanvasEdgeFocus : "edge payload"
+    CanvasArea ||--o| CanvasFocusedElement : "area payload"
 
     CanvasArea ||--o{ CanvasNode : "nodeIDs"
 
@@ -63,7 +64,7 @@ erDiagram
     }
 
     CanvasFocusedElement {
-        enum kind "node|edge"
+        enum kind "node|edge|area"
     }
 
     CanvasEdgeFocus {
@@ -74,6 +75,7 @@ erDiagram
     CanvasArea {
         CanvasAreaID id PK
         CanvasEditingMode editingMode
+        CanvasAreaEdgeShapeStyle edgeShapeStyle
     }
 ```
 
@@ -82,10 +84,8 @@ erDiagram
 - `CanvasArea` と `CanvasNode` は実装上 `nodeIDs: Set<CanvasNodeID>` による参照。  
   ドメイン不変条件として「各 `CanvasNode` はちょうど1つの `CanvasArea` に所属」する。
 - `CanvasEdge` は `fromNodeID` と `toNodeID` で `CanvasNode` を参照する有向辺。
-- `collapsedRootNodeIDs` は「可視性計算の入力集合」で、ノード実体は `CanvasNode` 側に存在する。
-- `focusedElement` は `node` または `edge` を保持し、`edge` の場合は `CanvasEdgeFocus`（`edgeID` と `originNodeID`）を保持する。
-- `selectedEdgeIDs` は edge 対象時の複数選択集合で、正規化時に `focused edge` を必ず含む。
-- `CanvasNode.metadata["createdOrder"]` は作成順メタデータとして利用し、area 跨ぎフォーカス移動時の Diagram アンカー決定に使用する。
+- `focusedElement` は `node` / `edge` / `area` を保持し、`edge` の場合は `CanvasEdgeFocus`（`edgeID` と `originNodeID`）を保持する。
+- `CanvasNode.metadata["createdOrder"]` は作成順メタデータを保持する。
 
 ## 4. ショートカット解決 ER
 
@@ -102,12 +102,10 @@ erDiagram
     CanvasShortcutGesture ||--|| CanvasShortcutModifiers : "modifiers"
 
     KeymapIntentResolver ||--o{ KeymapResolvedRoute : "resolveRoute"
-    KeymapResolvedRoute ||--|| KeymapShortcutScope : "scope"
     KeymapResolvedRoute ||--o| KeymapPrimitiveIntent : "primitive payload"
     KeymapResolvedRoute ||--o| KeymapGlobalAction : "global payload"
 ```
 
 補足:
 
-- `KeymapIntentResolver.resolveRoute(for:)` は現状 `primitive` / `global` を返し、非対応入力は `nil`。
-- `modal` は `KeymapResolvedRoute` のスコープ語彙として存在するが、現実装では View 側状態管理で処理する。
+- `KeymapResolvedRoute` は `primitive` / `global` / `modal` の route 語彙を持つ。

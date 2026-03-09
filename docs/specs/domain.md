@@ -282,7 +282,6 @@
   - `CanvasCommandPaletteVisibility`
   - `CanvasShortcutDefinition`
   - `KeymapExecutionRoute`
-  - `KeymapShortcutScope`
   - `KeymapPrimitiveIntent`
   - `KeymapGlobalAction`
   - `KeymapResolvedRoute`
