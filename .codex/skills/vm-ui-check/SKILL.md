@@ -18,9 +18,15 @@ description: Use when checking HotkeyCanvas behavior inside a Tart VM, especiall
 よく使う入口:
 
 - 新規 worker を作って app も起動する:
-  - `HOTKEY_VM_SHARED_REPO_MODE=rw HOTKEY_VM_NAME=<worker-name> scripts/vm/session_up.sh --clone --check-guest --start-app`
+  - `export HOTKEY_VM_NAME=<worker-name>`
+  - `export HOTKEY_VM_SHARED_REPO_MODE=rw`
+  - `export HOTKEY_VM_DISPLAY_MODE=no-graphics`
+  - `scripts/vm/session_up.sh --clone --check-guest --start-app`
 - 既存 worker を再利用して app を起動する:
-  - `HOTKEY_VM_SHARED_REPO_MODE=rw HOTKEY_VM_NAME=<worker-name> scripts/vm/session_up.sh --check-guest --start-app`
+  - `export HOTKEY_VM_NAME=<worker-name>`
+  - `export HOTKEY_VM_SHARED_REPO_MODE=rw`
+  - `export HOTKEY_VM_DISPLAY_MODE=no-graphics`
+  - `scripts/vm/session_up.sh --check-guest --start-app`
 
 必要に応じて次を付ける。
 
@@ -32,6 +38,8 @@ description: Use when checking HotkeyCanvas behavior inside a Tart VM, especiall
   - `--check-guest`
 - app 起動まで済ませたい:
   - `--start-app`
+- app を fresh に起動し直したい:
+  - `scripts/vm/restart_hotkey_canvas_debug.sh`
 - 標準成果物を残して閉じたい:
   - `--collect-standard-artifacts`
 
@@ -41,6 +49,7 @@ UI 操作は固定 wrapper に閉じ込めない。
 状況に応じて次を使い分ける。
 
 debug-state を使うなら、先に `--start-app` または `scripts/vm/start_hotkey_canvas_debug.sh` で app を起動しておく。
+途中で操作が崩れた時は、`scripts/vm/restart_hotkey_canvas_debug.sh` で app を fresh に戻してから再試行する。
 
 - guest 内 command 実行:
   - `tart exec`
@@ -53,6 +62,13 @@ debug-state を使うなら、先に `--start-app` または `scripts/vm/start_h
 - screenshot 取得:
   - `scripts/vm/capture_screen.sh`
 
+空キャンバスから tree と diagram を両方作る時は、次の順が安定しやすい。
+
+- canvas を click して入力先を固定する
+- `shift+enter -> esc` で tree node を bootstrap する
+- `shift+enter -> d -> enter` で diagram area の最初の node を作る
+- `super+enter` で同じ diagram area に node を追加する
+
 ## 成果物
 
 可能なら `screenshot PNG` と `debug-state JSON` の両方を残す。
@@ -64,6 +80,8 @@ app が起動しなかった場合でも、最低でも host 側 log の場所�
   - `.tmp/vm/<vm-name>/host/`
 - host artifact:
   - `.tmp/vm/<vm-name>/artifacts/`
+
+`session_down.sh --collect-standard-artifacts` が長く待つ場合は、artifact 採取の完了を確認してから `tart stop "$HOTKEY_VM_NAME"` で明示停止してよい。
 
 ## 詳細参照
 

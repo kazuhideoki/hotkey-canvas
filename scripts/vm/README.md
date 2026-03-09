@@ -90,23 +90,15 @@ scripts/vm/check_guest_setup.sh
 ## 最小フロー
 
 ```bash
-HOTKEY_VM_GOLDEN_IMAGE=hotkey-canvas-golden \
-HOTKEY_VM_NAME=hotkey-canvas-agent \
-HOTKEY_VM_SHARED_REPO_MODE=rw \
-HOTKEY_VM_DISPLAY_MODE=no-graphics \
-HOTKEY_VM_NAME=hotkey-canvas-agent \
+export HOTKEY_VM_GOLDEN_IMAGE=hotkey-canvas-golden
+export HOTKEY_VM_NAME=hotkey-canvas-agent
+export HOTKEY_VM_SHARED_REPO_MODE=rw
+export HOTKEY_VM_DISPLAY_MODE=no-graphics
+
 scripts/vm/session_up.sh --clone
-
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/start_hotkey_canvas_debug.sh
-
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/fetch_debug_state.sh /debug/v1/health
-
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/capture_screen.sh .tmp/vm-artifacts/guest-screen.png
-
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/session_down.sh --collect-standard-artifacts
 ```
 
@@ -120,6 +112,8 @@ scripts/vm/session_down.sh --collect-standard-artifacts
   - clone / start / prepare / check / app 起動を薄く束ねる
 - `session_down.sh`
   - 標準成果物を optional に保存してから stop する
+- `restart_hotkey_canvas_debug.sh`
+  - app を fresh に起動し直す
 - `create_golden_image.sh`
   - base image から local golden image を作る
 - `clone_worker.sh`

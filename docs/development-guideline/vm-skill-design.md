@@ -25,6 +25,7 @@ skill が標準化するもの:
 - worker VM の clone / start / readiness 確認
 - 必要に応じた guest 準備と前提確認
 - 必要に応じた HotkeyCanvas debug 起動
+- 必要に応じた HotkeyCanvas debug の fresh restart
 - 標準成果物の保存と VM 停止
 
 ## 権限方針
@@ -62,6 +63,7 @@ skill からは、削除系や image 更新系の操作を標準フローに含�
 ### setup
 
 `scripts/vm/session_up.sh` は、既存 script を順に呼ぶ薄い orchestrator とする。
+利用時の環境変数は、都度コマンド前置ではなく `export` して使う。
 
 扱うオプション:
 
@@ -105,6 +107,8 @@ GUI 検証では「その場で必要な操作を組み立てる」自由度を�
   - `scripts/vm/fetch_debug_state.sh`
 - 見た目確認:
   - `scripts/vm/capture_screen.sh`
+- app を fresh に戻したい時:
+  - `scripts/vm/restart_hotkey_canvas_debug.sh`
 
 必要なら `tart exec` で guest 内 command を直接実行する。
 
