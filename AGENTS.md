@@ -18,6 +18,10 @@
   - 役割: VM UI テストで発生しやすい問題と対処法の正本
   - 参照タイミング: VM UI テストや GUI 検証で詰まったとき
   - 変更タイミング: 新しい障害パターンや復旧手順を見つけたとき
+- VM skill 設計: `docs/development-guideline/vm-skill-design.md`
+  - 役割: VM 利用 skill の責務、権限境界、wrapper script 方針、git 追跡方針の正本
+  - 参照タイミング: VM 検証を skill 化するとき、承認方針や setup/teardown の設計を見直すとき
+  - 変更タイミング: skill の責務、許可対象コマンド、wrapper script、成果物定義、追跡方針を変更したとき
 
 ## Specs
 

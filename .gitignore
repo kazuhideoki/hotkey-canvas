@@ -1,4 +1,8 @@
-.codex
+.codex/*
+!.codex/skills/
+.codex/skills/*
+!.codex/skills/vm-ui-check/
+!.codex/skills/vm-ui-check/**
 AGENTS.override.md
 .build
 .DS_Store

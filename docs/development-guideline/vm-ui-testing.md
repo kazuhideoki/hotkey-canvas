@@ -34,6 +34,8 @@
 
 ## 使用スクリプト
 
+- `scripts/vm/session_up.sh`
+- `scripts/vm/session_down.sh`
 - `scripts/vm/create_golden_image.sh`
 - `scripts/vm/clone_worker.sh`
 - `scripts/vm/start_worker.sh`
@@ -50,6 +52,9 @@
 
 ## 基本フロー
 
+探索的な GUI 確認では、まず `session_up.sh` / `session_down.sh` を入口に使う。
+詳細は `vm-skill-design.md` を参照。
+
 ### 1. golden image を作成する
 
 ```bash
@@ -62,12 +67,9 @@ scripts/vm/create_golden_image.sh
 ```bash
 HOTKEY_VM_GOLDEN_IMAGE=hotkey-canvas-golden \
 HOTKEY_VM_NAME=hotkey-canvas-agent \
-scripts/vm/clone_worker.sh
-
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 HOTKEY_VM_DISPLAY_MODE=no-graphics \
 HOTKEY_VM_SHARED_REPO_MODE=rw \
-scripts/vm/start_worker.sh
+scripts/vm/session_up.sh --clone
 ```
 
 `HOTKEY_VM_SHARED_REPO_MODE=rw` を付けると、ホストの repo がゲストに `virtiofs` 共有される。
@@ -224,5 +226,5 @@ scripts/vm/capture_diagram_multi_edge.sh \
 
 ```bash
 HOTKEY_VM_NAME=hotkey-canvas-agent \
-scripts/vm/stop_worker.sh
+scripts/vm/session_down.sh --collect-standard-artifacts
 ```
