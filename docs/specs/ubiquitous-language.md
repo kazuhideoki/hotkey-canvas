@@ -299,7 +299,209 @@
   - 開く
   - 元に戻す
 
-## 5. 関連ドキュメント
+## 5. ショートカットと入力解決
+
+- 本節では、ショートカット入力まわりの会話で使う共通語彙を扱う。
+- 実装上は `CanvasShortcutGesture`、`KeymapPrimitiveIntent`、`KeymapGlobalAction`、`KeymapExecutionCondition` などと対応するが、本書では人が会話しやすい言葉を優先する。
+- `primitive`、`global`、`modal` は実装説明では使ってよいが、会話ではそれぞれ `通常ショートカット`、`全体ショートカット`、`モード内キー操作` を優先する。
+
+### ショートカット
+
+- 定義
+  - 特定のキー入力に、特定の操作を対応づけたもの。
+  - 会話では、まず「どのショートカットで何をするか」を自然言語で表す。
+- 使い方
+  - 「この操作にはショートカットを割り当てる」
+  - 「ショートカット一覧を確認する」
+  - 「このショートカットは edge 対象では無効にする」
+- 実装上の対応
+  - `CanvasShortcutDefinition`
+  - `CanvasShortcutCatalogService`
+- 非推奨
+  - ホットキー
+  - キーバインド
+
+### キー入力
+
+- 定義
+  - まだ操作として解釈される前の、押されたキーと修飾キーの組み合わせ。
+  - まず入力そのものを指す言葉として使う。
+- 使い方
+  - 「このキー入力を通常ショートカットとして解釈する」
+  - 「同じキー入力でも文脈によって動作が変わる」
+  - 「このキー入力は未割当のままにする」
+- 実装上の対応
+  - `CanvasShortcutGesture`
+  - `CanvasShortcutKey`
+  - `CanvasShortcutModifiers`
+- 非推奨
+  - 生イベント
+  - トリガー
+
+### 操作意図
+
+- 定義
+  - キー入力を、どの操作として解釈したかを表す言葉。
+  - 会話では、実装名の `Intent` ではなく `操作意図` と呼ぶ。
+- 使い方
+  - 「このキー入力は追加の操作意図として扱う」
+  - 「操作意図は同じだが、モードで実行結果が変わる」
+  - 「このキー入力は操作意図に変換しない」
+- 実装上の対応
+  - `KeymapPrimitiveIntent`
+  - `KeymapIntentResolver`
+- 非推奨
+  - Intent
+  - ルート
+
+### 通常ショートカット
+
+- 定義
+  - 通常のキャンバス操作として解釈されるショートカット。
+  - 今の操作対象、編集モード、フォーカス、選択に応じて意味や可否が決まる。
+- 使い方
+  - 「通常ショートカットとしてフォーカス移動を実行する」
+  - 「この通常ショートカットは tree と diagram で意味が変わる」
+  - 「edge 対象ではこの通常ショートカットを無効にする」
+- 実装上の対応
+  - `KeymapResolvedRoute.primitive`
+  - `KeymapPrimitiveIntent`
+- 非推奨
+  - primitive
+  - 編集ショートカット
+
+### 全体ショートカット
+
+- 定義
+  - キャンバス全体に対して働くショートカット。
+  - 通常ショートカットのようにキャンバス編集へ直接落とさず、全体機能を起動する。
+  - 操作対象やフォーカス状況に応じた有効条件を持つことはある。
+- 使い方
+  - 「Command Palette は全体ショートカットで開く」
+  - 「Undo は全体ショートカットとして扱う」
+  - 「ズームは全体ショートカットに含める」
+- 実装上の対応
+  - `KeymapResolvedRoute.global`
+  - `KeymapGlobalAction`
+- 非推奨
+  - global
+
+### モード内キー操作
+
+- 定義
+  - すでに開いている一時的な UI モードの中だけで有効なキー操作。
+  - キャンバス編集そのものではなく、そのモード自身を操作する。
+- 使い方
+  - 「Connect Mode 中はモード内キー操作で候補を移動する」
+  - 「Command Palette の上下キーはモード内キー操作である」
+  - 「通常ショートカットとモード内キー操作は分けて考える」
+- 実装上の対応
+  - `KeymapResolvedRoute.modal`
+  - `KeymapExecutionModalKind`
+- 非推奨
+  - modal
+
+### 操作対象
+
+- 定義
+  - 今ショートカットの対象になっている種別。
+  - `ノード`、`エッジ`、`エリア` のいずれかを取る。
+- 使い方
+  - 「操作対象を edge に切り替える」
+  - 「この通常ショートカットは area 対象では無効にする」
+  - 「操作対象ごとに有効条件が変わる」
+- 実装上の対応
+  - `KeymapSwitchTargetKindIntentVariant`
+  - `operationTargetKind`
+- 非推奨
+  - target kind
+  - ターゲット種別
+
+### 対象切替
+
+- 定義
+  - 操作対象を `ノード`、`エッジ`、`エリア` の間で切り替えること。
+  - 会話では、何に切り替えるかを明示する。
+- 使い方
+  - 「対象切替で edge に移る」
+  - 「tab で対象切替する」
+  - 「利用できない対象は対象切替で飛ばす」
+- 実装上の対応
+  - `KeymapPrimitiveIntent.switchTargetKind`
+  - `KeymapContextAction.switchTargetKind`
+- 非推奨
+  - switchTargetKind
+  - ターゲット切替
+
+### 有効条件
+
+- 定義
+  - あるショートカットや操作が、今の状態で使えるかどうかを決める条件。
+  - 操作対象、編集モード、フォーカス有無、テキスト編集中かどうかなどを含む。
+- 使い方
+  - 「このショートカットの有効条件は focused node 必須」
+  - 「有効条件に合わないときは Command Palette に出さない」
+  - 「edge 対象では別の有効条件を使う」
+- 実装上の対応
+  - `KeymapExecutionCondition`
+  - `KeymapExecutionContext`
+  - `KeymapExecutionPolicyResolver`
+- 非推奨
+  - execution condition
+  - policy
+
+### 接続モード
+
+- 定義
+  - 接続先候補を選んで、ノード同士を接続するための一時モード。
+  - 通常ショートカットではなく、モード内キー操作で進行する。
+- 使い方
+  - 「接続モードに入る」
+  - 「接続モードで候補を選ぶ」
+  - 「接続モードをキャンセルする」
+- 実装上の対応
+  - `beginConnectNodeSelection`
+  - `isConnectNodeSelectionActive`
+- 非推奨
+  - Connect Mode
+  - 接続選択
+
+### 追加モード選択
+
+- 定義
+  - 追加方法や追加先モードを選ぶための一時モード。
+  - `shift+enter` で開き、確定後に実際の追加操作へ進む。
+  - area 対象で確定した場合は、新規 area 作成後に node 編集へ遷移する。
+- 使い方
+  - 「追加モード選択を開く」
+  - 「追加モード選択で tree を選ぶ」
+  - 「追加モード選択をキャンセルする」
+- 実装上の対応
+  - `KeymapAddIntentVariant.modeSelect`
+  - `presentAddNodeModeSelection`
+  - `isAddNodePopupPresented`
+- 非推奨
+  - Add Node Mode Selection
+  - 追加ポップアップ
+
+### コマンドパレット
+
+- 定義
+  - 利用可能な操作を一覧し、検索して実行するための UI。
+  - ショートカット定義と表示条件を共有する。
+- 使い方
+  - 「コマンドパレットを開く」
+  - 「コマンドパレットにこの操作を表示する」
+  - 「有効条件に合わない項目はコマンドパレットに出さない」
+- 実装上の対応
+  - `CanvasShortcutCatalogService.commandPaletteDefinitions`
+  - `CanvasCommandPaletteVisibility`
+  - `CanvasCommandPaletteContext`
+- 非推奨
+  - Palette
+  - コマンド一覧
+
+## 6. 関連ドキュメント
 
 - ドメイン正本: `docs/specs/domain.md`
 - アーキテクチャ正本: `docs/specs/architecture.md`
