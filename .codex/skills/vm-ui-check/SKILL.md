@@ -15,10 +15,18 @@ description: Use when checking HotkeyCanvas behavior inside a Tart VM, especiall
 - 後片付け:
   - `scripts/vm/session_down.sh`
 
+よく使う入口:
+
+- 新規 worker を作って app も起動する:
+  - `HOTKEY_VM_SHARED_REPO_MODE=rw HOTKEY_VM_NAME=<worker-name> scripts/vm/session_up.sh --clone --check-guest --start-app`
+- 既存 worker を再利用して app を起動する:
+  - `HOTKEY_VM_SHARED_REPO_MODE=rw HOTKEY_VM_NAME=<worker-name> scripts/vm/session_up.sh --check-guest --start-app`
+
 必要に応じて次を付ける。
 
 - VM clone が必要:
   - `--clone`
+  - 新規 worker を作る時だけ付ける。`--clone` は clone だけでなく start まで含む
 - guest 前提確認が必要:
   - `--prepare-guest`
   - `--check-guest`
@@ -31,6 +39,8 @@ description: Use when checking HotkeyCanvas behavior inside a Tart VM, especiall
 
 UI 操作は固定 wrapper に閉じ込めない。
 状況に応じて次を使い分ける。
+
+debug-state を使うなら、先に `--start-app` または `scripts/vm/start_hotkey_canvas_debug.sh` で app を起動しておく。
 
 - guest 内 command 実行:
   - `tart exec`
@@ -45,17 +55,23 @@ UI 操作は固定 wrapper に閉じ込めない。
 
 ## 成果物
 
-少なくとも次のどちらかを残す。
+可能なら `screenshot PNG` と `debug-state JSON` の両方を残す。
+app が起動しなかった場合でも、最低でも host 側 log の場所は残す。
 
-- screenshot PNG
-- debug-state JSON
+標準保存先:
 
-host 側 log / artifact の標準保存先は `.tmp/vm/<vm-name>/` 配下。
+- host log:
+  - `.tmp/vm/<vm-name>/host/`
+- host artifact:
+  - `.tmp/vm/<vm-name>/artifacts/`
 
 ## 詳細参照
 
-詳細な運用判断が必要な時は次を読む。
+必要な時だけ次を読む。
 
-- `../../../docs/development-guideline/vm-skill-design.md`
-- `../../../docs/development-guideline/vm-ui-testing.md`
-- `../../../docs/development-guideline/vm-ui-testing-troubleshooting.md`
+- 権限境界と wrapper 方針:
+  - `../../../docs/development-guideline/vm-skill-design.md`
+- 通常の VM 手順:
+  - `../../../docs/development-guideline/vm-ui-testing.md`
+- 詰まった時の復旧:
+  - `../../../docs/development-guideline/vm-ui-testing-troubleshooting.md`
