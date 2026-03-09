@@ -134,12 +134,27 @@ struct ApplyResult {
   -> Sources/InterfaceAdapters/Output/SwiftUI render
 ```
 
-## 8. 将来拡張方針
+## 8. 編集パイプライン責務
+
+本節は主要段のみを抜粋して記述する。実装上の補助的な正規化段や個別コマンド特例はここでは列挙しない。
+
+- ステージ順序は `Mutation -> Tree Layout -> Area Layout -> Focus Normalization -> Viewport Intent` を基本線として扱う。
+- 実行条件:
+  - Tree: `didMutateGraph && needsTreeLayout`
+  - Area: `didMutateGraph && needsAreaLayout`
+  - Focus: `didMutateGraph && needsFocusNormalization`
+  - Viewport Intent: 常時自動生成せず、明示的な再センタリング操作など必要時のみ生成する。
+- 境界責務:
+  - Domain は純粋状態変換のみを担当する。
+  - Application はステージ実行順と `CanvasViewportIntent` 生成を担当する。
+  - InterfaceAdapters は `CanvasViewportIntent` を UI 状態へ反映し、表示ルール（初期中央化・画面外補正）を担う。
+
+## 9. 将来拡張方針
 
 - 初期フェーズはキーボード操作の完成を優先し、入力経路は Hotkey Adapter に集中させる。
 - 重い処理の Rust オフロードは将来検討とし、初期は Swift 実装を優先する。
 
-## 9. 型安全ルール
+## 10. 型安全ルール
 
 - `Any` の利用は禁止する（Lint で `error` 扱い）。
 - 抽象化が必要な場合は `any Protocol` を使う。
