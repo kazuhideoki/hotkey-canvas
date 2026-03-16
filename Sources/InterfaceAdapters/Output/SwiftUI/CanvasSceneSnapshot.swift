@@ -8,6 +8,13 @@ struct CanvasSceneCameraIntent: Equatable {
     let manualPanOffset: CGSize
     let hasInitializedCameraAnchor: Bool
     let cameraAnchorPoint: CGPoint
+
+    static func == (lhs: CanvasSceneCameraIntent, rhs: CanvasSceneCameraIntent) -> Bool {
+        lhs.zoomScale == rhs.zoomScale
+            && lhs.manualPanOffset == rhs.manualPanOffset
+            && lhs.hasInitializedCameraAnchor == rhs.hasInitializedCameraAnchor
+            && lhs.cameraAnchorPoint == rhs.cameraAnchorPoint
+    }
 }
 
 struct CanvasSceneViewportState: Equatable {

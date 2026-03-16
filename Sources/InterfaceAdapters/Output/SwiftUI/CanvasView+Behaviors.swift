@@ -95,7 +95,7 @@ extension CanvasView {
 
     func commitAddNodeModeSelection(_ mode: CanvasEditingMode) {
         isAddNodeModePopupPresented = false
-        shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit =
+        shouldSwitchToNodeTargetAfterModeCommit =
             Self.shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit(
                 currentTargetKind: operationTargetKind
             )
@@ -104,11 +104,11 @@ extension CanvasView {
             if viewModel.pendingEditingNodeID == nil {
                 let transition = Self.pendingAddNodeEditingTransition(
                     currentTargetKind: operationTargetKind,
-                    shouldSwitchToNodeTargetAfterCommit: shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit,
+                    shouldSwitchToNodeTargetAfterCommit: shouldSwitchToNodeTargetAfterModeCommit,
                     hasResolvedPendingEditingNode: false
                 )
                 operationTargetKind = transition.targetKind
-                shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit =
+                shouldSwitchToNodeTargetAfterModeCommit =
                     transition.shouldSwitchToNodeTargetAfterCommit
             }
         }

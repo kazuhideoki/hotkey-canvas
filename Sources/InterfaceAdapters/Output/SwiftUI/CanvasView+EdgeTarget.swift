@@ -241,6 +241,7 @@ extension CanvasView {
         }
     }
 
+    // swiftlint:disable:next function_body_length
     func moveEdgeFocus(direction: CanvasFocusDirection, extendsSelection: Bool) {
         guard let focusedNodeID = viewModel.focusedNodeID else {
             return

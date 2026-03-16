@@ -97,6 +97,7 @@ extension CanvasEdgeFocusNavigation {
         let score: Double
     }
 
+    // swiftlint:disable:next function_parameter_count
     private static func focusPoint(
         for edge: CanvasEdge,
         nodesByID: [CanvasNodeID: CanvasNode],

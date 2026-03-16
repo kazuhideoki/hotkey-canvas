@@ -30,7 +30,7 @@ public struct CanvasView: View {
     @State var searchQueryDraftBeforeHistoryNavigation: String = ""
     @State var isAddNodeModePopupPresented = false
     @State var selectedAddNodeMode: CanvasEditingMode = .tree
-    @State var shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit = false
+    @State var shouldSwitchToNodeTargetAfterModeCommit = false
     @State var hasInitializedCameraAnchor = false
     @State var cameraAnchorPoint: CGPoint = .zero
     @State var manualPanOffset: CGSize = .zero
@@ -531,11 +531,11 @@ public struct CanvasView: View {
                         let transition = Self.pendingAddNodeEditingTransition(
                             currentTargetKind: operationTargetKind,
                             shouldSwitchToNodeTargetAfterCommit:
-                                shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit,
+                                shouldSwitchToNodeTargetAfterModeCommit,
                             hasResolvedPendingEditingNode: true
                         )
                         operationTargetKind = transition.targetKind
-                        shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit =
+                        shouldSwitchToNodeTargetAfterModeCommit =
                             transition.shouldSwitchToNodeTargetAfterCommit
                         let contentScale = nodeContentScale(for: node)
                         let measuredLayout = measuredNodeLayout(
@@ -577,11 +577,11 @@ public struct CanvasView: View {
                 }
                 let transition = Self.pendingAddNodeEditingTransition(
                     currentTargetKind: operationTargetKind,
-                    shouldSwitchToNodeTargetAfterCommit: shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit,
+                    shouldSwitchToNodeTargetAfterCommit: shouldSwitchToNodeTargetAfterModeCommit,
                     hasResolvedPendingEditingNode: false
                 )
                 operationTargetKind = transition.targetKind
-                shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit =
+                shouldSwitchToNodeTargetAfterModeCommit =
                     transition.shouldSwitchToNodeTargetAfterCommit
                 guard viewModel.pendingEditingNodeID == nodeID else {
                     return

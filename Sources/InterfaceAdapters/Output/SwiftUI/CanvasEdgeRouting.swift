@@ -4,7 +4,8 @@
 import Domain
 import SwiftUI
 
-/// Computes MindNode-like edge routes with a shared branch axis per parent node.
+// Computes MindNode-like edge routes with a shared branch axis per parent node.
+// swiftlint:disable:next type_body_length
 enum CanvasEdgeRouting {
     static let minimumBranchGap: Double = 12
     static let minimumLegLength: Double = 6
@@ -496,6 +497,7 @@ extension CanvasEdgeRouting {
         }
     }
 
+    // swiftlint:disable:next function_parameter_count
     private static func routeGeometry(
         edge: CanvasEdge,
         parentNode: CanvasNode,
@@ -841,6 +843,7 @@ extension CanvasEdgeRouting {
         ]
     }
 
+    // swiftlint:disable:next function_parameter_count
     private static func routeCandidates(
         edge: CanvasEdge,
         parentNode: CanvasNode,
@@ -872,6 +875,7 @@ extension CanvasEdgeRouting {
         }
     }
 
+    // swiftlint:disable:next function_parameter_count
     private static func routeGeometries(
         edge: CanvasEdge,
         parentNode: CanvasNode,

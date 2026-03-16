@@ -6,12 +6,18 @@ import SwiftUI
 extension CanvasView {
     static let edgeFocusViewportPadding: Double = 12
 
-    static func recenteredViewportState() -> (
-        manualPanOffset: CGSize,
-        hasInitializedCameraAnchor: Bool,
-        cameraAnchorPoint: CGPoint
-    ) {
-        (.zero, false, .zero)
+    struct RecenteredViewportState {
+        let manualPanOffset: CGSize
+        let hasInitializedCameraAnchor: Bool
+        let cameraAnchorPoint: CGPoint
+    }
+
+    static func recenteredViewportState() -> RecenteredViewportState {
+        RecenteredViewportState(
+            manualPanOffset: .zero,
+            hasInitializedCameraAnchor: false,
+            cameraAnchorPoint: .zero
+        )
     }
 
     func recenterFocusedShape(viewportSize: CGSize) {

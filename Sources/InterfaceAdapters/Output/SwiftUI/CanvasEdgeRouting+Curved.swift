@@ -250,14 +250,13 @@ extension CanvasEdgeRouting {
         }
 
         for blocker in blockers {
-            for index in 0..<(sampledPoints.count - 1) {
-                if curvedSegmentIntersectsRect(
-                    start: sampledPoints[index],
-                    end: sampledPoints[index + 1],
-                    rect: blocker.bounds
-                ) {
-                    return blocker
-                }
+            for index in 0..<(sampledPoints.count - 1)
+            where curvedSegmentIntersectsRect(
+                start: sampledPoints[index],
+                end: sampledPoints[index + 1],
+                rect: blocker.bounds
+            ) {
+                return blocker
             }
         }
 
@@ -317,39 +316,39 @@ extension CanvasEdgeRouting {
     }
 
     private static func segmentsIntersect(
-        _ a: CGPoint,
-        _ b: CGPoint,
-        _ c: CGPoint,
-        _ d: CGPoint
+        _ pointA: CGPoint,
+        _ pointB: CGPoint,
+        _ pointC: CGPoint,
+        _ pointD: CGPoint
     ) -> Bool {
-        let abx = Double(b.x - a.x)
-        let aby = Double(b.y - a.y)
-        let acx = Double(c.x - a.x)
-        let acy = Double(c.y - a.y)
-        let adx = Double(d.x - a.x)
-        let ady = Double(d.y - a.y)
-        let cdx = Double(d.x - c.x)
-        let cdy = Double(d.y - c.y)
-        let cax = Double(a.x - c.x)
-        let cay = Double(a.y - c.y)
-        let cbx = Double(b.x - c.x)
-        let cby = Double(b.y - c.y)
+        let abx = Double(pointB.x - pointA.x)
+        let aby = Double(pointB.y - pointA.y)
+        let acx = Double(pointC.x - pointA.x)
+        let acy = Double(pointC.y - pointA.y)
+        let adx = Double(pointD.x - pointA.x)
+        let ady = Double(pointD.y - pointA.y)
+        let cdx = Double(pointD.x - pointC.x)
+        let cdy = Double(pointD.y - pointC.y)
+        let cax = Double(pointA.x - pointC.x)
+        let cay = Double(pointA.y - pointC.y)
+        let cbx = Double(pointB.x - pointC.x)
+        let cby = Double(pointB.y - pointC.y)
 
         let cross1 = cross(dx: abx, dy: aby, otherDX: acx, otherDY: acy)
         let cross2 = cross(dx: abx, dy: aby, otherDX: adx, otherDY: ady)
         let cross3 = cross(dx: cdx, dy: cdy, otherDX: cax, otherDY: cay)
         let cross4 = cross(dx: cdx, dy: cdy, otherDX: cbx, otherDY: cby)
 
-        if cross1 == 0, onSegment(point: c, segmentStart: a, segmentEnd: b) {
+        if cross1 == 0, onSegment(point: pointC, segmentStart: pointA, segmentEnd: pointB) {
             return true
         }
-        if cross2 == 0, onSegment(point: d, segmentStart: a, segmentEnd: b) {
+        if cross2 == 0, onSegment(point: pointD, segmentStart: pointA, segmentEnd: pointB) {
             return true
         }
-        if cross3 == 0, onSegment(point: a, segmentStart: c, segmentEnd: d) {
+        if cross3 == 0, onSegment(point: pointA, segmentStart: pointC, segmentEnd: pointD) {
             return true
         }
-        if cross4 == 0, onSegment(point: b, segmentStart: c, segmentEnd: d) {
+        if cross4 == 0, onSegment(point: pointB, segmentStart: pointC, segmentEnd: pointD) {
             return true
         }
 

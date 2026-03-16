@@ -408,26 +408,26 @@ private func segmentIntersectsRect(
 }
 
 private func segmentsIntersect(
-    _ a: CGPoint,
-    _ b: CGPoint,
-    _ c: CGPoint,
-    _ d: CGPoint
+    _ pointA: CGPoint,
+    _ pointB: CGPoint,
+    _ pointC: CGPoint,
+    _ pointD: CGPoint
 ) -> Bool {
-    let cross1 = cross(a, b, c)
-    let cross2 = cross(a, b, d)
-    let cross3 = cross(c, d, a)
-    let cross4 = cross(c, d, b)
+    let cross1 = cross(pointA, pointB, pointC)
+    let cross2 = cross(pointA, pointB, pointD)
+    let cross3 = cross(pointC, pointD, pointA)
+    let cross4 = cross(pointC, pointD, pointB)
 
-    if abs(cross1) < 0.0001, onSegment(c, a, b) {
+    if abs(cross1) < 0.0001, onSegment(pointC, pointA, pointB) {
         return true
     }
-    if abs(cross2) < 0.0001, onSegment(d, a, b) {
+    if abs(cross2) < 0.0001, onSegment(pointD, pointA, pointB) {
         return true
     }
-    if abs(cross3) < 0.0001, onSegment(a, c, d) {
+    if abs(cross3) < 0.0001, onSegment(pointA, pointC, pointD) {
         return true
     }
-    if abs(cross4) < 0.0001, onSegment(b, c, d) {
+    if abs(cross4) < 0.0001, onSegment(pointB, pointC, pointD) {
         return true
     }
 
