@@ -244,7 +244,8 @@ public struct CanvasView: View {
                         let areaID = viewModel.areaIDByNodeID[edge.fromNodeID]
                         let edgeShapeStyle = areaID.flatMap { viewModel.areaEdgeShapeStyleByID[$0] } ?? .curved
                         let editingMode = areaID.flatMap { viewModel.areaEditingModeByID[$0] }
-                        let routingStyle: CanvasEdgeRouting.RoutingStyle = editingMode == .tree ? .treeSimple : .adaptive
+                        let routingStyle: CanvasEdgeRouting.RoutingStyle =
+                            editingMode == .tree ? .treeSimple : .adaptive
                         let nodeAvoidanceEnabled = editingMode != .tree
                         let branchCoordinates =
                             routingStyle == .treeSimple
@@ -520,7 +521,8 @@ public struct CanvasView: View {
                     if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
                         let transition = Self.pendingAddNodeEditingTransition(
                             currentTargetKind: operationTargetKind,
-                            shouldSwitchToNodeTargetAfterCommit: shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit,
+                            shouldSwitchToNodeTargetAfterCommit:
+                                shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit,
                             hasResolvedPendingEditingNode: true
                         )
                         operationTargetKind = transition.targetKind

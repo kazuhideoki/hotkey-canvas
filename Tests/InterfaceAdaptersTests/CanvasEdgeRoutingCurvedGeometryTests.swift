@@ -314,7 +314,9 @@ func test_resolvedCurvedGeometry_whenNodeAvoidanceDisabled_keepsBaseCurve() thro
 
     #expect(curveWithoutAvoidance.control1 == baseCurve.control1)
     #expect(curveWithoutAvoidance.control2 == baseCurve.control2)
-    #expect(curvedRouteIntersectsNode(curveWithoutAvoidance, geometry: geometry, node: try #require(nodesByID[blockerID]), padding: 18))
+    #expect(
+        curvedRouteIntersectsNode(
+            curveWithoutAvoidance, geometry: geometry, node: try #require(nodesByID[blockerID]), padding: 18))
 }
 
 private func makeCurvedGeometryNode(
