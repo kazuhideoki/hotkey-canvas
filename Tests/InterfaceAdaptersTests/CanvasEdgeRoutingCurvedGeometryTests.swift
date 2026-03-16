@@ -284,6 +284,39 @@ func test_resolvedCurvedGeometry_withTerminalBlocker_avoidsByChangingAnchors() t
     #expect(!curvedRouteIntersectsNode(curve, geometry: geometry, node: blockerNode, padding: 18))
 }
 
+@Test("CanvasEdgeRouting: curved node avoidance can be disabled and keeps the base curve")
+func test_resolvedCurvedGeometry_whenNodeAvoidanceDisabled_keepsBaseCurve() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let blockerID = CanvasNodeID(rawValue: "blocker")
+    let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID = Dictionary(uniqueKeysWithValues: [
+        makeCurvedGeometryNode(id: parentID, x: 80, y: 200, width: 220, height: 56),
+        makeCurvedGeometryNode(id: childID, x: 460, y: 360, width: 220, height: 56),
+        makeCurvedGeometryNode(id: blockerID, x: 344, y: 252, width: 72, height: 72),
+    ])
+    let geometry = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: edge,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:]
+        )
+    )
+
+    let baseCurve = CanvasEdgeRouting.curvedGeometry(routeGeometry: geometry, laneOffsets: .zero)
+    let curveWithoutAvoidance = CanvasEdgeRouting.resolvedCurvedGeometry(
+        for: edge,
+        routeGeometry: geometry,
+        nodesByID: nodesByID,
+        laneOffsets: .zero,
+        nodeAvoidanceEnabled: false
+    )
+
+    #expect(curveWithoutAvoidance.control1 == baseCurve.control1)
+    #expect(curveWithoutAvoidance.control2 == baseCurve.control2)
+    #expect(curvedRouteIntersectsNode(curveWithoutAvoidance, geometry: geometry, node: try #require(nodesByID[blockerID]), padding: 18))
+}
+
 private func makeCurvedGeometryNode(
     id: CanvasNodeID,
     x: Double,

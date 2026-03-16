@@ -8,8 +8,11 @@ enum CanvasEdgeFocusNavigation {
         let edges: [CanvasEdge]
         let nodesByID: [CanvasNodeID: CanvasNode]
         let branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double]
+        let treeBranchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double]
         let laneOffsetsByEdgeID: [CanvasEdgeID: CanvasEdgeRouting.EdgeLaneOffsets]
         let edgeShapeStyleByEdgeID: [CanvasEdgeID: CanvasAreaEdgeShapeStyle]
+        let routingStyleByEdgeID: [CanvasEdgeID: CanvasEdgeRouting.RoutingStyle]
+        let nodeAvoidanceEnabledByEdgeID: [CanvasEdgeID: Bool]
     }
 
     private static let preferredCrossAxisRatio: Double = 0.8
@@ -32,8 +35,11 @@ enum CanvasEdgeFocusNavigation {
                     for: edge,
                     nodesByID: context.nodesByID,
                     branchCoordinateByParentAndDirection: context.branchCoordinateByParentAndDirection,
+                    treeBranchCoordinateByParentAndDirection: context.treeBranchCoordinateByParentAndDirection,
                     laneOffsetsByEdgeID: context.laneOffsetsByEdgeID,
-                    edgeShapeStyle: context.edgeShapeStyleByEdgeID[edge.id] ?? .curved
+                    edgeShapeStyle: context.edgeShapeStyleByEdgeID[edge.id] ?? .curved,
+                    routingStyle: context.routingStyleByEdgeID[edge.id] ?? .adaptive,
+                    nodeAvoidanceEnabled: context.nodeAvoidanceEnabledByEdgeID[edge.id] ?? true
                 ).map { (edge.id, $0) }
             }
         )
@@ -95,16 +101,25 @@ extension CanvasEdgeFocusNavigation {
         for edge: CanvasEdge,
         nodesByID: [CanvasNodeID: CanvasNode],
         branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double],
+        treeBranchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double],
         laneOffsetsByEdgeID: [CanvasEdgeID: CanvasEdgeRouting.EdgeLaneOffsets],
-        edgeShapeStyle: CanvasAreaEdgeShapeStyle
+        edgeShapeStyle: CanvasAreaEdgeShapeStyle,
+        routingStyle: CanvasEdgeRouting.RoutingStyle,
+        nodeAvoidanceEnabled: Bool
     ) -> CGPoint? {
+        let selectedBranchCoordinates =
+            routingStyle == .treeSimple
+            ? treeBranchCoordinateByParentAndDirection
+            : branchCoordinateByParentAndDirection
         guard
             let path = CanvasEdgeRouting.path(
                 for: edge,
                 nodesByID: nodesByID,
-                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                branchCoordinateByParentAndDirection: selectedBranchCoordinates,
                 laneOffsetsByEdgeID: laneOffsetsByEdgeID,
-                edgeShapeStyle: edgeShapeStyle
+                edgeShapeStyle: edgeShapeStyle,
+                routingStyle: routingStyle,
+                nodeAvoidanceEnabled: nodeAvoidanceEnabled
             )
         else {
             return nil

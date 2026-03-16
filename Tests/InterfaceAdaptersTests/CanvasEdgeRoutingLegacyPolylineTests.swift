@@ -534,3 +534,35 @@ func test_legacyPolylineRoute_withVerticalReroutesBlocked_usesSameAxisOutwardFal
     #expect(!routeIntersectsNode(route, node: try #require(nodesByID[topBlockerID]), padding: 18))
     #expect(!routeIntersectsNode(route, node: try #require(nodesByID[bottomBlockerID]), padding: 18))
 }
+
+@Test("CanvasEdgeRouting: legacy node avoidance can be disabled and keeps the base polyline")
+func test_legacyPolylineRoute_whenNodeAvoidanceDisabled_keepsBaseRoute() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let blockerID = CanvasNodeID(rawValue: "blocker")
+    let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID = Dictionary(uniqueKeysWithValues: [
+        makeLegacyPolylineNode(id: parentID, x: 80, y: 200, width: 220, height: 56),
+        makeLegacyPolylineNode(id: childID, x: 460, y: 360, width: 220, height: 56),
+        makeLegacyPolylineNode(id: blockerID, x: 300, y: 140, width: 220, height: 220),
+    ])
+    let geometry = CanvasEdgeRouting.RouteGeometry(
+        axis: .horizontal,
+        startX: 300,
+        startY: 228,
+        branchCoordinate: 350,
+        endX: 460,
+        endY: 388
+    )
+    let baseRoute = CanvasEdgeRouting.legacyPolylineRoute(routeGeometry: geometry)
+    let routeWithoutAvoidance = CanvasEdgeRouting.legacyPolylineRoute(
+        for: edge,
+        routeGeometry: geometry,
+        nodesByID: nodesByID,
+        nodeAvoidanceEnabled: false
+    )
+
+    #expect(routeIntersectsNode(baseRoute, node: try #require(nodesByID[blockerID]), padding: 18))
+    #expect(routeWithoutAvoidance.points == baseRoute.points)
+    #expect(routeIntersectsNode(routeWithoutAvoidance, node: try #require(nodesByID[blockerID]), padding: 18))
+}

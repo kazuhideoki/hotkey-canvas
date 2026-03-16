@@ -204,13 +204,22 @@ extension CanvasView {
 
         let areaID = context.areaIDByNodeID[edge.fromNodeID]
         let edgeShapeStyle = areaID.flatMap { context.areaEdgeShapeStyleByID[$0] } ?? .curved
+        let editingMode = areaID.flatMap { context.areaEditingModeByID[$0] }
+        let routingStyle: CanvasEdgeRouting.RoutingStyle = editingMode == .tree ? .treeSimple : .adaptive
+        let nodeAvoidanceEnabled = editingMode != .tree
+        let branchCoordinateByParentAndDirection =
+            routingStyle == .treeSimple
+            ? context.treeBranchCoordinateByParentAndDirection
+            : context.branchCoordinateByParentAndDirection
         guard
             let anchor = CanvasEdgeRouting.labelAnchor(
                 for: edge,
                 nodesByID: context.nodesByID,
-                branchCoordinateByParentAndDirection: context.branchCoordinateByParentAndDirection,
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
                 laneOffsetsByEdgeID: context.laneOffsetsByEdgeID,
-                edgeShapeStyle: edgeShapeStyle
+                edgeShapeStyle: edgeShapeStyle,
+                routingStyle: routingStyle,
+                nodeAvoidanceEnabled: nodeAvoidanceEnabled
             )
         else {
             return nil
@@ -437,12 +446,20 @@ extension CanvasView {
         transform: CGAffineTransform,
         labelSize: CGSize
     ) -> CGFloat {
+        let areaID = context.areaIDByNodeID[edge.fromNodeID]
+        let editingMode = areaID.flatMap { context.areaEditingModeByID[$0] }
+        let routingStyle: CanvasEdgeRouting.RoutingStyle = editingMode == .tree ? .treeSimple : .adaptive
+        let branchCoordinateByParentAndDirection =
+            routingStyle == .treeSimple
+            ? context.treeBranchCoordinateByParentAndDirection
+            : context.branchCoordinateByParentAndDirection
         guard
             let geometry = CanvasEdgeRouting.routeGeometry(
                 for: edge,
                 nodesByID: context.nodesByID,
-                branchCoordinateByParentAndDirection: context.branchCoordinateByParentAndDirection,
-                laneOffsetsByEdgeID: context.laneOffsetsByEdgeID
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                laneOffsetsByEdgeID: context.laneOffsetsByEdgeID,
+                routingStyle: routingStyle
             )
         else {
             return 0

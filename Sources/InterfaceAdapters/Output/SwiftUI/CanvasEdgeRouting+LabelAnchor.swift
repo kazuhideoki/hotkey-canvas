@@ -16,14 +16,17 @@ extension CanvasEdgeRouting {
         nodesByID: [CanvasNodeID: CanvasNode],
         branchCoordinateByParentAndDirection: [BranchKey: Double],
         laneOffsetsByEdgeID: [CanvasEdgeID: EdgeLaneOffsets] = [:],
-        edgeShapeStyle: CanvasAreaEdgeShapeStyle
+        edgeShapeStyle: CanvasAreaEdgeShapeStyle,
+        routingStyle: RoutingStyle = .adaptive,
+        nodeAvoidanceEnabled: Bool = true
     ) -> EdgeLabelAnchor? {
         guard
             let geometry = routeGeometry(
                 for: edge,
                 nodesByID: nodesByID,
                 branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-                laneOffsetsByEdgeID: laneOffsetsByEdgeID
+                laneOffsetsByEdgeID: laneOffsetsByEdgeID,
+                routingStyle: routingStyle
             )
         else {
             return nil
@@ -40,14 +43,23 @@ extension CanvasEdgeRouting {
                 normal: perpendicularUnitVector(for: tangent)
             )
         case .legacy:
-            return legacyLabelAnchor(edge: edge, nodesByID: nodesByID, routeGeometry: geometry)
+            return legacyLabelAnchor(
+                edge: edge,
+                nodesByID: nodesByID,
+                routeGeometry: geometry,
+                nodeAvoidanceEnabled: nodeAvoidanceEnabled
+            )
         case .curved:
+            if routingStyle == .treeSimple {
+                return polylineLabelAnchor(points: legacyPolylineRoute(routeGeometry: geometry).points)
+            }
             let laneOffsets = laneOffsetsByEdgeID[edge.id] ?? .zero
             let curve = resolvedCurvedGeometry(
                 for: edge,
                 routeGeometry: geometry,
                 nodesByID: nodesByID,
-                laneOffsets: laneOffsets
+                laneOffsets: laneOffsets,
+                nodeAvoidanceEnabled: nodeAvoidanceEnabled
             )
             return curvedLabelAnchor(routeGeometry: geometry, curve: curve)
         }
@@ -64,9 +76,15 @@ extension CanvasEdgeRouting {
     private static func legacyLabelAnchor(
         edge: CanvasEdge,
         nodesByID: [CanvasNodeID: CanvasNode],
-        routeGeometry: RouteGeometry
+        routeGeometry: RouteGeometry,
+        nodeAvoidanceEnabled: Bool
     ) -> EdgeLabelAnchor {
-        let route = legacyPolylineRoute(for: edge, routeGeometry: routeGeometry, nodesByID: nodesByID)
+        let route = legacyPolylineRoute(
+            for: edge,
+            routeGeometry: routeGeometry,
+            nodesByID: nodesByID,
+            nodeAvoidanceEnabled: nodeAvoidanceEnabled
+        )
         return polylineLabelAnchor(points: route.points)
     }
 

@@ -377,6 +377,114 @@ func test_routeGeometry_relativelyVertical_prefersVerticalRouting() {
     #expect(geometry?.endY == 310)  // child top edge
 }
 
+@Test("CanvasEdgeRouting: tree simple routing keeps horizontal branches for relatively vertical relation")
+func test_routeGeometry_treeSimpleRelativeVertical_keepsHorizontalBranching() {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childID = CanvasNodeID(rawValue: "child")
+    let edge = CanvasEdge(id: CanvasEdgeID(rawValue: "edge-1"), fromNodeID: parentID, toNodeID: childID)
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 100, y: 100, width: 220, height: 56),
+        childID: makeNode(id: childID, x: 280, y: 310, width: 220, height: 56),
+    ]
+
+    let geometry = CanvasEdgeRouting.routeGeometry(
+        for: edge,
+        nodesByID: nodesByID,
+        branchCoordinateByParentAndDirection: [:],
+        routingStyle: .treeSimple
+    )
+
+    #expect(geometry?.axis == .horizontal)
+    #expect(geometry?.startX == 320)
+    #expect(geometry?.endX == 280)
+    #expect(geometry?.startY == 128)
+    #expect(geometry?.endY == 338)
+}
+
+@Test("CanvasEdgeRouting: tree simple branch coordinate shares one horizontal branch for vertically separated children")
+func test_treeBranchCoordinateByParentAndDirection_forVerticallySeparatedChildren_buildsSharedHorizontalBranch() {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childTopID = CanvasNodeID(rawValue: "child-top")
+    let childBottomID = CanvasNodeID(rawValue: "child-bottom")
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 80, y: 200, width: 220, height: 56),
+        childTopID: makeNode(id: childTopID, x: 460, y: 120, width: 220, height: 56),
+        childBottomID: makeNode(id: childBottomID, x: 460, y: 420, width: 220, height: 56),
+    ]
+    let edges = [
+        CanvasEdge(id: CanvasEdgeID(rawValue: "edge-top"), fromNodeID: parentID, toNodeID: childTopID),
+        CanvasEdge(id: CanvasEdgeID(rawValue: "edge-bottom"), fromNodeID: parentID, toNodeID: childBottomID),
+    ]
+
+    let branchCoordinates = CanvasEdgeRouting.treeBranchCoordinateByParentAndDirection(
+        edges: edges,
+        nodesByID: nodesByID
+    )
+
+    let key = CanvasEdgeRouting.BranchKey(parentNodeID: parentID, axis: .horizontal, direction: 1)
+    let branchCoordinate = branchCoordinates[key]
+
+    #expect(branchCoordinate != nil)
+    if let branchCoordinate {
+        #expect(branchCoordinate > 300)
+        #expect(branchCoordinate < 460)
+    }
+}
+
+@Test("CanvasEdgeRouting: tree simple routing ignores duplicated-edge lane offsets")
+func test_routeGeometry_treeSimpleIgnoresLaneOffsets() throws {
+    let parentID = CanvasNodeID(rawValue: "parent")
+    let childTopID = CanvasNodeID(rawValue: "child-top")
+    let childBottomID = CanvasNodeID(rawValue: "child-bottom")
+    let edgeTop = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-top"),
+        fromNodeID: parentID,
+        toNodeID: childTopID,
+        relationType: .normal
+    )
+    let edgeBottom = CanvasEdge(
+        id: CanvasEdgeID(rawValue: "edge-bottom"),
+        fromNodeID: parentID,
+        toNodeID: childBottomID,
+        relationType: .normal
+    )
+    let nodesByID: [CanvasNodeID: CanvasNode] = [
+        parentID: makeNode(id: parentID, x: 80, y: 200, width: 220, height: 220),
+        childTopID: makeNode(id: childTopID, x: 460, y: 120, width: 220, height: 220),
+        childBottomID: makeNode(id: childBottomID, x: 460, y: 420, width: 220, height: 220),
+    ]
+    let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
+        edges: [edgeTop, edgeBottom],
+        nodesByID: nodesByID
+    )
+
+    let geometryTop = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: edgeTop,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:],
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID,
+            routingStyle: .treeSimple
+        )
+    )
+    let geometryBottom = try #require(
+        CanvasEdgeRouting.routeGeometry(
+            for: edgeBottom,
+            nodesByID: nodesByID,
+            branchCoordinateByParentAndDirection: [:],
+            laneOffsetsByEdgeID: laneOffsetsByEdgeID,
+            routingStyle: .treeSimple
+        )
+    )
+
+    #expect(geometryTop.axis == .horizontal)
+    #expect(geometryBottom.axis == .horizontal)
+    #expect(geometryTop.startX == geometryBottom.startX)
+    #expect(geometryTop.endX == geometryBottom.endX)
+    #expect(geometryTop.startY == 310)
+    #expect(geometryBottom.startY == 310)
+}
+
 @Test("CanvasEdgeRouting: terminal blocker near a horizontal edge switches to an outward reroute")
 func test_routeGeometry_withTerminalBlocker_switchesToOutwardVerticalReroute() throws {
     let parentID = CanvasNodeID(rawValue: "parent")

@@ -257,6 +257,10 @@ extension CanvasView {
             edges: edges,
             nodesByID: nodesByID
         )
+        let treeBranchCoordinateByParentAndDirection = CanvasEdgeRouting.treeBranchCoordinateByParentAndDirection(
+            edges: edges,
+            nodesByID: nodesByID
+        )
         let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
             edges: edges,
             nodesByID: nodesByID
@@ -268,12 +272,30 @@ extension CanvasView {
                 return (edge.id, edgeShapeStyle)
             }
         )
+        let routingStyleByEdgeID = Dictionary(
+            uniqueKeysWithValues: edges.map { edge in
+                let areaID = viewModel.areaIDByNodeID[edge.fromNodeID]
+                let editingMode = areaID.flatMap { viewModel.areaEditingModeByID[$0] }
+                let routingStyle: CanvasEdgeRouting.RoutingStyle = editingMode == .tree ? .treeSimple : .adaptive
+                return (edge.id, routingStyle)
+            }
+        )
+        let nodeAvoidanceEnabledByEdgeID = Dictionary(
+            uniqueKeysWithValues: edges.map { edge in
+                let areaID = viewModel.areaIDByNodeID[edge.fromNodeID]
+                let nodeAvoidanceEnabled = areaID.flatMap { viewModel.areaEditingModeByID[$0] } != .tree
+                return (edge.id, nodeAvoidanceEnabled)
+            }
+        )
         let context = CanvasEdgeFocusNavigation.Context(
             edges: edges,
             nodesByID: nodesByID,
             branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+            treeBranchCoordinateByParentAndDirection: treeBranchCoordinateByParentAndDirection,
             laneOffsetsByEdgeID: laneOffsetsByEdgeID,
-            edgeShapeStyleByEdgeID: edgeShapeStyleByEdgeID
+            edgeShapeStyleByEdgeID: edgeShapeStyleByEdgeID,
+            routingStyleByEdgeID: routingStyleByEdgeID,
+            nodeAvoidanceEnabledByEdgeID: nodeAvoidanceEnabledByEdgeID
         )
         let nextFocusedEdgeID = CanvasEdgeFocusNavigation.nextFocusedEdgeID(
             in: context,

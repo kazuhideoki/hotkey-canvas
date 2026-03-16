@@ -29,9 +29,13 @@ extension CanvasEdgeRouting {
     static func legacyPolylineRoute(
         for edge: CanvasEdge,
         routeGeometry: RouteGeometry,
-        nodesByID: [CanvasNodeID: CanvasNode]
+        nodesByID: [CanvasNodeID: CanvasNode],
+        nodeAvoidanceEnabled: Bool = true
     ) -> PolylineRoute {
         let baseRoute = legacyPolylineRoute(routeGeometry: routeGeometry)
+        guard nodeAvoidanceEnabled else {
+            return baseRoute
+        }
         let blockers = legacyNodeBlockers(for: edge, nodesByID: nodesByID)
         guard !blockers.isEmpty else {
             return baseRoute

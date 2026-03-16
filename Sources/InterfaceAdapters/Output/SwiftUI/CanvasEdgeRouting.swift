@@ -8,6 +8,9 @@ import SwiftUI
 enum CanvasEdgeRouting {
     static let minimumBranchGap: Double = 12
     static let minimumLegLength: Double = 6
+    static let treeSimpleMaximumBranchOffset: Double = 72
+    static let treeSimpleMinimumBranchOffset: Double = 24
+    static let treeSimpleCornerRadius: Double = 14
     static let verticalPreferenceRatio: Double = 0.9
     static let parallelLaneSpacing: Double = 14
     static let minimumAnchorInset: Double = 4
@@ -31,6 +34,12 @@ enum CanvasEdgeRouting {
         case right
         case top
         case bottom
+    }
+
+    /// Selects the routing skeleton before style-specific rendering is applied.
+    enum RoutingStyle {
+        case adaptive
+        case treeSimple
     }
 
     /// Geometric route information used to build a rounded edge path.
@@ -121,6 +130,63 @@ enum CanvasEdgeRouting {
         return result
     }
 
+    /// Returns the original tree-mode horizontal branch coordinate for each parent node side.
+    static func treeBranchCoordinateByParentAndDirection(
+        edges: [CanvasEdge],
+        nodesByID: [CanvasNodeID: CanvasNode]
+    ) -> [BranchKey: Double] {
+        let edgesByParent = Dictionary(grouping: edges, by: \.fromNodeID)
+        var result: [BranchKey: Double] = [:]
+
+        for (parentID, parentEdges) in edgesByParent {
+            guard let parentNode = nodesByID[parentID] else {
+                continue
+            }
+            for direction in [-1.0, 1.0] {
+                let directionalEdges = parentEdges.filter { edge in
+                    guard let childNode = nodesByID[edge.toNodeID] else {
+                        return false
+                    }
+                    return horizontalDirection(parentNode: parentNode, childNode: childNode) == direction
+                }
+                guard !directionalEdges.isEmpty else {
+                    continue
+                }
+
+                let exitX = direction >= 0 ? parentNode.bounds.x + parentNode.bounds.width : parentNode.bounds.x
+                let childEntryXValues = directionalEdges.compactMap { edge -> Double? in
+                    guard let childNode = nodesByID[edge.toNodeID] else {
+                        return nil
+                    }
+                    return direction >= 0 ? childNode.bounds.x : childNode.bounds.x + childNode.bounds.width
+                }
+                guard !childEntryXValues.isEmpty else {
+                    continue
+                }
+
+                let closestChildEntryX =
+                    direction > 0
+                    ? (childEntryXValues.min() ?? exitX)
+                    : (childEntryXValues.max() ?? exitX)
+                let available = abs(closestChildEntryX - exitX)
+                let offset = max(
+                    treeSimpleMinimumBranchOffset,
+                    min(treeSimpleMaximumBranchOffset, available * 0.45)
+                )
+                let baseBranchCoordinate = exitX + (direction * offset)
+                let constrainedBranchCoordinate = constrainBranchCoordinate(
+                    baseBranchCoordinate,
+                    start: exitX,
+                    end: closestChildEntryX
+                )
+                let key = BranchKey(parentNodeID: parentID, axis: .horizontal, direction: direction > 0 ? 1 : -1)
+                result[key] = constrainedBranchCoordinate
+            }
+        }
+
+        return result
+    }
+
     /// Returns per-endpoint lane offsets so edges sharing one node-side anchor do not overlap.
     /// - Parameters:
     ///   - edges: Graph edges to route.
@@ -201,14 +267,17 @@ enum CanvasEdgeRouting {
         nodesByID: [CanvasNodeID: CanvasNode],
         branchCoordinateByParentAndDirection: [BranchKey: Double],
         laneOffsetsByEdgeID: [CanvasEdgeID: EdgeLaneOffsets] = [:],
-        edgeShapeStyle: CanvasAreaEdgeShapeStyle
+        edgeShapeStyle: CanvasAreaEdgeShapeStyle,
+        routingStyle: RoutingStyle = .adaptive,
+        nodeAvoidanceEnabled: Bool = true
     ) -> Path? {
         guard
             let geometry = routeGeometry(
                 for: edge,
                 nodesByID: nodesByID,
                 branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-                laneOffsetsByEdgeID: laneOffsetsByEdgeID
+                laneOffsetsByEdgeID: laneOffsetsByEdgeID,
+                routingStyle: routingStyle
             )
         else {
             return nil
@@ -220,19 +289,29 @@ enum CanvasEdgeRouting {
             path.move(to: start)
             switch edgeShapeStyle {
             case .legacy:
-                let legacyRoute = legacyPolylineRoute(for: edge, routeGeometry: geometry, nodesByID: nodesByID)
+                let legacyRoute = legacyPolylineRoute(
+                    for: edge,
+                    routeGeometry: geometry,
+                    nodesByID: nodesByID,
+                    nodeAvoidanceEnabled: nodeAvoidanceEnabled
+                )
                 addPolylinePathSegments(path: &path, route: legacyRoute)
             case .straight:
                 path.addLine(to: end)
             case .curved:
-                let laneOffsets = curveLaneOffsets(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
-                let curve = resolvedCurvedGeometry(
-                    for: edge,
-                    routeGeometry: geometry,
-                    nodesByID: nodesByID,
-                    laneOffsets: laneOffsets
-                )
-                path.addCurve(to: end, control1: curve.control1, control2: curve.control2)
+                if routingStyle == .treeSimple {
+                    addTreeSimpleRoundedPath(path: &path, routeGeometry: geometry, end: end)
+                } else {
+                    let laneOffsets = curveLaneOffsets(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
+                    let curve = resolvedCurvedGeometry(
+                        for: edge,
+                        routeGeometry: geometry,
+                        nodesByID: nodesByID,
+                        laneOffsets: laneOffsets,
+                        nodeAvoidanceEnabled: nodeAvoidanceEnabled
+                    )
+                    path.addCurve(to: end, control1: curve.control1, control2: curve.control2)
+                }
             }
         }
     }
@@ -243,14 +322,17 @@ enum CanvasEdgeRouting {
         nodesByID: [CanvasNodeID: CanvasNode],
         branchCoordinateByParentAndDirection: [BranchKey: Double],
         laneOffsetsByEdgeID: [CanvasEdgeID: EdgeLaneOffsets] = [:],
-        edgeShapeStyle: CanvasAreaEdgeShapeStyle
+        edgeShapeStyle: CanvasAreaEdgeShapeStyle,
+        routingStyle: RoutingStyle = .adaptive,
+        nodeAvoidanceEnabled: Bool = true
     ) -> EdgeTipVector? {
         guard
             let geometry = routeGeometry(
                 for: edge,
                 nodesByID: nodesByID,
                 branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-                laneOffsetsByEdgeID: laneOffsetsByEdgeID
+                laneOffsetsByEdgeID: laneOffsetsByEdgeID,
+                routingStyle: routingStyle
             )
         else {
             return nil
@@ -258,17 +340,26 @@ enum CanvasEdgeRouting {
 
         switch edgeShapeStyle {
         case .legacy:
-            let legacyRoute = legacyPolylineRoute(for: edge, routeGeometry: geometry, nodesByID: nodesByID)
+            let legacyRoute = legacyPolylineRoute(
+                for: edge,
+                routeGeometry: geometry,
+                nodesByID: nodesByID,
+                nodeAvoidanceEnabled: nodeAvoidanceEnabled
+            )
             return legacyEdgeTipAndVector(edge: edge, polylineRoute: legacyRoute)
         case .straight:
             return straightEdgeTipAndVector(edge: edge, routeGeometry: geometry)
         case .curved:
+            if routingStyle == .treeSimple {
+                return legacyEdgeTipAndVector(edge: edge, polylineRoute: legacyPolylineRoute(routeGeometry: geometry))
+            }
             let laneOffsets = curveLaneOffsets(for: edge.id, laneOffsetsByEdgeID: laneOffsetsByEdgeID)
             let curve = resolvedCurvedGeometry(
                 for: edge,
                 routeGeometry: geometry,
                 nodesByID: nodesByID,
-                laneOffsets: laneOffsets
+                laneOffsets: laneOffsets,
+                nodeAvoidanceEnabled: nodeAvoidanceEnabled
             )
             return curvedEdgeTipAndVector(edge: edge, routeGeometry: geometry, curve: curve)
         }
@@ -284,13 +375,23 @@ enum CanvasEdgeRouting {
         for edge: CanvasEdge,
         nodesByID: [CanvasNodeID: CanvasNode],
         branchCoordinateByParentAndDirection: [BranchKey: Double],
-        laneOffsetsByEdgeID: [CanvasEdgeID: EdgeLaneOffsets] = [:]
+        laneOffsetsByEdgeID: [CanvasEdgeID: EdgeLaneOffsets] = [:],
+        routingStyle: RoutingStyle = .adaptive
     ) -> RouteGeometry? {
         guard
             let parentNode = nodesByID[edge.fromNodeID],
             let childNode = nodesByID[edge.toNodeID]
         else {
             return nil
+        }
+
+        if routingStyle == .treeSimple {
+            return treeRouteGeometry(
+                edge: edge,
+                parentNode: parentNode,
+                childNode: childNode,
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection
+            )
         }
 
         let axis = routeAxis(parentNode: parentNode, childNode: childNode)
@@ -514,6 +615,92 @@ extension CanvasEdgeRouting {
         return RouteEndpoints(startX: startX, startY: startY, endX: endX, endY: endY)
     }
 
+    private static func treeRouteGeometry(
+        edge: CanvasEdge,
+        parentNode: CanvasNode,
+        childNode: CanvasNode,
+        branchCoordinateByParentAndDirection: [BranchKey: Double]
+    ) -> RouteGeometry {
+        let direction = horizontalDirection(parentNode: parentNode, childNode: childNode)
+        let directionKey = BranchKey(
+            parentNodeID: edge.fromNodeID,
+            axis: .horizontal,
+            direction: direction > 0 ? 1 : -1
+        )
+        let startX = direction >= 0 ? parentNode.bounds.x + parentNode.bounds.width : parentNode.bounds.x
+        let endX = direction >= 0 ? childNode.bounds.x : childNode.bounds.x + childNode.bounds.width
+        let startY = parentNode.bounds.y + (parentNode.bounds.height / 2)
+        let endY = childNode.bounds.y + (childNode.bounds.height / 2)
+        let branchCoordinate = constrainBranchCoordinate(
+            branchCoordinateByParentAndDirection[directionKey]
+                ?? (startX + ((endX - startX) / 2)),
+            start: startX,
+            end: endX
+        )
+
+        return RouteGeometry(
+            axis: .horizontal,
+            startX: startX,
+            startY: startY,
+            branchCoordinate: branchCoordinate,
+            endX: endX,
+            endY: endY
+        )
+    }
+
+    private static func addTreeSimpleRoundedPath(
+        path: inout Path,
+        routeGeometry: RouteGeometry,
+        end: CGPoint
+    ) {
+        let horizontal1 = abs(routeGeometry.branchCoordinate - routeGeometry.startX)
+        let horizontal2 = abs(routeGeometry.endX - routeGeometry.branchCoordinate)
+        let vertical = abs(routeGeometry.endY - routeGeometry.startY)
+        let cornerRadius = min(
+            treeSimpleCornerRadius,
+            horizontal1 / 2,
+            horizontal2 / 2,
+            vertical / 2
+        )
+
+        guard cornerRadius > 0 else {
+            path.addLine(to: end)
+            return
+        }
+
+        let xSignToBranch: Double = routeGeometry.branchCoordinate >= routeGeometry.startX ? 1 : -1
+        let ySignToEnd: Double = routeGeometry.endY >= routeGeometry.startY ? 1 : -1
+        let xSignToEnd: Double = routeGeometry.endX >= routeGeometry.branchCoordinate ? 1 : -1
+
+        path.addLine(
+            to: CGPoint(
+                x: routeGeometry.branchCoordinate - (xSignToBranch * cornerRadius),
+                y: routeGeometry.startY
+            )
+        )
+        path.addQuadCurve(
+            to: CGPoint(
+                x: routeGeometry.branchCoordinate,
+                y: routeGeometry.startY + (ySignToEnd * cornerRadius)
+            ),
+            control: CGPoint(x: routeGeometry.branchCoordinate, y: routeGeometry.startY)
+        )
+        path.addLine(
+            to: CGPoint(
+                x: routeGeometry.branchCoordinate,
+                y: routeGeometry.endY - (ySignToEnd * cornerRadius)
+            )
+        )
+        path.addQuadCurve(
+            to: CGPoint(
+                x: routeGeometry.branchCoordinate + (xSignToEnd * cornerRadius),
+                y: routeGeometry.endY
+            ),
+            control: CGPoint(x: routeGeometry.branchCoordinate, y: routeGeometry.endY)
+        )
+        path.addLine(to: end)
+    }
+
     private static func anchorX(
         for side: AnchorSide,
         node: CanvasNode,
@@ -566,6 +753,15 @@ extension CanvasEdgeRouting {
             return .vertical
         }
         return .horizontal
+    }
+
+    private static func horizontalDirection(
+        parentNode: CanvasNode,
+        childNode: CanvasNode
+    ) -> Double {
+        let childCenterX = childNode.bounds.x + (childNode.bounds.width / 2)
+        let parentCenterX = parentNode.bounds.x + (parentNode.bounds.width / 2)
+        return childCenterX >= parentCenterX ? 1 : -1
     }
 
     private static func directionSign(

@@ -70,9 +70,13 @@ extension CanvasEdgeRouting {
         for edge: CanvasEdge,
         routeGeometry: RouteGeometry,
         nodesByID: [CanvasNodeID: CanvasNode],
-        laneOffsets: EdgeLaneOffsets
+        laneOffsets: EdgeLaneOffsets,
+        nodeAvoidanceEnabled: Bool = true
     ) -> CurveGeometry {
         let baseCurve = curvedGeometry(routeGeometry: routeGeometry, laneOffsets: laneOffsets)
+        guard nodeAvoidanceEnabled else {
+            return baseCurve
+        }
         let blockers = curvedNodeBlockers(for: edge, nodesByID: nodesByID)
         guard !blockers.isEmpty else {
             return baseCurve

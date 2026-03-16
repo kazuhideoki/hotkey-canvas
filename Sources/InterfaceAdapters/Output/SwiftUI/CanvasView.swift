@@ -92,6 +92,10 @@ public struct CanvasView: View {
                 edges: displayEdges,
                 nodesByID: nodesByID
             )
+            let treeBranchCoordinateByParentAndDirection = CanvasEdgeRouting.treeBranchCoordinateByParentAndDirection(
+                edges: displayEdges,
+                nodesByID: nodesByID
+            )
             let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
                 edges: displayEdges,
                 nodesByID: nodesByID
@@ -99,8 +103,10 @@ public struct CanvasView: View {
             let edgeRenderContext = EdgeRenderContext(
                 nodesByID: nodesByID,
                 branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                treeBranchCoordinateByParentAndDirection: treeBranchCoordinateByParentAndDirection,
                 laneOffsetsByEdgeID: laneOffsetsByEdgeID,
                 areaIDByNodeID: viewModel.areaIDByNodeID,
+                areaEditingModeByID: viewModel.areaEditingModeByID,
                 areaEdgeShapeStyleByID: viewModel.areaEdgeShapeStyleByID,
                 viewportSize: viewportSize,
                 zoomScale: zoomScale,
@@ -237,12 +243,21 @@ public struct CanvasView: View {
                     ForEach(displayEdges, id: \.id) { edge in
                         let areaID = viewModel.areaIDByNodeID[edge.fromNodeID]
                         let edgeShapeStyle = areaID.flatMap { viewModel.areaEdgeShapeStyleByID[$0] } ?? .curved
+                        let editingMode = areaID.flatMap { viewModel.areaEditingModeByID[$0] }
+                        let routingStyle: CanvasEdgeRouting.RoutingStyle = editingMode == .tree ? .treeSimple : .adaptive
+                        let nodeAvoidanceEnabled = editingMode != .tree
+                        let branchCoordinates =
+                            routingStyle == .treeSimple
+                            ? treeBranchCoordinateByParentAndDirection
+                            : branchCoordinateByParentAndDirection
                         if let path = CanvasEdgeRouting.path(
                             for: edge,
                             nodesByID: nodesByID,
-                            branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                            branchCoordinateByParentAndDirection: branchCoordinates,
                             laneOffsetsByEdgeID: laneOffsetsByEdgeID,
-                            edgeShapeStyle: edgeShapeStyle
+                            edgeShapeStyle: edgeShapeStyle,
+                            routingStyle: routingStyle,
+                            nodeAvoidanceEnabled: nodeAvoidanceEnabled
                         ) {
                             let isFocusedEdge = focusedEdgeID == edge.id
                             let isSelectedEdge = selectedEdgeIDs.contains(edge.id)

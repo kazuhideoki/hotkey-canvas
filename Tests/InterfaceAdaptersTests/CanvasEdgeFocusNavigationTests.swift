@@ -196,8 +196,11 @@ private func makeContext(
         edges: edges,
         nodesByID: nodesByID,
         branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+        treeBranchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
         laneOffsetsByEdgeID: laneOffsetsByEdgeID,
-        edgeShapeStyleByEdgeID: Dictionary(uniqueKeysWithValues: edgeIDs.map { ($0, edgeShapeStyle) })
+        edgeShapeStyleByEdgeID: Dictionary(uniqueKeysWithValues: edgeIDs.map { ($0, edgeShapeStyle) }),
+        routingStyleByEdgeID: Dictionary(uniqueKeysWithValues: edgeIDs.map { ($0, .adaptive) }),
+        nodeAvoidanceEnabledByEdgeID: Dictionary(uniqueKeysWithValues: edgeIDs.map { ($0, true) })
     )
 }
 

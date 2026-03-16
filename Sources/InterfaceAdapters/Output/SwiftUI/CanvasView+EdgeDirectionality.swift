@@ -8,8 +8,10 @@ extension CanvasView {
     struct EdgeRenderContext {
         let nodesByID: [CanvasNodeID: CanvasNode]
         let branchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double]
+        let treeBranchCoordinateByParentAndDirection: [CanvasEdgeRouting.BranchKey: Double]
         let laneOffsetsByEdgeID: [CanvasEdgeID: CanvasEdgeRouting.EdgeLaneOffsets]
         let areaIDByNodeID: [CanvasNodeID: CanvasAreaID]
+        let areaEditingModeByID: [CanvasAreaID: CanvasEditingMode]
         let areaEdgeShapeStyleByID: [CanvasAreaID: CanvasAreaEdgeShapeStyle]
         let viewportSize: CGSize
         let zoomScale: Double
@@ -66,13 +68,22 @@ extension CanvasView {
         }
         let areaID = context.areaIDByNodeID[edge.fromNodeID]
         let edgeShapeStyle = areaID.flatMap { context.areaEdgeShapeStyleByID[$0] } ?? .curved
+        let editingMode = areaID.flatMap { context.areaEditingModeByID[$0] }
+        let routingStyle: CanvasEdgeRouting.RoutingStyle = editingMode == .tree ? .treeSimple : .adaptive
+        let nodeAvoidanceEnabled = editingMode != .tree
+        let branchCoordinateByParentAndDirection =
+            routingStyle == .treeSimple
+            ? context.treeBranchCoordinateByParentAndDirection
+            : context.branchCoordinateByParentAndDirection
         guard
             let tipAndVector = CanvasEdgeRouting.edgeTipAndVector(
                 for: edge,
                 nodesByID: context.nodesByID,
-                branchCoordinateByParentAndDirection: context.branchCoordinateByParentAndDirection,
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
                 laneOffsetsByEdgeID: context.laneOffsetsByEdgeID,
-                edgeShapeStyle: edgeShapeStyle
+                edgeShapeStyle: edgeShapeStyle,
+                routingStyle: routingStyle,
+                nodeAvoidanceEnabled: nodeAvoidanceEnabled
             )
         else {
             return nil
