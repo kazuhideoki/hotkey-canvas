@@ -4,7 +4,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasEdgeRouting: curved resolved geometry keeps the base curve when no blocker exists")
+@Test("ブロッカーが存在しない場合、曲線の解決されたジオメトリはベース カーブを維持する")
 func test_resolvedCurvedGeometry_withoutBlocker_matchesBaseCurve() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -33,7 +33,7 @@ func test_resolvedCurvedGeometry_withoutBlocker_matchesBaseCurve() throws {
     #expect(resolvedCurve.control2 == baseCurve.control2)
 }
 
-@Test("CanvasEdgeRouting: curved resolved geometry bends away from a middle blocker")
+@Test("湾曲した解決されたジオメトリがミドルブロッカーから遠ざかる方向に曲がります")
 func test_resolvedCurvedGeometry_withMiddleBlocker_avoidsNonEndpointNode() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -65,7 +65,7 @@ func test_resolvedCurvedGeometry_withMiddleBlocker_avoidsNonEndpointNode() throw
     #expect(!curvedRouteIntersectsNode(resolvedCurve, geometry: geometry, node: blockerNode, padding: 18))
 }
 
-@Test("CanvasEdgeRouting: curved label anchor follows the avoided curve instead of the blocked midpoint")
+@Test("曲線ラベルのアンカーは、ブロックされた中点ではなく、回避された曲線に従います")
 func test_labelAnchor_curvedAvoidedEdge_staysOffBlockedMidpoint() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -91,7 +91,7 @@ func test_labelAnchor_curvedAvoidedEdge_staysOffBlockedMidpoint() throws {
     #expect(abs(anchor.point.x - 380) > 1 || abs(anchor.point.y - 308) > 1)
 }
 
-@Test("CanvasEdgeRouting: curved avoided edge tip follows the avoided terminal tangent")
+@Test("湾曲した回避エッジの先端は回避された終端接線に従う")
 func test_edgeTipAndVector_curvedAvoidedEdge_tracksResolvedCurveTerminalTangent() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -141,7 +141,7 @@ func test_edgeTipAndVector_curvedAvoidedEdge_tracksResolvedCurveTerminalTangent(
     #expect(normalizedTipVector == normalizedExpectedVector)
 }
 
-@Test("CanvasEdgeRouting: curved geometry bulges outward for vertical routes regardless of edge direction")
+@Test("湾曲したジオメトリは、エッジの方向に関係なく、垂直ルートでは外側に膨らみます")
 func test_curvedGeometry_verticalRoute_positiveLaneBulgesOutwardForBothDirections() {
     let downward = CanvasEdgeRouting.RouteGeometry(
         axis: .vertical,
@@ -175,7 +175,7 @@ func test_curvedGeometry_verticalRoute_positiveLaneBulgesOutwardForBothDirection
     #expect(upwardCurve.control2.x > upward.endX)
 }
 
-@Test("CanvasEdgeRouting: curved geometry increases bulge as lane gets farther from center")
+@Test("湾曲したジオメトリは、車線が中心から遠ざかるにつれて膨らみを増加させます")
 func test_curvedGeometry_largerLaneOffsetIncreasesBulge() {
     let geometry = CanvasEdgeRouting.RouteGeometry(
         axis: .horizontal,
@@ -199,7 +199,7 @@ func test_curvedGeometry_largerLaneOffsetIncreasesBulge() {
     #expect(farCurve.control2.y - geometry.endY > nearCurve.control2.y - geometry.endY)
 }
 
-@Test("CanvasEdgeRouting: curved geometry respects different lane offsets at start and end")
+@Test("曲線ジオメトリは、開始時と終了時の異なる車線オフセットを尊重する")
 func test_curvedGeometry_withDistinctStartAndEndLanes_followsEachEndpointLane() {
     let geometry = CanvasEdgeRouting.RouteGeometry(
         axis: .horizontal,
@@ -219,7 +219,7 @@ func test_curvedGeometry_withDistinctStartAndEndLanes_followsEachEndpointLane() 
     #expect(splitCurve.control2.y > geometry.endY)
 }
 
-@Test("CanvasEdgeRouting: edge tip vector respects asymmetric lanes on vertical curved routes")
+@Test("エッジ先端ベクトルは垂直曲線ルート上の非対称車線を尊重する")
 func test_edgeTipAndVector_verticalCurvedRoute_withDistinctLanes_tracksEndLaneDirection() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -255,7 +255,7 @@ func test_edgeTipAndVector_verticalCurvedRoute_withDistinctLanes_tracksEndLaneDi
     #expect(tipAndVector.vector.dy > 0)
 }
 
-@Test("CanvasEdgeRouting: curved route avoids a terminal blocker by rerouting to another side")
+@Test("曲線ルートは別の側にルートを変更することでターミナル ブロッカーを回避する")
 func test_resolvedCurvedGeometry_withTerminalBlocker_avoidsByChangingAnchors() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -284,7 +284,7 @@ func test_resolvedCurvedGeometry_withTerminalBlocker_avoidsByChangingAnchors() t
     #expect(!curvedRouteIntersectsNode(curve, geometry: geometry, node: blockerNode, padding: 18))
 }
 
-@Test("CanvasEdgeRouting: curved node avoidance can be disabled and keeps the base curve")
+@Test("曲線ノードの回避を無効にすることができ、ベース カーブを維持する")
 func test_resolvedCurvedGeometry_whenNodeAvoidanceDisabled_keepsBaseCurve() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")

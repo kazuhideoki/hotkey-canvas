@@ -4,7 +4,7 @@ import Testing
 
 // Background: Deleting focused nodes drives destructive edit flows and subtree cleanup.
 // Responsibility: Verify focused deletion behavior, no-op guards, and subtree removal.
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes removes focused node")
+@Test("deleteSelectedOrFocusedNodes はフォーカス中のノードを削除する")
 func test_apply_deleteSelectedOrFocusedNodes_removesFocusedNode() async throws {
     let targetID = CanvasNodeID(rawValue: "target")
     let otherID = CanvasNodeID(rawValue: "other")
@@ -45,7 +45,7 @@ func test_apply_deleteSelectedOrFocusedNodes_removesFocusedNode() async throws {
     #expect(result.newState.focusedNodeID == otherID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes fails when focus is nil")
+@Test("フォーカスが nil の場合、deleteSelectedOrFocusedNodes は失敗する")
 func test_apply_deleteSelectedOrFocusedNodes_fails_whenFocusedNodeIDIsNil() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
@@ -70,7 +70,7 @@ func test_apply_deleteSelectedOrFocusedNodes_fails_whenFocusedNodeIDIsNil() asyn
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes fails when focused node is stale")
+@Test("フォーカス中のノードが古い場合、deleteSelectedOrFocusedNodes が失敗する")
 func test_apply_deleteSelectedOrFocusedNodes_fails_whenFocusedNodeIDIsStale() async throws {
     let existingNodeID = CanvasNodeID(rawValue: "node")
     let staleFocusedNodeID = CanvasNodeID(rawValue: "stale")
@@ -96,7 +96,7 @@ func test_apply_deleteSelectedOrFocusedNodes_fails_whenFocusedNodeIDIsStale() as
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes removes focused subtree")
+@Test("deleteSelectedOrFocusedNodes はフォーカス中のサブツリーを削除する")
 func test_apply_deleteSelectedOrFocusedNodes_removesFocusedSubtree() async throws {
     let fixture = SubtreeDeletionFixture.make()
     let graph = CanvasGraph(
@@ -117,7 +117,7 @@ func test_apply_deleteSelectedOrFocusedNodes_removesFocusedSubtree() async throw
     #expect(result.newState.edgesByID[fixture.edgeRootSiblingID] != nil)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes removes selected subtrees in tree area")
+@Test("deleteSelectedOrFocusedNodes はツリーエリアで選択したサブツリーを削除する")
 func test_apply_deleteSelectedOrFocusedNodes_removesSelectedSubtreesInTreeArea() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -144,7 +144,7 @@ func test_apply_deleteSelectedOrFocusedNodes_removesSelectedSubtreesInTreeArea()
     #expect(result.newState.selectedNodeIDs == [survivorID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes removes selected nodes in diagram area")
+@Test("deleteSelectedOrFocusedNodes は、ダイアグラムエリアで選択したノードを削除する")
 func test_apply_deleteSelectedOrFocusedNodes_removesSelectedNodesInDiagramArea() async throws {
     let leftID = CanvasNodeID(rawValue: "left")
     let focusedID = CanvasNodeID(rawValue: "focused")

@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasSearchNavigator: matches are ordered top-to-bottom then left-to-right")
+@Test("一致は上から下、次に左から右の順に並べられます")
 func test_matches_ordersByNodePosition() {
     let topLeftID = CanvasNodeID(rawValue: "top-left")
     let topRightID = CanvasNodeID(rawValue: "top-right")
@@ -37,7 +37,7 @@ func test_matches_ordersByNodePosition() {
     #expect(matches.map(\.nodeID) == [topLeftID, topRightID, lowerID])
 }
 
-@Test("CanvasSearchNavigator: nextMatch loops forward and backward")
+@Test("nextMatch は順方向と逆方向にループする")
 func test_nextMatch_loopsInBothDirections() {
     let nodeA = CanvasNodeID(rawValue: "a")
     let nodeB = CanvasNodeID(rawValue: "b")
@@ -61,7 +61,7 @@ func test_nextMatch_loopsInBothDirections() {
     #expect(backwardFromFirst == matches[1])
 }
 
-@Test("CanvasSearchNavigator: backward without current match starts from last")
+@Test("現在の一致なしで後方に戻ると最後から開始される")
 func test_nextMatch_backwardWithoutCurrent_startsFromLast() {
     let nodeA = CanvasNodeID(rawValue: "a")
     let nodeB = CanvasNodeID(rawValue: "b")

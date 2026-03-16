@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasEdgeRouting: sibling edges on one side follow counterpart order to avoid immediate crossing")
+@Test("片側の兄弟ノードのエッジは、すぐに交差することを避けるために、対応する順序に従います")
 func test_routeGeometry_withSharedStartSide_ordersLanesByCounterpartPosition() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let upperChildID = CanvasNodeID(rawValue: "upper-child")
@@ -44,7 +44,7 @@ func test_routeGeometry_withSharedStartSide_ordersLanesByCounterpartPosition() t
     #expect(upperGeometry.endY < lowerGeometry.endY)
 }
 
-@Test("CanvasEdgeRouting: sibling edges on one end side follow counterpart order to avoid immediate crossing")
+@Test("一方の端側の兄弟ノードのエッジは、すぐに交差することを避けるために相手の順序に従います")
 func test_routeGeometry_withSharedEndSide_ordersLanesByCounterpartPosition() throws {
     let upperParentID = CanvasNodeID(rawValue: "upper-parent")
     let lowerParentID = CanvasNodeID(rawValue: "lower-parent")

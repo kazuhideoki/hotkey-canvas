@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasView edge target sync: adopts edge target from model-focused edge")
+@Test("モデル中心のエッジからエッジターゲットを採用")
 func test_edgeTargetStateSyncedWithModel_adoptsEdgeMode() {
     let edgeID = CanvasEdgeID(rawValue: "edge-focused")
 
@@ -19,7 +19,7 @@ func test_edgeTargetStateSyncedWithModel_adoptsEdgeMode() {
     #expect(state.selectedEdgeIDs == [edgeID])
 }
 
-@Test("CanvasView edge target sync: drops local edge mode when model has no focused edge")
+@Test("モデルにフォーカス中のエッジがない場合、ローカル エッジ モードを削除する")
 func test_edgeTargetStateSyncedWithModel_dropsEdgeModeWhenModelHasNoEdgeFocus() {
     let staleEdgeID = CanvasEdgeID(rawValue: "edge-stale")
 
@@ -35,7 +35,7 @@ func test_edgeTargetStateSyncedWithModel_dropsEdgeModeWhenModelHasNoEdgeFocus() 
     #expect(state.selectedEdgeIDs.isEmpty)
 }
 
-@Test("CanvasView edge target sync: keeps node mode unchanged when model has no focused edge")
+@Test("モデルにフォーカス中のエッジがない場合、ノード モードは変更されない")
 func test_edgeTargetStateSyncedWithModel_keepsNodeModeWhenModelHasNoEdgeFocus() {
     let state = CanvasView.edgeTargetStateSyncedWithModel(
         currentTargetKind: .node,
@@ -49,7 +49,7 @@ func test_edgeTargetStateSyncedWithModel_keepsNodeModeWhenModelHasNoEdgeFocus() 
     #expect(state.selectedEdgeIDs.isEmpty)
 }
 
-@Test("CanvasView edge target sync: drops stale area mode when model has no focused area")
+@Test("モデルにフォーカス中のエリアがない場合、古いエリアモードを削除する")
 func test_edgeTargetStateSyncedWithModel_dropsAreaModeWhenModelHasNoAreaFocus() {
     let state = CanvasView.edgeTargetStateSyncedWithModel(
         currentTargetKind: .area,
@@ -63,7 +63,7 @@ func test_edgeTargetStateSyncedWithModel_dropsAreaModeWhenModelHasNoAreaFocus() 
     #expect(state.selectedEdgeIDs.isEmpty)
 }
 
-@Test("CanvasView edge target sync: adopts area target when model-focused area exists")
+@Test("モデルに重点を置いたエリアが存在する場合、エリアターゲットを採用する")
 func test_edgeTargetStateSyncedWithModel_adoptsAreaMode() {
     let areaID = CanvasAreaID(rawValue: "area-1")
 
@@ -79,7 +79,7 @@ func test_edgeTargetStateSyncedWithModel_adoptsAreaMode() {
     #expect(state.selectedEdgeIDs.isEmpty)
 }
 
-@Test("CanvasView edge target sync: area focus overrides stale edge mode")
+@Test("エリアフォーカスは古いエッジモードをオーバーライドする")
 func test_edgeTargetStateSyncedWithModel_areaFocusOverridesEdgeMode() {
     let areaID = CanvasAreaID(rawValue: "area-1")
     let staleEdgeID = CanvasEdgeID(rawValue: "edge-stale")
@@ -96,7 +96,7 @@ func test_edgeTargetStateSyncedWithModel_areaFocusOverridesEdgeMode() {
     #expect(state.selectedEdgeIDs.isEmpty)
 }
 
-@Test("CanvasView edge target sync: edge deletion command keeps current selected set")
+@Test("エッジ削除コマンドは現在選択されているセットを保持する")
 func test_edgeDeletionCommand_keepsCurrentSelectedSet() {
     let focusedNodeID = CanvasNodeID(rawValue: "node-focused")
     let focusedEdgeID = CanvasEdgeID(rawValue: "edge-focused")
@@ -117,7 +117,7 @@ func test_edgeDeletionCommand_keepsCurrentSelectedSet() {
     #expect(selectedEdgeIDs == [focusedEdgeID, selectedEdgeID])
 }
 
-@Test("CanvasView edge target sync: edge directionality command keeps focused edge, origin node, and selection")
+@Test("エッジ方向性コマンドは、フォーカス中のエッジ、原点ノード、および選択を維持する")
 func test_edgeDirectionalityCycleCommand_keepsFocusedEdgeOriginNodeAndSelection() {
     let focusedNodeID = CanvasNodeID(rawValue: "node-focused")
     let focusedEdgeID = CanvasEdgeID(rawValue: "edge-focused")

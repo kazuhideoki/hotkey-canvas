@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("AddNodeModeSelectionHotkeyResolver: T key selects tree mode")
+@Test("T キーはツリー モードを選択する")
 func test_action_tKey_returnsSelectTree() throws {
     let sut = AddNodeModeSelectionHotkeyResolver()
 
@@ -12,7 +12,7 @@ func test_action_tKey_returnsSelectTree() throws {
     #expect(action == .selectTree)
 }
 
-@Test("AddNodeModeSelectionHotkeyResolver: D key selects diagram mode")
+@Test("D キーはダイアグラム モードを選択する")
 func test_action_dKey_returnsSelectDiagram() throws {
     let sut = AddNodeModeSelectionHotkeyResolver()
 
@@ -21,7 +21,7 @@ func test_action_dKey_returnsSelectDiagram() throws {
     #expect(action == .selectDiagram)
 }
 
-@Test("AddNodeModeSelectionHotkeyResolver: up arrow moves selection up")
+@Test("上矢印で選択範囲を上に移動する")
 func test_action_upArrow_returnsMoveSelectionMinusOne() throws {
     let sut = AddNodeModeSelectionHotkeyResolver()
 
@@ -30,7 +30,7 @@ func test_action_upArrow_returnsMoveSelectionMinusOne() throws {
     #expect(action == .moveSelection(delta: -1))
 }
 
-@Test("AddNodeModeSelectionHotkeyResolver: down arrow moves selection down")
+@Test("下矢印で選択範囲を下に移動する")
 func test_action_downArrow_returnsMoveSelectionPlusOne() throws {
     let sut = AddNodeModeSelectionHotkeyResolver()
 
@@ -39,7 +39,7 @@ func test_action_downArrow_returnsMoveSelectionPlusOne() throws {
     #expect(action == .moveSelection(delta: 1))
 }
 
-@Test("AddNodeModeSelectionHotkeyResolver: Enter confirms current selection")
+@Test("Enter で現在の選択を確認する")
 func test_action_enter_returnsConfirmSelection() throws {
     let sut = AddNodeModeSelectionHotkeyResolver()
 
@@ -48,7 +48,7 @@ func test_action_enter_returnsConfirmSelection() throws {
     #expect(action == .confirmSelection)
 }
 
-@Test("AddNodeModeSelectionHotkeyResolver: Escape dismisses popup")
+@Test("エスケープするとポップアップが閉じる")
 func test_action_escape_returnsDismiss() throws {
     let sut = AddNodeModeSelectionHotkeyResolver()
 
@@ -57,7 +57,7 @@ func test_action_escape_returnsDismiss() throws {
     #expect(action == .dismiss)
 }
 
-@Test("AddNodeModeSelectionHotkeyResolver: unrelated key returns nil")
+@Test("無関係なキーは nil を返す")
 func test_action_unrelatedKey_returnsNil() throws {
     let sut = AddNodeModeSelectionHotkeyResolver()
 
@@ -66,7 +66,7 @@ func test_action_unrelatedKey_returnsNil() throws {
     #expect(action == nil)
 }
 
-@Test("AddNodeModeSelectionHotkeyResolver: non-keyDown event returns nil")
+@Test("keyDown 以外のイベントは nil を返す")
 func test_action_nonKeyDownEvent_returnsNil() throws {
     let sut = AddNodeModeSelectionHotkeyResolver()
     let event = try #require(

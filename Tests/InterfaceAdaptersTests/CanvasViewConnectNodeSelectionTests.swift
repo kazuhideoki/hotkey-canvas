@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasView connect selection: initial target chooses nearest node by physical position")
+@Test("初期ターゲットは物理的位置に基づいて最も近いノードを選択する")
 func test_initialConnectNodeSelectionTargetID_choosesNearestNode() {
     let sourceNode = CanvasNode(
         id: CanvasNodeID(rawValue: "source"),
@@ -32,7 +32,7 @@ func test_initialConnectNodeSelectionTargetID_choosesNearestNode() {
     #expect(targetID == nearestNode.id)
 }
 
-@Test("CanvasView connect selection: initial target breaks equal distance ties by position then id")
+@Test("最初のターゲットは、位置、次に ID によって等距離タイを破ります")
 func test_initialConnectNodeSelectionTargetID_breaksEqualDistanceTiesDeterministically() {
     let sourceNode = CanvasNode(
         id: CanvasNodeID(rawValue: "source"),

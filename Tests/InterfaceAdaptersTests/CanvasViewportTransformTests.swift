@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasViewportTransform: identity zoom maps world point to same screen point when offset is zero")
+@Test("オフセットがゼロの場合、アイデンティティ ズームはワールド ポイントを同じスクリーン ポイントにマッピングする")
 func test_pointOnScreen_identityZoom_noOffset() {
     let point = CanvasViewportTransform.pointOnScreen(
         worldPoint: CGPoint(x: 250, y: 180),
@@ -16,7 +16,7 @@ func test_pointOnScreen_identityZoom_noOffset() {
     #expect(point.y == 180)
 }
 
-@Test("CanvasViewportTransform: zoom in expands distance from viewport center")
+@Test("ズームインするとビューポートの中心からの距離が拡大される")
 func test_pointOnScreen_zoomIn_expandsFromCenter() {
     let point = CanvasViewportTransform.pointOnScreen(
         worldPoint: CGPoint(x: 650, y: 450),
@@ -29,7 +29,7 @@ func test_pointOnScreen_zoomIn_expandsFromCenter() {
     #expect(point.y == 600)
 }
 
-@Test("CanvasViewportTransform: zoom in and pan offset both affect transformed rect")
+@Test("ズームインとパンオフセットは両方とも変換された四角形に影響する")
 func test_rectOnScreen_zoomAndOffset_appliesBoth() {
     let rect = CanvasViewportTransform.rectOnScreen(
         worldRect: CGRect(x: 400, y: 260, width: 100, height: 80),
@@ -44,7 +44,7 @@ func test_rectOnScreen_zoomAndOffset_appliesBoth() {
     #expect(rect.height == 160)
 }
 
-@Test("CanvasViewportTransform: affine transform matches point conversion")
+@Test("アフィン変換はポイント変換と一致する")
 func test_affineTransform_matchesPointOnScreen() {
     let viewportSize = CGSize(width: 900, height: 600)
     let zoomScale = 1.5

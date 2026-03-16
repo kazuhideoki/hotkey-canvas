@@ -36,7 +36,7 @@ private func areaBounds(areaID: CanvasAreaID, in graph: CanvasGraph) -> CanvasBo
     )
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveArea translates all nodes in focused area")
+@Test("moveArea は、フォーカス中のエリア内のすべてのノードを変換する")
 func test_apply_moveArea_translatesFocusedAreaNodes() async throws {
     let areaID = CanvasAreaID(rawValue: "focused-area")
     let otherAreaID = CanvasAreaID(rawValue: "other-area")
@@ -84,7 +84,7 @@ func test_apply_moveArea_translatesFocusedAreaNodes() async throws {
     #expect(other.bounds.x == 1_200)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveArea resolves overlap with other areas")
+@Test("moveArea は他のエリアとの重複を解決する")
 func test_apply_moveArea_resolvesAreaOverlap() async throws {
     let movingAreaID = CanvasAreaID(rawValue: "moving-area")
     let blockerAreaID = CanvasAreaID(rawValue: "blocker-area")
@@ -122,7 +122,7 @@ func test_apply_moveArea_resolvesAreaOverlap() async throws {
     #expect(boundsOverlap(movingAreaBounds, blockerAreaBounds) == false)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveArea supports left direction")
+@Test("moveArea は左方向をサポートする")
 func test_apply_moveArea_supportsLeftDirection() async throws {
     let areaID = CanvasAreaID(rawValue: "focused-area")
     let nodeID = CanvasNodeID(rawValue: "node")
@@ -151,7 +151,7 @@ func test_apply_moveArea_supportsLeftDirection() async throws {
     #expect(movedNode.bounds.y == 220)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveArea supports up direction")
+@Test("moveArea は上方向をサポートする")
 func test_apply_moveArea_supportsUpDirection() async throws {
     let areaID = CanvasAreaID(rawValue: "focused-area")
     let nodeID = CanvasNodeID(rawValue: "node")
@@ -180,7 +180,7 @@ func test_apply_moveArea_supportsUpDirection() async throws {
     #expect(movedNode.bounds.y == 0)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveArea supports down direction")
+@Test("moveArea は下方向をサポートする")
 func test_apply_moveArea_supportsDownDirection() async throws {
     let areaID = CanvasAreaID(rawValue: "focused-area")
     let nodeID = CanvasNodeID(rawValue: "node")
@@ -209,7 +209,7 @@ func test_apply_moveArea_supportsDownDirection() async throws {
     #expect(movedNode.bounds.y == 440)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveArea keeps relative positions inside moved area")
+@Test("moveArea は移動エリア内の相対位置を維持する")
 func test_apply_moveArea_preservesRelativePositionsWithinArea() async throws {
     let movingAreaID = CanvasAreaID(rawValue: "moving-area")
     let blockerAreaID = CanvasAreaID(rawValue: "blocker-area")

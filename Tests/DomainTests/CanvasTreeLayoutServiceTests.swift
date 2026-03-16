@@ -3,7 +3,7 @@
 import Domain
 import Testing
 
-@Test("CanvasTreeLayoutService: children are laid out symmetrically and without overlap")
+@Test("子は対称的に重ならずに配置される")
 func test_relayoutParentChildTrees_childrenAreSymmetric() throws {
     let fixture = makeSymmetricLayoutFixture()
 
@@ -37,7 +37,7 @@ func test_relayoutParentChildTrees_childrenAreSymmetric() throws {
     #expect(abs(actualRootCenterY - expectedRootCenterY) < 0.0001)
 }
 
-@Test("CanvasTreeLayoutService: root anchor position is preserved")
+@Test("ルートノードのアンカー位置は保持される")
 func test_relayoutParentChildTrees_keepsRootAnchor() throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
@@ -74,7 +74,7 @@ func test_relayoutParentChildTrees_keepsRootAnchor() throws {
     #expect(root.y == 260)
 }
 
-@Test("CanvasTreeLayoutService: explicit parentChildOrder controls sibling order before coordinates")
+@Test("明示的な parentChildOrder は座標の前の兄弟ノードの順序を制御する")
 func test_relayoutParentChildTrees_parentChildOrderHasPriorityOverBounds() throws {
     let fixture = makeParentChildOrderPriorityFixture()
 

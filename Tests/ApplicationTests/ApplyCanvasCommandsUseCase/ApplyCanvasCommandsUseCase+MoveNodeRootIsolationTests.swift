@@ -4,7 +4,7 @@ import Testing
 
 // Background: Tree roots should remain immutable by move-node commands even when diagram areas coexist.
 // Responsibility: Verify tree-root move isolation from diagram areas.
-@Test("ApplyCanvasCommandsUseCase: moveNode up does not move top-level tree root when diagram area exists")
+@Test("ダイアグラムエリアが存在する場合、moveNode up はトップレベルのツリー ルートノードを移動しない")
 func test_apply_moveNodeUp_doesNotMoveTopLevelTreeRootWithDiagramArea() async throws {
     let treeRootID = CanvasNodeID(rawValue: "tree-root")
     let treeChildID = CanvasNodeID(rawValue: "tree-child")

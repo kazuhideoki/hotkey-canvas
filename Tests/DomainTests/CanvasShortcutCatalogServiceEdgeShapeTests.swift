@@ -1,7 +1,7 @@
 import Domain
 import Testing
 
-@Test("Shortcut catalog: command-shift-e resolves toggleFocusedAreaEdgeShapeStyle")
+@Test("command-shift-e は toggleFocusedAreaEdgeShapeStyle を解決する")
 func test_resolveAction_commandShiftE_returnsToggleFocusedAreaEdgeShapeStyle() {
     let gesture = CanvasShortcutGesture(key: .character("e"), modifiers: [.command, .shift])
 

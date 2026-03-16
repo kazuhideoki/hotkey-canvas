@@ -11,7 +11,7 @@ private struct AddSiblingInsertionFixture {
     let focusedChildID: CanvasNodeID
 }
 
-@Test("ApplyCanvasCommandsUseCase: addSiblingNode creates sibling under same parent")
+@Test("addSiblingNode は同じ親の下に兄弟ノードを作成する")
 func test_apply_addSiblingNode_createsSiblingUnderSameParent() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let focusedChildID = CanvasNodeID(rawValue: "focused-child")
@@ -59,7 +59,7 @@ func test_apply_addSiblingNode_createsSiblingUnderSameParent() async throws {
     #expect(siblingEdge.relationType == .parentChild)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addSiblingNode resolves overlap by moving areas")
+@Test("addSiblingNode はエリアを移動することで重複を解決する")
 func test_apply_addSiblingNode_resolvesOverlapByMovingAreas() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let focusedChildID = CanvasNodeID(rawValue: "focused-child")
@@ -112,7 +112,7 @@ func test_apply_addSiblingNode_resolvesOverlapByMovingAreas() async throws {
     #expect(addSiblingTestBoundsOverlap(siblingAreaBounds, updatedBlocker.bounds, spacing: 32) == false)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addSiblingNode is no-op when focused node has no parent")
+@Test("フォーカス中のノードに親がない場合、addSiblingNode は何もしない")
 func test_apply_addSiblingNode_withoutParent_isNoOp() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let graph = CanvasGraph(
@@ -134,7 +134,7 @@ func test_apply_addSiblingNode_withoutParent_isNoOp() async throws {
     #expect(result.newState == graph.withDefaultTreeAreaIfMissing())
 }
 
-@Test("ApplyCanvasCommandsUseCase: addSiblingNode above places node directly above focused node")
+@Test("addSiblingNode を上側に追加すると、フォーカス中のノードの真上に配置される")
 func test_apply_addSiblingNodeAbove_placesNodeAboveFocusedNode() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let focusedChildID = CanvasNodeID(rawValue: "focused-child")
@@ -174,7 +174,7 @@ func test_apply_addSiblingNodeAbove_placesNodeAboveFocusedNode() async throws {
     #expect(sibling.bounds.y + sibling.bounds.height + 24 <= updatedFocusedChild.bounds.y)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addSiblingNode avoids occupied slot within same parent area")
+@Test("addSiblingNode は同じ親エリア内の占有スロットを回避する")
 func test_apply_addSiblingNode_avoidsOccupiedSlotWithinSameArea() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let focusedChildID = CanvasNodeID(rawValue: "focused-child")
@@ -229,7 +229,7 @@ func test_apply_addSiblingNode_avoidsOccupiedSlotWithinSameArea() async throws {
     #expect(newSibling.bounds.y + newSibling.bounds.height + 24 <= lowerSiblingAfter.bounds.y)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addSiblingNode above inserts between previous sibling and focused node")
+@Test("addSiblingNode を上側に追加すると、前の兄弟ノードとフォーカス中のノードの間に挿入される")
 func test_apply_addSiblingNodeAbove_insertsBetweenPreviousAndFocusedSibling() async throws {
     let fixture = makeAddSiblingInsertionFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -258,7 +258,7 @@ func test_apply_addSiblingNodeAbove_insertsBetweenPreviousAndFocusedSibling() as
     #expect(newIndex < focusedIndex)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addSiblingNode above keeps ordering when previous sibling shares Y")
+@Test("addSiblingNode を上側に追加すると、前の兄弟ノードが Y を共有していても順序を維持する")
 func test_apply_addSiblingNodeAbove_withEqualY_keepsNewNodeAboveFocused() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let previousID = CanvasNodeID(rawValue: "previous")

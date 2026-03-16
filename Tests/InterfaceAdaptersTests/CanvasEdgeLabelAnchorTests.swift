@@ -4,7 +4,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasEdgeRouting: curved label anchor follows rendered curve instead of straight midpoint")
+@Test("曲線ラベルのアンカーは直線の中点ではなくレンダリングされた曲線に従います")
 func test_labelAnchor_curvedEdge_usesRenderedCurveMidpoint() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -28,7 +28,7 @@ func test_labelAnchor_curvedEdge_usesRenderedCurveMidpoint() throws {
     #expect(anchor.point != straightMidpoint)
 }
 
-@Test("CanvasEdgeRouting: duplicated edges receive distinct label anchors on their own rendered paths")
+@Test("重複したエッジは、独自のレンダリングされたパス上で個別のラベルアンカーを受け取る")
 func test_labelAnchor_duplicatedEdges_returnsSeparatedAnchors() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")

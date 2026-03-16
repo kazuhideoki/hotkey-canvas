@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasStylePalette: default style sheet keeps current node and edge defaults")
+@Test("デフォルトのスタイルシートは現在のノードとエッジのデフォルトを保持する")
 func test_defaultStyleSheet_matchesCurrentNodeAndEdgeDefaults() {
     let styleSheet = CanvasStylePalette.defaultStyleSheet
 
@@ -13,7 +13,7 @@ func test_defaultStyleSheet_matchesCurrentNodeAndEdgeDefaults() {
     #expect(styleSheet.edge.lineWidth == 2.25)
 }
 
-@Test("CanvasStylePalette: default style sheet keeps current overlay defaults")
+@Test("デフォルトのスタイルシートは現在のオーバーレイのデフォルトを維持する")
 func test_defaultStyleSheet_matchesCurrentOverlayDefaults() {
     let styleSheet = CanvasStylePalette.defaultStyleSheet
 
@@ -28,7 +28,7 @@ func test_defaultStyleSheet_matchesCurrentOverlayDefaults() {
     #expect(styleSheet.overlay.zoomPopupBorderOpacity == 0.55)
 }
 
-@Test("NodeTextStyle: style sheet injection overrides node text metrics")
+@Test("スタイルシートインジェクションはノードテキストメトリクスをオーバーライドする")
 func test_nodeTextStyle_usesInjectedNodeTextMetrics() {
     let base = CanvasStylePalette.defaultStyleSheet
     let injectedNodeText = CanvasNodeTextStyle(

@@ -3,7 +3,7 @@
 import Domain
 import Testing
 
-@Test("CanvasFocusNavigationService: picks aligned candidate over heavily offset nearer candidate")
+@Test("大きくオフセットされたより近い候補よりも整列した候補を選択する")
 func test_nextFocusedNodeID_prefersAlignedCandidate_overOffsetNearCandidate() {
     let centerID = CanvasNodeID(rawValue: "center")
     let rightOffsetNearID = CanvasNodeID(rawValue: "right-offset-near")
@@ -38,7 +38,7 @@ func test_nextFocusedNodeID_prefersAlignedCandidate_overOffsetNearCandidate() {
     #expect(nextFocusedNodeID == rightAlignedFarID)
 }
 
-@Test("CanvasFocusNavigationService: falls back to directional candidates when preferred corridor is empty")
+@Test("優先コリドーが空の場合は方向候補に戻ります")
 func test_nextFocusedNodeID_usesDirectionalFallback_whenPreferredCorridorHasNoCandidate() {
     let centerID = CanvasNodeID(rawValue: "center")
     let upLeftID = CanvasNodeID(rawValue: "up-left")
@@ -73,7 +73,7 @@ func test_nextFocusedNodeID_usesDirectionalFallback_whenPreferredCorridorHasNoCa
     #expect(nextFocusedNodeID == upLeftID)
 }
 
-@Test("CanvasFocusNavigationService: returns current focus when requested direction has no candidate")
+@Test("要求された方向に候補がない場合、現在のフォーカスを返す")
 func test_nextFocusedNodeID_returnsCurrentFocus_whenNoDirectionalCandidateExists() {
     let nodeID = CanvasNodeID(rawValue: "single")
     let graph = CanvasGraph(
@@ -94,14 +94,14 @@ func test_nextFocusedNodeID_returnsCurrentFocus_whenNoDirectionalCandidateExists
     #expect(nextFocusedNodeID == nodeID)
 }
 
-@Test("CanvasFocusNavigationService: returns nil on empty graph")
+@Test("空のグラフでは nil を返す")
 func test_nextFocusedNodeID_returnsNil_whenGraphIsEmpty() {
     let nextFocusedNodeID = CanvasFocusNavigationService.nextFocusedNodeID(in: .empty, moving: .down)
 
     #expect(nextFocusedNodeID == nil)
 }
 
-@Test("CanvasFocusNavigationService: edge focus moves to nearest edge in requested direction")
+@Test("エッジフォーカスは要求された方向の最も近いエッジに移動する")
 func test_nextFocusedEdgeID_movesToNearestDirectionalEdge() {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -152,7 +152,7 @@ func test_nextFocusedEdgeID_movesToNearestDirectionalEdge() {
     #expect(nextFocusedEdgeID == edgeCDID)
 }
 
-@Test("CanvasFocusNavigationService: edge focus cycles between duplicated coincident edges")
+@Test("重複した一致するエッジ間でエッジ フォーカスが循環する")
 func test_nextFocusedEdgeID_withCoincidentEdges_cyclesByDirection() {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -194,7 +194,7 @@ func test_nextFocusedEdgeID_withCoincidentEdges_cyclesByDirection() {
     #expect(nextByLeft == edge2ID)
 }
 
-@Test("CanvasFocusNavigationService: edge focus prioritizes duplicate bundle before directional candidates")
+@Test("エッジフォーカスは、方向候補よりも重複したバンドルを優先する")
 func test_nextFocusedEdgeID_prioritizesDuplicateBundle_beforeDirectionalCandidates() {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -246,7 +246,7 @@ func test_nextFocusedEdgeID_prioritizesDuplicateBundle_beforeDirectionalCandidat
     #expect(nextFocusedEdgeID == edge2ID)
 }
 
-@Test("CanvasFocusNavigationService: edge focus does not cycle to unrelated edge that only shares midpoint")
+@Test("エッジ フォーカスは、中点のみを共有する無関係なエッジには循環しない")
 func test_nextFocusedEdgeID_doesNotCycleToUnrelatedEdge_whenOnlyMidpointMatches() {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")

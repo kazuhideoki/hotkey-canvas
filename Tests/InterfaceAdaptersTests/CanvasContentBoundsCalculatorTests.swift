@@ -2,7 +2,7 @@ import Domain
 import InterfaceAdapters
 import Testing
 
-@Test("CanvasContentBoundsCalculator: empty nodes return minimum area from origin")
+@Test("空のノードは原点からの最小エリアを返す")
 func test_calculate_emptyNodes_returnsMinimumArea() {
     let result = CanvasContentBoundsCalculator.calculate(
         nodes: [],
@@ -17,7 +17,7 @@ func test_calculate_emptyNodes_returnsMinimumArea() {
     #expect(result.height == 600)
 }
 
-@Test("CanvasContentBoundsCalculator: includes negative coordinates and margin")
+@Test("負の座標とマージンが含まれます")
 func test_calculate_nodesWithNegativeCoordinates_expandsInAllDirections() {
     let nodes = [
         CanvasNode(
@@ -47,7 +47,7 @@ func test_calculate_nodesWithNegativeCoordinates_expandsInAllDirections() {
     #expect(result.height == 560)
 }
 
-@Test("CanvasContentBoundsCalculator: minimum area is centered around content bounds")
+@Test("最小エリアはコンテンツ境界の中心にあります")
 func test_calculate_smallContent_appliesMinimumAreaWithCenterPadding() {
     let nodes = [
         CanvasNode(

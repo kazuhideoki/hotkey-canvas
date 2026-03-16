@@ -4,7 +4,7 @@ import Testing
 
 // Background: Tree move should support multi-selection while preserving focus-driven command semantics.
 // Responsibility: Verify multi-selection moveNode behavior in tree mode.
-@Test("ApplyCanvasCommandsUseCase: moveNode down moves multi-selection as siblings under focused destination parent")
+@Test("moveNode 下に移動すると、複数選択がフォーカス中の宛先の親の下に兄弟として移動する")
 func test_apply_moveNodeDown_multiSelectionAcrossParents_becomesSiblingsAtDestination() async throws {
     let fixture = makeMoveNodeDownMultiSelectionFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -21,7 +21,7 @@ func test_apply_moveNodeDown_multiSelectionAcrossParents_becomesSiblingsAtDestin
     #expect(result.newState.selectedNodeIDs == [fixture.focusedID, fixture.selectedID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode down swaps sibling block when multi-selection is adjacent")
+@Test("moveNode ダウンは、複数選択が隣接している場合に兄弟ノード ブロックをスワップする")
 func test_apply_moveNodeDown_multiSelectionSiblings_swapsAsBlock() async throws {
     let fixture = makeMoveNodeSiblingBlockMultiSelectionFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -35,7 +35,7 @@ func test_apply_moveNodeDown_multiSelectionSiblings_swapsAsBlock() async throws 
     )
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode up swaps sibling block when multi-selection is adjacent")
+@Test("moveNode は、複数選択が隣接している場合に兄弟ノード ブロックをスワップする")
 func test_apply_moveNodeUp_multiSelectionSiblings_swapsAsBlock() async throws {
     let fixture = makeMoveNodeSiblingBlockMultiSelectionFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -49,7 +49,7 @@ func test_apply_moveNodeUp_multiSelectionSiblings_swapsAsBlock() async throws {
     )
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode right flattens selected parent-child relation into siblings")
+@Test("moveNode right は選択された親子ノード関係を兄弟に平坦化する")
 func test_apply_moveNodeRight_multiSelectionWithNestedNodes_flattensToSiblings() async throws {
     let fixture = makeMoveNodeRightMultiSelectionFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -67,7 +67,7 @@ func test_apply_moveNodeRight_multiSelectionWithNestedNodes_flattensToSiblings()
     )
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode right keeps collapsed destination parent focus in multi-selection")
+@Test("moveNode right は、複数選択で折りたたまれた宛先の親フォーカスを保持する")
 func test_apply_moveNodeRight_multiSelectionKeepsCollapsedDestinationParentFocus() async throws {
     let fixture = makeMoveNodeRightCollapsedFocusMultiSelectionFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())

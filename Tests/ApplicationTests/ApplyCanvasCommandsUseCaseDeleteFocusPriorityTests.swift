@@ -2,7 +2,7 @@ import Application
 import Domain
 import Testing
 
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes focuses sibling when sibling exists")
+@Test("deleteSelectedOrFocusedNodes は兄弟ノードが存在する場合に兄弟ノードにフォーカスします")
 func test_apply_deleteSelectedOrFocusedNodes_focusesSibling_whenSiblingExists() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let upperSiblingID = CanvasNodeID(rawValue: "upper-sibling")
@@ -66,8 +66,7 @@ func test_apply_deleteSelectedOrFocusedNodes_focusesSibling_whenSiblingExists() 
     #expect(result.newState.focusedNodeID == upperSiblingID)
 }
 
-@Test(
-    "ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes focuses lower sibling when upper sibling does not exist")
+@Test("deleteSelectedOrFocusedNodes は、上側の兄弟ノードが存在しないとき、下側の兄弟ノードへフォーカスする")
 func test_apply_deleteSelectedOrFocusedNodes_focusesLowerSibling_whenUpperSiblingDoesNotExist() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -118,7 +117,7 @@ func test_apply_deleteSelectedOrFocusedNodes_focusesLowerSibling_whenUpperSiblin
     #expect(result.newState.focusedNodeID == lowerSiblingID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes focuses parent when no sibling exists")
+@Test("deleteSelectedOrFocusedNodes は兄弟ノードが存在しない場合に親にフォーカスします")
 func test_apply_deleteSelectedOrFocusedNodes_focusesParent_whenSiblingDoesNotExist() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -163,7 +162,7 @@ func test_apply_deleteSelectedOrFocusedNodes_focusesParent_whenSiblingDoesNotExi
     #expect(result.newState.focusedNodeID == parentID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes focuses nearest node when parent does not exist")
+@Test("deleteSelectedOrFocusedNodes は親が存在しない場合に最も近いノードにフォーカスします")
 func test_apply_deleteSelectedOrFocusedNodes_focusesNearestNode_whenParentDoesNotExist() async throws {
     let focusedID = CanvasNodeID(rawValue: "focused")
     let nearestID = CanvasNodeID(rawValue: "nearest")
@@ -201,7 +200,7 @@ func test_apply_deleteSelectedOrFocusedNodes_focusesNearestNode_whenParentDoesNo
     #expect(result.newState.focusedNodeID == nearestID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes skips upper sibling when sibling is also deleted")
+@Test("deleteSelectedOrFocusedNodes は兄弟ノードも削除されると上位の兄弟ノードをスキップする")
 func test_apply_deleteSelectedOrFocusedNodes_skipsDeletedUpperSibling() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -259,7 +258,7 @@ func test_apply_deleteSelectedOrFocusedNodes_skipsDeletedUpperSibling() async th
     #expect(result.newState.focusedNodeID == parentID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedNodes chooses deterministic parent in multi-parent graph")
+@Test("deleteSelectedOrFocusedNodes は複数親グラフで決定的な親を選択する")
 func test_apply_deleteSelectedOrFocusedNodes_choosesDeterministicParent_whenMultiParent() async throws {
     let parentAID = CanvasNodeID(rawValue: "parent-a")
     let parentBID = CanvasNodeID(rawValue: "parent-b")

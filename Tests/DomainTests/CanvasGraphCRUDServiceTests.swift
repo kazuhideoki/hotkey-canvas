@@ -3,7 +3,7 @@
 import Domain
 import Testing
 
-@Test("Node CRUD: text node can be created, updated, and deleted")
+@Test("テキストノードの作成、更新、削除が可能")
 func test_nodeCrud_textNode_lifecycleWorks() throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
     let initialNode = CanvasNode(
@@ -31,7 +31,7 @@ func test_nodeCrud_textNode_lifecycleWorks() throws {
     #expect(deletedGraph.nodesByID[nodeID] == nil)
 }
 
-@Test("Edge CRUD: edge requires existing node endpoints")
+@Test("エッジには既存のノード端点が必要である")
 func test_edgeCrud_withExistingNodes_lifecycleWorks() throws {
     let fromNode = CanvasNode(
         id: CanvasNodeID(rawValue: "from"),
@@ -65,7 +65,7 @@ func test_edgeCrud_withExistingNodes_lifecycleWorks() throws {
     #expect(graph.edgesByID[edgeID] == nil)
 }
 
-@Test("Deleting a node also removes related edges")
+@Test("ノードを削除すると、関連するエッジも削除される")
 func test_deleteNode_removesConnectedEdges() throws {
     let fromNode = CanvasNode(
         id: CanvasNodeID(rawValue: "from"),
@@ -93,7 +93,7 @@ func test_deleteNode_removesConnectedEdges() throws {
     #expect(prunedGraph.edgesByID[edgeID] == nil)
 }
 
-@Test("Deleting focused node clears focus")
+@Test("フォーカス中のノードを削除すると、フォーカスが解除される")
 func test_deleteNode_clearsFocus_whenDeletingFocusedNode() throws {
     let focusedNode = CanvasNode(
         id: CanvasNodeID(rawValue: "focused"),
@@ -112,7 +112,7 @@ func test_deleteNode_clearsFocus_whenDeletingFocusedNode() throws {
     #expect(prunedGraph.focusedNodeID == nil)
 }
 
-@Test("Graph CRUD preserves collapsed root state")
+@Test("グラフを CRUD しても折りたたみルートの状態を維持する")
 func test_crud_preservesCollapsedRootState() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -148,7 +148,7 @@ func test_crud_preservesCollapsedRootState() throws {
     #expect(updatedGraph.collapsedRootNodeIDs == [parentID])
 }
 
-@Test("Validation: creating invalid edge or duplicate node fails")
+@Test("無効なエッジまたは重複ノードの作成が失敗する")
 func test_validation_invalidOperations_throwExpectedErrors() throws {
     let node = CanvasNode(
         id: CanvasNodeID(rawValue: "node-1"),
@@ -181,7 +181,7 @@ func test_validation_invalidOperations_throwExpectedErrors() throws {
     }
 }
 
-@Test("Edge default relation type is normal")
+@Test("エッジのデフォルト関係種別は normal になる")
 func test_edge_defaultRelationType_isNormal() {
     let edge = CanvasEdge(
         id: CanvasEdgeID(rawValue: "edge-default"),
@@ -191,7 +191,7 @@ func test_edge_defaultRelationType_isNormal() {
     #expect(edge.relationType == .normal)
 }
 
-@Test("Node CRUD: createNode assigns node into exactly one area")
+@Test("createNode はノードを必ず 1 つのエリアにだけ割り当てる")
 func test_createNode_assignsNodeIntoSingleArea() throws {
     let existingNodeID = CanvasNodeID(rawValue: "existing")
     let newNodeID = CanvasNodeID(rawValue: "new")
@@ -223,7 +223,7 @@ func test_createNode_assignsNodeIntoSingleArea() throws {
     try CanvasAreaMembershipService.validate(in: createdGraph).get()
 }
 
-@Test("Node CRUD: deleteNode removes deleted node from all area memberships")
+@Test("deleteNode は、削除されたノードを全てのエリア所属から削除する")
 func test_deleteNode_removesDeletedNodeFromAreaMemberships() throws {
     let nodeID = CanvasNodeID(rawValue: "delete-me")
     let areaID = CanvasAreaID(rawValue: "area-1")
@@ -248,7 +248,7 @@ func test_deleteNode_removesDeletedNodeFromAreaMemberships() throws {
     #expect(deletedGraph.areasByID[areaID]?.nodeIDs.contains(nodeID) == false)
 }
 
-@Test("Validation: duplicate attachment IDs are rejected")
+@Test("重複した添付ファイル IDs は拒否される")
 func test_validation_duplicateAttachmentID_rejected() {
     let attachmentID = CanvasAttachmentID(rawValue: "att-1")
     let node = CanvasNode(
@@ -274,7 +274,7 @@ func test_validation_duplicateAttachmentID_rejected() {
     #expect(result == .failure(.duplicateAttachmentID(attachmentID)))
 }
 
-@Test("Validation: image attachment requires non-empty file path")
+@Test("画像の添付には空ではないファイル パスが必要である")
 func test_validation_emptyImageAttachmentPath_rejected() {
     let node = CanvasNode(
         id: CanvasNodeID(rawValue: "node-1"),

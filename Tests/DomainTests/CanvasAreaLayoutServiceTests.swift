@@ -3,7 +3,7 @@
 import Domain
 import Testing
 
-@Test("CanvasAreaLayoutService: parent-child areas are connected components")
+@Test("親子ノードエリアは接続されたコンポーネントである")
 func test_makeParentChildAreas_buildsConnectedComponents() {
     let fixture = makeParentChildAreasFixture()
     let areas = CanvasAreaLayoutService.makeParentChildAreas(in: fixture.graph)
@@ -33,7 +33,7 @@ func test_makeParentChildAreas_buildsConnectedComponents() {
     expectAlmostEqual(isolatedArea.bounds.height, 90)
 }
 
-@Test("CanvasAreaLayoutService: convex hull shape can be selected during area extraction")
+@Test("エリア抽出時に凸包形状を選択可能")
 func test_makeParentChildAreas_convexHullShape_isStoredInArea() {
     let fixture = makeParentChildAreasFixture()
     let areas = CanvasAreaLayoutService.makeParentChildAreas(
@@ -54,7 +54,7 @@ func test_makeParentChildAreas_convexHullShape_isStoredInArea() {
     }
 }
 
-@Test("CanvasAreaLayoutService: initial collision moves seed and first collided area equally")
+@Test("最初の衝突はシードと最初に衝突したエリアを均等に移動する")
 func test_resolveOverlaps_initialCollision_movesBothAreasEqually() {
     let areaA = CanvasNodeArea(
         id: CanvasNodeID(rawValue: "a"),
@@ -80,7 +80,7 @@ func test_resolveOverlaps_initialCollision_movesBothAreasEqually() {
     expectAlmostEqual(translationB.dy, 0)
 }
 
-@Test("CanvasAreaLayoutService: chain collision moves encountered area only")
+@Test("チェーン衝突は遭遇したエリアのみを移動する")
 func test_resolveOverlaps_chainCollision_movesEncounteredAreaOnly() {
     let areaA = CanvasNodeArea(
         id: CanvasNodeID(rawValue: "a"),
@@ -114,7 +114,7 @@ func test_resolveOverlaps_chainCollision_movesEncounteredAreaOnly() {
     expectAlmostEqual(translationC.dy, 0)
 }
 
-@Test("CanvasAreaLayoutService: minimum spacing is included in resolved distance")
+@Test("最小間隔は分解距離に含まれます")
 func test_resolveOverlaps_withMinimumSpacing_appliesExtraDistance() {
     let areaA = CanvasNodeArea(
         id: CanvasNodeID(rawValue: "a"),
@@ -141,7 +141,7 @@ func test_resolveOverlaps_withMinimumSpacing_appliesExtraDistance() {
     expectAlmostEqual(translationB.dy, 0)
 }
 
-@Test("CanvasAreaLayoutService: diagonal collision prefers horizontal move when X gap is dominant")
+@Test("X ギャップが支配的な場合、斜めの衝突は水平方向の移動を優先する")
 func test_resolveOverlaps_diagonalCollision_prefersHorizontalAxis() {
     let areaA = CanvasNodeArea(
         id: CanvasNodeID(rawValue: "a"),
@@ -167,7 +167,7 @@ func test_resolveOverlaps_diagonalCollision_prefersHorizontalAxis() {
     expectAlmostEqual(translationB.dy, 0)
 }
 
-@Test("CanvasAreaLayoutService: diagonal collision prefers vertical move when Y gap is dominant")
+@Test("Y ギャップが支配的な場合、斜めの衝突は垂直方向の移動を優先する")
 func test_resolveOverlaps_diagonalCollision_prefersVerticalAxis() {
     let areaA = CanvasNodeArea(
         id: CanvasNodeID(rawValue: "a"),
@@ -193,7 +193,7 @@ func test_resolveOverlaps_diagonalCollision_prefersVerticalAxis() {
     expectAlmostEqual(translationB.dy, 10)
 }
 
-@Test("CanvasAreaLayoutService: identical centers use deterministic horizontal tie-break")
+@Test("同一のセンターは決定的な水平タイブレークを使う")
 func test_resolveOverlaps_identicalCenters_usesDeterministicHorizontalDirection() {
     let areaA = CanvasNodeArea(
         id: CanvasNodeID(rawValue: "a"),
@@ -219,7 +219,7 @@ func test_resolveOverlaps_identicalCenters_usesDeterministicHorizontalDirection(
     expectAlmostEqual(translationB.dy, 0)
 }
 
-@Test("CanvasAreaLayoutService: propagation ignores epsilon no-op moves")
+@Test("伝播はイプシロンの無変化移動を無視する")
 func test_resolveOverlaps_propagation_ignoresNoOpMove() {
     let tinyOverlap = 0.0000000005
     let areaA = CanvasNodeArea(
@@ -258,7 +258,7 @@ func test_resolveOverlaps_propagation_ignoresNoOpMove() {
     expectAlmostEqual(translationD.dy, 0)
 }
 
-@Test("CanvasAreaLayoutService: returns empty result when seed area is missing")
+@Test("シードエリアが欠落している場合は空の結果を返す")
 func test_resolveOverlaps_missingSeed_returnsEmpty() {
     let areaA = CanvasNodeArea(
         id: CanvasNodeID(rawValue: "a"),
@@ -274,7 +274,7 @@ func test_resolveOverlaps_missingSeed_returnsEmpty() {
     #expect(translations.isEmpty)
 }
 
-@Test("CanvasAreaLayoutService: convex hull avoids rectangle-based false positives")
+@Test("凸包は長方形ベースの誤検知を回避する")
 func test_resolveOverlaps_convexHullFalsePositive_returnsEmpty() {
     let areaA = CanvasNodeArea(
         id: CanvasNodeID(rawValue: "a"),

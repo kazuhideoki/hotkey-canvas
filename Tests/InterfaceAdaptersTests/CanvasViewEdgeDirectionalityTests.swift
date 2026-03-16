@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasView edge directionality: arrow metrics keep minimum readable size")
+@Test("矢印メトリクスは読み取り可能な最小サイズを維持する")
 func test_edgeArrowMetrics_smallStrokeWidth_usesMinimums() {
     let metrics = CanvasView.edgeArrowMetrics(strokeWidth: 2)
 
@@ -11,7 +11,7 @@ func test_edgeArrowMetrics_smallStrokeWidth_usesMinimums() {
     #expect(metrics.halfWidth == 4)
 }
 
-@Test("CanvasView edge directionality: arrow metrics scale from stroke width in world space")
+@Test("矢印メトリクスはワールド空間のストローク幅からスケールする")
 func test_edgeArrowMetrics_largeStrokeWidth_scalesWithStrokeWidth() {
     let metrics = CanvasView.edgeArrowMetrics(strokeWidth: 5)
 

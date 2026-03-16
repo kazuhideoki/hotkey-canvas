@@ -3,7 +3,7 @@
 import Domain
 import Testing
 
-@Test("KeymapIntentResolver: command-enter resolves primitive hierarchical add intent")
+@Test("command-enter はプリミティブな階層追加インテントを解決する")
 func test_resolveRoute_commandEnter_returnsPrimitiveAddHierarchical() {
     let gesture = CanvasShortcutGesture(key: .enter, modifiers: [.command])
 
@@ -12,7 +12,7 @@ func test_resolveRoute_commandEnter_returnsPrimitiveAddHierarchical() {
     #expect(route == .primitive(intent: .add(variant: .hierarchical)))
 }
 
-@Test("KeymapIntentResolver: shift-enter resolves primitive mode-select add intent")
+@Test("shift-enter はプリミティブ モードを解決する - 追加インテントを選択する")
 func test_resolveRoute_shiftEnter_returnsPrimitiveAddModeSelect() {
     let gesture = CanvasShortcutGesture(key: .enter, modifiers: [.shift])
 
@@ -21,7 +21,7 @@ func test_resolveRoute_shiftEnter_returnsPrimitiveAddModeSelect() {
     #expect(route == .primitive(intent: .add(variant: .modeSelect)))
 }
 
-@Test("KeymapIntentResolver: command-k resolves global command palette action")
+@Test("command-k はグローバル コマンドパレット アクションを解決する")
 func test_resolveRoute_commandK_returnsGlobalOpenCommandPalette() {
     let gesture = CanvasShortcutGesture(key: .character("k"), modifiers: [.command])
 
@@ -30,7 +30,7 @@ func test_resolveRoute_commandK_returnsGlobalOpenCommandPalette() {
     #expect(route == .global(action: .openCommandPalette))
 }
 
-@Test("KeymapIntentResolver: command-f resolves global search action")
+@Test("command-f はグローバル検索アクションを解決する")
 func test_resolveRoute_commandF_returnsGlobalOpenSearch() {
     let gesture = CanvasShortcutGesture(key: .character("f"), modifiers: [.command])
 
@@ -39,7 +39,7 @@ func test_resolveRoute_commandF_returnsGlobalOpenSearch() {
     #expect(route == .global(action: .openSearch))
 }
 
-@Test("KeymapIntentResolver: command-z resolves global undo action")
+@Test("command-z はグローバルな元に戻すアクションを解決する")
 func test_resolveRoute_commandZ_returnsGlobalUndo() {
     let gesture = CanvasShortcutGesture(key: .character("z"), modifiers: [.command])
 
@@ -48,7 +48,7 @@ func test_resolveRoute_commandZ_returnsGlobalUndo() {
     #expect(route == .global(action: .undo))
 }
 
-@Test("KeymapIntentResolver: command-l resolves global begin-connect action")
+@Test("command-l はグローバル接続開始アクションを解決する")
 func test_resolveRoute_commandL_returnsGlobalBeginConnectNodeSelection() {
     let gesture = CanvasShortcutGesture(key: .character("l"), modifiers: [.command])
 
@@ -57,7 +57,7 @@ func test_resolveRoute_commandL_returnsGlobalBeginConnectNodeSelection() {
     #expect(route == .global(action: .beginConnectNodeSelection))
 }
 
-@Test("KeymapIntentResolver: tab resolves primitive switch-target-kind cycle intent")
+@Test("タブはプリミティブな switch-target-kind サイクル インテントを解決する")
 func test_resolveRoute_tab_returnsPrimitiveSwitchTargetKindCycle() {
     let gesture = CanvasShortcutGesture(key: .tab, modifiers: [])
 
@@ -66,7 +66,7 @@ func test_resolveRoute_tab_returnsPrimitiveSwitchTargetKindCycle() {
     #expect(route == .primitive(intent: .switchTargetKind(variant: .cycle)))
 }
 
-@Test("KeymapIntentResolver: control-l resolves global center-focused-node action")
+@Test("control-l は、グローバルなセンター中心ノードのアクションを解決する")
 func test_resolveRoute_controlL_returnsGlobalCenterFocusedNode() {
     let gesture = CanvasShortcutGesture(key: .character("l"), modifiers: [.control])
 
@@ -75,7 +75,7 @@ func test_resolveRoute_controlL_returnsGlobalCenterFocusedNode() {
     #expect(route == .global(action: .centerFocusedNode))
 }
 
-@Test("KeymapIntentResolver: command-c resolves primitive copy-subtree edit intent")
+@Test("command-c はプリミティブなコピーサブツリー編集意図を解決する")
 func test_resolveRoute_commandC_returnsPrimitiveEditCopySubtree() {
     let gesture = CanvasShortcutGesture(key: .character("c"), modifiers: [.command])
 
@@ -84,7 +84,7 @@ func test_resolveRoute_commandC_returnsPrimitiveEditCopySubtree() {
     #expect(route == .primitive(intent: .edit(variant: .copySelectionOrFocusedSubtree)))
 }
 
-@Test("KeymapIntentResolver: command-down resolves primitive move-node down intent")
+@Test("command-down はプリミティブなノードダウン移動インテントを解決する")
 func test_resolveRoute_commandDown_returnsPrimitiveMoveNodeDown() {
     let gesture = CanvasShortcutGesture(key: .arrowDown, modifiers: [.command])
 
@@ -93,7 +93,7 @@ func test_resolveRoute_commandDown_returnsPrimitiveMoveNodeDown() {
     #expect(route == .primitive(intent: .moveNode(direction: .down)))
 }
 
-@Test("KeymapIntentResolver: command-option-minus resolves primitive scale-selection-down transform intent")
+@Test("command-option-minus は、プリミティブなスケール選択ダウン変換の意図を解決する")
 func test_resolveRoute_commandOptionMinus_returnsPrimitiveScaleSelectionDown() {
     let gesture = CanvasShortcutGesture(key: .character("-"), modifiers: [.command, .option])
 
@@ -102,7 +102,7 @@ func test_resolveRoute_commandOptionMinus_returnsPrimitiveScaleSelectionDown() {
     #expect(route == .primitive(intent: .transform(variant: .scaleSelectionDown)))
 }
 
-@Test("KeymapIntentResolver: shift-left resolves primitive extend-selection left intent")
+@Test("shift-left はプリミティブ拡張選択左インテントを解決する")
 func test_resolveRoute_shiftLeft_returnsPrimitiveMoveFocusExtendSelectionLeft() {
     let gesture = CanvasShortcutGesture(key: .arrowLeft, modifiers: [.shift])
 
@@ -111,7 +111,7 @@ func test_resolveRoute_shiftLeft_returnsPrimitiveMoveFocusExtendSelectionLeft() 
     #expect(route == .primitive(intent: .moveFocus(direction: .left, variant: .extendSelection)))
 }
 
-@Test("KeymapIntentResolver: command-option-right resolves primitive across-areas focus intent")
+@Test("command-option-right は、原始的なエリア間フォーカスの意図を解決する")
 func test_resolveRoute_commandOptionRight_returnsPrimitiveMoveFocusAcrossAreasToRoot() {
     let gesture = CanvasShortcutGesture(key: .arrowRight, modifiers: [.command, .option])
 
@@ -120,7 +120,7 @@ func test_resolveRoute_commandOptionRight_returnsPrimitiveMoveFocusAcrossAreasTo
     #expect(route == .primitive(intent: .moveFocus(direction: .right, variant: .acrossAreasToRoot)))
 }
 
-@Test("KeymapIntentResolver: command-shift-e resolves area edge-shape toggle edit intent")
+@Test("command-shift-e はエリアのエッジ形状の切り替え編集インテントを解決する")
 func test_resolveRoute_commandShiftE_returnsPrimitiveEditToggleAreaEdgeShape() {
     let gesture = CanvasShortcutGesture(key: .character("e"), modifiers: [.command, .shift])
 

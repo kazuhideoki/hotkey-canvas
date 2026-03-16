@@ -4,7 +4,7 @@ import Testing
 
 // Background: Diagram moveNode uses semantic slot movement and should resolve collisions immediately.
 // Responsibility: Verify moveNode overlap resolution behavior inside one diagram area.
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area resolves overlap within same area")
+@Test("図エリア内の moveNode は、同じエリア内の重複を解決する")
 func test_apply_moveNodeInDiagramArea_resolvesOverlapWithinSameArea() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let anchorID = CanvasNodeID(rawValue: "anchor")
@@ -61,7 +61,7 @@ func test_apply_moveNodeInDiagramArea_resolvesOverlapWithinSameArea() async thro
     #expect(boundsOverlap(focusedAfter.bounds, blockerAfter.bounds, spacing: 0) == false)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area moves focused node without anchor")
+@Test("ダイアグラムエリアの moveNode は、アンカーなしでフォーカス中のノードを移動する")
 func test_apply_moveNodeInDiagramArea_movesFocusedNodeWithoutAnchor() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -88,7 +88,7 @@ func test_apply_moveNodeInDiagramArea_movesFocusedNodeWithoutAnchor() async thro
     #expect(movedNode.bounds.y == 0)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area moves unconnected focused node")
+@Test("ダイアグラムエリアの moveNode は、未接続のフォーカス中のノードを移動する")
 func test_apply_moveNodeInDiagramArea_movesUnconnectedFocusedNode() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -122,7 +122,7 @@ func test_apply_moveNodeInDiagramArea_movesUnconnectedFocusedNode() async throws
     #expect(movedNode.bounds.y == 440)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area keeps moving by grid slots from current position")
+@Test("ダイアグラムエリアのmoveNodeは現在位置からグリッドスロット分移動し続けます")
 func test_apply_moveNodeInDiagramArea_movesByGridFromCurrentPosition() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let anchorID = CanvasNodeID(rawValue: "anchor")
@@ -165,7 +165,7 @@ func test_apply_moveNodeInDiagramArea_movesByGridFromCurrentPosition() async thr
     #expect(movedNode.bounds.y == 0)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area uses current-slot direction")
+@Test("ダイアグラムエリアの moveNode は現在のスロット方向を使う")
 func test_apply_moveNodeInDiagramArea_movesRelativeToCurrentSlotDirection() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let anchorID = CanvasNodeID(rawValue: "anchor")
@@ -208,7 +208,7 @@ func test_apply_moveNodeInDiagramArea_movesRelativeToCurrentSlotDirection() asyn
     #expect(movedNode.bounds.y == -440)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area keeps semantic distance when moving toward anchor")
+@Test("図エリアの moveNode は、アンカーに向かって移動するときに意味上の距離を維持する")
 func test_apply_moveNodeInDiagramArea_keepsSemanticDistanceWhenMovingTowardAnchor() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let anchorID = CanvasNodeID(rawValue: "anchor")
@@ -254,7 +254,7 @@ func test_apply_moveNodeInDiagramArea_keepsSemanticDistanceWhenMovingTowardAncho
     #expect(leftGap == CanvasDefaultNodeDistance.diagramHorizontal)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area skips candidate that overlaps anchor")
+@Test("図エリアの moveNode はアンカーと重なる候補をスキップする")
 func test_apply_moveNodeInDiagramArea_skipsAnchorOverlappingCandidate() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let anchorID = CanvasNodeID(rawValue: "anchor")
@@ -299,7 +299,7 @@ func test_apply_moveNodeInDiagramArea_skipsAnchorOverlappingCandidate() async th
     #expect(movedNode.bounds.y == 440)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area does not drift diagonally after nudge")
+@Test("図エリアの moveNode がナッジ後に斜めにドリフトしない")
 func test_apply_moveNodeInDiagramArea_noDiagonalDriftAfterNudge() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let anchorID = CanvasNodeID(rawValue: "anchor")
@@ -345,7 +345,7 @@ func test_apply_moveNodeInDiagramArea_noDiagonalDriftAfterNudge() async throws {
     #expect(abs(movedNode.bounds.y - nudgedNode.bounds.y) <= 20)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram nudge step keeps 4:1 ratio against move step")
+@Test("図のナッジ ステップは移動ステップに対して 4:1 の比率を維持する")
 func test_apply_moveNodeInDiagramArea_nudgeStepIsQuarterOfMoveStep() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -376,7 +376,7 @@ func test_apply_moveNodeInDiagramArea_nudgeStepIsQuarterOfMoveStep() async throw
     #expect(moveDelta == nudgeDelta * 4)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area translates selected nodes together")
+@Test("ダイアグラムエリアの moveNode は、選択したノードをまとめて変換する")
 func test_apply_moveNodeInDiagramArea_multiSelection_translatesAsGroup() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let anchorID = CanvasNodeID(rawValue: "anchor")
@@ -430,7 +430,7 @@ func test_apply_moveNodeInDiagramArea_multiSelection_translatesAsGroup() async t
     #expect(selectedAfter.bounds.y == 110)
 }
 
-@Test("ApplyCanvasCommandsUseCase: nudgeNode in diagram area translates selected nodes together")
+@Test("ダイアグラムエリアの nudgeNode は、選択したノードをまとめて変換する")
 func test_apply_nudgeNodeInDiagramArea_multiSelection_translatesAsGroup() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let focusedID = CanvasNodeID(rawValue: "focused")

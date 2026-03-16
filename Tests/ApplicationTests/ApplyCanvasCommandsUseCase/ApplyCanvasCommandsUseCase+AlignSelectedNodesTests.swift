@@ -9,7 +9,7 @@ private func nodesOverlap(_ lhs: CanvasNode, _ rhs: CanvasNode) -> Bool {
         && lhs.bounds.y + lhs.bounds.height > rhs.bounds.y
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignSelectedNodes horizontal aligns selected diagram nodes to focused center y")
+@Test("alignSelectedNodes は、選択したダイアグラムノードをフォーカス中の中心 y に水平に配置する")
 func test_apply_alignSelectedNodes_horizontal_alignsSelectedDiagramNodes() async throws {
     let focusedID = CanvasNodeID(rawValue: "focused-diagram-node")
     let selectedID = CanvasNodeID(rawValue: "selected-diagram-node")
@@ -52,7 +52,7 @@ func test_apply_alignSelectedNodes_horizontal_alignsSelectedDiagramNodes() async
     #expect(alignedNode.bounds.x == 380)
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignSelectedNodes vertical aligns selected diagram nodes to focused center x")
+@Test("alignSelectedNodes は、選択したダイアグラムノードをフォーカス中の中心 x に垂直に配置する")
 func test_apply_alignSelectedNodes_vertical_alignsSelectedDiagramNodes() async throws {
     let focusedID = CanvasNodeID(rawValue: "focused-diagram-node")
     let selectedID = CanvasNodeID(rawValue: "selected-diagram-node")
@@ -91,7 +91,7 @@ func test_apply_alignSelectedNodes_vertical_alignsSelectedDiagramNodes() async t
     #expect(alignedNode.bounds.y == 320)
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignSelectedNodes resolves overlap while preserving horizontal alignment")
+@Test("alignSelectedNodes は水平方向の配置を維持しながら重なりを解決する")
 func test_apply_alignSelectedNodes_horizontal_resolvesOverlap() async throws {
     let focusedID = CanvasNodeID(rawValue: "focused-diagram-node")
     let selectedID = CanvasNodeID(rawValue: "selected-diagram-node")
@@ -131,7 +131,7 @@ func test_apply_alignSelectedNodes_horizontal_resolvesOverlap() async throws {
     #expect(alignedNode.bounds.x > graph.nodesByID[selectedID]?.bounds.x ?? 0)
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignSelectedNodes resolves overlap while preserving vertical alignment")
+@Test("alignSelectedNodes は垂直方向の配置を維持しながら重なりを解決する")
 func test_apply_alignSelectedNodes_vertical_resolvesOverlap() async throws {
     let focusedID = CanvasNodeID(rawValue: "focused-diagram-node")
     let selectedID = CanvasNodeID(rawValue: "selected-diagram-node")
@@ -171,7 +171,7 @@ func test_apply_alignSelectedNodes_vertical_resolvesOverlap() async throws {
     #expect(alignedNode.bounds.y > graph.nodesByID[selectedID]?.bounds.y ?? 0)
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignSelectedNodes resolves overlap when focused node is not selected")
+@Test("alignSelectedNodes は、フォーカス中のノードが選択されていない場合の重複を解決する")
 func test_apply_alignSelectedNodes_resolvesOverlap_withoutFocusedSelection() async throws {
     let focusedID = CanvasNodeID(rawValue: "focused-diagram-node")
     let leadingSelectedID = CanvasNodeID(rawValue: "leading-selected-node")
@@ -223,7 +223,7 @@ func test_apply_alignSelectedNodes_resolvesOverlap_withoutFocusedSelection() asy
     #expect(!nodesOverlap(focusedNode, trailingSelectedNode))
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignSelectedNodes resolves overlap around anchor and blocker")
+@Test("alignSelectedNodes はアンカーとブロッカーの周囲の重なりを解決する")
 func test_apply_alignSelectedNodes_resolvesOverlap_withAnchorSidesAndBlocker() async throws {
     let leftID = CanvasNodeID(rawValue: "left-node")
     let focusedID = CanvasNodeID(rawValue: "focused-diagram-node")
@@ -286,7 +286,7 @@ func test_apply_alignSelectedNodes_resolvesOverlap_withAnchorSidesAndBlocker() a
     #expect(rightNode.bounds.x > blockerNode.bounds.x + blockerNode.bounds.width)
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignSelectedNodes is unsupported in tree area")
+@Test("alignSelectedNodes はツリーエリアでは未対応である")
 func test_apply_alignSelectedNodes_treeArea_isUnsupported() async throws {
     let focusedID = CanvasNodeID(rawValue: "focused-tree-node")
     let selectedID = CanvasNodeID(rawValue: "selected-tree-node")

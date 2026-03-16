@@ -4,7 +4,7 @@ import Testing
 
 // Background: Top-level tree roots must not move even when moveNode is invoked through multi-selection paths.
 // Responsibility: Ensure multi-selection up/down commands keep root structure unchanged.
-@Test("ApplyCanvasCommandsUseCase: moveNode down is no-op for top-level root in multi-selection")
+@Test("moveNode down は、複数選択の最上位ルートノードに対しては何もしない")
 func test_apply_moveNodeDown_topLevelRootMultiSelection_isNoOp() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let rootChildID = CanvasNodeID(rawValue: "root-child")

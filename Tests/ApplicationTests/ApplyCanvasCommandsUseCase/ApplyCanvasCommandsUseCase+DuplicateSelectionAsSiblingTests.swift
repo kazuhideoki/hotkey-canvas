@@ -4,7 +4,7 @@ import Testing
 
 // Background: Duplicate command in tree mode must clone subtree content from focus/selection.
 // Responsibility: Verify duplicate behavior for focused node and deduplicated multi-selection.
-@Test("ApplyCanvasCommandsUseCase: duplicateSelectionAsSibling duplicates focused subtree under same parent")
+@Test("duplicateSelectionAsSibling は同じ親の下でフォーカス中のサブツリーを複製する")
 func test_apply_duplicateSelectionAsSibling_duplicatesFocusedSubtree() async throws {
     let fixture = makeDuplicateFocusedSubtreeFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -44,7 +44,7 @@ func test_apply_duplicateSelectionAsSibling_duplicatesFocusedSubtree() async thr
     #expect(duplicatedChild.text == "child")
 }
 
-@Test("ApplyCanvasCommandsUseCase: duplicateSelectionAsSibling rewrites createdOrder for duplicated nodes")
+@Test("duplicateSelectionAsSibling は重複ノードの createdOrder を書き換える")
 func test_apply_duplicateSelectionAsSibling_rewritesCreatedOrder() async throws {
     let fixture = makeDuplicateFocusedSubtreeFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -67,7 +67,7 @@ func test_apply_duplicateSelectionAsSibling_rewritesCreatedOrder() async throws 
     #expect(duplicatedChildOrder == 4)
 }
 
-@Test("ApplyCanvasCommandsUseCase: duplicateSelectionAsSibling stops recursive clone on cyclic descendants")
+@Test("duplicateSelectionAsSibling は循環子孫の再帰的クローンを停止する")
 func test_apply_duplicateSelectionAsSibling_stopsOnCyclicDescendants() async throws {
     let fixture = makeDuplicateCyclicDescendantFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -95,7 +95,7 @@ func test_apply_duplicateSelectionAsSibling_stopsOnCyclicDescendants() async thr
     #expect(duplicatedCycleEdges.isEmpty)
 }
 
-@Test("ApplyCanvasCommandsUseCase: duplicateSelectionAsSibling ignores descendant when ancestor is selected")
+@Test("duplicateSelectionAsSibling は、祖先が選択されている場合に子孫を無視する")
 func test_apply_duplicateSelectionAsSibling_ignoresDescendantSelection() async throws {
     let fixture = makeDuplicateAncestorSelectionFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -115,7 +115,7 @@ func test_apply_duplicateSelectionAsSibling_ignoresDescendantSelection() async t
     #expect(duplicatedChildCount == 1)
 }
 
-@Test("ApplyCanvasCommandsUseCase: duplicateSelectionAsSibling does not hang when ancestor chain has cycle")
+@Test("祖先チェーンにサイクルがある場合、duplicateSelectionAsSibling がハングしない")
 func test_apply_duplicateSelectionAsSibling_doesNotHangOnAncestorCycle() async throws {
     let fixture = makeDuplicateAncestorCycleFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -128,7 +128,7 @@ func test_apply_duplicateSelectionAsSibling_doesNotHangOnAncestorCycle() async t
     #expect(duplicatedRoot.text == "focus")
 }
 
-@Test("ApplyCanvasCommandsUseCase: duplicateSelectionAsSibling preserves shared descendant edges")
+@Test("duplicateSelectionAsSibling は共有子孫エッジを保持する")
 func test_apply_duplicateSelectionAsSibling_preservesSharedDescendantEdges() async throws {
     let fixture = makeDuplicateSharedDescendantFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())

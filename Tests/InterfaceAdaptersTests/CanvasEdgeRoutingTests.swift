@@ -6,7 +6,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasEdgeRouting: duplicated edges receive symmetric lane offsets on both endpoints")
+@Test("重複したエッジは両方の端点で対称レーンオフセットを受け取る")
 func test_laneOffsetsByEdgeID_forDuplicatedEdges_returnsSymmetricOffsets() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -31,7 +31,7 @@ func test_laneOffsetsByEdgeID_forDuplicatedEdges_returnsSymmetricOffsets() throw
     #expect(laneOffsetsB.start > 0)
 }
 
-@Test("CanvasEdgeRouting: opposite directions between same nodes also receive split lanes")
+@Test("同じノード間の反対方向でもスプリット レーンを受信する")
 func test_laneOffsetsByEdgeID_forOppositeDirections_returnsSymmetricOffsets() throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -55,7 +55,7 @@ func test_laneOffsetsByEdgeID_forOppositeDirections_returnsSymmetricOffsets() th
     #expect(laneOffsetsBA.start != 0)
 }
 
-@Test("CanvasEdgeRouting: sibling edges share a branch column between parent and children on right side")
+@Test("兄弟ノードのエッジは、右側の親と子の間で分岐列を共有する")
 func test_branchCoordinateByParentAndDirection_rightSideChildren_placesBranchBetweenNodes() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childTopID = CanvasNodeID(rawValue: "child-top")
@@ -84,7 +84,7 @@ func test_branchCoordinateByParentAndDirection_rightSideChildren_placesBranchBet
     }
 }
 
-@Test("CanvasEdgeRouting: single right-side child places branch at midpoint between node sides")
+@Test("単一の右側の子ノードは、ノードの側面間の中間点に枝を配置する")
 func test_branchCoordinateByParentAndDirection_singleRightChild_placesBranchAtMidpoint() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -107,7 +107,7 @@ func test_branchCoordinateByParentAndDirection_singleRightChild_placesBranchAtMi
     #expect(branchCoordinate == 340)
 }
 
-@Test("CanvasEdgeRouting: mixed left and right children keep separate branch columns")
+@Test("左右の混合子は別々の分岐列を保持する")
 func test_branchCoordinateByParentAndDirection_mixedSideChildren_buildsBothBranchColumns() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let rightChildID = CanvasNodeID(rawValue: "right-child")
@@ -143,7 +143,7 @@ func test_branchCoordinateByParentAndDirection_mixedSideChildren_buildsBothBranc
     }
 }
 
-@Test("CanvasEdgeRouting: route geometry fallback uses midpoint when shared branch is absent")
+@Test("共有ブランチが存在しない場合、ルート ジオメトリ フォールバックは中間点を使う")
 func test_routeGeometry_withoutSharedBranch_usesMidpointFallback() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -165,7 +165,7 @@ func test_routeGeometry_withoutSharedBranch_usesMidpointFallback() {
     #expect(geometry?.branchCoordinate == 380)
 }
 
-@Test("CanvasEdgeRouting: route geometry uses side anchors and shared branch column")
+@Test("ルート ジオメトリはサイド アンカーと共有分岐列を使う")
 func test_routeGeometry_usesNodeSidesAndParentBranchX() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -193,7 +193,7 @@ func test_routeGeometry_usesNodeSidesAndParentBranchX() {
     #expect(geometry?.endY == 388)
 }
 
-@Test("CanvasEdgeRouting: duplicated horizontal edges use distinct start and end anchors")
+@Test("重複した水平エッジは別個の開始アンカーと終了アンカーを使う")
 func test_routeGeometry_withLaneOffsets_separatesDuplicatedHorizontalEdges() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -236,7 +236,7 @@ func test_routeGeometry_withLaneOffsets_separatesDuplicatedHorizontalEdges() thr
     #expect(geometryA.branchCoordinate != geometryB.branchCoordinate)
 }
 
-@Test("CanvasEdgeRouting: edges sharing only one node side still receive separated anchors")
+@Test("1 つのノード側のみを共有するエッジは依然として分離されたアンカーを受け取る")
 func test_routeGeometry_withSharedOneSideNode_separatesSharedAnchors() throws {
     let sharedNodeID = CanvasNodeID(rawValue: "shared")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -278,7 +278,7 @@ func test_routeGeometry_withSharedOneSideNode_separatesSharedAnchors() throws {
     #expect(geometryAB.startY != geometryAC.startY)
 }
 
-@Test("CanvasEdgeRouting: left-side child route enters from child right edge")
+@Test("左側の子ノードのルートは子ノードの右端から入ります")
 func test_routeGeometry_leftDirection_usesOppositeSides() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -304,7 +304,7 @@ func test_routeGeometry_leftDirection_usesOppositeSides() {
     #expect(geometry?.branchCoordinate == 380)
 }
 
-@Test("CanvasEdgeRouting: overlapping nodes determine direction from centers")
+@Test("重なり合うノードは中心からの方向を決定する")
 func test_routeGeometry_overlappingNodes_usesCenterBasedDirection() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -328,7 +328,7 @@ func test_routeGeometry_overlappingNodes_usesCenterBasedDirection() {
     #expect(geometry?.endX == 270)  // child right edge
 }
 
-@Test("CanvasEdgeRouting: vertically aligned nodes connect from bottom to top centers")
+@Test("垂直に整列したノードが下から上の中心に接続する")
 func test_routeGeometry_verticalAlignment_usesTopBottomAnchors() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -356,7 +356,7 @@ func test_routeGeometry_verticalAlignment_usesTopBottomAnchors() {
     #expect(geometry?.branchCoordinate == 320)
 }
 
-@Test("CanvasEdgeRouting: relatively vertical relation prefers vertical routing")
+@Test("比較的垂直な関係は垂直ル​​ーティングを好みます")
 func test_routeGeometry_relativelyVertical_prefersVerticalRouting() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -377,7 +377,7 @@ func test_routeGeometry_relativelyVertical_prefersVerticalRouting() {
     #expect(geometry?.endY == 310)  // child top edge
 }
 
-@Test("CanvasEdgeRouting: tree simple routing keeps horizontal branches for relatively vertical relation")
+@Test("ツリーの単純なルーティングは、比較的垂直な関係のために水平な分岐を維持する")
 func test_routeGeometry_treeSimpleRelativeVertical_keepsHorizontalBranching() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -401,7 +401,7 @@ func test_routeGeometry_treeSimpleRelativeVertical_keepsHorizontalBranching() {
     #expect(geometry?.endY == 338)
 }
 
-@Test("CanvasEdgeRouting: tree simple branch coordinate shares one horizontal branch for vertically separated children")
+@Test("ツリーの単純な分岐座標は、垂直に分離された子に対して 1 つの水平分岐を共有する")
 func test_treeBranchCoordinateByParentAndDirection_forVerticallySeparatedChildren_buildsSharedHorizontalBranch() {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childTopID = CanvasNodeID(rawValue: "child-top")
@@ -431,7 +431,7 @@ func test_treeBranchCoordinateByParentAndDirection_forVerticallySeparatedChildre
     }
 }
 
-@Test("CanvasEdgeRouting: tree simple routing ignores duplicated-edge lane offsets")
+@Test("ツリーの単純なルーティングは重複したエッジのレーンオフセットを無視する")
 func test_routeGeometry_treeSimpleIgnoresLaneOffsets() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childTopID = CanvasNodeID(rawValue: "child-top")
@@ -485,7 +485,7 @@ func test_routeGeometry_treeSimpleIgnoresLaneOffsets() throws {
     #expect(geometryBottom.startY == 310)
 }
 
-@Test("CanvasEdgeRouting: terminal blocker near a horizontal edge switches to an outward reroute")
+@Test("水平エッジ近くのターミナル ブロッカーが外側への再ルートに切り替わります")
 func test_routeGeometry_withTerminalBlocker_switchesToOutwardVerticalReroute() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")

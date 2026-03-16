@@ -5,7 +5,7 @@ import Domain
 import Testing
 
 @MainActor
-@Test("CanvasSessionStore: openSession creates isolated graph state per session")
+@Test("openSession はセッションごとに分離されたグラフ状態を作成する")
 func test_openSession_createsIsolatedGraphState_perSession() async throws {
     let sut = CanvasSessionStore()
     let firstSession = sut.openSession()
@@ -21,7 +21,7 @@ func test_openSession_createsIsolatedGraphState_perSession() async throws {
 }
 
 @MainActor
-@Test("CanvasSessionStore: closeSession removes active session from store")
+@Test("closeSession はアクティブなセッションをストアから削除する")
 func test_closeSession_removesActiveSession_fromStore() {
     let sut = CanvasSessionStore()
     let session = sut.openSession()

@@ -3,7 +3,7 @@ import Testing
 
 // Background: Area-mode dispatch needs deterministic and validated node membership.
 // Responsibility: Verify membership validation and reassignment behavior.
-@Test("CanvasAreaMembershipService: validate fails when node has no area")
+@Test("ノードがどのエリアにも属していないとき、validate は失敗する")
 func test_validate_failsWhenNodeHasNoArea() throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
     let graph = CanvasGraph(
@@ -28,7 +28,7 @@ func test_validate_failsWhenNodeHasNoArea() throws {
     }
 }
 
-@Test("CanvasAreaMembershipService: validate fails when node belongs to multiple areas")
+@Test("ノードが複数のエリアに属しているとき、validate は失敗する")
 func test_validate_failsWhenNodeBelongsToMultipleAreas() throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
     let firstAreaID = CanvasAreaID(rawValue: "area-1")
@@ -58,7 +58,7 @@ func test_validate_failsWhenNodeBelongsToMultipleAreas() throws {
     }
 }
 
-@Test("CanvasAreaMembershipService: assign moves membership between areas")
+@Test("assign すると、ノードの所属エリアが移動する")
 func test_assign_movesMembershipBetweenAreas() throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
     let treeAreaID = CanvasAreaID(rawValue: "tree-a")
@@ -90,7 +90,7 @@ func test_assign_movesMembershipBetweenAreas() throws {
     #expect(movedGraph.areasByID[diagramAreaID]?.nodeIDs.contains(nodeID) == true)
 }
 
-@Test("CanvasAreaMembershipService: focusedAreaID fails when focused node is unassigned")
+@Test("フォーカス中のノードがどのエリアにも属していないとき、focusedAreaID は失敗する")
 func test_focusedAreaID_failsWhenFocusedNodeIsUnassigned() throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let graph = CanvasGraph(
@@ -117,7 +117,7 @@ func test_focusedAreaID_failsWhenFocusedNodeIsUnassigned() throws {
     }
 }
 
-@Test("CanvasAreaMembershipService: focusedAreaID fails when focused node belongs to multiple areas")
+@Test("フォーカス中のノードが複数のエリアに属しているとき、focusedAreaID は失敗する")
 func test_focusedAreaID_failsWhenFocusedNodeBelongsToMultipleAreas() throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let firstAreaID = CanvasAreaID(rawValue: "area-1")
@@ -147,7 +147,7 @@ func test_focusedAreaID_failsWhenFocusedNodeBelongsToMultipleAreas() throws {
     }
 }
 
-@Test("CanvasAreaMembershipService: focusedAreaID prefers focused area element")
+@Test("フォーカス中の要素がエリアのとき、focusedAreaID はそのエリアを優先する")
 func test_focusedAreaID_prefersFocusedAreaElement() throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let areaIDFromFocus = CanvasAreaID(rawValue: "focused-area")
@@ -175,7 +175,7 @@ func test_focusedAreaID_prefersFocusedAreaElement() throws {
     #expect(result == areaIDFromFocus)
 }
 
-@Test("CanvasAreaMembershipService: focusedAreaID fails when focused area element is missing")
+@Test("フォーカス中の要素が存在しないエリアを指すとき、focusedAreaID は失敗する")
 func test_focusedAreaID_failsWhenFocusedAreaElementIsMissing() throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let missingAreaID = CanvasAreaID(rawValue: "missing-area")
@@ -204,7 +204,7 @@ func test_focusedAreaID_failsWhenFocusedAreaElementIsMissing() throws {
     }
 }
 
-@Test("CanvasAreaMembershipService: createArea reassigns initial members from existing areas")
+@Test("createArea すると、初期メンバーは既存エリアから新しいエリアへ移る")
 func test_createArea_reassignsInitialMembersFromExistingAreas() throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
     let sourceAreaID = CanvasAreaID(rawValue: "source")
@@ -237,7 +237,7 @@ func test_createArea_reassignsInitialMembersFromExistingAreas() throws {
     try CanvasAreaMembershipService.validate(in: created).get()
 }
 
-@Test("CanvasAreaMembershipService: assign fails when cross-area edge would be introduced")
+@Test("assign によってエリア間エッジが生まれるとき、assign は失敗する")
 func test_assign_failsWhenCrossAreaEdgeWouldBeIntroduced() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -282,7 +282,7 @@ func test_assign_failsWhenCrossAreaEdgeWouldBeIntroduced() throws {
     }
 }
 
-@Test("CanvasAreaMembershipService: createArea fails when cross-area edge would be introduced")
+@Test("createArea によってエリア間エッジが生まれるとき、createArea は失敗する")
 func test_createArea_failsWhenCrossAreaEdgeWouldBeIntroduced() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -331,7 +331,7 @@ func test_createArea_failsWhenCrossAreaEdgeWouldBeIntroduced() throws {
     }
 }
 
-@Test("CanvasAreaMembershipService: convertFocusedAreaMode updates focused area mode")
+@Test("convertFocusedAreaMode すると、フォーカス中のエリアのモードが更新される")
 func test_convertFocusedAreaMode_updatesFocusedAreaMode() throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let areaID = CanvasAreaID(rawValue: "area-1")
@@ -359,7 +359,7 @@ func test_convertFocusedAreaMode_updatesFocusedAreaMode() throws {
     #expect(converted.areasByID[areaID]?.editingMode == .diagram)
 }
 
-@Test("CanvasAreaMembershipService: convertFocusedAreaMode no-ops when target mode is same")
+@Test("変換先モードが現在と同じとき、convertFocusedAreaMode は何もしない")
 func test_convertFocusedAreaMode_noOpsWhenTargetModeIsSame() throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let areaID = CanvasAreaID(rawValue: "area-1")
@@ -387,7 +387,7 @@ func test_convertFocusedAreaMode_noOpsWhenTargetModeIsSame() throws {
     #expect(converted == graph)
 }
 
-@Test("CanvasAreaMembershipService: toggleFocusedAreaEdgeShapeStyle cycles focused area shape style")
+@Test("toggleFocusedAreaEdgeShapeStyle すると、フォーカス中のエリアの線形状が順番に切り替わる")
 func test_toggleFocusedAreaEdgeShapeStyle_cyclesFocusedAreaShapeStyle() throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let areaID = CanvasAreaID(rawValue: "area-1")

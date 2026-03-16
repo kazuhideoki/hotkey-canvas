@@ -4,7 +4,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("NodeEditingStartResolver: character key starts editing from empty text")
+@Test("文字キーは空のテキストから編集を開始する")
 func test_resolve_characterKey_returnsTypedTextContext() throws {
     let sut = NodeEditingStartResolver()
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
@@ -39,7 +39,7 @@ func test_resolve_characterKey_returnsTypedTextContext() throws {
     #expect(context?.initialTypingEvent != nil)
 }
 
-@Test("NodeEditingStartResolver: Ctrl+E starts editing at end with existing text")
+@Test("Ctrl+E は既存のテキストの最後から編集を開始する")
 func test_resolve_ctrlE_returnsExistingTextWithEndCursor() throws {
     let sut = NodeEditingStartResolver()
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
@@ -74,7 +74,7 @@ func test_resolve_ctrlE_returnsExistingTextWithEndCursor() throws {
     #expect(context?.initialTypingEvent == nil)
 }
 
-@Test("NodeEditingStartResolver: Ctrl+A starts editing at start with existing text")
+@Test("Ctrl+A は既存のテキストから編集を開始する")
 func test_resolve_ctrlA_returnsExistingTextWithStartCursor() throws {
     let sut = NodeEditingStartResolver()
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
@@ -109,7 +109,7 @@ func test_resolve_ctrlA_returnsExistingTextWithStartCursor() throws {
     #expect(context?.initialTypingEvent == nil)
 }
 
-@Test("NodeEditingStartResolver: Ctrl+non target key does not start editing")
+@Test("Ctrl+ターゲット以外のキーを押しても編集が開始されない")
 func test_resolve_ctrlNonTarget_returnsNil() throws {
     let sut = NodeEditingStartResolver()
     let focusedNodeID = CanvasNodeID(rawValue: "focused")

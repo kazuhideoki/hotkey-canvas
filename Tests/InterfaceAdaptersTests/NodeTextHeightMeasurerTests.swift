@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("NodeTextHeightMeasurer: multiline text yields taller node than single line")
+@Test("複数行のテキストは単一行よりも高いノードを生成する")
 func test_measure_multilineText_isTallerThanSingleLine() {
     let sut = NodeTextHeightMeasurer()
 
@@ -13,7 +13,7 @@ func test_measure_multilineText_isTallerThanSingleLine() {
     #expect(multiline > singleLine)
 }
 
-@Test("NodeTextHeightMeasurer: narrow width increases wrapped text height")
+@Test("幅が狭いと折り返されたテキストの高さが大きくなる")
 func test_measure_narrowWidth_wrapsAndIncreasesHeight() {
     let sut = NodeTextHeightMeasurer()
     let text = "This is a long sentence to verify wrapping behavior."
@@ -24,7 +24,7 @@ func test_measure_narrowWidth_wrapsAndIncreasesHeight() {
     #expect(narrowHeight > wideHeight)
 }
 
-@Test("NodeTextHeightMeasurer: empty text keeps minimum one-line height")
+@Test("空のテキストは最小の 1 行の高さを維持する")
 func test_measure_emptyText_keepsMinimumHeight() {
     let sut = NodeTextHeightMeasurer()
 
@@ -33,7 +33,7 @@ func test_measure_emptyText_keepsMinimumHeight() {
     #expect(height >= 30)
 }
 
-@Test("NodeTextHeightMeasurer: empty one-line and text one-line use same height")
+@Test("空の 1 行とテキストの 1 行は同じ高さを使う")
 func test_measure_emptyAndSingleLineText_matchHeight() {
     let sut = NodeTextHeightMeasurer()
 
@@ -43,7 +43,7 @@ func test_measure_emptyAndSingleLineText_matchHeight() {
     #expect(abs(emptyHeight - textHeight) <= 0.5)
 }
 
-@Test("NodeTextHeightMeasurer: long text is capped by maximum height")
+@Test("長いテキストは最大高さで制限される")
 func test_measure_longText_isClampedToMaximumHeight() {
     let sut = NodeTextHeightMeasurer(maximumNodeHeight: 140)
     let text = String(repeating: "line\n", count: 60)
@@ -53,7 +53,7 @@ func test_measure_longText_isClampedToMaximumHeight() {
     #expect(height == 140)
 }
 
-@Test("NodeTextHeightMeasurer: default configuration can grow beyond legacy cap")
+@Test("デフォルト設定は従来の上限を超える可能性があります")
 func test_measure_manyLines_exceedsLegacyCap() {
     let sut = NodeTextHeightMeasurer()
     let text = String(repeating: "line\n", count: 80)
@@ -63,7 +63,7 @@ func test_measure_manyLines_exceedsLegacyCap() {
     #expect(height > 320)
 }
 
-@Test("NodeTextHeightMeasurer: content scale increases measured height for same text")
+@Test("コンテンツスケールは、同じテキストの測定された高さを増加させます")
 func test_measure_contentScale_increasesMeasuredHeight() {
     let base = NodeTextHeightMeasurer()
     let scaled = NodeTextHeightMeasurer(style: .defaultStyle, contentScale: 1.5)

@@ -1,7 +1,7 @@
 import Domain
 import Testing
 
-@Test("Shortcut catalog: tree context rewrites copy cut paste labels")
+@Test("ツリーコンテキストの書き換えラベルのコピー、カット、ペースト")
 func test_commandPaletteDefinitions_treeContext_rewritesClipboardLabels() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true),
@@ -19,7 +19,7 @@ func test_commandPaletteDefinitions_treeContext_rewritesClipboardLabels() {
     #expect(titleByID["pasteClipboardAtFocusedNode"] == "Node: Paste As Child")
 }
 
-@Test("Shortcut catalog: diagram context rewrites copy cut paste and nudge labels")
+@Test("図のコンテキストを書き換え、コピー、カット、ペースト、ラベルのナッジを行う")
 func test_commandPaletteDefinitions_diagramContext_rewritesClipboardAndNudgeLabels() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
@@ -38,7 +38,7 @@ func test_commandPaletteDefinitions_diagramContext_rewritesClipboardAndNudgeLabe
     #expect(titleByID["nudgeNodeUp"] == "Node: Move Up Slightly")
 }
 
-@Test("Shortcut catalog: edge-aware route is attached to edge-target navigation commands")
+@Test("エッジ認識ルートはエッジターゲットナビゲーションコマンドに付加される")
 func test_commandPaletteDefinitions_attachEdgeAwareRouteToEdgeNavigationCommands() {
     let moveFocus = CanvasShortcutCatalogService.definition(for: .moveFocus(.up))
     let extendSelection = CanvasShortcutCatalogService.definition(for: .extendSelection(.left))

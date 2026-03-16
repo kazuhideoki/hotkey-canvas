@@ -4,9 +4,7 @@ import Testing
 
 // Background: Edge target deletion must remove only edges while preserving node graph state.
 // Responsibility: Verify focused/selected edge deletion behavior for single and multi-selection flows.
-@Test(
-    "ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedEdges deletes focused edge when focus is not in multi-selection"
-)
+@Test("deleteSelectedOrFocusedEdges は、フォーカス中のエッジが複数選択に含まれないとき、そのエッジだけを削除する")
 func test_apply_deleteSelectedOrFocusedEdges_deletesFocusedEdge_whenFocusedEdgeIsNotInMultiSelection() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -52,9 +50,7 @@ func test_apply_deleteSelectedOrFocusedEdges_deletesFocusedEdge_whenFocusedEdgeI
     #expect(focus.originNodeID == nodeAID)
 }
 
-@Test(
-    "ApplyCanvasCommandsUseCase: deleteSelectedOrFocusedEdges deletes multi-selected edges"
-)
+@Test("deleteSelectedOrFocusedEdges は、複数選択されたエッジを削除する")
 func test_apply_deleteSelectedOrFocusedEdges_deletesMultiSelectedEdges_whenFocusedEdgeIsIncluded() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")

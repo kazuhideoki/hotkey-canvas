@@ -27,12 +27,12 @@ private enum NodeTextEditorTextViewLayoutProbe {
     }
 }
 
-@Test("NodeTextContentAlignment: top-leading paragraph alignment is locale-aware")
+@Test("先頭から始まる段落の配置はロケールを認識する")
 func test_nodeTextContentAlignment_topLeadingParagraphAlignment_isNatural() {
     #expect(NodeTextContentAlignment.topLeading.paragraphAlignment == .natural)
 }
 
-@Test("NodeTextContentAlignment: center paragraph alignment remains center")
+@Test("段落の中央揃えは中央揃えのまま")
 func test_nodeTextContentAlignment_centerParagraphAlignment_isCenter() {
     #expect(NodeTextContentAlignment.center.paragraphAlignment == .center)
 }
@@ -51,7 +51,7 @@ private final class MarkedTextNodeTextEditorTextViewSpy: NodeTextEditorTextView 
     }
 }
 
-@Test("NodeTextEditorTextView: Enter commits editing")
+@Test("Enter で編集を確定する")
 func test_keyDown_enter_commitsEditing() throws {
     var commitCount = 0
     var cancelCount = 0
@@ -79,7 +79,7 @@ func test_keyDown_enter_commitsEditing() throws {
     #expect(cancelCount == 0)
 }
 
-@Test("NodeTextEditorTextView: Command+Enter commits editing")
+@Test("Command+Enter は編集をコミットする")
 func test_keyDown_commandEnter_commitsEditing() throws {
     var commitCount = 0
     var cancelCount = 0
@@ -107,7 +107,7 @@ func test_keyDown_commandEnter_commitsEditing() throws {
     #expect(cancelCount == 0)
 }
 
-@Test("NodeTextEditorTextView: Command+Enter commits editing while IME composition is active")
+@Test("IME コンポジションがアクティブなときに Command+Enter が編集をコミットする")
 func test_keyDown_commandEnter_withMarkedText_confirmsImeAndCommitsEditing() throws {
     var commitCount = 0
     var cancelCount = 0
@@ -136,7 +136,7 @@ func test_keyDown_commandEnter_withMarkedText_confirmsImeAndCommitsEditing() thr
     #expect(cancelCount == 0)
 }
 
-@Test("NodeTextEditorTextView: Escape cancels editing")
+@Test("エスケープすると編集がキャンセルされる")
 func test_keyDown_escape_cancelsEditing() throws {
     var commitCount = 0
     var cancelCount = 0
@@ -164,7 +164,7 @@ func test_keyDown_escape_cancelsEditing() throws {
     #expect(cancelCount == 1)
 }
 
-@Test("NodeTextEditorTextView: center alignment computes vertical inset to center text")
+@Test("中央揃えは、テキストを中央に配置する垂直方向の差し込みを計算する")
 func test_verticalInset_centerAlignment_centersText() {
     let inset = NodeTextEditorTextView.verticalInset(
         boundsHeight: 200,
@@ -176,7 +176,7 @@ func test_verticalInset_centerAlignment_centersText() {
     #expect(inset == 80)
 }
 
-@Test("NodeTextEditorTextView: center alignment keeps base inset when content overflows")
+@Test("コンテンツがオーバーフローしても、中央揃えによりベースのインセットが維持される")
 func test_verticalInset_centerAlignment_overflowKeepsBaseInset() {
     let inset = NodeTextEditorTextView.verticalInset(
         boundsHeight: 48,
@@ -188,7 +188,7 @@ func test_verticalInset_centerAlignment_overflowKeepsBaseInset() {
     #expect(inset == 6)
 }
 
-@Test("NodeTextEditorTextView: top-leading alignment always uses base inset")
+@Test("先頭の配置では常にベース インセットが使用される")
 func test_verticalInset_topLeadingAlignment_usesBaseInset() {
     let inset = NodeTextEditorTextView.verticalInset(
         boundsHeight: 200,
@@ -200,7 +200,7 @@ func test_verticalInset_topLeadingAlignment_usesBaseInset() {
     #expect(inset == 6)
 }
 
-@Test("NodeTextEditorTextView: center alignment centers text horizontally")
+@Test("中央揃え テキストを水平方向に中央揃えにする")
 @MainActor
 func test_applyContentLayout_centerAlignment_centersTextHorizontally() throws {
     let sut = NodeTextEditorTextView(frame: NSRect(x: 0, y: 0, width: 240, height: 120))
@@ -214,7 +214,7 @@ func test_applyContentLayout_centerAlignment_centersTextHorizontally() throws {
     #expect(firstGlyphOriginX > 30)
 }
 
-@Test("NodeTextEditorTextView: top-leading alignment keeps text near leading inset")
+@Test("先頭の配置により、テキストが先頭の差し込み口の近くに配置される")
 @MainActor
 func test_applyContentLayout_topLeadingAlignment_keepsLeadingPosition() throws {
     let sut = NodeTextEditorTextView(frame: NSRect(x: 0, y: 0, width: 240, height: 120))

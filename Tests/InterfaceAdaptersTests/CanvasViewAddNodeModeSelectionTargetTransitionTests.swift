@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasView add-node mode selection: area-origin commit arms node-target switch")
+@Test("エリア-オリジンコミットアームノード-ターゲットスイッチ")
 func test_addNodeModeSelectionTargetTransition_areaCommitArmsNodeTargetSwitch() {
     #expect(
         CanvasView.shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit(
@@ -12,7 +12,7 @@ func test_addNodeModeSelectionTargetTransition_areaCommitArmsNodeTargetSwitch() 
     )
 }
 
-@Test("CanvasView add-node mode selection: node-origin commit does not arm node-target switch")
+@Test("ノード起点のコミットはノードとターゲットの切り替えを準備しない")
 func test_addNodeModeSelectionTargetTransition_nodeCommitDoesNotArmNodeTargetSwitch() {
     #expect(
         !CanvasView.shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit(
@@ -21,7 +21,7 @@ func test_addNodeModeSelectionTargetTransition_nodeCommitDoesNotArmNodeTargetSwi
     )
 }
 
-@Test("CanvasView add-node mode selection: successful area-origin add switches to node target and clears flag")
+@Test("area-origin の追加が成功すると、ノード ターゲットに切り替わり、フラグがクリアされる")
 func test_addNodeModeSelectionTargetTransition_successfulAreaAddSwitchesToNodeTarget() {
     let transition = CanvasView.pendingAddNodeEditingTransition(
         currentTargetKind: .area,
@@ -38,7 +38,7 @@ func test_addNodeModeSelectionTargetTransition_successfulAreaAddSwitchesToNodeTa
     )
 }
 
-@Test("CanvasView add-node mode selection: failed area-origin add keeps area target and clears flag")
+@Test("失敗したエリア原点の追加はエリアターゲットを保持し、フラグをクリアする")
 func test_addNodeModeSelectionTargetTransition_failedAreaAddKeepsAreaTarget() {
     let transition = CanvasView.pendingAddNodeEditingTransition(
         currentTargetKind: .area,
@@ -55,7 +55,7 @@ func test_addNodeModeSelectionTargetTransition_failedAreaAddKeepsAreaTarget() {
     )
 }
 
-@Test("CanvasView add-node mode selection: cancelled popup keeps area target without arming switch")
+@Test("ポップアップをキャンセルすると、スイッチを解除せずにエリアターゲットを維持する")
 func test_addNodeModeSelectionTargetTransition_cancelledPopupKeepsAreaTarget() {
     let transition = CanvasView.pendingAddNodeEditingTransition(
         currentTargetKind: .area,

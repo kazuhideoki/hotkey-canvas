@@ -4,7 +4,7 @@ import Testing
 
 // Background: Area target mode introduces explicit area focus independent from node/edge focus.
 // Responsibility: Verify focusArea command updates area focus, node anchor, and no-op guards.
-@Test("ApplyCanvasCommandsUseCase: focusArea focuses area and picks top-left visible anchor")
+@Test("focusArea はエリアにフォーカスし、左上に表示されているアンカーを選択する")
 func test_apply_focusArea_setsAreaFocusAndAnchor() async throws {
     let leftNodeID = CanvasNodeID(rawValue: "left")
     let rightNodeID = CanvasNodeID(rawValue: "right")
@@ -68,7 +68,7 @@ func test_apply_focusArea_setsAreaFocusAndAnchor() async throws {
     #expect(result.newState.selectedEdgeIDs.isEmpty)
 }
 
-@Test("ApplyCanvasCommandsUseCase: focusArea fails when area does not exist")
+@Test("エリアが存在しない場合、focusArea は失敗する")
 func test_apply_focusArea_failsWhenAreaMissing() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let sourceAreaID = CanvasAreaID(rawValue: "source-area")
@@ -100,7 +100,7 @@ func test_apply_focusArea_failsWhenAreaMissing() async throws {
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: focusArea is no-op when area has no visible anchor")
+@Test("エリアに表示されるアンカーがない場合、focusArea は何もしない")
 func test_apply_focusArea_noOpWhenAreaHasNoVisibleAnchor() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let hiddenChildID = CanvasNodeID(rawValue: "hidden-child")

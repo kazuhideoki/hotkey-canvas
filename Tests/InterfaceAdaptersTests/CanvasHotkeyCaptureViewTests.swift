@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasKeyCaptureNSView: handleKeyDown returns handler result")
+@Test("handleKeyDown はハンドラーの結果を返す")
 func test_handleKeyDown_returnsHandlerResult() throws {
     var wasCalled = false
     let sut = CanvasKeyCaptureNSView(isEnabled: true) { _ in

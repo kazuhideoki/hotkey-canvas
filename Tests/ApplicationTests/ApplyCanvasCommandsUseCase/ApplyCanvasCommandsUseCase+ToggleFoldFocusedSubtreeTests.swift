@@ -2,7 +2,7 @@ import Application
 import Domain
 import Testing
 
-@Test("ApplyCanvasCommandsUseCase: toggleFoldFocusedSubtree folds focused descendants")
+@Test("toggleFoldFocusedSubtree はフォーカス中の子孫ノードをフォールドする")
 func test_apply_toggleFoldFocusedSubtree_foldsFocusedDescendants() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
@@ -40,7 +40,7 @@ func test_apply_toggleFoldFocusedSubtree_foldsFocusedDescendants() async throws 
     #expect(result.canUndo)
 }
 
-@Test("ApplyCanvasCommandsUseCase: toggleFoldFocusedSubtree toggles back to expanded")
+@Test("toggleFoldFocusedSubtree は展開状態に戻ります")
 func test_apply_toggleFoldFocusedSubtree_togglesBackToExpanded() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
@@ -77,7 +77,7 @@ func test_apply_toggleFoldFocusedSubtree_togglesBackToExpanded() async throws {
     #expect(result.newState.collapsedRootNodeIDs.isEmpty)
 }
 
-@Test("ApplyCanvasCommandsUseCase: toggleFoldFocusedSubtree is no-op for leaf node")
+@Test("toggleFoldFocusedSubtree はリーフ ノードに対して何も操作しない")
 func test_apply_toggleFoldFocusedSubtree_isNoOpForLeafNode() async throws {
     let leafID = CanvasNodeID(rawValue: "leaf")
     let graph = CanvasGraph(
@@ -100,7 +100,7 @@ func test_apply_toggleFoldFocusedSubtree_isNoOpForLeafNode() async throws {
     #expect(!result.canUndo)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocus skips folded descendants")
+@Test("moveFocus は折り畳まれた子孫をスキップする")
 func test_apply_moveFocus_skipsFoldedDescendants() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let hiddenChildID = CanvasNodeID(rawValue: "hidden-child")

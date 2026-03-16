@@ -2,7 +2,7 @@ import Application
 import Domain
 import Testing
 
-@Test("ApplyCanvasCommandsUseCase: moveFocusAcrossAreasToRoot in node target picks destination tree root")
+@Test("ノードターゲットのmoveFocusAcrossAreasToRootは宛先ツリールートノードを選択する")
 func test_apply_moveFocusAcrossAreasToRoot_nodeTarget_picksDestinationTreeRoot() async throws {
     let fixture = makeTreeAcrossAreasFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
@@ -14,7 +14,7 @@ func test_apply_moveFocusAcrossAreasToRoot_nodeTarget_picksDestinationTreeRoot()
     #expect(result.newState.selectedNodeIDs == [fixture.expectedFocusedNodeID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocusAcrossAreasToRoot in node target picks oldest created diagram node")
+@Test("ノードターゲットのmoveFocusAcrossAreasToRootは、作成された最も古いダイアグラムノードを選択する")
 func test_apply_moveFocusAcrossAreasToRoot_nodeTarget_picksOldestDiagramNode() async throws {
     let fixture = makeDiagramAcrossAreasFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
@@ -26,7 +26,7 @@ func test_apply_moveFocusAcrossAreasToRoot_nodeTarget_picksOldestDiagramNode() a
     #expect(result.newState.selectedNodeIDs == [fixture.expectedFocusedNodeID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocusAcrossAreasToRoot in area target keeps area focus and updates anchor")
+@Test("エリア ターゲットの moveFocusAcrossAreasToRoot はエリア フォーカスを維持し、アンカーを更新する")
 func test_apply_moveFocusAcrossAreasToRoot_areaTarget_keepsAreaFocusAndUpdatesAnchor() async throws {
     let fixture = makeAreaTargetAcrossAreasFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
@@ -38,7 +38,7 @@ func test_apply_moveFocusAcrossAreasToRoot_areaTarget_keepsAreaFocusAndUpdatesAn
     #expect(result.newState.selectedNodeIDs == [fixture.expectedFocusedNodeID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocusAcrossAreasToRoot wraps from right edge to left-most area")
+@Test("moveFocusAcrossAreasToRoot は右端から左端のエリアまで折り返す")
 func test_apply_moveFocusAcrossAreasToRoot_wrapsRightEdgeToLeftMostArea() async throws {
     let fixture = makeDiagramAcrossAreasFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
@@ -52,7 +52,7 @@ func test_apply_moveFocusAcrossAreasToRoot_wrapsRightEdgeToLeftMostArea() async 
     #expect(wrappedMove.newState.focusedElement == .node(CanvasNodeID(rawValue: "left-node")))
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocusAcrossAreasToRoot wraps from left edge to right-most area")
+@Test("moveFocusAcrossAreasToRoot は左端から右端のエリアまで折り返す")
 func test_apply_moveFocusAcrossAreasToRoot_wrapsLeftEdgeToRightMostArea() async throws {
     let fixture = makeDiagramAcrossAreasFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)

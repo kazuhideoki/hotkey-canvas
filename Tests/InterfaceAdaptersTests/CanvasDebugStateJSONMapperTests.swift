@@ -6,7 +6,7 @@ import Foundation
 import InterfaceAdapters
 import Testing
 
-@Test("CanvasDebugStateJSONMapper: sessions payload includes summary rows")
+@Test("セッションペイロードには概要行が含まれます")
 func test_sessionsPayload_includesSummaryRows() throws {
     let firstID = CanvasSessionID(rawValue: "session-a")
     let secondID = CanvasSessionID(rawValue: "session-b")
@@ -46,7 +46,7 @@ func test_sessionsPayload_includesSummaryRows() throws {
     #expect(rows?.last?["focusedNodeID"] as? String == "node-1")
 }
 
-@Test("CanvasDebugStateJSONMapper: session state payload includes graph and ui fields")
+@Test("セッション状態ペイロードにはグラフと UI フィールドが含まれます")
 func test_sessionStatePayload_includesGraphAndUI() throws {
     let sessionID = CanvasSessionID(rawValue: "session-a")
     let nodeID = CanvasNodeID(rawValue: "node-1")
@@ -115,7 +115,7 @@ func test_sessionStatePayload_includesGraphAndUI() throws {
     #expect(areaRows?.first?["editingMode"] as? String == "diagram")
 }
 
-@Test("CanvasDebugStateJSONMapper: domain catalog payload includes all domain endpoints")
+@Test("ドメイン カタログ ペイロードにはすべてのドメイン 端点が含まれます")
 func test_domainCatalogPayload_includesAllDomainEndpoints() throws {
     let sessionID = CanvasSessionID(rawValue: "session-a")
     let data = try CanvasDebugStateJSONMapper.makeDomainCatalogPayload(sessionID: sessionID)
@@ -133,7 +133,7 @@ func test_domainCatalogPayload_includesAllDomainEndpoints() throws {
     )
 }
 
-@Test("CanvasDebugStateJSONMapper: fold visibility domain payload includes hidden and visible nodes")
+@Test("フォールド可視性ドメインペイロードには非表示ノードと表示ノードが含まれます")
 func test_domainStatePayload_foldVisibility_includesHiddenAndVisibleNodes() throws {
     let sessionID = CanvasSessionID(rawValue: "session-a")
     let rootID = CanvasNodeID(rawValue: "root")

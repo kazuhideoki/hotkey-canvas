@@ -4,7 +4,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasView edge label placement: same-bundle labels spread along the edge tangent")
+@Test("エッジ接線に沿って広がる同じバンドルのラベル")
 func test_resolveEdgeLabelPlacements_sameBundle_spreadsAlongTangent() {
     let firstEdgeID = CanvasEdgeID(rawValue: "edge-1")
     let secondEdgeID = CanvasEdgeID(rawValue: "edge-2")
@@ -37,7 +37,7 @@ func test_resolveEdgeLabelPlacements_sameBundle_spreadsAlongTangent() {
     #expect(placements[secondEdgeID] == CGPoint(x: 284, y: 180))
 }
 
-@Test("CanvasView edge label placement: same-bundle labels also spread along a vertical tangent")
+@Test("同じバンドルのラベルも垂直接線に沿って広がります")
 func test_resolveEdgeLabelPlacements_sameBundle_verticalTangent_spreadsAlongTangent() {
     let firstEdgeID = CanvasEdgeID(rawValue: "edge-1")
     let secondEdgeID = CanvasEdgeID(rawValue: "edge-2")
@@ -70,7 +70,7 @@ func test_resolveEdgeLabelPlacements_sameBundle_verticalTangent_spreadsAlongTang
     #expect(placements[secondEdgeID] == CGPoint(x: 240, y: 224))
 }
 
-@Test("CanvasView edge label placement: three same-bundle labels keep the middle label on the anchor")
+@Test("3 つの同じバンドルのラベルは、中央のラベルをアンカー上に維持する")
 func test_resolveEdgeLabelPlacements_threeSameBundle_keepsMiddleOnAnchor() {
     let firstEdgeID = CanvasEdgeID(rawValue: "edge-1")
     let secondEdgeID = CanvasEdgeID(rawValue: "edge-2")
@@ -115,7 +115,7 @@ func test_resolveEdgeLabelPlacements_threeSameBundle_keepsMiddleOnAnchor() {
     #expect(placements[thirdEdgeID] == CGPoint(x: 328, y: 180))
 }
 
-@Test("CanvasView edge label placement: mixed label widths do not force every label to follow the longest width")
+@Test("ラベルの幅が混在しても、すべてのラベルが最長の幅に従うように強制されるわけではない")
 func test_resolveEdgeLabelPlacements_mixedWidths_usesNeighborAwareSpacing() {
     let shortEdgeID = CanvasEdgeID(rawValue: "edge-short")
     let longEdgeID = CanvasEdgeID(rawValue: "edge-long")
@@ -148,7 +148,7 @@ func test_resolveEdgeLabelPlacements_mixedWidths_usesNeighborAwareSpacing() {
     #expect(placements[longEdgeID] == CGPoint(x: 304, y: 180))
 }
 
-@Test("CanvasView edge label placement: candidate order does not affect resolved centers")
+@Test("候補の順序は解決された中心に影響を与えない")
 func test_resolveEdgeLabelPlacements_isStableAcrossCandidateOrder() {
     let firstEdgeID = CanvasEdgeID(rawValue: "edge-1")
     let secondEdgeID = CanvasEdgeID(rawValue: "edge-2")

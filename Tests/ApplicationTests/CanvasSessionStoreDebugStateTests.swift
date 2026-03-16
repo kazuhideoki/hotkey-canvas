@@ -5,7 +5,7 @@ import Domain
 import Testing
 
 @MainActor
-@Test("CanvasSessionStore: activeSessionIDs returns sorted identifiers")
+@Test("activeSessionIDs はソートされた識別子を返す")
 func test_activeSessionIDs_returnsSortedIdentifiers() {
     let sut = CanvasSessionStore()
     let first = sut.openSession()
@@ -17,7 +17,7 @@ func test_activeSessionIDs_returnsSortedIdentifiers() {
 }
 
 @MainActor
-@Test("CanvasSessionStore: currentResultsBySessionID returns latest session snapshots")
+@Test("currentResultsBySessionID は最新のセッション スナップショットを返す")
 func test_currentResultsBySessionID_returnsLatestSnapshots() async throws {
     let sut = CanvasSessionStore()
     let first = sut.openSession()

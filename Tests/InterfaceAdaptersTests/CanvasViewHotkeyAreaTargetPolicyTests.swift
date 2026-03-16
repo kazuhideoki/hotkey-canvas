@@ -4,7 +4,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasView area target policy: disables global actions requiring node/edge target")
+@Test("ノード/エッジターゲットを必要とするグローバルアクションを無効にする")
 func test_areaTarget_isActionEnabled_disablesGlobalNodeOrEdgeActions() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -20,7 +20,7 @@ func test_areaTarget_isActionEnabled_disablesGlobalNodeOrEdgeActions() {
     #expect(CanvasView.isActionEnabled(.undo, context: context))
 }
 
-@Test("CanvasView area target policy: command-l is repurposed to recenter focused area")
+@Test("command-l はフォーカス中のエリアを再調整するために再利用される")
 func test_areaTarget_beginConnectAction_recentersFocusedAreaWhenAreaIsFocused() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -46,7 +46,7 @@ func test_areaTarget_beginConnectAction_recentersFocusedAreaWhenAreaIsFocused() 
     )
 }
 
-@Test("CanvasView node target policy: command-l does not recenter area")
+@Test("command-l はエリアを再センタリングしない")
 func test_nodeTarget_beginConnectAction_doesNotRecenterArea() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -65,7 +65,7 @@ func test_nodeTarget_beginConnectAction_doesNotRecenterArea() {
     )
 }
 
-@Test("CanvasView focus visibility: recenter resets manual pan and camera anchor")
+@Test("再センタは手動パンとカメラアンカーをリセットする")
 func test_recenteredViewportState_resetsPanAndAnchor() {
     let state = CanvasView.recenteredViewportState()
 
@@ -74,7 +74,7 @@ func test_recenteredViewportState_resetsPanAndAnchor() {
     #expect(state.cameraAnchorPoint == .zero)
 }
 
-@Test("CanvasView area target policy: disables node/edge command actions")
+@Test("ノード/エッジコマンドアクションを無効にする")
 func test_areaTarget_isActionEnabled_disablesNodeOrEdgeCommands() {
     let context = KeymapExecutionContext(
         editingMode: .tree,
@@ -98,7 +98,7 @@ func test_areaTarget_isActionEnabled_disablesNodeOrEdgeCommands() {
     #expect(CanvasView.isActionEnabled(.presentAddNodeModeSelection, context: context))
 }
 
-@Test("CanvasView hotkey policy: allows addChildNode in diagram node target")
+@Test("ダイアグラムノード ターゲットで addChildNode を許可する")
 func test_hotkeyPolicy_addChildNodeEnabledInDiagramNodeTarget() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -111,7 +111,7 @@ func test_hotkeyPolicy_addChildNodeEnabledInDiagramNodeTarget() {
     #expect(CanvasView.isActionEnabled(.apply(commands: [.addChildNode]), context: context))
 }
 
-@Test("CanvasView hotkey policy: allows addChildNode in diagram node target without focused node")
+@Test("フォーカス中のノードのないダイアグラムノード ターゲットで addChildNode を許可する")
 func test_hotkeyPolicy_addChildNodeEnabledInDiagramNodeTargetWithoutFocus() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -124,7 +124,7 @@ func test_hotkeyPolicy_addChildNodeEnabledInDiagramNodeTargetWithoutFocus() {
     #expect(CanvasView.isActionEnabled(.apply(commands: [.addChildNode]), context: context))
 }
 
-@Test("CanvasView hotkey policy: moveFocusAcrossAreasToRoot is disabled in edge target")
+@Test("moveFocusAcrossAreasToRoot はエッジ ターゲットで無効になっています")
 func test_hotkeyPolicy_moveFocusAcrossAreasToRootDisabledInEdgeTarget() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -142,7 +142,7 @@ func test_hotkeyPolicy_moveFocusAcrossAreasToRootDisabledInEdgeTarget() {
     )
 }
 
-@Test("CanvasView hotkey policy: add-node actions are disabled in edge target")
+@Test("エッジターゲットではノード追加アクションが無効になっています")
 func test_hotkeyPolicy_addNodeActionsDisabledInEdgeTarget() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -157,7 +157,7 @@ func test_hotkeyPolicy_addNodeActionsDisabledInEdgeTarget() {
     #expect(!CanvasView.isActionEnabled(.presentAddNodeModeSelection, context: context))
 }
 
-@Test("CanvasView hotkey policy: tree add actions are disabled in edge target")
+@Test("エッジターゲットではツリー追加アクションが無効になっています")
 func test_hotkeyPolicy_treeAddActionsDisabledInEdgeTarget() {
     let context = KeymapExecutionContext(
         editingMode: .tree,
@@ -172,7 +172,7 @@ func test_hotkeyPolicy_treeAddActionsDisabledInEdgeTarget() {
     #expect(!CanvasView.isActionEnabled(.apply(commands: [.duplicateSelectionAsSibling]), context: context))
 }
 
-@Test("CanvasView hotkey policy: node transform actions are disabled in edge target")
+@Test("エッジ ターゲットではノード変換アクションが無効になっています")
 func test_hotkeyPolicy_nodeTransformActionsDisabledInEdgeTarget() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -187,7 +187,7 @@ func test_hotkeyPolicy_nodeTransformActionsDisabledInEdgeTarget() {
     #expect(!CanvasView.isActionEnabled(.apply(commands: [.scaleSelectedNodes(.up)]), context: context))
 }
 
-@Test("CanvasView hotkey policy: clipboard actions are disabled in edge target")
+@Test("エッジターゲットではクリップボードアクションが無効になっています")
 func test_hotkeyPolicy_clipboardActionsDisabledInEdgeTarget() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -202,7 +202,7 @@ func test_hotkeyPolicy_clipboardActionsDisabledInEdgeTarget() {
     #expect(!CanvasView.isActionEnabled(.apply(commands: [.pasteClipboardAtFocusedNode]), context: context))
 }
 
-@Test("CanvasView hotkey policy: moveArea is enabled only in area target")
+@Test("moveAreaはエリア対象のみ有効である")
 func test_hotkeyPolicy_moveAreaEnabledOnlyInAreaTarget() {
     let allowedContext = KeymapExecutionContext(
         editingMode: .diagram,
@@ -223,7 +223,7 @@ func test_hotkeyPolicy_moveAreaEnabledOnlyInAreaTarget() {
     #expect(!CanvasView.isActionEnabled(.apply(commands: [.moveArea(.right)]), context: deniedContext))
 }
 
-@Test("CanvasView hotkey policy: non-shortcut command fallback respects edge restrictions")
+@Test("非ショートカット コマンド フォールバックはエッジ制限を考慮する")
 func test_hotkeyPolicy_nonShortcutCommandFallbackRespectsEdgeRestrictions() {
     let edgeContext = KeymapExecutionContext(
         editingMode: .diagram,
@@ -246,7 +246,7 @@ func test_hotkeyPolicy_nonShortcutCommandFallbackRespectsEdgeRestrictions() {
     #expect(CanvasView.isActionEnabled(.apply(commands: [.toggleFocusedNodeMarkdownStyle]), context: nodeContext))
 }
 
-@Test("Command palette filtering reuses execution policy in area target")
+@Test("コマンドパレットの絞り込みはエリア対象でも実行ポリシーを再利用する")
 func test_areaTarget_commandPaletteFiltersByExecutionPolicy() {
     let paletteContext = CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
@@ -273,7 +273,7 @@ func test_areaTarget_commandPaletteFiltersByExecutionPolicy() {
     #expect(visibleIds.contains("undo"))
 }
 
-@Test("Command palette filtering: addChildNode is visible in diagram node target")
+@Test("addChildNode はダイアグラムノード ターゲットに表示される")
 func test_diagramNodeTarget_commandPaletteShowsAddChildNode() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: false),
@@ -290,7 +290,7 @@ func test_diagramNodeTarget_commandPaletteShowsAddChildNode() {
     #expect(!visibleIds.contains("addSiblingNodeBelow"))
 }
 
-@Test("Command palette filtering reuses execution policy in edge target")
+@Test("コマンドパレットの絞り込みはエッジ対象でも実行ポリシーを再利用する")
 func test_edgeTarget_commandPaletteFiltersByExecutionPolicy() {
     let paletteContext = CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true)
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
@@ -317,7 +317,7 @@ func test_edgeTarget_commandPaletteFiltersByExecutionPolicy() {
     #expect(!visibleIds.contains("scaleSelectedNodesUp.commandOptionPlus"))
 }
 
-@Test("Command palette apply routing: edge target delegates edge-specific apply commands")
+@Test("エッジターゲットはエッジ固有の適用コマンドを委任する")
 func test_commandPaletteApplyRouting_edgeTarget_delegatesEdgeSpecificApplyCommands() {
     let command: CanvasCommand = .moveFocus(.up)
     let definition = CanvasShortcutCatalogService.definition(for: command)
@@ -326,7 +326,7 @@ func test_commandPaletteApplyRouting_edgeTarget_delegatesEdgeSpecificApplyComman
     #expect(definition?.executionRoute == .edgeAware)
 }
 
-@Test("Command palette apply routing: edge target does not delegate generic node apply commands")
+@Test("エッジ ターゲットは汎用ノード適用コマンドを委任しない")
 func test_commandPaletteApplyRouting_edgeTarget_doesNotDelegateGenericNodeApplyCommands() {
     let command: CanvasCommand = .addChildNode
     let definition = CanvasShortcutCatalogService.definition(for: command)
@@ -335,7 +335,7 @@ func test_commandPaletteApplyRouting_edgeTarget_doesNotDelegateGenericNodeApplyC
     #expect(definition?.executionRoute != .edgeAware)
 }
 
-@Test("Command palette apply routing: non-edge-aware commands stay direct")
+@Test("非エッジ対応コマンドは直接的なままである")
 func test_commandPaletteApplyRouting_nonEdgeAwareCommandsRemainDirect() {
     let command: CanvasCommand = .addSiblingNode(position: .below)
     let definition = CanvasShortcutCatalogService.definition(for: command)

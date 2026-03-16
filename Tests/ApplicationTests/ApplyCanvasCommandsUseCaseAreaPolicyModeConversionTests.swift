@@ -2,7 +2,7 @@ import Application
 import Domain
 import Testing
 
-@Test("ApplyCanvasCommandsUseCase: convertFocusedAreaMode converts focused area mode")
+@Test("convertFocusedAreaMode はフォーカスエリアモードを変換する")
 func test_apply_convertFocusedAreaMode_convertsFocusedAreaMode() async throws {
     let nodeID = CanvasNodeID(rawValue: "focused")
     let areaID = CanvasAreaID(rawValue: "area-1")

@@ -7,7 +7,7 @@ import InterfaceAdapters
 import Testing
 
 @MainActor
-@Test("Interaction flow: add node, edit text, and apply undo/redo through translated hotkeys")
+@Test("ノードの追加、テキストの編集、翻訳されたホットキーによる元に戻す/やり直しの適用")
 func test_interactionFlow_addEditUndoRedo_throughTranslatedHotkeys() async throws {
     let inputPort = ApplyCanvasCommandsUseCase(initialGraph: .empty)
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -54,7 +54,7 @@ func test_interactionFlow_addEditUndoRedo_throughTranslatedHotkeys() async throw
 }
 
 @MainActor
-@Test("Interaction flow: move focus and extend selection through arrow-key translation")
+@Test("矢印キーの移動によりフォーカスを移動し、選択範囲を拡張する")
 func test_interactionFlow_moveFocusAndExtendSelection_throughTranslatedArrowKeys() async throws {
     let topNodeID = CanvasNodeID(rawValue: "top")
     let bottomNodeID = CanvasNodeID(rawValue: "bottom")
@@ -108,7 +108,7 @@ func test_interactionFlow_moveFocusAndExtendSelection_throughTranslatedArrowKeys
 }
 
 @MainActor
-@Test("Interaction flow: fold toggle hides descendant nodes and edges in published state")
+@Test("折りたたみトグルは、パブリッシュされた状態で子孫ノードとエッジを非表示にする")
 func test_interactionFlow_toggleFold_hidesPublishedDescendants() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")

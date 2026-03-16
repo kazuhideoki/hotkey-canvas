@@ -2,7 +2,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("Search query history: Up starts from latest entry and stores draft")
+@Test("Up は最新のエントリから開始され、ドラフトが保存される")
 func test_navigate_older_withoutCursor_startsFromLatestAndStoresDraft() {
     let result = CanvasSearchQueryHistoryNavigator.navigate(
         query: "in-progress",
@@ -17,7 +17,7 @@ func test_navigate_older_withoutCursor_startsFromLatestAndStoresDraft() {
     #expect(result.draft == "in-progress")
 }
 
-@Test("Search query history: Up steps toward older entries")
+@Test("古いエントリに向けてステップアップ")
 func test_navigate_older_withCursor_movesTowardOlderEntries() {
     let result = CanvasSearchQueryHistoryNavigator.navigate(
         query: "latest",
@@ -32,7 +32,7 @@ func test_navigate_older_withCursor_movesTowardOlderEntries() {
     #expect(result.draft == "draft")
 }
 
-@Test("Search query history: Down restores draft after newest entry")
+@Test("ダウンすると、最新のエントリの後に下書きが復元される")
 func test_navigate_newer_fromLatest_restoresDraft() {
     let result = CanvasSearchQueryHistoryNavigator.navigate(
         query: "latest",
@@ -47,7 +47,7 @@ func test_navigate_newer_fromLatest_restoresDraft() {
     #expect(result.draft == "typed text")
 }
 
-@Test("Search query history: record deduplicates and trims whitespace")
+@Test("レコードの重複排除と空白のトリミング")
 func test_record_deduplicatesAndTrimsWhitespace() {
     let result = CanvasSearchQueryHistoryNavigator.record(
         query: "  find me  ",
@@ -58,7 +58,7 @@ func test_record_deduplicatesAndTrimsWhitespace() {
     #expect(result == ["find me", "alpha", "beta"])
 }
 
-@Test("Search query history: user edit clears cursor and keeps edited query as draft")
+@Test("ユーザー編集によりカーソルがクリアされ、編集されたクエリが下書きとして保持される")
 func test_userEditedQuery_clearsCursorAndSetsDraft() {
     let result = CanvasSearchQueryHistoryNavigator.userEditedQuery(
         currentQuery: "edited",

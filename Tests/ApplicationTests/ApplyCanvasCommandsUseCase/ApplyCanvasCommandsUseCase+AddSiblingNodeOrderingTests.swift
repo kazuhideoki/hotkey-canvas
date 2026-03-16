@@ -4,7 +4,7 @@ import Testing
 
 // Background: Ordering-specific sibling insertion scenarios are independent from core sibling creation behavior.
 // Responsibility: Verify deterministic sibling ordering when Y coordinates are equal.
-@Test("ApplyCanvasCommandsUseCase: addSiblingNode below keeps ordering when next sibling shares Y")
+@Test("次の addSiblingNode は、次の兄弟ノードが Y を共有する場合に順序を維持する")
 func test_apply_addSiblingNodeBelow_withEqualY_keepsNewNodeBelowFocused() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let focusedID = CanvasNodeID(rawValue: "focused")

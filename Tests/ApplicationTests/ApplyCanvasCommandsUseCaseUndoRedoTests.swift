@@ -2,7 +2,7 @@ import Application
 import Domain
 import Testing
 
-@Test("ApplyCanvasCommandsUseCase: undo restores previous graph after addNode")
+@Test("元に戻すと、addNode の後に前のグラフが復元される")
 func test_undo_restoresPreviousGraph_afterAddNode() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -17,7 +17,7 @@ func test_undo_restoresPreviousGraph_afterAddNode() async throws {
     #expect(undone.canRedo)
 }
 
-@Test("ApplyCanvasCommandsUseCase: redo reapplies state after undo")
+@Test("redo は元に戻した後に状態を再適用する")
 func test_redo_reappliesState_afterUndo() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -30,7 +30,7 @@ func test_redo_reappliesState_afterUndo() async throws {
     #expect(!redone.canRedo)
 }
 
-@Test("ApplyCanvasCommandsUseCase: new apply clears redo history")
+@Test("新規適用はやり直し履歴をクリアする")
 func test_apply_clearsRedoHistory_afterUndo() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -44,7 +44,7 @@ func test_apply_clearsRedoHistory_afterUndo() async throws {
     #expect(!redoResult.canRedo)
 }
 
-@Test("ApplyCanvasCommandsUseCase: maxHistoryCount limits undo depth")
+@Test("maxHistoryCount は元に戻す深さを制限する")
 func test_undo_respectsMaxHistoryCount() async throws {
     let sut = ApplyCanvasCommandsUseCase(maxHistoryCount: 1)
 
@@ -58,7 +58,7 @@ func test_undo_respectsMaxHistoryCount() async throws {
     #expect(secondUndo.newState.nodesByID.count == 1)
 }
 
-@Test("ApplyCanvasCommandsUseCase: undo does not emit viewport intent when focus changes")
+@Test("undo はフォーカスが変更されたときにビューポート インテントを発行しない")
 func test_undo_doesNotEmitViewportIntent_whenFocusChanges() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -70,7 +70,7 @@ func test_undo_doesNotEmitViewportIntent_whenFocusChanges() async throws {
     #expect(undone.viewportIntent == nil)
 }
 
-@Test("ApplyCanvasCommandsUseCase: redo does not emit viewport intent when focus changes")
+@Test("REDO はフォーカスが変更されたときにビューポート インテントを発行しない")
 func test_redo_doesNotEmitViewportIntent_whenFocusChanges() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -83,7 +83,7 @@ func test_redo_doesNotEmitViewportIntent_whenFocusChanges() async throws {
     #expect(redone.viewportIntent == nil)
 }
 
-@Test("ApplyCanvasCommandsUseCase: undo/redo restores area membership after assignNodesToArea")
+@Test("元に戻す/やり直しは、assignNodesToArea の後にエリア メンバーシップを復元する")
 func test_undoRedo_restoresAreaMembership_afterAssignNodesToArea() async throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
     let sourceAreaID = CanvasAreaID(rawValue: "source")
@@ -120,7 +120,7 @@ func test_undoRedo_restoresAreaMembership_afterAssignNodesToArea() async throws 
     #expect(redone.newState.areasByID[sourceAreaID]?.nodeIDs.contains(nodeID) == false)
 }
 
-@Test("ApplyCanvasCommandsUseCase: failed assignNodesToArea does not append undo history")
+@Test("失敗した assignNodesToArea は元に戻す履歴を追加しない")
 func test_failedAssignNodesToArea_doesNotAppendUndoHistory() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -170,7 +170,7 @@ func test_failedAssignNodesToArea_doesNotAppendUndoHistory() async throws {
     #expect(!undoResult.canUndo)
 }
 
-@Test("ApplyCanvasCommandsUseCase: undo/redo restores area mode after convertFocusedAreaMode")
+@Test("convertFocusedAreaMode の後に元に戻す/やり直してエリア モードを復元する")
 func test_undoRedo_restoresAreaMode_afterConvertFocusedAreaMode() async throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
     let areaID = CanvasAreaID(rawValue: "area-1")
@@ -203,7 +203,7 @@ func test_undoRedo_restoresAreaMode_afterConvertFocusedAreaMode() async throws {
     #expect(redone.newState.areasByID[areaID]?.editingMode == .diagram)
 }
 
-@Test("ApplyCanvasCommandsUseCase: same-mode convertFocusedAreaMode does not append undo history")
+@Test("同じモード convertFocusedAreaMode は元に戻す履歴を追加しない")
 func test_sameModeConvertFocusedAreaMode_doesNotAppendUndoHistory() async throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
     let areaID = CanvasAreaID(rawValue: "area-1")

@@ -1,7 +1,7 @@
 import Domain
 import Testing
 
-@Test("CanvasSelectionService: normalized selection keeps focused node and drops hidden descendants")
+@Test("正規化された選択はフォーカス中のノードを維持し、非表示の子孫を削除する")
 func test_normalizedSelectedNodeIDs_keepsFocusedAndDropsHiddenNode() {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
@@ -51,7 +51,7 @@ func test_normalizedSelectedNodeIDs_keepsFocusedAndDropsHiddenNode() {
     #expect(normalized == [childID])
 }
 
-@Test("CanvasSelectionService: normalized selection becomes empty when focused node is nil")
+@Test("フォーカス中のノードが nil の場合、正規化された選択は空になる")
 func test_normalizedSelectedNodeIDs_becomesEmptyWhenFocusedNodeIsNil() {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
@@ -73,7 +73,7 @@ func test_normalizedSelectedNodeIDs_becomesEmptyWhenFocusedNodeIsNil() {
     #expect(normalized.isEmpty)
 }
 
-@Test("CanvasSelectionService: normalized edge selection keeps focused edge and drops missing edge")
+@Test("正規化されたエッジ選択は、焦点を合わせたエッジを維持し、欠落したエッジを削除する")
 func test_normalizedSelectedEdgeIDs_keepsFocusedAndDropsMissing() {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")

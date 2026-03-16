@@ -4,7 +4,7 @@ import InterfaceAdapters
 import Testing
 
 @MainActor
-@Test("CanvasViewModel: onAppear does not overwrite newer apply result")
+@Test("onAppear は新しい適用結果を上書きしない")
 func test_onAppear_doesNotOverwriteApplyResult() async throws {
     let inputPort = DelayedCanvasEditingInputPort(getDelayNanoseconds: 200_000_000)
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -19,7 +19,7 @@ func test_onAppear_doesNotOverwriteApplyResult() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: onAppear requests mode-selection popup when graph is empty")
+@Test("onAppear は、グラフが空の場合にモード選択ポップアップを要求する")
 func test_onAppear_requestsModeSelectionPopup_whenGraphIsEmpty() async throws {
     let inputPort = EmptyBootstrapCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -32,7 +32,7 @@ func test_onAppear_requestsModeSelectionPopup_whenGraphIsEmpty() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: onAppear does not request mode-selection popup while add-node apply is in flight")
+@Test("onAppear は、ノード追加適用の実行中にモード選択ポップアップを要求しない")
 func test_onAppear_doesNotRequestModeSelectionPopup_whenAddNodeApplyIsInFlight() async throws {
     let inputPort = InFlightAddNodeCanvasEditingInputPort(getDelayNanoseconds: 200_000_000)
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -49,7 +49,7 @@ func test_onAppear_doesNotRequestModeSelectionPopup_whenAddNodeApplyIsInFlight()
 }
 
 @MainActor
-@Test("CanvasViewModel: earlier successful apply is preserved when later overlapping apply fails")
+@Test("後で重複する適用が失敗した場合でも、以前に成功した適用は保持される")
 func test_apply_preservesEarlierSuccess_whenLaterOverlappingApplyFails() async throws {
     let inputPort = OverlappingFailureCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -67,7 +67,7 @@ func test_apply_preservesEarlierSuccess_whenLaterOverlappingApplyFails() async t
 }
 
 @MainActor
-@Test("CanvasViewModel: newer overlapping successful apply stays visible")
+@Test("新しい重複する成功した適用は表示されたままになる")
 func test_apply_keepsNewerSuccess_whenOlderCompletesLater() async throws {
     let inputPort = ReorderedSuccessCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -84,7 +84,7 @@ func test_apply_keepsNewerSuccess_whenOlderCompletesLater() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: undo and redo update history flags")
+@Test("元に戻すおよびやり直しの更新履歴フラグ")
 func test_undoRedo_updatesHistoryFlags() async throws {
     let inputPort = UndoRedoCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -105,7 +105,7 @@ func test_undoRedo_updatesHistoryFlags() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: undo result stays visible when older apply completes later")
+@Test("後で古い適用が完了しても、元に戻す結果は表示されたままになる")
 func test_undo_keepsState_whenOlderApplyCompletesLater() async throws {
     let inputPort = ApplyUndoReorderCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -120,7 +120,7 @@ func test_undo_keepsState_whenOlderApplyCompletesLater() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: onAppear reflects history flags from shared input port")
+@Test("onAppear は共有入力ポートからの履歴フラグを反映する")
 func test_onAppear_reflectsHistoryFlags() async throws {
     let inputPort = UndoRedoCanvasEditingInputPort()
     _ = try await inputPort.apply(commands: [.addNode])
@@ -134,7 +134,7 @@ func test_onAppear_reflectsHistoryFlags() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: onAppear hides folded descendants from published nodes and edges")
+@Test("onAppear は折り畳まれた子孫をパブリッシュされたノードおよびエッジから非表示にする")
 func test_onAppear_hidesFoldedDescendants_fromPublishedGraph() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
@@ -176,7 +176,7 @@ func test_onAppear_hidesFoldedDescendants_fromPublishedGraph() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: onAppear publishes diagram node ids and tree root node ids for node styling")
+@Test("onAppear は、ノード スタイル用のダイアグラムノード ID とツリー ルートノード ノード ID を公開する")
 func test_onAppear_publishesNodeStylingIDs() async throws {
     let treeRootID = CanvasNodeID(rawValue: "tree-root")
     let treeChildID = CanvasNodeID(rawValue: "tree-child")
@@ -230,7 +230,7 @@ func test_onAppear_publishesNodeStylingIDs() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: add-node apply publishes pending editing node")
+@Test("add-node apply 保留中の編集ノードを公開する")
 func test_apply_addNode_setsPendingEditingNodeID() async throws {
     let inputPort = UndoRedoCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -241,7 +241,7 @@ func test_apply_addNode_setsPendingEditingNodeID() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: mode-selected add-node with tree sets pending editing node")
+@Test("モード選択されたノードの追加、ツリー セット保留中の編集ノード")
 func test_addNodeFromModeSelection_tree_setsPendingEditingNodeID() async throws {
     let inputPort = UndoRedoCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -253,7 +253,7 @@ func test_addNodeFromModeSelection_tree_setsPendingEditingNodeID() async throws 
 }
 
 @MainActor
-@Test("CanvasViewModel: mode-selected add-node with tree creates tree area when focused area is diagram")
+@Test("モード選択されたツリーを含むノードの追加は、フォーカス中のエリアが図の場合にツリーエリアを作成する")
 func test_addNodeFromModeSelection_tree_createsTreeAreaWhenFocusedAreaIsDiagram() async throws {
     let inputPort = TreeModeSelectionFromDiagramCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -269,7 +269,7 @@ func test_addNodeFromModeSelection_tree_createsTreeAreaWhenFocusedAreaIsDiagram(
 }
 
 @MainActor
-@Test("CanvasViewModel: mode-selected add-node with diagram creates new diagram area for added node")
+@Test("モード選択されたダイアグラム付きノードの追加により、追加されたノードの新しいダイアグラムエリアが作成される")
 func test_addNodeFromModeSelection_diagram_createsDiagramAreaForAddedNode() async throws {
     let inputPort = DiagramModeSelectionCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -285,7 +285,7 @@ func test_addNodeFromModeSelection_diagram_createsDiagramAreaForAddedNode() asyn
 }
 
 @MainActor
-@Test("CanvasViewModel: stale diagram mode request still creates area for newly added node")
+@Test("古いダイアグラム モード要求により、新しく追加されたノード用のエリアがまだ作成される")
 func test_addNodeFromModeSelection_diagram_staleRequestStillCreatesAreaForAddedNode() async throws {
     let inputPort = StaleDiagramModeSelectionCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -307,7 +307,7 @@ func test_addNodeFromModeSelection_diagram_staleRequestStillCreatesAreaForAddedN
 }
 
 @MainActor
-@Test("CanvasViewModel: diagram mode selection retries createArea when generated area ID collides")
+@Test("生成されたエリア ID が衝突した場合、ダイアグラム モード選択は createArea を再試行する")
 func test_addNodeFromModeSelection_diagram_retriesCreateAreaWhenAreaIDCollides() async throws {
     let inputPort = DiagramAreaCollisionInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -326,7 +326,7 @@ func test_addNodeFromModeSelection_diagram_retriesCreateAreaWhenAreaIDCollides()
 }
 
 @MainActor
-@Test("CanvasViewModel: mode-selected add-node does not publish stale pending editing node")
+@Test("モード選択された追加ノードは、古い保留中の編集ノードを公開しない")
 func test_addNodeFromModeSelection_doesNotSetPendingEditingNodeID_whenFocusedNodeIsMissing() async throws {
     let inputPort = StaleModeSelectionResultInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -337,7 +337,7 @@ func test_addNodeFromModeSelection_doesNotSetPendingEditingNodeID_whenFocusedNod
 }
 
 @MainActor
-@Test("CanvasViewModel: non-add apply does not publish pending editing node")
+@Test("non-add apply は保留中の編集ノードを公開しない")
 func test_apply_nonAddCommand_doesNotSetPendingEditingNodeID() async throws {
     let nodeID = CanvasNodeID(rawValue: "focused")
     let graph = CanvasGraph(
@@ -361,7 +361,7 @@ func test_apply_nonAddCommand_doesNotSetPendingEditingNodeID() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: add no-op does not publish pending editing node when displayed nodes are stale")
+@Test("add の無変化適用は、表示中のノードが古い場合でも保留中の編集ノードを公開しない")
 func test_apply_addNoOp_doesNotSetPendingEditingNodeID_whenDisplayedSnapshotIsStale() async throws {
     let nodeID = CanvasNodeID(rawValue: "focused")
     let graph = CanvasGraph(
@@ -385,7 +385,7 @@ func test_apply_addNoOp_doesNotSetPendingEditingNodeID_whenDisplayedSnapshotIsSt
 }
 
 @MainActor
-@Test("CanvasViewModel: add-child apply publishes pending editing node")
+@Test("子ノードの追加 適用 保留中の編集ノードを公開する")
 func test_apply_addChildNode_setsPendingEditingNodeID() async throws {
     let inputPort = AddChildCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -397,7 +397,7 @@ func test_apply_addChildNode_setsPendingEditingNodeID() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: add-sibling apply publishes pending editing node")
+@Test("兄弟ノードの追加 適用 保留中の編集ノードを公開する")
 func test_apply_addSiblingNode_setsPendingEditingNodeID() async throws {
     let inputPort = AddSiblingCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -409,7 +409,7 @@ func test_apply_addSiblingNode_setsPendingEditingNodeID() async throws {
 }
 
 @MainActor
-@Test("CanvasViewModel: duplicate apply does not publish pending editing node")
+@Test("重複適用では保留中の編集ノードが公開されない")
 func test_apply_duplicateSelectionAsSibling_doesNotSetPendingEditingNodeID() async throws {
     let inputPort = DuplicateSelectionCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)
@@ -421,7 +421,7 @@ func test_apply_duplicateSelectionAsSibling_doesNotSetPendingEditingNodeID() asy
 }
 
 @MainActor
-@Test("CanvasViewModel: apply publishes viewport intent from input port")
+@Test("apply は入力ポートからビューポート インテントをパブリッシュする")
 func test_apply_setsViewportIntent_fromApplyResult() async throws {
     let inputPort = ViewportIntentCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)

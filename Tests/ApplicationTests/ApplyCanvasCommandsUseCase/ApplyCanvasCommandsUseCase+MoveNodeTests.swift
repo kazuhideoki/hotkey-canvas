@@ -4,7 +4,7 @@ import Testing
 
 // Background: Command-arrow shortcuts modify node hierarchy and sibling order.
 // Responsibility: Verify moveNode command behavior for up/down/left/right transitions.
-@Test("ApplyCanvasCommandsUseCase: moveNode down swaps with next sibling")
+@Test("moveNode を下に実行すると、次の兄弟ノードと入れ替わる")
 func test_apply_moveNodeDown_swapsWithNextSibling() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let firstID = CanvasNodeID(rawValue: "first")
@@ -20,7 +20,7 @@ func test_apply_moveNodeDown_swapsWithNextSibling() async throws {
     #expect(result.newState.focusedNodeID == focusedID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode down preserves each node size")
+@Test("moveNode を下に実行しても、各ノードのサイズを維持する")
 func test_apply_moveNodeDown_preservesNodeSize() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -73,7 +73,7 @@ func test_apply_moveNodeDown_preservesNodeSize() async throws {
     #expect(nextAfter.bounds.height == next.bounds.height)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode up swaps with previous sibling")
+@Test("moveNode を上に実行すると、前の兄弟ノードと入れ替わる")
 func test_apply_moveNodeUp_swapsWithPreviousSibling() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let firstID = CanvasNodeID(rawValue: "first")
@@ -89,7 +89,7 @@ func test_apply_moveNodeUp_swapsWithPreviousSibling() async throws {
     #expect(result.newState.focusedNodeID == focusedID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode left promotes node to parent sibling")
+@Test("moveNode を左に実行すると、ノードを親の兄弟ノードへ昇格させる")
 func test_apply_moveNodeLeft_promotesToParentSibling() async throws {
     let grandID = CanvasNodeID(rawValue: "grand")
     let parentID = CanvasNodeID(rawValue: "parent")
@@ -139,7 +139,7 @@ func test_apply_moveNodeLeft_promotesToParentSibling() async throws {
     #expect(result.newState.focusedNodeID == focusedID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode left keeps top-level parent child unchanged")
+@Test("moveNode を左に実行しても、トップレベルの親子関係は維持する")
 func test_apply_moveNodeLeft_doesNotPromoteTopLevelChild() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
@@ -176,7 +176,7 @@ func test_apply_moveNodeLeft_doesNotPromoteTopLevelChild() async throws {
     #expect(result.newState.edgesByID == graph.edgesByID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode right indents node under previous sibling")
+@Test("moveNode を右に実行すると、ノードを前の兄弟ノードの子として入れ子にする")
 func test_apply_moveNodeRight_indentsUnderPreviousSibling() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let previousID = CanvasNodeID(rawValue: "previous")
@@ -191,7 +191,7 @@ func test_apply_moveNodeRight_indentsUnderPreviousSibling() async throws {
     #expect(result.newState.focusedNodeID == focusedID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode right appends node as last child of previous sibling")
+@Test("moveNode を右に実行すると、ノードを前の兄弟ノードの最後の子として追加する")
 func test_apply_moveNodeRight_appendsAsLastChildOfPreviousSibling() async throws {
     let fixture = makeMoveNodeRightAppendFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -202,7 +202,7 @@ func test_apply_moveNodeRight_appendsAsLastChildOfPreviousSibling() async throws
     #expect(previousChildIDs == [fixture.firstChildID, fixture.secondChildID, fixture.focusedID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode right appends below deepest child bottom")
+@Test("moveNode を右に実行すると、最も深い子ノードの下に追加する")
 func test_apply_moveNodeRight_appendsBelowDeepestChildBottom() async throws {
     let fixture = makeMoveNodeRightAppendDeepestBottomFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph.withDefaultTreeAreaIfMissing())
@@ -213,7 +213,7 @@ func test_apply_moveNodeRight_appendsBelowDeepestChildBottom() async throws {
     #expect(previousChildIDs == [fixture.tallChildID, fixture.shortLowerChildID, fixture.focusedID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode right focuses collapsed new parent")
+@Test("moveNode を右に実行すると、折りたたまれた新しい親へフォーカスする")
 func test_apply_moveNodeRight_focusesCollapsedNewParent() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let previousID = CanvasNodeID(rawValue: "previous")
@@ -234,7 +234,7 @@ func test_apply_moveNodeRight_focusesCollapsedNewParent() async throws {
     #expect(result.newState.collapsedRootNodeIDs == [previousID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode right does not indent top-level root node")
+@Test("moveNode を右に実行しても、トップレベルのルートノードはインデントしない")
 func test_apply_moveNodeRight_doesNotIndentTopLevelRootNode() async throws {
     let firstRootID = CanvasNodeID(rawValue: "first-root")
     let focusedRootID = CanvasNodeID(rawValue: "focused-root")

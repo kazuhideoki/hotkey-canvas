@@ -4,7 +4,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasSearchTextField: Enter is not handled while marked text is active")
+@Test("マークされたテキストがアクティブな間は Enter は処理されない")
 func test_control_insertNewline_withMarkedText_returnsFalseWithoutSubmit() {
     var textValue = ""
     let binding = Binding<String>(
@@ -41,7 +41,7 @@ func test_control_insertNewline_withMarkedText_returnsFalseWithoutSubmit() {
     #expect(backwardCount == 0)
 }
 
-@Test("CanvasSearchTextField: Enter submits forward when marked text is inactive")
+@Test("マークされたテキストが非アクティブな場合に送信を送信すると入力する")
 func test_control_insertNewline_withoutMarkedText_returnsTrueAndSubmitsForward() {
     var textValue = ""
     let binding = Binding<String>(
@@ -78,7 +78,7 @@ func test_control_insertNewline_withoutMarkedText_returnsTrueAndSubmitsForward()
     #expect(backwardCount == 0)
 }
 
-@Test("CanvasSearchTextField: Up and Down invoke history navigation handlers")
+@Test("Up および Down は履歴ナビゲーション ハンドラーを呼び出する")
 func test_control_moveUpDown_invokesHistoryHandlers() {
     var textValue = ""
     let binding = Binding<String>(
@@ -119,7 +119,7 @@ func test_control_moveUpDown_invokesHistoryHandlers() {
     #expect(newerCount == 1)
 }
 
-@Test("CanvasSearchTextField: Up and Down are not handled while marked text is active")
+@Test("マークされたテキストがアクティブな間は、上と下は処理されない")
 func test_control_moveUpDown_withMarkedText_doesNotInvokeHistoryHandlers() {
     var textValue = ""
     let binding = Binding<String>(
@@ -161,7 +161,7 @@ func test_control_moveUpDown_withMarkedText_doesNotInvokeHistoryHandlers() {
     #expect(newerCount == 0)
 }
 
-@Test("CanvasSearchTextField: text change updates binding and emits edit callback")
+@Test("テキストの変更によりバインディングが更新され、編集コールバックが発行される")
 func test_controlTextDidChange_updatesBindingAndEditCallback() {
     var textValue = ""
     let binding = Binding<String>(

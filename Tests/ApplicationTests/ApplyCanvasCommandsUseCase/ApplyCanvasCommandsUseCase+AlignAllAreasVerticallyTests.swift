@@ -4,7 +4,7 @@ import Testing
 
 // Background: Command palette provides one command to vertically align area blocks.
 // Responsibility: Verify cross-area left alignment while preserving intra-area node layout.
-@Test("ApplyCanvasCommandsUseCase: alignAllAreasVertically aligns all areas to one left column")
+@Test("alignAllAreasVertically すると、全てのエリアが左の 1 列に揃う")
 func test_apply_alignAllAreasVertically_alignsAllAreasToOneLeftColumn() async throws {
     let fixture = makeMultiAreaFixtureGraph()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture)
@@ -24,7 +24,7 @@ func test_apply_alignAllAreasVertically_alignsAllAreasToOneLeftColumn() async th
     #expect(rightChild.bounds.y == 252)
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignAllAreasVertically keeps relative positions inside each area")
+@Test("alignAllAreasVertically は各エリア内の相対位置を保持する")
 func test_apply_alignAllAreasVertically_preservesRelativePositionsInsideEachArea() async throws {
     let fixture = makeMultiAreaFixtureGraph()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture)
@@ -47,7 +47,7 @@ func test_apply_alignAllAreasVertically_preservesRelativePositionsInsideEachArea
     )
 }
 
-@Test("ApplyCanvasCommandsUseCase: alignAllAreasVertically is no-op when only one area exists")
+@Test("エリアが 1 つだけ存在する場合、alignAllAreasVertically は何もしない")
 func test_apply_alignAllAreasVertically_isNoOpWhenOnlyOneAreaExists() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")

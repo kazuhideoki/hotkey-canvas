@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasView image size: measured display width does not upscale small images")
+@Test("測定された表示幅では小さな画像はアップスケールされない")
 func test_measuredImageDisplayWidth_smallImage_doesNotUpscale() {
     let imageSize = CGSize(width: 80, height: 40)
 
@@ -12,7 +12,7 @@ func test_measuredImageDisplayWidth_smallImage_doesNotUpscale() {
     #expect(width == 80)
 }
 
-@Test("CanvasView image size: measured display width clamps to content width")
+@Test("測定された表示幅はコンテンツの幅に固定される")
 func test_measuredImageDisplayWidth_largeImage_clampsToContentWidth() {
     let imageSize = CGSize(width: 640, height: 320)
     let expectedContentWidth = 220.0 - (Double(NodeTextStyle.outerPadding) * 2)
@@ -22,7 +22,7 @@ func test_measuredImageDisplayWidth_largeImage_clampsToContentWidth() {
     #expect(width == expectedContentWidth)
 }
 
-@Test("CanvasView image size: measured display width upscales small image by node content scale")
+@Test("測定された表示幅 ノードコンテンツスケールごとに小さな画像をアップスケールする")
 func test_measuredImageDisplayWidth_smallImage_withContentScale_upscales() {
     let imageSize = CGSize(width: 80, height: 40)
 
@@ -35,7 +35,7 @@ func test_measuredImageDisplayWidth_smallImage_withContentScale_upscales() {
     #expect(width == 160)
 }
 
-@Test("CanvasView image size: diagram image side keeps minimum for small image")
+@Test("図画像側は小さい画像の場合は最小限に抑えます")
 func test_diagramImageNodeSideLength_smallImage_keepsMinimumDiagramSide() {
     let imageSize = CGSize(width: 80, height: 40)
 
@@ -44,7 +44,7 @@ func test_diagramImageNodeSideLength_smallImage_keepsMinimumDiagramSide() {
     #expect(side == 220)
 }
 
-@Test("CanvasView image size: diagram image side keeps shrunk node width on image replacement")
+@Test("図のイメージ側は、イメージの置換時に縮小されたノード幅を維持する")
 func test_diagramImageNodeSideLength_smallImage_preservesShrunkDiagramNodeWidth() {
     let imageSize = CGSize(width: 80, height: 40)
     let shrunkNodeWidth = 132.0
@@ -57,7 +57,7 @@ func test_diagramImageNodeSideLength_smallImage_preservesShrunkDiagramNodeWidth(
     #expect(side == shrunkNodeWidth)
 }
 
-@Test("CanvasView image size: diagram image side clamps to maximum for large image")
+@Test("図 大きな画像の場合、画像側を最大にクランプする")
 func test_diagramImageNodeSideLength_largeImage_clampsToMaximum() {
     let imageSize = CGSize(width: 1200, height: 800)
 
@@ -66,7 +66,7 @@ func test_diagramImageNodeSideLength_largeImage_clampsToMaximum() {
     #expect(side == 330)
 }
 
-@Test("CanvasView image height: image-only editing keeps base text container height")
+@Test("画像のみの編集ではベーステキストコンテナの高さが維持される")
 func test_imageAwareEditingNodeHeight_imageOnly_preservesMeasuredTextHeight() {
     let measuredTextHeight = 42.0
     let imageHeight = 120.0
@@ -80,7 +80,7 @@ func test_imageAwareEditingNodeHeight_imageOnly_preservesMeasuredTextHeight() {
     #expect(height == measuredTextHeight + imageHeight)
 }
 
-@Test("CanvasView image height: image+text editing includes spacing")
+@Test("画像+テキスト編集にはスペースが含まれます")
 func test_imageAwareEditingNodeHeight_withText_includesSpacing() {
     let measuredTextHeight = 52.0
     let imageHeight = 100.0
@@ -95,7 +95,7 @@ func test_imageAwareEditingNodeHeight_withText_includesSpacing() {
     #expect(height == measuredTextHeight + imageHeight + imageSpacing)
 }
 
-@Test("CanvasView image replacement: stale previous image path falls back to text baseline")
+@Test("古い画像パスはテキストベースラインに戻ります")
 func test_replacementBaseNodeHeight_stalePreviousImage_usesTextOnlyHeight() {
     let baseHeight = CanvasView.replacementBaseNodeHeight(
         currentNodeHeight: 300,
@@ -108,7 +108,7 @@ func test_replacementBaseNodeHeight_stalePreviousImage_usesTextOnlyHeight() {
     #expect(baseHeight == 60)
 }
 
-@Test("CanvasView image replacement: known previous image subtracts existing image height and spacing")
+@Test("既知の以前の画像から既存の画像の高さと間隔が差し引かれます")
 func test_replacementBaseNodeHeight_knownPreviousImage_subtractsCurrentImageLayout() {
     let baseHeight = CanvasView.replacementBaseNodeHeight(
         currentNodeHeight: 260,

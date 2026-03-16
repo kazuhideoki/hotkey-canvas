@@ -2,7 +2,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("Command palette search text: noun-verb title adds verb-first alias")
+@Test("名詞-動詞タイトルは動詞-最初のエイリアスを追加する")
 func test_commandPaletteSearchText_addsVerbFirstAlias() {
     let searchText = CanvasView.commandPaletteSearchText(
         title: "Node: Delete Selected",
@@ -14,12 +14,12 @@ func test_commandPaletteSearchText_addsVerbFirstAlias() {
     #expect(searchText.contains("Delete Selected Node"))
 }
 
-@Test("Command palette search text: non noun-verb title does not add alias")
+@Test("名詞と動詞以外のタイトルはエイリアスを追加しない")
 func test_commandPaletteSearchText_nonNounVerbTitle_hasNoAlias() {
     #expect(CanvasView.commandPaletteVerbFirstAliases(from: "Undo") == [])
 }
 
-@Test("Command palette recent ordering: recent top 5 are pinned above alphabetical items")
+@Test("最近のトップ 5 はアルファベット順の項目の上に固定されています")
 func test_commandPaletteRecentOrdering_pinsTopFiveRecentItems() {
     let items: [CanvasView.CommandPaletteItem] = [
         .init(id: "a", title: "A", shortcutLabel: "", searchText: "", action: .insertImageFromFinder),
@@ -40,7 +40,7 @@ func test_commandPaletteRecentOrdering_pinsTopFiveRecentItems() {
     #expect(ordered.map(\.id) == ["f", "c", "g", "a", "e", "b", "d"])
 }
 
-@Test("Command palette recent ordering: unknown ids in history are ignored")
+@Test("履歴内の不明な ID は無視される")
 func test_commandPaletteRecentOrdering_ignoresUnknownRecentIDs() {
     let items: [CanvasView.CommandPaletteItem] = [
         .init(id: "alpha", title: "Alpha", shortcutLabel: "", searchText: "", action: .insertImageFromFinder),
@@ -56,7 +56,7 @@ func test_commandPaletteRecentOrdering_ignoresUnknownRecentIDs() {
     #expect(ordered.map(\.id) == ["beta", "alpha"])
 }
 
-@Test("Command palette query history: up on empty query recalls newest history")
+@Test("空のクエリで最新の履歴を呼び出す")
 func test_commandPaletteQueryHistoryTransition_upFromEmpty_recallsNewest() {
     let state = CanvasView.CommandPaletteQueryHistoryState(
         queryHistory: ["delete", "zoom", "align"],
@@ -75,7 +75,7 @@ func test_commandPaletteQueryHistoryTransition_upFromEmpty_recallsNewest() {
     #expect(transition.nextState.draftQuery == "")
 }
 
-@Test("Command palette query history: up while browsing moves to older entry")
+@Test("閲覧中は古いエントリに移動する")
 func test_commandPaletteQueryHistoryTransition_upWhileBrowsing_movesOlder() {
     let state = CanvasView.CommandPaletteQueryHistoryState(
         queryHistory: ["delete", "zoom", "align"],
@@ -93,7 +93,7 @@ func test_commandPaletteQueryHistoryTransition_upWhileBrowsing_movesOlder() {
     #expect(transition.nextState.activeHistoryIndex == 1)
 }
 
-@Test("Command palette query history: down while browsing moves to newer entry")
+@Test("ブラウジング中にクリックすると、新しいエントリに移動する")
 func test_commandPaletteQueryHistoryTransition_downWhileBrowsing_movesNewer() {
     let state = CanvasView.CommandPaletteQueryHistoryState(
         queryHistory: ["delete", "zoom", "align"],
@@ -111,7 +111,7 @@ func test_commandPaletteQueryHistoryTransition_downWhileBrowsing_movesNewer() {
     #expect(transition.nextState.activeHistoryIndex == 1)
 }
 
-@Test("Command palette query history: down at newest restores draft and exits history mode")
+@Test("最新の時点でダウンすると、ドラフトが復元され、履歴モードが終了する")
 func test_commandPaletteQueryHistoryTransition_downAtNewest_restoresDraft() {
     let state = CanvasView.CommandPaletteQueryHistoryState(
         queryHistory: ["delete", "zoom", "align"],
@@ -129,7 +129,7 @@ func test_commandPaletteQueryHistoryTransition_downAtNewest_restoresDraft() {
     #expect(transition.nextState.activeHistoryIndex == -1)
 }
 
-@Test("Command palette query history: up on non-empty query does not start history recall")
+@Test("空ではないクエリを実行しても履歴の呼び出しは開始されない")
 func test_commandPaletteQueryHistoryTransition_upFromNonEmpty_doesNotRecall() {
     let state = CanvasView.CommandPaletteQueryHistoryState(
         queryHistory: ["delete"],
@@ -147,7 +147,7 @@ func test_commandPaletteQueryHistoryTransition_upFromNonEmpty_doesNotRecall() {
     #expect(transition.nextState == state)
 }
 
-@Test("Command palette query history gating: up uses history only when selection is at top")
+@Test("up は選択範囲が一番上にある場合にのみ履歴を使う")
 func test_shouldHandleArrowAsQueryHistory_upRequiresTopSelection() {
     let state = CanvasView.CommandPaletteQueryHistoryState(
         queryHistory: ["delete"],
@@ -172,7 +172,7 @@ func test_shouldHandleArrowAsQueryHistory_upRequiresTopSelection() {
     #expect(shouldHandleAwayFromTop == false)
 }
 
-@Test("Command palette query history gating: down uses history only while browsing history")
+@Test("down は履歴の閲覧中に履歴を使う")
 func test_shouldHandleArrowAsQueryHistory_downRequiresActiveHistory() {
     let inactive = CanvasView.CommandPaletteQueryHistoryState(
         queryHistory: ["delete"],

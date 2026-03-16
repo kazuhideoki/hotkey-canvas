@@ -9,7 +9,7 @@ private func expectNodeSizeEqual(_ actual: CanvasNode, _ expected: CanvasBounds)
 
 // Background: Tree copy/cut/paste in phase A uses in-memory clipboard and reconstructs subtree with new IDs.
 // Responsibility: Verify copy/cut/paste semantics, clipboard no-op behavior, and collapsed-parent expansion.
-@Test("ApplyCanvasCommandsUseCase: copy focused subtree survives delete and pastes under next focused sibling")
+@Test("コピーにフォーカス中のサブツリーは削除を維持し、次にフォーカス中の兄弟ノードの下に貼り付ける")
 func test_apply_copyThenDelete_thenPasteAsChild_underNextFocusedSibling() async throws {
     let fixture = CopyThenPasteFixture.make()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
@@ -48,7 +48,7 @@ func test_apply_copyThenDelete_thenPasteAsChild_underNextFocusedSibling() async 
     #expect(pastedChildNode.metadata["marker"] == "source-child")
 }
 
-@Test("ApplyCanvasCommandsUseCase: cut focused subtree then paste as child under next focused sibling")
+@Test("フォーカス中のサブツリーを切り取り、次にフォーカス中の兄弟ノードの下に子ノードとして貼り付ける")
 func test_apply_cutThenPasteAsChild_underNextFocusedSibling() async throws {
     let fixture = CutThenPasteFixture.make()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
@@ -69,7 +69,7 @@ func test_apply_cutThenPasteAsChild_underNextFocusedSibling() async throws {
     #expect(targetChildren.count == 2)
 }
 
-@Test("ApplyCanvasCommandsUseCase: tree area copies multiple selected nodes and pastes them under focused node")
+@Test("ツリーエリアは、選択した複数のノードをコピーし、フォーカス中のノードの下に貼り付ける")
 func test_apply_treeArea_copyPasteMultipleSelection_pastesSelectedNodesAsChildren() async throws {
     let focusedTargetID = CanvasNodeID(rawValue: "target")
     let sourceAID = CanvasNodeID(rawValue: "source-a")
@@ -123,7 +123,7 @@ func test_apply_treeArea_copyPasteMultipleSelection_pastesSelectedNodesAsChildre
     #expect(pastedParentChildEdges.count == 2)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area copy/paste multiple selection keeps only internal edges")
+@Test("図エリアの複数選択をコピー/貼り付けすると、内部エッジのみが保持される")
 func test_apply_diagramArea_copyPasteMultipleSelection_preservesInternalEdges() async throws {
     let fixture = makeDiagramCopyPasteInternalEdgeFixture()
     let graph = fixture.graph
@@ -208,7 +208,7 @@ private func makeDiagramCopyPasteInternalEdgeFixture() -> DiagramCopyPasteIntern
     )
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area paste keeps group footprint and relative positions")
+@Test("ダイアグラムエリアの貼り付けでは、グループのフットプリントと相対位置が維持される")
 func test_apply_diagramArea_pastePreservesGroupFootprintAndRelativePositions() async throws {
     let focusedTargetID = CanvasNodeID(rawValue: "target")
     let sourceAID = CanvasNodeID(rawValue: "source-a")
@@ -274,7 +274,7 @@ func test_apply_diagramArea_pastePreservesGroupFootprintAndRelativePositions() a
     expectNodeSizeEqual(pastedSourceB, sourceBBounds)
 }
 
-@Test("ApplyCanvasCommandsUseCase: pasteClipboardAtFocusedNode is no-op when clipboard is empty")
+@Test("クリップボードが空の場合、pasteClipboardAtFocusedNode は何もしない")
 func test_apply_pasteClipboardAtFocusedNode_noOpWhenClipboardIsEmpty() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let graph = CanvasGraph(
@@ -297,9 +297,7 @@ func test_apply_pasteClipboardAtFocusedNode_noOpWhenClipboardIsEmpty() async thr
     #expect(!result.canUndo)
 }
 
-@Test(
-    "ApplyCanvasCommandsUseCase: copySelectionOrFocusedSubtree does not recurse infinitely on cyclic parent-child graph"
-)
+@Test("copySelectionOrFocusedSubtree は循環した親子グラフでも無限再帰しない")
 func test_apply_copySelectionOrFocusedSubtree_handlesParentChildCycle() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")

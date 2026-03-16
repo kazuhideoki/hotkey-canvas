@@ -4,7 +4,7 @@ import Testing
 
 // Background: Directional focus movement is a core keyboard navigation behavior.
 // Responsibility: Verify nearest-candidate selection and fallback focus rules.
-@Test("ApplyCanvasCommandsUseCase: moveFocus picks nearest node in requested direction")
+@Test("moveFocus は要求された方向に最も近いノードを選択する")
 func test_apply_moveFocus_movesToNearestNodeInDirection() async throws {
     let centerID = CanvasNodeID(rawValue: "center")
     let rightNearID = CanvasNodeID(rawValue: "right-near")
@@ -41,7 +41,7 @@ func test_apply_moveFocus_movesToNearestNodeInDirection() async throws {
     #expect(result.newState.focusedNodeID == rightNearID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocus keeps focus when direction has no candidate")
+@Test("moveFocus は、方向に候補がない場合でもフォーカスを維持する")
 func test_apply_moveFocus_keepsCurrentFocus_whenNoCandidateExists() async throws {
     let singleNodeID = CanvasNodeID(rawValue: "single")
     let graph = CanvasGraph(
@@ -63,7 +63,7 @@ func test_apply_moveFocus_keepsCurrentFocus_whenNoCandidateExists() async throws
     #expect(result.newState.focusedNodeID == singleNodeID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocus fails when focus is nil")
+@Test("フォーカスが nil の場合、moveFocus は失敗する")
 func test_apply_moveFocus_fails_whenFocusedNodeIDIsNil() async throws {
     let singleNodeID = CanvasNodeID(rawValue: "single")
     let graph = CanvasGraph(
@@ -88,7 +88,7 @@ func test_apply_moveFocus_fails_whenFocusedNodeIDIsNil() async throws {
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocus prefers aligned node over heavily offset near node")
+@Test("moveFocus はノード近くの大きくオフセットされたノードよりも整列したノードを優先する")
 func test_apply_moveFocus_prefersAlignedNode_overOffsetNearNode() async throws {
     let centerID = CanvasNodeID(rawValue: "center")
     let rightOffsetNearID = CanvasNodeID(rawValue: "right-offset-near")
@@ -124,7 +124,7 @@ func test_apply_moveFocus_prefersAlignedNode_overOffsetNearNode() async throws {
     #expect(result.newState.focusedNodeID == rightAlignedFarID)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocus updates selection to focused node only")
+@Test("moveFocus は選択をフォーカス中のノードのみに更新する")
 func test_apply_moveFocus_updatesSelectionToFocusedNodeOnly() async throws {
     let centerID = CanvasNodeID(rawValue: "center")
     let rightID = CanvasNodeID(rawValue: "right")
@@ -155,7 +155,7 @@ func test_apply_moveFocus_updatesSelectionToFocusedNodeOnly() async throws {
     #expect(result.newState.selectedNodeIDs == [rightID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: extendSelection keeps previous selection and adds next focused node")
+@Test("extendSelection は以前の選択を保持し、次にフォーカス中のノードを追加する")
 func test_apply_extendSelection_addsNextFocusedNode() async throws {
     let centerID = CanvasNodeID(rawValue: "center")
     let rightID = CanvasNodeID(rawValue: "right")
@@ -186,7 +186,7 @@ func test_apply_extendSelection_addsNextFocusedNode() async throws {
     #expect(result.newState.selectedNodeIDs == [centerID, rightID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocus collapses selection when direction has no candidate")
+@Test("moveFocus は方向に候補がない場合に選択を折りたたむ")
 func test_apply_moveFocus_collapsesSelection_whenDirectionHasNoCandidate() async throws {
     let centerID = CanvasNodeID(rawValue: "center")
     let rightID = CanvasNodeID(rawValue: "right")
@@ -217,7 +217,7 @@ func test_apply_moveFocus_collapsesSelection_whenDirectionHasNoCandidate() async
     #expect(result.newState.selectedNodeIDs == [centerID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: extendSelection includes focused node when selection is empty")
+@Test("extendSelection には、選択が空の場合にフォーカス中のノードが含まれます")
 func test_apply_extendSelection_includesFocusedNode_whenSelectionIsEmpty() async throws {
     let centerID = CanvasNodeID(rawValue: "center")
     let rightID = CanvasNodeID(rawValue: "right")
@@ -248,7 +248,7 @@ func test_apply_extendSelection_includesFocusedNode_whenSelectionIsEmpty() async
     #expect(result.newState.selectedNodeIDs == [centerID, rightID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocus in area mode jumps to adjacent area and keeps area focus")
+@Test("エリアモードのmoveFocusは隣接するエリアにジャンプし、エリアフォーカスを維持する")
 func test_apply_moveFocus_areaMode_movesAreaFocusAndAnchor() async throws {
     let leftNodeID = CanvasNodeID(rawValue: "left")
     let rightNodeID = CanvasNodeID(rawValue: "right")
@@ -298,7 +298,7 @@ func test_apply_moveFocus_areaMode_movesAreaFocusAndAnchor() async throws {
     #expect(result.newState.selectedEdgeIDs.isEmpty)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocus in area mode is no-op when no directional area exists")
+@Test("指向性エリアが存在しない場合、エリア モードの moveFocus は何もしない")
 func test_apply_moveFocus_areaMode_noOpWhenNoDirectionalArea() async throws {
     let singleNodeID = CanvasNodeID(rawValue: "single")
     let singleAreaID = CanvasAreaID(rawValue: "single-area")
@@ -328,7 +328,7 @@ func test_apply_moveFocus_areaMode_noOpWhenNoDirectionalArea() async throws {
     #expect(!result.canUndo)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveFocus in area mode does not re-anchor when no directional area exists")
+@Test("エリア モードの moveFocus は、指向性エリアが存在しない場合に再アンカーされない")
 func test_apply_moveFocus_areaMode_doesNotReanchorWithinSameAreaWithoutDirectionalCandidate() async throws {
     let anchorNodeID = CanvasNodeID(rawValue: "anchor")
     let focusedNodeID = CanvasNodeID(rawValue: "focused")

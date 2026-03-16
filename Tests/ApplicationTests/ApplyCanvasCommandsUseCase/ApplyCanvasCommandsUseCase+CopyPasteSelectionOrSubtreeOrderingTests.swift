@@ -4,7 +4,7 @@ import Testing
 
 // Background: Tree paste previously mixed copied children with existing siblings due coordinate-based ordering.
 // Responsibility: Verify pasted siblings are appended after existing children in tree mode.
-@Test("ApplyCanvasCommandsUseCase: tree area paste appends copied siblings after existing children")
+@Test("ツリーエリアに貼り付けると、コピーされた兄弟が既存の子の後に追加される")
 func test_apply_treeArea_pasteAppendsChildrenAfterExistingSiblings() async throws {
     let fixture = makeCopyPasteAppendOrderingFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)

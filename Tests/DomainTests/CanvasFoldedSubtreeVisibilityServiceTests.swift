@@ -1,7 +1,7 @@
 import Domain
 import Testing
 
-@Test("CanvasFoldedSubtreeVisibilityService: descendantNodeIDs traverses parent-child edges")
+@Test("descendantNodeIDs は親子エッジを横断する")
 func test_descendantNodeIDs_traversesParentChildEdges() {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
@@ -13,7 +13,7 @@ func test_descendantNodeIDs_traversesParentChildEdges() {
     #expect(descendants == [childID, grandchildID])
 }
 
-@Test("CanvasFoldedSubtreeVisibilityService: hiddenNodeIDs hides descendants but keeps root")
+@Test("hiddenNodeIDs は子孫を非表示にするが、ルートノードは保持する")
 func test_hiddenNodeIDs_hidesDescendantsButKeepsRoot() {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
@@ -32,7 +32,7 @@ func test_hiddenNodeIDs_hidesDescendantsButKeepsRoot() {
     #expect(visibleNodeIDs == [rootID])
 }
 
-@Test("CanvasFoldedSubtreeVisibilityService: normalizedCollapsedRootNodeIDs removes missing or leaf roots")
+@Test("normalizedCollapsedRootNodeIDs は欠落したルートまたは葉のルートを削除する")
 func test_normalizedCollapsedRootNodeIDs_removesMissingOrLeafRoots() {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")

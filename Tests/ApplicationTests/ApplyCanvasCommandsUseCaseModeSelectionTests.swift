@@ -2,7 +2,7 @@ import Application
 import Domain
 import Testing
 
-@Test("ApplyCanvasCommandsUseCase: mode-selected add-node is undoable in one step")
+@Test("モード選択されたノードの追加は 1 ステップで元に戻せます")
 func test_addNodeFromModeSelection_isUndoableInOneStep() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -20,7 +20,7 @@ func test_addNodeFromModeSelection_isUndoableInOneStep() async throws {
     #expect(undone.canRedo)
 }
 
-@Test("ApplyCanvasCommandsUseCase: mode-selected add-node works after deleting all nodes with multiple empty areas")
+@Test("mode-selected add-node は、複数の空のエリアを持つすべてのノードを削除した後に機能する")
 func test_addNodeFromModeSelection_worksAfterDeletingAllNodes() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -40,7 +40,7 @@ func test_addNodeFromModeSelection_worksAfterDeletingAllNodes() async throws {
     #expect(secondAdd.newState.nodesByID.count == 1)
 }
 
-@Test("ApplyCanvasCommandsUseCase: empty graph mode-selected add-node picks selected tree mode area")
+@Test("空のグラフ モードで選択された追加ノードが選択されたツリー モードエリアを選択する")
 func test_addNodeFromModeSelection_emptyGraphRespectsSelectedTreeMode() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -53,7 +53,7 @@ func test_addNodeFromModeSelection_emptyGraphRespectsSelectedTreeMode() async th
     #expect(areaMode == .tree)
 }
 
-@Test("ApplyCanvasCommandsUseCase: mode-selected new diagram does not connect from existing diagram")
+@Test("モードで選択された新しいダイアグラムが既存のダイアグラムから接続されない")
 func test_addNodeFromModeSelection_newDiagramDoesNotCreateEdgeFromExistingDiagram() async throws {
     let existingNodeID = CanvasNodeID(rawValue: "existing-diagram-node")
     let existingAreaID = CanvasAreaID(rawValue: "diagram-area-existing")
@@ -89,7 +89,7 @@ func test_addNodeFromModeSelection_newDiagramDoesNotCreateEdgeFromExistingDiagra
             != areaIDContaining(nodeID: addedNodeID, in: applied.newState))
 }
 
-@Test("ApplyCanvasCommandsUseCase: mode-selected new tree does not connect from existing diagram")
+@Test("モード選択された新しいツリーが既存のダイアグラムから接続されない")
 func test_addNodeFromModeSelection_newTreeDoesNotCreateCrossAreaEdge() async throws {
     let existingNodeID = CanvasNodeID(rawValue: "existing-diagram-node")
     let existingAreaID = CanvasAreaID(rawValue: "diagram-area-existing")
@@ -119,7 +119,7 @@ func test_addNodeFromModeSelection_newTreeDoesNotCreateCrossAreaEdge() async thr
     #expect(addedNodeAreaMode == .tree)
 }
 
-@Test("ApplyCanvasCommandsUseCase: mode-selected new diagram avoids overlap when graph is non-empty and focus is nil")
+@Test("モード選択された新しい図は、グラフが空ではなくフォーカスが nil の場合に重なりを回避する")
 func test_addNodeFromModeSelection_newDiagramAvoidsOverlapWhenFocusIsNil() async throws {
     let existingNodeID = CanvasNodeID(rawValue: "existing-diagram-node")
     let existingAreaID = CanvasAreaID(rawValue: "diagram-area-existing")

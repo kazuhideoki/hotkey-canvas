@@ -6,7 +6,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasEdgeRouting: legacy polyline preserves horizontal elbow geometry")
+@Test("従来のポリラインは水平エルボ ジオメトリを保持する")
 func test_legacyPolylineRoute_horizontal_preservesElbowPoints() {
     let geometry = CanvasEdgeRouting.RouteGeometry(
         axis: .horizontal,
@@ -28,7 +28,7 @@ func test_legacyPolylineRoute_horizontal_preservesElbowPoints() {
         ])
 }
 
-@Test("CanvasEdgeRouting: legacy polyline preserves vertical elbow geometry")
+@Test("従来のポリラインは垂直エルボ ジオメトリを保持する")
 func test_legacyPolylineRoute_vertical_preservesElbowPoints() {
     let geometry = CanvasEdgeRouting.RouteGeometry(
         axis: .vertical,
@@ -50,7 +50,7 @@ func test_legacyPolylineRoute_vertical_preservesElbowPoints() {
         ])
 }
 
-@Test("CanvasEdgeRouting: legacy edge tip vector follows polyline terminal segments")
+@Test("従来のエッジ先端ベクトルはポリライン端子セグメントに従います")
 func test_legacyEdgeTipAndVector_tracksPolylineTerminalSegments() {
     let route = CanvasEdgeRouting.PolylineRoute(
         start: CGPoint(x: 300, y: 228),
@@ -85,7 +85,7 @@ func test_legacyEdgeTipAndVector_tracksPolylineTerminalSegments() {
     #expect(backwardTip.vector == CGVector(dx: -50, dy: 0))
 }
 
-@Test("CanvasEdgeRouting: legacy label anchor follows the rendered polyline midpoint")
+@Test("従来のラベルアンカーはレンダリングされたポリラインの中点に従います")
 func test_labelAnchor_legacyEdge_usesLegacyPolylineMidpoint() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -111,7 +111,7 @@ func test_labelAnchor_legacyEdge_usesLegacyPolylineMidpoint() throws {
     #expect(anchor.normal == CGVector(dx: -1, dy: 0))
 }
 
-@Test("CanvasEdgeRouting: legacy production route keeps the base polyline when no blocker exists")
+@Test("従来の生産ルートは、ブロッカーが存在しない場合、ベース ポリラインを保持する")
 func test_legacyPolylineRoute_withoutBlockers_matchesBaseRoute() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -138,7 +138,7 @@ func test_legacyPolylineRoute_withoutBlockers_matchesBaseRoute() throws {
     #expect(productionRoute.points == baseRoute.points)
 }
 
-@Test("CanvasEdgeRouting: legacy route avoids a middle non-endpoint blocker")
+@Test("従来のルートは中間の非端点 ブロッカーを回避する")
 func test_legacyPolylineRoute_withMiddleBlocker_avoidsNonEndpointNode() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -170,7 +170,7 @@ func test_legacyPolylineRoute_withMiddleBlocker_avoidsNonEndpointNode() throws {
     #expect(!routeIntersectsNode(detouredRoute, node: blockerNode, padding: 18))
 }
 
-@Test("CanvasEdgeRouting: legacy route survives a start blocker plus a middle blocker")
+@Test("レガシールートはスタートブロッカーとミドルブロッカーを乗り越えます")
 func test_legacyPolylineRoute_withStartAndMiddleBlockers_returnsNonIntersectingPolyline() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -204,7 +204,7 @@ func test_legacyPolylineRoute_withStartAndMiddleBlockers_returnsNonIntersectingP
     #expect(!routeIntersectsNode(detouredRoute, node: try #require(nodesByID[middleBlockerID]), padding: 18))
 }
 
-@Test("CanvasEdgeRouting: legacy detoured label anchor stays on the rendered polyline")
+@Test("従来の迂回ラベルアンカーはレンダリングされたポリライン上に留まります")
 func test_labelAnchor_legacyDetouredEdge_staysOnDetouredPolyline() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -242,7 +242,7 @@ func test_labelAnchor_legacyDetouredEdge_staysOnDetouredPolyline() throws {
     #expect(abs(anchor.tangent.dx) == 1 || abs(anchor.tangent.dy) == 1)
 }
 
-@Test("CanvasEdgeRouting: legacy detoured edge tip follows the rendered terminal segment")
+@Test("従来の迂回エッジ先端はレンダリングされた端子セグメントに続きます")
 func test_edgeTipAndVector_legacyDetouredEdge_tracksRenderedTerminalSegment() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -291,7 +291,7 @@ func test_edgeTipAndVector_legacyDetouredEdge_tracksRenderedTerminalSegment() th
     )
 }
 
-@Test("CanvasEdgeRouting: vertical legacy route avoids a middle blocker and keeps label anchor on the detour")
+@Test("垂直の従来のルートはミドルブロッカーを回避し、ラベルアンカーを迂回に保ちます")
 func test_legacyPolylineRoute_verticalWithMiddleBlocker_avoidsNodeAndKeepsAnchor() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -332,7 +332,7 @@ func test_legacyPolylineRoute_verticalWithMiddleBlocker_avoidsNodeAndKeepsAnchor
     #expect(abs(anchor.tangent.dx) == 1 || abs(anchor.tangent.dy) == 1)
 }
 
-@Test("CanvasEdgeRouting: legacy sibling routes keep lane ordering when detouring around a blocker")
+@Test("従来の兄弟ノードのルートは、ブロッカーを迂回するときにレーンの順序を維持する")
 func test_legacyPolylineRoute_withSiblingBlocker_preservesLaneOrderingNearEndpoints() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let upperChildID = CanvasNodeID(rawValue: "upper-child")
@@ -386,7 +386,7 @@ func test_legacyPolylineRoute_withSiblingBlocker_preservesLaneOrderingNearEndpoi
     #expect(!routesIntersect(upperRoute, lowerRoute))
 }
 
-@Test("CanvasEdgeRouting: legacy detour stays stable regardless of blocker dictionary order")
+@Test("従来の迂回は、ブロッカー辞書の順序に関係なく安定したままになる")
 func test_legacyPolylineRoute_withSymmetricBlockers_isIndependentFromDictionaryOrder() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -427,7 +427,7 @@ func test_legacyPolylineRoute_withSymmetricBlockers_isIndependentFromDictionaryO
     #expect(firstRoute.points == secondRoute.points)
 }
 
-@Test("CanvasEdgeRouting: legacy route avoids a terminal blocker by rerouting to another side")
+@Test("従来のルートは別の側にルート変更することでターミナル ブロッカーを回避する")
 func test_legacyPolylineRoute_withTerminalBlocker_avoidsByChangingAnchors() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -455,7 +455,7 @@ func test_legacyPolylineRoute_withTerminalBlocker_avoidsByChangingAnchors() thro
     #expect(!routeIntersectsNode(route, node: try #require(nodesByID[blockerID]), padding: 18))
 }
 
-@Test("CanvasEdgeRouting: duplicated rerouted legacy edges keep separated outward branches")
+@Test("重複した再ルーティングされたレガシー エッジにより、外側のブランチが分離されたままになる")
 func test_legacyPolylineRoute_withDuplicatedTerminalBlocker_keepsSeparatedRoutes() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -500,7 +500,7 @@ func test_legacyPolylineRoute_withDuplicatedTerminalBlocker_keepsSeparatedRoutes
     #expect(!routesIntersect(routeA, routeB))
 }
 
-@Test("CanvasEdgeRouting: legacy reroute falls back to same-axis outward path when top and bottom are blocked")
+@Test("従来のリルートは、上部と下部がブロックされている場合、同じ軸の外側パスにフォールバックする")
 func test_legacyPolylineRoute_withVerticalReroutesBlocked_usesSameAxisOutwardFallback() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")
@@ -535,7 +535,7 @@ func test_legacyPolylineRoute_withVerticalReroutesBlocked_usesSameAxisOutwardFal
     #expect(!routeIntersectsNode(route, node: try #require(nodesByID[bottomBlockerID]), padding: 18))
 }
 
-@Test("CanvasEdgeRouting: legacy node avoidance can be disabled and keeps the base polyline")
+@Test("レガシー ノードの回避を無効にすることができ、ベースのポリラインを維持する")
 func test_legacyPolylineRoute_whenNodeAvoidanceDisabled_keepsBaseRoute() throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let childID = CanvasNodeID(rawValue: "child")

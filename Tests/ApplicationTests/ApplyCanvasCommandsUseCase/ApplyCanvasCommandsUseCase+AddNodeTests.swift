@@ -4,7 +4,7 @@ import Testing
 
 // Background: Add-node behavior defines the default placement baseline for new graph edits.
 // Responsibility: Verify add-node creation and area-based overlap handling behavior.
-@Test("ApplyCanvasCommandsUseCase: addNode creates one text node")
+@Test("addNode は 1 つのテキストノードを作成する")
 func test_apply_addNode_createsTextNode() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -20,7 +20,7 @@ func test_apply_addNode_createsTextNode() async throws {
     #expect(result.newState.focusedNodeID == node.id)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode twice creates two nodes")
+@Test("addNode を 2 回実行すると 2 つのノードが作成される")
 func test_apply_addNodeTwice_createsTwoNodes() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -32,7 +32,7 @@ func test_apply_addNodeTwice_createsTwoNodes() async throws {
     #expect(second.newState.nodesByID[focusedNodeID] != nil)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode uses bottom-most area parent as insertion anchor")
+@Test("addNode は、最下位のエリアの親を挿入アンカーとして使う")
 func test_apply_addNode_usesBottomMostAreaParentAsInsertionAnchor() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let bottomParentID = CanvasNodeID(rawValue: "bottom-parent")
@@ -80,7 +80,7 @@ func test_apply_addNode_usesBottomMostAreaParentAsInsertionAnchor() async throws
     #expect(newNode.bounds.y > 160)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode avoids area overlap at insertion time")
+@Test("addNode は挿入時のエリアの重複を回避する")
 func test_apply_addNode_avoidsAreaOverlapAtInsertionTime() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused-top")
     let bottomParentID = CanvasNodeID(rawValue: "bottom-parent")
@@ -137,7 +137,7 @@ func test_apply_addNode_avoidsAreaOverlapAtInsertionTime() async throws {
     #expect(boundsOverlap(newNode.bounds, blockerAfter.bounds, spacing: 32) == false)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode keeps top-level parent as anchor inside bottom-most area")
+@Test("addNode は最下位のエリア内のアンカーとして最上位の親を保持する")
 func test_apply_addNode_keepsTopLevelParentAsAnchorInsideBottomMostArea() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused-top")
     let parentID = CanvasNodeID(rawValue: "parent")
@@ -196,7 +196,7 @@ func test_apply_addNode_keepsTopLevelParentAsAnchorInsideBottomMostArea() async 
     #expect(newNode.bounds.y >= 572)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode chooses area with larger maxY when minY ties")
+@Test("addNode は、minY が同点の場合、maxY がより大きいエリアを選択する")
 func test_apply_addNode_choosesAreaWithLargerMaxYWhenMinYTies() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let shortParentID = CanvasNodeID(rawValue: "short-parent")
@@ -262,7 +262,7 @@ func test_apply_addNode_choosesAreaWithLargerMaxYWhenMinYTies() async throws {
     #expect(newNode.bounds.y >= 204)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode in diagram continues placement to the right from incoming anchor")
+@Test("図の addNode は、受信アンカーから右への配置を継続する")
 func test_apply_addNodeInDiagramArea_continuesToRightFromIncomingAnchor() async throws {
     let anchorID = CanvasNodeID(rawValue: "anchor")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -307,7 +307,7 @@ func test_apply_addNodeInDiagramArea_continuesToRightFromIncomingAnchor() async 
     #expect(newNode.bounds.y == 0)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode in diagram continues placement upward from incoming anchor")
+@Test("図の addNode は、入力アンカーから上向きに配置を継続する")
 func test_apply_addNodeInDiagramArea_continuesUpwardFromIncomingAnchor() async throws {
     let anchorID = CanvasNodeID(rawValue: "anchor")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -352,7 +352,7 @@ func test_apply_addNodeInDiagramArea_continuesUpwardFromIncomingAnchor() async t
     #expect(newNode.bounds.y == -440)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode fails without focused node when multiple areas exist")
+@Test("複数のエリアが存在する場合、フォーカス中のノードがないと addNode が失敗する")
 func test_apply_addNode_failsWithoutFocusInMultiAreaGraph() async throws {
     let areaA = CanvasAreaID(rawValue: "area-a")
     let areaB = CanvasAreaID(rawValue: "area-b")
@@ -375,7 +375,7 @@ func test_apply_addNode_failsWithoutFocusInMultiAreaGraph() async throws {
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode in diagram area creates square node with tree-width side length")
+@Test("ダイアグラムエリアの addNode は、ツリー幅の辺の長さを持つ正方形のノードを作成する")
 func test_apply_addNodeInDiagramArea_createsSquareNode() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let graph = CanvasGraph(

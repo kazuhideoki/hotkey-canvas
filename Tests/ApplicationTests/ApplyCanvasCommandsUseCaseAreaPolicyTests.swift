@@ -40,7 +40,7 @@ private func areaBounds(for areaID: CanvasAreaID, in graph: CanvasGraph) -> Canv
 
 // Background: Phase-1 area mode requires command dispatch by focused area policy.
 // Responsibility: Verify mode-specific command gating and area-data validation in apply entry.
-@Test("ApplyCanvasCommandsUseCase: diagram area maps addChildNode command to addNode behavior")
+@Test("図エリアは addChildNode コマンドを addNode の動作にマップする")
 func test_apply_diagramArea_mapsAddChildNodeToAddNodeBehavior() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -73,7 +73,7 @@ func test_apply_diagramArea_mapsAddChildNodeToAddNodeBehavior() async throws {
     #expect(edge.relationType == .normal)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area addChildNode continues placement direction from incoming anchor")
+@Test("ダイアグラムエリア addChildNode は受信アンカーからの配置方向を継続する")
 func test_apply_diagramArea_addChildNodeContinuesPlacementDirectionFromIncomingAnchor() async throws {
     let anchorID = CanvasNodeID(rawValue: "anchor")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -116,7 +116,7 @@ func test_apply_diagramArea_addChildNodeContinuesPlacementDirectionFromIncomingA
     #expect(newNode.bounds.y == 0)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area addChildNode snaps diagonal anchor direction to cardinal axis")
+@Test("ダイアグラムエリア addChildNode は、斜めのアンカー方向を基本軸にスナップする")
 func test_apply_diagramArea_addChildNodeSnapsDiagonalAnchorDirectionToCardinalAxis() async throws {
     let anchorID = CanvasNodeID(rawValue: "anchor")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -159,7 +159,7 @@ func test_apply_diagramArea_addChildNodeSnapsDiagonalAnchorDirectionToCardinalAx
     #expect(newNode.bounds.y == 440)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area addChildNode resolves cross-area overlap immediately after insertion")
+@Test("ダイアグラムエリア addChildNode は、挿入直後にエリア間の重複を解決する")
 func test_apply_diagramArea_addChildNodeResolvesCrossAreaOverlapImmediatelyAfterInsertion() async throws {
     let anchorID = CanvasNodeID(rawValue: "anchor")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -215,7 +215,7 @@ func test_apply_diagramArea_addChildNodeResolvesCrossAreaOverlapImmediatelyAfter
     #expect(boundsOverlap(resolvedSourceAreaBounds, resolvedBlockerAreaBounds) == false)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area maps addChildNode to addNode when focus is nil and area is unique")
+@Test("図のエリアは、フォーカスが nil でエリアが一意の場合、addChildNode を addNode にマップする")
 func test_apply_diagramArea_mapsAddChildNodeWithoutFocusWhenSingleArea() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let graph = CanvasGraph(
@@ -236,9 +236,7 @@ func test_apply_diagramArea_mapsAddChildNodeWithoutFocusWhenSingleArea() async t
     #expect(result.newState.areasByID[areaID]?.nodeIDs == [focusedNodeID])
 }
 
-@Test(
-    "ApplyCanvasCommandsUseCase: diagram area moveNode relocates focused node to directional slot around connected node"
-)
+@Test("ダイアグラムエリアの moveNode は、接続されたノードの周囲にある方向スロットへフォーカス中のノードを移動する")
 func test_apply_diagramArea_moveNodeRelocatesFocusedNodeAroundConnectedNode() async throws {
     let anchorID = CanvasNodeID(rawValue: "diagram-anchor")
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
@@ -281,7 +279,7 @@ func test_apply_diagramArea_moveNodeRelocatesFocusedNodeAroundConnectedNode() as
     #expect(movedNode.bounds.y == 40)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area nudgeNode nudges focused node")
+@Test("ダイアグラムエリア nudgeNode フォーカス中のノードをナッジする")
 func test_apply_diagramArea_nudgeNodeMovesFocusedNodeByStep() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -309,7 +307,7 @@ func test_apply_diagramArea_nudgeNodeMovesFocusedNodeByStep() async throws {
     #expect(movedNode.bounds.y == 40)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area nudgeNode resolves overlap with neighboring nodes")
+@Test("ダイアグラムエリア nudgeNode は隣接ノードとの重複を解決する")
 func test_apply_diagramArea_nudgeNodeResolvesOverlapWithNeighboringNodes() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused-diagram-node")
     let neighborNodeID = CanvasNodeID(rawValue: "neighbor-diagram-node")
@@ -344,7 +342,7 @@ func test_apply_diagramArea_nudgeNodeResolvesOverlapWithNeighboringNodes() async
     #expect(boundsOverlap(movedNode.bounds, neighborNode.bounds) == false)
 }
 
-@Test("ApplyCanvasCommandsUseCase: tree area nudgeNode is no-op")
+@Test("ツリーエリア nudgeNode は何もしない")
 func test_apply_treeArea_nudgeNodeIsNoOp() async throws {
     let nodeID = CanvasNodeID(rawValue: "tree-node")
     let areaID = CanvasAreaID(rawValue: "tree-area")
@@ -370,7 +368,7 @@ func test_apply_treeArea_nudgeNodeIsNoOp() async throws {
     #expect(result.newState == graph)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area allows copySelectionOrFocusedSubtree command")
+@Test("ダイアグラムエリアで copySelectionOrFocusedSubtree コマンドが使用可能になる")
 func test_apply_diagramArea_allowsCopyFocusedSubtreeCommand() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -395,7 +393,7 @@ func test_apply_diagramArea_allowsCopyFocusedSubtreeCommand() async throws {
     #expect(result.newState == graph)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area rejects duplicateSelectionAsSibling command")
+@Test("ダイアグラムエリアは duplicateSelectionAsSibling コマンドを拒否する")
 func test_apply_diagramArea_rejectsDuplicateSelectionAsSiblingCommand() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -424,7 +422,7 @@ func test_apply_diagramArea_rejectsDuplicateSelectionAsSiblingCommand() async th
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area allows assignNodesToArea command")
+@Test("ダイアグラムエリアで assignNodesToArea コマンドが使用可能になる")
 func test_apply_diagramArea_allowsAssignNodesToAreaCommand() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let diagramAreaID = CanvasAreaID(rawValue: "diagram-area")
@@ -453,7 +451,7 @@ func test_apply_diagramArea_allowsAssignNodesToAreaCommand() async throws {
     #expect(result.newState.areasByID[diagramAreaID]?.nodeIDs.isEmpty == true)
 }
 
-@Test("ApplyCanvasCommandsUseCase: diagram area allows createArea command")
+@Test("ダイアグラムエリアで createArea コマンドが使用可能になる")
 func test_apply_diagramArea_allowsCreateAreaCommand() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let diagramAreaID = CanvasAreaID(rawValue: "diagram-area")
@@ -485,7 +483,7 @@ func test_apply_diagramArea_allowsCreateAreaCommand() async throws {
     #expect(result.newState.areasByID[diagramAreaID]?.nodeIDs.isEmpty == true)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode fails when no focus and multiple areas exist")
+@Test("フォーカスがなく複数のエリアが存在する場合、addNode は失敗する")
 func test_apply_addNode_failsWhenNoFocusAndMultipleAreasExist() async throws {
     let areaA = CanvasAreaID(rawValue: "area-a")
     let areaB = CanvasAreaID(rawValue: "area-b")
@@ -508,7 +506,7 @@ func test_apply_addNode_failsWhenNoFocusAndMultipleAreasExist() async throws {
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode executes even when focused element is area")
+@Test("addNode はフォーカス中の要素がエリアの場合でも実行される")
 func test_apply_addNode_executesWhenFocusedElementIsArea() async throws {
     let areaID = CanvasAreaID(rawValue: "area-1")
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
@@ -536,7 +534,7 @@ func test_apply_addNode_executesWhenFocusedElementIsArea() async throws {
     #expect(result.newState.nodesByID.count == 2)
 }
 
-@Test("ApplyCanvasCommandsUseCase: apply fails when graph has nodes but no area data")
+@Test("グラフにノードがあるがエリア データがない場合、適用は失敗する")
 func test_apply_failsWhenAreaDataMissing() async throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
     let graph = CanvasGraph(

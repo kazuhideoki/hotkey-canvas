@@ -12,7 +12,7 @@ private func expectAlmostEqual(
 
 // Background: Node scaling applies ratio-based size changes to selected nodes in both editing modes.
 // Responsibility: Verify selection-targeted scaling behavior and per-mode bounds normalization.
-@Test("ApplyCanvasCommandsUseCase: scaleSelectedNodes scales all selected tree nodes")
+@Test("scaleSelectedNodes は、選択されたすべてのツリー ノードをスケールする")
 func test_apply_scaleSelectedNodes_scalesSelectedTreeNodes() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused-tree-node")
     let selectedNodeID = CanvasNodeID(rawValue: "selected-tree-node")
@@ -53,7 +53,7 @@ func test_apply_scaleSelectedNodes_scalesSelectedTreeNodes() async throws {
     expectAlmostEqual(selectedNode.bounds.height, 80 + heightStep)
 }
 
-@Test("ApplyCanvasCommandsUseCase: scaleSelectedNodes keeps diagram node square while scaling down")
+@Test("scaleSelectedNodes は、スケールダウン中にダイアグラムノードを正方形に保ちます")
 func test_apply_scaleSelectedNodes_diagramNode_scalesDownAsSquare() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -83,7 +83,7 @@ func test_apply_scaleSelectedNodes_diagramNode_scalesDownAsSquare() async throws
     expectAlmostEqual(scaledNode.bounds.height, expectedSide)
 }
 
-@Test("ApplyCanvasCommandsUseCase: scaleSelectedNodes is no-op when no node is selected")
+@Test("ノードが選択されていない場合、scaleSelectedNodes は何もしない")
 func test_apply_scaleSelectedNodes_noSelection_noOp() async throws {
     let nodeID = CanvasNodeID(rawValue: "tree-node")
     let areaID = CanvasAreaID(rawValue: "tree-area")
@@ -110,7 +110,7 @@ func test_apply_scaleSelectedNodes_noSelection_noOp() async throws {
     #expect(result.newState == graph)
 }
 
-@Test("ApplyCanvasCommandsUseCase: scaleSelectedNodes ignores selections outside focused area")
+@Test("scaleSelectedNodes はフォーカス中のエリア外の選択を無視する")
 func test_apply_scaleSelectedNodes_ignoresCrossAreaSelections() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused-tree-node")
     let selectedInFocusedAreaID = CanvasNodeID(rawValue: "selected-tree-node")

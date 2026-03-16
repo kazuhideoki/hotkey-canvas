@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasView composite move: enabled when moveNode shortcut is enabled")
+@Test("moveNode ショートカットが有効な場合に有効になる")
 func test_shouldEnableCompositeMove_whenMoveNodeEnabled_returnsTrue() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -19,7 +19,7 @@ func test_shouldEnableCompositeMove_whenMoveNodeEnabled_returnsTrue() {
     #expect(result)
 }
 
-@Test("CanvasView composite move: enabled in area target")
+@Test("エリアターゲットで有効")
 func test_shouldEnableCompositeMove_areaTarget_returnsTrue() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -35,7 +35,7 @@ func test_shouldEnableCompositeMove_areaTarget_returnsTrue() {
     #expect(result)
 }
 
-@Test("CanvasView composite move: disabled when no focused node")
+@Test("フォーカス中のノードがない場合は無効になる")
 func test_shouldEnableCompositeMove_withoutFocusedNode_returnsFalse() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -51,7 +51,7 @@ func test_shouldEnableCompositeMove_withoutFocusedNode_returnsFalse() {
     #expect(!result)
 }
 
-@Test("CanvasView composite move: disabled in edge target")
+@Test("エッジターゲットで無効になっています")
 func test_shouldEnableCompositeMove_edgeTarget_returnsFalse() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -67,7 +67,7 @@ func test_shouldEnableCompositeMove_edgeTarget_returnsFalse() {
     #expect(!result)
 }
 
-@Test("CanvasView composite move: disabled in tree edge target")
+@Test("ツリーエッジターゲットで無効になっています")
 func test_shouldEnableCompositeMove_treeEdgeTarget_returnsFalse() {
     let context = KeymapExecutionContext(
         editingMode: .tree,
@@ -83,7 +83,7 @@ func test_shouldEnableCompositeMove_treeEdgeTarget_returnsFalse() {
     #expect(!result)
 }
 
-@Test("CanvasView composite move: area target resolves moveArea command")
+@Test("エリアターゲットは moveArea コマンドを解決する")
 func test_compositeMoveCommand_areaTarget_resolvesMoveArea() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,
@@ -99,7 +99,7 @@ func test_compositeMoveCommand_areaTarget_resolvesMoveArea() {
     #expect(command == .moveArea(.left))
 }
 
-@Test("CanvasView composite move: node target resolves moveNode command")
+@Test("ノードターゲットが moveNode コマンドを解決する")
 func test_compositeMoveCommand_nodeTarget_resolvesMoveNode() {
     let context = KeymapExecutionContext(
         editingMode: .diagram,

@@ -4,7 +4,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasSceneSnapshot: interpolation shares viewport and node intermediate state")
+@Test("補間はビューポートとノードの中間状態を共有する")
 func test_interpolatedScene_sharesViewportAndNodeState() {
     let source = makeSnapshot(
         nodes: [
@@ -42,7 +42,7 @@ func test_interpolatedScene_sharesViewportAndNodeState() {
     #expect(interpolated.viewport.viewportSize.width == 1050)
 }
 
-@Test("CanvasSceneSnapshot: added node emerges from related existing node")
+@Test("追加されたノードは関連する既存のノードから出現する")
 func test_interpolatedScene_addedNode_emergesFromConnectedNodeCenter() throws {
     let source = makeSnapshot(
         nodes: [makeNode(id: "parent", x: 40, y: 80, width: 120, height: 80)],
@@ -71,7 +71,7 @@ func test_interpolatedScene_addedNode_emergesFromConnectedNodeCenter() throws {
     #expect(child.bounds.height == 40)
 }
 
-@Test("CanvasSceneSnapshot: text-only change does not count as animated difference")
+@Test("テキストのみの変更はアニメーションの差分としてカウントされない")
 func test_hasAnimatedDifference_textOnlyChange_returnsFalse() {
     let source = makeSnapshot(
         nodes: [makeNode(id: "n1", x: 0, y: 0, width: 120, height: 80, text: "before")],
@@ -91,7 +91,7 @@ func test_hasAnimatedDifference_textOnlyChange_returnsFalse() {
     #expect(source.hasAnimatedDifference(comparedTo: target) == false)
 }
 
-@Test("CanvasSceneSnapshot: viewport-only change counts as animated difference")
+@Test("ビューポートのみの変更はアニメーションの差分としてカウントされる")
 func test_hasAnimatedDifference_viewportOnlyChange_returnsTrue() {
     let source = makeSnapshot(
         nodes: [makeNode(id: "n1", x: 0, y: 0, width: 120, height: 80)],
@@ -111,7 +111,7 @@ func test_hasAnimatedDifference_viewportOnlyChange_returnsTrue() {
     #expect(source.hasAnimatedDifference(comparedTo: target) == true)
 }
 
-@Test("CanvasSceneSnapshot: viewport size-only change does not count as animated difference")
+@Test("ビューポート サイズのみの変更はアニメーション化された差分としてカウントされない")
 func test_hasAnimatedDifference_viewportSizeOnlyChange_returnsFalse() {
     let source = makeSnapshot(
         nodes: [makeNode(id: "n1", x: 0, y: 0, width: 120, height: 80)],
@@ -137,7 +137,7 @@ func test_hasAnimatedDifference_viewportSizeOnlyChange_returnsFalse() {
     #expect(source.hasAnimatedDifference(comparedTo: target) == false)
 }
 
-@Test("CanvasSceneSnapshot: node layout change does not count as animated difference")
+@Test("ノードレイアウトの変更はアニメーション化された差分としてカウントされない")
 func test_hasAnimatedDifference_nodeLayoutChange_returnsFalse() {
     let source = makeSnapshot(
         nodes: [makeNode(id: "n1", x: 0, y: 0, width: 120, height: 80)],
@@ -157,7 +157,7 @@ func test_hasAnimatedDifference_nodeLayoutChange_returnsFalse() {
     #expect(source.hasAnimatedDifference(comparedTo: target) == false)
 }
 
-@Test("CanvasSceneSnapshot: data change with viewport change does not animate")
+@Test("ビューポートの変更に伴うデータの変更がアニメーション化されない")
 func test_hasAnimatedDifference_viewportAndDataChange_returnsFalse() {
     let source = makeSnapshot(
         nodes: [makeNode(id: "n1", x: 0, y: 0, width: 120, height: 80)],

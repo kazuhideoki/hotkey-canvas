@@ -4,7 +4,7 @@ import Testing
 
 // Background: Search exit flow needs deterministic focus handoff to a specific node.
 // Responsibility: Verify explicit focus command updates focused node and selection.
-@Test("ApplyCanvasCommandsUseCase: focusNode moves focus and collapses selection")
+@Test("focusNode はフォーカスを移動し、選択範囲を折りたたみます")
 func test_apply_focusNode_movesFocusAndSelection() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -35,7 +35,7 @@ func test_apply_focusNode_movesFocusAndSelection() async throws {
     #expect(result.newState.selectedNodeIDs == [nodeBID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: focusNode keeps focused node but normalizes selection")
+@Test("focusNode はフォーカス中のノードを維持するが、選択を正規化する")
 func test_apply_focusNode_normalizesSelectionWhenFocusAlreadyMatches() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -66,7 +66,7 @@ func test_apply_focusNode_normalizesSelectionWhenFocusAlreadyMatches() async thr
     #expect(result.newState.selectedNodeIDs == [nodeBID])
 }
 
-@Test("ApplyCanvasCommandsUseCase: focusNode clears area focus even when focused node already matches")
+@Test("focusNode は、フォーカス中のノードがすでに一致している場合でもエリア フォーカスをクリアする")
 func test_apply_focusNode_clearsAreaFocusWhenFocusedNodeAlreadyMatches() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let areaID = CanvasAreaID(rawValue: "area")

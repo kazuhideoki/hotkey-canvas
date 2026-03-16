@@ -4,7 +4,7 @@ import Application
 import Domain
 import Testing
 
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area resolves overlap for non-focused selected node")
+@Test("ダイアグラムエリアの moveNode は、フォーカスされていない選択されたノードの重複を解決する")
 func test_apply_moveNodeInDiagramArea_multiSelection_resolvesOverlapForNonFocusedSelectedNode() async throws {
     let fixture = makeMoveNodeDiagramSelectionOverlapFixture()
     let sut = ApplyCanvasCommandsUseCase(initialGraph: fixture.graph)
@@ -27,7 +27,7 @@ func test_apply_moveNodeInDiagramArea_multiSelection_resolvesOverlapForNonFocuse
     #expect(selectedAfter.bounds.y - focusedAfter.bounds.y == 0)
 }
 
-@Test("ApplyCanvasCommandsUseCase: moveNode in diagram area does not collide when node ID matches legacy synthetic cluster prefix")
+@Test("ノード ID がレガシー合成クラスター プレフィックスと一致する場合、ダイアグラムエリアの moveNode は衝突しない")
 func test_apply_moveNodeInDiagramArea_avoidsBodyIDNamespaceCollision() async throws {
     let areaID = CanvasAreaID(rawValue: "diagram-area")
     let focusedID = CanvasNodeID(rawValue: "selected")

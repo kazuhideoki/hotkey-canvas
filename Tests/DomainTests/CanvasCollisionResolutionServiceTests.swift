@@ -3,7 +3,7 @@
 import Domain
 import Testing
 
-@Test("CanvasCollisionResolutionService: rect union keeps blocker inside concave gap without collision")
+@Test("レクトユニオンはブロッカーを衝突せずに凹面ギャップ内に保持する")
 func test_resolveOverlaps_rectUnion_keepsConcaveGapOpen() {
     let seedBody = CanvasCollisionBody(
         id: .cluster(nodeIDs: [
@@ -36,7 +36,7 @@ func test_resolveOverlaps_rectUnion_keepsConcaveGapOpen() {
     #expect(translations.isEmpty)
 }
 
-@Test("CanvasCollisionResolutionService: rect union resolves overlap on one selected node")
+@Test("矩形結合は、選択した 1 つのノード上の重なりを解決する")
 func test_resolveOverlaps_rectUnion_resolvesOverlapOnOneMember() {
     let seedBody = CanvasCollisionBody(
         id: .cluster(nodeIDs: [
@@ -72,7 +72,7 @@ func test_resolveOverlaps_rectUnion_resolvesOverlapOnOneMember() {
     expectAlmostEqual(blockerTranslation.dy, 0)
 }
 
-@Test("CanvasCollisionResolutionService: preferred seed direction keeps seed slot and pushes blocker along command axis")
+@Test("優先シード方向はシード スロットを維持し、ブロッカーをコマンド軸に沿って押する")
 func test_resolveOverlaps_withPreferredSeedDirection_preservesSeedSlot() {
     let seedBody = CanvasCollisionBody(
         id: .cluster(nodeIDs: [
@@ -108,7 +108,7 @@ func test_resolveOverlaps_withPreferredSeedDirection_preservesSeedSlot() {
     expectAlmostEqual(blockerTranslation.dy, 236)
 }
 
-@Test("CanvasCollisionResolutionService: missing seed or disabled iteration returns no translation")
+@Test("シードが欠落しているか無効な反復では翻訳が返されない")
 func test_resolveOverlaps_missingSeedOrDisabledIteration_returnsEmpty() {
     let bodyA = makeCollisionBody(id: "a", minX: 0, minY: 0, width: 100, height: 100)
     let bodyB = makeCollisionBody(id: "b", minX: 80, minY: 0, width: 100, height: 100)
@@ -127,7 +127,7 @@ func test_resolveOverlaps_missingSeedOrDisabledIteration_returnsEmpty() {
     #expect(disabledIterationTranslations.isEmpty)
 }
 
-@Test("CanvasCollisionResolutionService: vertical overlap moves bodies on Y axis")
+@Test("垂直重なりは Y 軸上でボディを移動する")
 func test_resolveOverlaps_verticalOverlap_movesBodiesOnYAxis() {
     let lowerBody = makeCollisionBody(id: "lower", minX: 0, minY: 100, width: 100, height: 100)
     let upperBody = makeCollisionBody(id: "upper", minX: 0, minY: 40, width: 100, height: 100)
@@ -145,7 +145,7 @@ func test_resolveOverlaps_verticalOverlap_movesBodiesOnYAxis() {
     expectAlmostEqual(upperTranslation.dy, -20)
 }
 
-@Test("CanvasCollisionResolutionService: minimum spacing increases resolved distance")
+@Test("最小間隔により分解距離が増加する")
 func test_resolveOverlaps_withMinimumSpacing_increasesResolvedDistance() {
     let bodyA = makeCollisionBody(id: "a", minX: 0, minY: 0, width: 100, height: 100)
     let bodyB = makeCollisionBody(id: "b", minX: 80, minY: 0, width: 100, height: 100)
@@ -164,7 +164,7 @@ func test_resolveOverlaps_withMinimumSpacing_increasesResolvedDistance() {
     expectAlmostEqual(translationB.dy, 0)
 }
 
-@Test("CanvasCollisionResolutionService: node body ID does not collide with cluster body ID")
+@Test("ノード本体 ID がクラスター本体 ID と衝突しない")
 func test_resolveOverlaps_nodeBodyIDDoesNotCollideWithClusterBodyID() {
     let sharedRawValue = CanvasNodeID(rawValue: "diagram-selection:selected,other")
     let clusterBody = CanvasCollisionBody(
@@ -193,7 +193,7 @@ func test_resolveOverlaps_nodeBodyIDDoesNotCollideWithClusterBodyID() {
     #expect(translations.isEmpty == false)
 }
 
-@Test("CanvasCollisionResolutionService: propagated collision moves encountered third body")
+@Test("伝播された衝突移動が 3 番目のボディに遭遇しました")
 func test_resolveOverlaps_chainCollision_movesEncounteredThirdBody() {
     let seedBody = makeCollisionBody(id: "seed", minX: 0, minY: 0, width: 100, height: 100)
     let middleBody = makeCollisionBody(id: "middle", minX: 80, minY: 0, width: 100, height: 100)

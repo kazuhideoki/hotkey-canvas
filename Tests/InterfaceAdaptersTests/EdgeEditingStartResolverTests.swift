@@ -4,7 +4,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("EdgeEditingStartResolver: character key starts label editing from empty text")
+@Test("文字キーは空のテキストからラベル編集を開始する")
 func test_edgeEditingStartResolver_resolve_characterKey_returnsTypedLabelContext() throws {
     let sut = EdgeEditingStartResolver()
     let focusedEdgeID = CanvasEdgeID(rawValue: "focused-edge")
@@ -42,7 +42,7 @@ func test_edgeEditingStartResolver_resolve_characterKey_returnsTypedLabelContext
     #expect(context?.initialTypingEvent != nil)
 }
 
-@Test("EdgeEditingStartResolver: Ctrl+E starts editing at end with existing label")
+@Test("Ctrl+E は既存のラベルの最後に編集を開始する")
 func test_edgeEditingStartResolver_resolve_ctrlE_returnsExistingLabelWithEndCursor() throws {
     let sut = EdgeEditingStartResolver()
     let focusedEdgeID = CanvasEdgeID(rawValue: "focused-edge")
@@ -80,7 +80,7 @@ func test_edgeEditingStartResolver_resolve_ctrlE_returnsExistingLabelWithEndCurs
     #expect(context?.initialTypingEvent == nil)
 }
 
-@Test("EdgeEditingStartResolver: Ctrl+A starts editing at start with existing label")
+@Test("Ctrl+A は既存のラベルで開始時に編集を開始する")
 func test_edgeEditingStartResolver_resolve_ctrlA_returnsExistingLabelWithStartCursor() throws {
     let sut = EdgeEditingStartResolver()
     let focusedEdgeID = CanvasEdgeID(rawValue: "focused-edge")
@@ -118,7 +118,7 @@ func test_edgeEditingStartResolver_resolve_ctrlA_returnsExistingLabelWithStartCu
     #expect(context?.initialTypingEvent == nil)
 }
 
-@Test("EdgeEditingStartResolver: Ctrl+non target key does not start editing")
+@Test("Ctrl+ターゲット以外のキーを押しても編集が開始されない")
 func test_edgeEditingStartResolver_resolve_ctrlNonTarget_returnsNil() throws {
     let sut = EdgeEditingStartResolver()
     let focusedEdgeID = CanvasEdgeID(rawValue: "focused-edge")

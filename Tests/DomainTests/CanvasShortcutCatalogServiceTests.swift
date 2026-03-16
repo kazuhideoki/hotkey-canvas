@@ -3,7 +3,7 @@
 import Domain
 import Testing
 
-@Test("Shortcut catalog: command-enter resolves addChildNode")
+@Test("command-enter は addChildNode を解決する")
 func test_resolveAction_commandEnter_returnsAddChildNode() {
     let gesture = CanvasShortcutGesture(key: .enter, modifiers: [.command])
 
@@ -12,7 +12,7 @@ func test_resolveAction_commandEnter_returnsAddChildNode() {
     #expect(action == .apply(commands: [.addChildNode]))
 }
 
-@Test("Shortcut catalog: control+l resolves centerFocusedNode")
+@Test("control+l は centerFocusedNode を解決する")
 func test_resolveAction_controlL_returnsCenterFocusedNode() {
     let gesture = CanvasShortcutGesture(key: .character("l"), modifiers: [.control])
 
@@ -21,7 +21,7 @@ func test_resolveAction_controlL_returnsCenterFocusedNode() {
     #expect(action == .apply(commands: [.centerFocusedNode]))
 }
 
-@Test("Shortcut catalog: command+l resolves beginConnectNodeSelection")
+@Test("command+l は beginConnectNodeSelection を解決する")
 func test_resolveAction_commandL_returnsBeginConnectNodeSelection() {
     let gesture = CanvasShortcutGesture(key: .character("l"), modifiers: [.command])
 
@@ -30,7 +30,7 @@ func test_resolveAction_commandL_returnsBeginConnectNodeSelection() {
     #expect(action == .beginConnectNodeSelection)
 }
 
-@Test("Shortcut catalog: option+period resolves toggleFoldFocusedSubtree")
+@Test("option+period は toggleFoldFocusedSubtree を解決する")
 func test_resolveAction_optionPeriod_returnsToggleFoldFocusedSubtree() {
     let gesture = CanvasShortcutGesture(key: .character("."), modifiers: [.option])
 
@@ -39,7 +39,7 @@ func test_resolveAction_optionPeriod_returnsToggleFoldFocusedSubtree() {
     #expect(action == .apply(commands: [.toggleFoldFocusedSubtree]))
 }
 
-@Test("Shortcut catalog: command-shift-p resolves open command palette")
+@Test("command-shift-p は開いているコマンドパレットを解決する")
 func test_resolveAction_commandShiftP_returnsOpenCommandPalette() {
     let gesture = CanvasShortcutGesture(key: .character("p"), modifiers: [.command, .shift])
 
@@ -48,7 +48,7 @@ func test_resolveAction_commandShiftP_returnsOpenCommandPalette() {
     #expect(action == .openCommandPalette)
 }
 
-@Test("Shortcut catalog: command-shift-equals resolves zoom in")
+@Test("command-shift-equals はズームインを解決する")
 func test_resolveAction_commandShiftEquals_returnsZoomIn() {
     let gesture = CanvasShortcutGesture(key: .character("="), modifiers: [.command, .shift])
 
@@ -57,7 +57,7 @@ func test_resolveAction_commandShiftEquals_returnsZoomIn() {
     #expect(action == .zoomIn)
 }
 
-@Test("Shortcut catalog: command-minus resolves zoom out")
+@Test("command-minus はズームアウトを解決する")
 func test_resolveAction_commandMinus_returnsZoomOut() {
     let gesture = CanvasShortcutGesture(key: .character("-"), modifiers: [.command])
 
@@ -66,7 +66,7 @@ func test_resolveAction_commandMinus_returnsZoomOut() {
     #expect(action == .zoomOut)
 }
 
-@Test("Shortcut catalog: command-option-minus resolves scale selected nodes down")
+@Test("command-option-minus は選択したノードのスケールダウンを解決する")
 func test_resolveAction_commandOptionMinus_returnsScaleSelectedNodesDown() {
     let gesture = CanvasShortcutGesture(key: .character("-"), modifiers: [.command, .option])
 
@@ -75,7 +75,7 @@ func test_resolveAction_commandOptionMinus_returnsScaleSelectedNodesDown() {
     #expect(action == .apply(commands: [.scaleSelectedNodes(.down)]))
 }
 
-@Test("Shortcut catalog: command palette definitions exclude open palette trigger")
+@Test("コマンドパレット定義ではオープン パレット トリガーを除外する")
 func test_commandPaletteDefinitions_excludeOpenPaletteAction() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions()
 
@@ -84,7 +84,7 @@ func test_commandPaletteDefinitions_excludeOpenPaletteAction() {
     #expect(!definitions.contains(where: { $0.action == .openCommandPalette }))
 }
 
-@Test("Shortcut catalog: command palette labels use symbol notation")
+@Test("コマンドパレットのラベルは記号表記を使う")
 func test_commandPaletteDefinitions_useSymbolShortcutLabels() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions()
     let labelsByID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0.shortcutLabel) })
@@ -96,7 +96,7 @@ func test_commandPaletteDefinitions_useSymbolShortcutLabels() {
     #expect(labelsByID["zoomIn.commandShiftEquals"] == "⌘⇧+")
 }
 
-@Test("Shortcut catalog: command palette titles use noun-colon-verb format")
+@Test("コマンドパレットのタイトルは名詞-コロン-動詞の形式を使う")
 func test_commandPaletteDefinitions_useNounColonVerbTitles() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions()
 
@@ -113,7 +113,7 @@ func test_commandPaletteDefinitions_useNounColonVerbTitles() {
     )
 }
 
-@Test("Shortcut catalog: fold command uses toggle wording")
+@Test("フォールドコマンドはトグル文言を使う")
 func test_commandPaletteDefinitions_toggleCommand_usesToggleVerb() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions()
     let definitionByID = Dictionary(uniqueKeysWithValues: definitions.map { ($0.id.rawValue, $0) })
@@ -122,7 +122,7 @@ func test_commandPaletteDefinitions_toggleCommand_usesToggleVerb() {
     #expect(definitionByID["toggleFoldFocusedSubtree"]?.searchTokens.contains("focused") == true)
 }
 
-@Test("Shortcut catalog: command-plus resolves zoom in")
+@Test("command-plus はズームインを解決する")
 func test_resolveAction_commandPlus_returnsZoomIn() {
     let gesture = CanvasShortcutGesture(key: .character("+"), modifiers: [.command])
 
@@ -131,7 +131,7 @@ func test_resolveAction_commandPlus_returnsZoomIn() {
     #expect(action == .zoomIn)
 }
 
-@Test("Shortcut catalog: command-option-plus resolves scale selected nodes up")
+@Test("command-option-plus は選択したノードのスケールアップを解決する")
 func test_resolveAction_commandOptionPlus_returnsScaleSelectedNodesUp() {
     let gesture = CanvasShortcutGesture(key: .character("+"), modifiers: [.command, .option])
 
@@ -140,7 +140,7 @@ func test_resolveAction_commandOptionPlus_returnsScaleSelectedNodesUp() {
     #expect(action == .apply(commands: [.scaleSelectedNodes(.up)]))
 }
 
-@Test("Shortcut catalog: command-shift-semicolon resolves zoom in")
+@Test("command-shift-semicolon はズームインを解決する")
 func test_resolveAction_commandShiftSemicolon_returnsZoomIn() {
     let gesture = CanvasShortcutGesture(key: .character(";"), modifiers: [.command, .shift])
 
@@ -149,7 +149,7 @@ func test_resolveAction_commandShiftSemicolon_returnsZoomIn() {
     #expect(action == .zoomIn)
 }
 
-@Test("Shortcut catalog: command+c resolves copySelectionOrFocusedSubtree")
+@Test("command+c は copySelectionOrFocusedSubtree を解決する")
 func test_resolveAction_commandC_returnsCopyFocusedSubtree() {
     let gesture = CanvasShortcutGesture(key: .character("c"), modifiers: [.command])
 
@@ -158,7 +158,7 @@ func test_resolveAction_commandC_returnsCopyFocusedSubtree() {
     #expect(action == .apply(commands: [.copySelectionOrFocusedSubtree]))
 }
 
-@Test("Shortcut catalog: command+x resolves cutSelectionOrFocusedSubtree")
+@Test("command+x は cutSelectionOrFocusedSubtree を解決する")
 func test_resolveAction_commandX_returnsCutFocusedSubtree() {
     let gesture = CanvasShortcutGesture(key: .character("x"), modifiers: [.command])
 
@@ -167,7 +167,7 @@ func test_resolveAction_commandX_returnsCutFocusedSubtree() {
     #expect(action == .apply(commands: [.cutSelectionOrFocusedSubtree]))
 }
 
-@Test("Shortcut catalog: command+v resolves pasteClipboardAtFocusedNode")
+@Test("command+v は pasteClipboardAtFocusedNode を解決する")
 func test_resolveAction_commandV_returnsPasteSubtreeAsChild() {
     let gesture = CanvasShortcutGesture(key: .character("v"), modifiers: [.command])
 
@@ -176,7 +176,7 @@ func test_resolveAction_commandV_returnsPasteSubtreeAsChild() {
     #expect(action == .apply(commands: [.pasteClipboardAtFocusedNode]))
 }
 
-@Test("Shortcut catalog: command+d resolves duplicateSelectionAsSibling")
+@Test("command+d は duplicateSelectionAsSibling を解決する")
 func test_resolveAction_commandD_returnsDuplicateSelectionAsSibling() {
     let gesture = CanvasShortcutGesture(key: .character("d"), modifiers: [.command])
 
@@ -185,7 +185,7 @@ func test_resolveAction_commandD_returnsDuplicateSelectionAsSibling() {
     #expect(action == .apply(commands: [.duplicateSelectionAsSibling]))
 }
 
-@Test("Shortcut catalog: shift+left resolves extendSelection")
+@Test("shift+left は extendSelection を解決する")
 func test_resolveAction_shiftLeft_returnsExtendSelection() {
     let gesture = CanvasShortcutGesture(key: .arrowLeft, modifiers: [.shift])
 
@@ -194,7 +194,7 @@ func test_resolveAction_shiftLeft_returnsExtendSelection() {
     #expect(action == .apply(commands: [.extendSelection(.left)]))
 }
 
-@Test("Shortcut catalog: command-option-right resolves moveFocusAcrossAreasToRoot")
+@Test("command-option-right は moveFocusAcrossAreasToRoot を解決する")
 func test_resolveAction_commandOptionRight_returnsMoveFocusAcrossAreasToRoot() {
     let gesture = CanvasShortcutGesture(key: .arrowRight, modifiers: [.command, .option])
 
@@ -203,7 +203,7 @@ func test_resolveAction_commandOptionRight_returnsMoveFocusAcrossAreasToRoot() {
     #expect(action == .apply(commands: [.moveFocusAcrossAreasToRoot(.right)]))
 }
 
-@Test("Shortcut catalog: moveFocusAcrossAreasToRoot is disabled in edge target")
+@Test("moveFocusAcrossAreasToRoot はエッジ ターゲットで無効になっています")
 func test_moveFocusAcrossAreasToRoot_isDisabledInEdgeTarget() {
     let definition = CanvasShortcutCatalogService.definition(for: .moveFocusAcrossAreasToRoot(.right))
 
@@ -222,7 +222,7 @@ func test_moveFocusAcrossAreasToRoot_isDisabledInEdgeTarget() {
     )
 }
 
-@Test("Shortcut catalog: addNode and addChildNode are disabled in edge target")
+@Test("addNode および addChildNode はエッジ ターゲットで無効になっています")
 func test_addNodeCommands_areDisabledInEdgeTarget() {
     let addNodeDefinition = CanvasShortcutCatalogService.definition(for: .addNode)
     let addChildDefinition = CanvasShortcutCatalogService.definition(for: .addChildNode)
@@ -246,7 +246,7 @@ func test_addNodeCommands_areDisabledInEdgeTarget() {
     )
 }
 
-@Test("Shortcut catalog: tree add commands are disabled in edge target")
+@Test("ツリーのノード追加コマンドはエッジターゲットで無効になる")
 func test_treeAddCommands_areDisabledInEdgeTarget() {
     let addSiblingAboveDefinition = CanvasShortcutCatalogService.definition(for: .addSiblingNode(position: .above))
     let addSiblingBelowDefinition = CanvasShortcutCatalogService.definition(for: .addSiblingNode(position: .below))
@@ -277,7 +277,7 @@ func test_treeAddCommands_areDisabledInEdgeTarget() {
     )
 }
 
-@Test("Shortcut catalog: node transform commands are disabled in edge target")
+@Test("エッジ ターゲットではノード変換コマンドが無効になっています")
 func test_nodeTransformCommands_areDisabledInEdgeTarget() {
     let moveNodeDefinition = CanvasShortcutCatalogService.definition(for: .moveNode(.right))
     let nudgeNodeDefinition = CanvasShortcutCatalogService.definition(for: .nudgeNode(.right))
@@ -308,7 +308,7 @@ func test_nodeTransformCommands_areDisabledInEdgeTarget() {
     )
 }
 
-@Test("Shortcut catalog: clipboard commands are disabled in edge target")
+@Test("エッジターゲットではクリップボードコマンドが無効になっています")
 func test_clipboardCommands_areDisabledInEdgeTarget() {
     let copyDefinition = CanvasShortcutCatalogService.definition(for: .copySelectionOrFocusedSubtree)
     let cutDefinition = CanvasShortcutCatalogService.definition(for: .cutSelectionOrFocusedSubtree)
@@ -339,7 +339,7 @@ func test_clipboardCommands_areDisabledInEdgeTarget() {
     )
 }
 
-@Test("Shortcut catalog: edge target hides moveFocusAcrossAreasToRoot in command palette")
+@Test("エッジ ターゲットはコマンドパレットで moveFocusAcrossAreasToRoot を非表示にする")
 func test_commandPaletteDefinitions_edgeTarget_hidesMoveFocusAcrossAreasToRoot() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
@@ -355,7 +355,7 @@ func test_commandPaletteDefinitions_edgeTarget_hidesMoveFocusAcrossAreasToRoot()
     #expect(!ids.contains("moveFocusAcrossAreasToRootRight"))
 }
 
-@Test("Shortcut catalog: edge target hides node add commands in command palette")
+@Test("エッジターゲットはコマンドパレットのノード追加コマンドを非表示にする")
 func test_commandPaletteDefinitions_edgeTarget_hidesNodeAddCommands() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
@@ -373,7 +373,7 @@ func test_commandPaletteDefinitions_edgeTarget_hidesNodeAddCommands() {
     #expect(!ids.contains("addSiblingNodeBelow"))
 }
 
-@Test("Shortcut catalog: edge target hides node transform commands in command palette")
+@Test("エッジ ターゲットはコマンドパレットでノード変換コマンドを非表示にする")
 func test_commandPaletteDefinitions_edgeTarget_hidesNodeTransformCommands() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
@@ -390,7 +390,7 @@ func test_commandPaletteDefinitions_edgeTarget_hidesNodeTransformCommands() {
     #expect(!ids.contains("scaleSelectedNodesUp.commandOptionPlus"))
 }
 
-@Test("Shortcut catalog: edge target hides node clipboard commands in command palette")
+@Test("エッジ ターゲットはコマンドパレットでノードのクリップボード コマンドを非表示にする")
 func test_commandPaletteDefinitions_edgeTarget_hidesNodeClipboardCommands() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
@@ -407,7 +407,7 @@ func test_commandPaletteDefinitions_edgeTarget_hidesNodeClipboardCommands() {
     #expect(!ids.contains("pasteClipboardAtFocusedNode"))
 }
 
-@Test("Shortcut catalog: diagram context keeps addChild and hides tree-only command palette definitions")
+@Test("ダイアグラム コンテキストは addChild を保持し、ツリーのみのコマンドパレット定義を非表示にする")
 func test_commandPaletteDefinitions_diagramContext_hidesTreeOnlyDefinitionsExceptAddChild() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .diagram, hasFocusedNode: true),
@@ -427,7 +427,7 @@ func test_commandPaletteDefinitions_diagramContext_hidesTreeOnlyDefinitionsExcep
     #expect(ids.contains("beginConnectNodeSelection"))
 }
 
-@Test("Shortcut catalog: tree context hides diagram-only command palette definitions")
+@Test("ツリー コンテキストはダイアグラムのみのコマンドパレット定義を非表示にする")
 func test_commandPaletteDefinitions_treeContext_hidesDiagramOnlyDefinitions() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true),
@@ -449,7 +449,7 @@ func test_commandPaletteDefinitions_treeContext_hidesDiagramOnlyDefinitions() {
     #expect(!ids.contains("nudgeNodeRight"))
 }
 
-@Test("Shortcut catalog: no-focus context hides focus-required command palette definitions")
+@Test("フォーカスのないコンテキストはフォーカスが必要なコマンドパレットの定義を非表示にする")
 func test_commandPaletteDefinitions_withoutFocus_hidesFocusRequiredDefinitions() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: false),
@@ -468,7 +468,7 @@ func test_commandPaletteDefinitions_withoutFocus_hidesFocusRequiredDefinitions()
     #expect(!ids.contains("centerFocusedNode"))
 }
 
-@Test("Shortcut catalog: area target hides node-target command palette definitions except add-node mode selection")
+@Test("エリア ターゲットは、ノード追加モードの選択を除き、ノード ターゲットのコマンドパレット定義を非表示にする")
 func test_commandPaletteDefinitions_areaTarget_hidesNodeTargetDefinitionsExceptAddNodeModeSelection() {
     let definitions = CanvasShortcutCatalogService.commandPaletteDefinitions(
         context: CanvasCommandPaletteContext(activeEditingMode: .tree, hasFocusedNode: true),

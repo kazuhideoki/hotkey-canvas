@@ -11,7 +11,7 @@ private func makeImageAttachment(path: String) -> CanvasAttachment {
     )
 }
 
-@Test("ApplyCanvasCommandsUseCase: setNodeText updates target node, normalizes empty to nil, and persists height")
+@Test("setNodeText はターゲット ノードを更新し、空を nil に正規化し、高さを保持する")
 func test_apply_setNodeText_updatesNodeText() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
@@ -41,7 +41,7 @@ func test_apply_setNodeText_updatesNodeText() async throws {
     #expect(cleared.newState.nodesByID[nodeID]?.bounds.height == 44)
 }
 
-@Test("ApplyCanvasCommandsUseCase: setNodeText rejects non-finite height values")
+@Test("setNodeText は非有限の高さの値を拒否する")
 func test_apply_setNodeText_nonFiniteHeight_fallsBackToCurrentHeight() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
@@ -71,7 +71,7 @@ func test_apply_setNodeText_nonFiniteHeight_fallsBackToCurrentHeight() async thr
     #expect(infinityHeightResult.newState.nodesByID[nodeID]?.bounds.height == 70)
 }
 
-@Test("ApplyCanvasCommandsUseCase: setNodeText expands node height as lines increase")
+@Test("setNodeText は行の増加に応じてノードの高さを拡張する")
 func test_apply_setNodeText_expandsNodeHeightAsLinesIncrease() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
@@ -106,7 +106,7 @@ func test_apply_setNodeText_expandsNodeHeightAsLinesIncrease() async throws {
     #expect(fortyLineHeight > twentyLineHeight)
 }
 
-@Test("ApplyCanvasCommandsUseCase: setNodeText shrinks node height when lines decrease")
+@Test("setNodeText は行が減少するとノードの高さを縮小する")
 func test_apply_setNodeText_shrinksNodeHeightWhenLinesDecrease() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
@@ -140,7 +140,7 @@ func test_apply_setNodeText_shrinksNodeHeightWhenLinesDecrease() async throws {
     #expect(shrunkHeight < expandedHeight)
 }
 
-@Test("ApplyCanvasCommandsUseCase: setNodeText keeps diagram node as square with tree-width side length")
+@Test("setNodeText は、ダイアグラムノードをツリー幅の辺の長さを持つ正方形として維持する")
 func test_apply_setNodeText_inDiagramArea_keepsSquareNode() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -170,7 +170,7 @@ func test_apply_setNodeText_inDiagramArea_keepsSquareNode() async throws {
     #expect(updatedNode.bounds.height == 220)
 }
 
-@Test("ApplyCanvasCommandsUseCase: setNodeText keeps diagram image node side length within attachment range")
+@Test("setNodeText は、ダイアグラム イメージ ノードの辺の長さをアタッチメント範囲内に保ちます")
 func test_apply_setNodeText_inDiagramAreaWithImage_preservesExpandedSquareSide() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-image-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -200,7 +200,7 @@ func test_apply_setNodeText_inDiagramAreaWithImage_preservesExpandedSquareSide()
     #expect(updatedNode.bounds.height == 300)
 }
 
-@Test("ApplyCanvasCommandsUseCase: upsertNodeAttachment updates target node image attachment and height")
+@Test("upsertNodeAttachment はターゲット ノードのイメージの添付ファイルと高さを更新する")
 func test_apply_upsertNodeAttachment_updatesNodeImage() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
@@ -232,7 +232,7 @@ func test_apply_upsertNodeAttachment_updatesNodeImage() async throws {
     #expect(updated.newState.nodesByID[nodeID]?.text == "before")
 }
 
-@Test("ApplyCanvasCommandsUseCase: upsertNodeAttachment replaces existing image when inserting again")
+@Test("upsertNodeAttachment は、再度挿入するときに既存の画像を置き換えます")
 func test_apply_upsertNodeAttachment_replacesExistingImage() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
@@ -264,7 +264,7 @@ func test_apply_upsertNodeAttachment_replacesExistingImage() async throws {
     #expect(replaced.newState.nodesByID[nodeID]?.bounds.height == 90)
 }
 
-@Test("ApplyCanvasCommandsUseCase: upsertNodeAttachment rejects non-finite height values")
+@Test("upsertNodeAttachment は非有限の高さの値を拒否する")
 func test_apply_upsertNodeAttachment_nonFiniteHeight_fallsBackToCurrentHeight() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
@@ -308,7 +308,7 @@ func test_apply_upsertNodeAttachment_nonFiniteHeight_fallsBackToCurrentHeight() 
     #expect(infinityHeightResult.newState.nodesByID[nodeID]?.bounds.height == 70)
 }
 
-@Test("ApplyCanvasCommandsUseCase: upsertNodeAttachment keeps diagram node square and clamps side by image range")
+@Test("upsertNodeAttachment は図のノードを正方形に保ち、画像範囲ごとに固定する")
 func test_apply_upsertNodeAttachment_inDiagramArea_clampsNodeSide() async throws {
     let nodeID = CanvasNodeID(rawValue: "diagram-node")
     let areaID = CanvasAreaID(rawValue: "diagram-area")
@@ -344,7 +344,7 @@ func test_apply_upsertNodeAttachment_inDiagramArea_clampsNodeSide() async throws
     #expect(updatedNode.bounds.height == CanvasDefaultNodeDistance.diagramImageMaxSide)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addNode enables markdown styling by default")
+@Test("addNode はデフォルトでマークダウン スタイルを有効にする")
 func test_apply_addNode_enablesMarkdownStylingByDefault() async throws {
     let sut = ApplyCanvasCommandsUseCase()
 
@@ -355,7 +355,7 @@ func test_apply_addNode_enablesMarkdownStylingByDefault() async throws {
     #expect(addedNode.markdownStyleEnabled)
 }
 
-@Test("ApplyCanvasCommandsUseCase: toggleFocusedNodeMarkdownStyle toggles markdown flag for focused node")
+@Test("toggleFocusedNodeMarkdownStyle はフォーカス中のノードのマークダウン フラグを切り替える")
 func test_apply_toggleFocusedNodeMarkdownStyle_togglesFocusedNodeFlag() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(
@@ -380,7 +380,7 @@ func test_apply_toggleFocusedNodeMarkdownStyle_togglesFocusedNodeFlag() async th
     #expect(enabledResult.newState.nodesByID[nodeID]?.markdownStyleEnabled == true)
 }
 
-@Test("ApplyCanvasCommandsUseCase: toggleFocusedNodeMarkdownStyle preserves image attachment and requests relayout")
+@Test("toggleFocusedNodeMarkdownStyle は画像の添付ファイルを保存し、再レイアウトを要求する")
 func test_applyMutation_toggleFocusedNodeMarkdownStyle_preservesImageAttachment_andRequestsRelayout() async throws {
     let nodeID = CanvasNodeID(rawValue: "node")
     let graph = CanvasGraph(

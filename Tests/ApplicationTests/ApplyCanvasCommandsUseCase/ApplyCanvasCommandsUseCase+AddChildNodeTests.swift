@@ -4,7 +4,7 @@ import Testing
 
 // Background: Child-node creation grows explicit parent-child structure from focused nodes.
 // Responsibility: Verify child creation, edge connection, and horizontal overlap handling.
-@Test("ApplyCanvasCommandsUseCase: addChildNode creates child and parent-child edge")
+@Test("addChildNode は子ノードと親子エッジを作成する")
 func test_apply_addChildNode_createsChildAndEdge() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let parent = CanvasNode(
@@ -33,7 +33,7 @@ func test_apply_addChildNode_createsChildAndEdge() async throws {
     #expect(child.bounds.x >= parent.bounds.x + parent.bounds.width)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addChildNode resolves overlap by moving areas")
+@Test("addChildNode はエリアを移動することで重複を解決する")
 func test_apply_addChildNode_avoidsOverlap() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let blockerID = CanvasNodeID(rawValue: "blocker")
@@ -72,7 +72,7 @@ func test_apply_addChildNode_avoidsOverlap() async throws {
     #expect(boundsOverlap(parentAreaBounds, blockerAfter.bounds, spacing: 32) == false)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addChildNode avoids occupied slot within same parent area")
+@Test("addChildNode は同じ親エリア内の占有スロットを回避する")
 func test_apply_addChildNode_avoidsOccupiedSlotWithinSameArea() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let existingChildID = CanvasNodeID(rawValue: "existing-child")
@@ -115,7 +115,7 @@ func test_apply_addChildNode_avoidsOccupiedSlotWithinSameArea() async throws {
     #expect(newChild.bounds.y >= existingChildAfter.bounds.y + existingChildAfter.bounds.height + 24)
 }
 
-@Test("ApplyCanvasCommandsUseCase: addChildNode expands collapsed focused parent")
+@Test("addChildNode は折りたたまれてフォーカス中の親ノードを展開する")
 func test_apply_addChildNode_expandsCollapsedFocusedParent() async throws {
     let parentID = CanvasNodeID(rawValue: "parent")
     let parent = CanvasNode(

@@ -2,7 +2,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasView image text policy: markdown render is disabled when search matches exist")
+@Test("検索一致が存在する場合、マークダウン レンダリングは無効になる")
 func test_shouldRenderMarkdownText_markdownEnabledWithSearchMatches_returnsFalse() {
     #expect(
         CanvasView.shouldRenderMarkdownText(
@@ -12,7 +12,7 @@ func test_shouldRenderMarkdownText_markdownEnabledWithSearchMatches_returnsFalse
     )
 }
 
-@Test("CanvasView image text policy: markdown render is enabled when no search matches exist")
+@Test("検索一致が存在しない場合、マークダウン レンダリングが有効になる")
 func test_shouldRenderMarkdownText_markdownEnabledWithoutSearchMatches_returnsTrue() {
     #expect(
         CanvasView.shouldRenderMarkdownText(

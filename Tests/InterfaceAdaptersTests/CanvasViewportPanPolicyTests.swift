@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasViewportPanPolicy: combines auto-center, manual pan, and active drag offsets")
+@Test("自動センター、手動パン、アクティブドラッグオフセットを組み合わせます")
 func test_combinedOffset_addsAllOffsets() {
     let result = CanvasViewportPanPolicy.combinedOffset(
         autoCenterOffset: CGSize(width: 120, height: -50),
@@ -15,7 +15,7 @@ func test_combinedOffset_addsAllOffsets() {
     #expect(result.height == -5)
 }
 
-@Test("CanvasViewportPanPolicy: updates manual pan by adding latest drag translation")
+@Test("最新のドラッグ変換を追加して手動パンを更新する")
 func test_updatedManualPanOffset_accumulatesTranslation() {
     let result = CanvasViewportPanPolicy.updatedManualPanOffset(
         current: CGSize(width: 15, height: -25),
@@ -26,7 +26,7 @@ func test_updatedManualPanOffset_accumulatesTranslation() {
     #expect(result.height == -20)
 }
 
-@Test("CanvasViewportPanPolicy: scales non-precise scroll wheel deltas")
+@Test("不正確なスクロールホイールデルタをスケールする")
 func test_scrollWheelTranslation_scalesLineBasedDeltas() {
     let translation = CanvasViewportPanPolicy.scrollWheelTranslation(
         deltaX: 2,
@@ -38,7 +38,7 @@ func test_scrollWheelTranslation_scalesLineBasedDeltas() {
     #expect(translation.height == -48)
 }
 
-@Test("CanvasViewportPanPolicy: keeps precise scroll wheel deltas unscaled")
+@Test("正確なスクロールホイールデルタをスケールなしで維持する")
 func test_scrollWheelTranslation_keepsPreciseDeltas() {
     let translation = CanvasViewportPanPolicy.scrollWheelTranslation(
         deltaX: -1.5,
@@ -50,7 +50,7 @@ func test_scrollWheelTranslation_keepsPreciseDeltas() {
     #expect(translation.height == 4)
 }
 
-@Test("CanvasViewportPanPolicy: returns zero compensation when focused node is fully visible")
+@Test("フォーカス中のノードが完全に表示されている場合、ゼロ補正を返す")
 func test_overflowCompensation_returnsZero_whenFocusRectIsVisible() {
     let compensation = CanvasViewportPanPolicy.overflowCompensation(
         focusRect: CGRect(x: 120, y: 80, width: 200, height: 120),
@@ -61,7 +61,7 @@ func test_overflowCompensation_returnsZero_whenFocusRectIsVisible() {
     #expect(compensation == .zero)
 }
 
-@Test("CanvasViewportPanPolicy: compensates overflow on each axis by minimal amount")
+@Test("各軸のオーバーフローを最小限の量で補正する")
 func test_overflowCompensation_returnsMinimalOverflowAmount() {
     let compensation = CanvasViewportPanPolicy.overflowCompensation(
         focusRect: CGRect(x: 760, y: -20, width: 120, height: 80),
@@ -73,7 +73,7 @@ func test_overflowCompensation_returnsMinimalOverflowAmount() {
     #expect(compensation.height == 20)
 }
 
-@Test("CanvasViewportPanPolicy: zoomScaleToFit shrinks scale to keep focused shape in viewport")
+@Test("zoomScaleToFit はスケールを縮小してビューポート内でフォーカス中の形状を維持する")
 func test_zoomScaleToFit_shrinksScale_whenFocusedShapeIsLargerThanViewport() {
     let scale = CanvasViewportPanPolicy.zoomScaleToFit(
         focusRect: CGRect(x: 0, y: 0, width: 1_600, height: 900),
@@ -85,7 +85,7 @@ func test_zoomScaleToFit_shrinksScale_whenFocusedShapeIsLargerThanViewport() {
     #expect(scale == 0.5)
 }
 
-@Test("CanvasViewportPanPolicy: zoomScaleToFit keeps current scale when focused shape already fits")
+@Test("zoomScaleToFit は、フォーカス中の形状がすでにフィットしている場合に現在のスケールを維持する")
 func test_zoomScaleToFit_keepsCurrentScale_whenFocusedShapeFits() {
     let scale = CanvasViewportPanPolicy.zoomScaleToFit(
         focusRect: CGRect(x: 0, y: 0, width: 300, height: 200),
@@ -97,7 +97,7 @@ func test_zoomScaleToFit_keepsCurrentScale_whenFocusedShapeFits() {
     #expect(scale == 1.0)
 }
 
-@Test("CanvasViewportPanPolicy: zoomScaleToFit respects minimum zoom scale")
+@Test("zoomScaleToFit は最小ズームスケールを尊重する")
 func test_zoomScaleToFit_respectsMinimumScale() {
     let scale = CanvasViewportPanPolicy.zoomScaleToFit(
         focusRect: CGRect(x: 0, y: 0, width: 8_000, height: 6_000),

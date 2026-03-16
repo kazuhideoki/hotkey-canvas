@@ -6,7 +6,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasEdgeFocusNavigation: right movement escapes duplicated bundle and follows rendered edge positions")
+@Test("右に移動すると、重複したバンドルが回避され、レンダリングされたエッジ位置に従います")
 func test_nextFocusedEdgeID_rightMovement_escapesDuplicatedBundle() throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -52,7 +52,7 @@ func test_nextFocusedEdgeID_rightMovement_escapesDuplicatedBundle() throws {
     #expect(nextFocusedEdgeID == edge3ID)
 }
 
-@Test("CanvasEdgeFocusNavigation: downward movement can choose visually lower duplicated edge")
+@Test("下方向に移動すると、視覚的に下の複製エッジを選択できる")
 func test_nextFocusedEdgeID_downMovement_canChooseLowerDuplicatedEdge() throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -101,7 +101,7 @@ func test_nextFocusedEdgeID_downMovement_canChooseLowerDuplicatedEdge() throws {
     #expect(nextFocusedEdgeID == bottomEdgeID)
 }
 
-@Test("CanvasEdgeFocusNavigation: straight horizontal edges remain navigable when bounding rect height is zero")
+@Test("境界四角形の高さがゼロの場合でも、直線の水平エッジはナビゲート可能のままである")
 func test_nextFocusedEdgeID_straightHorizontalEdgesRemainNavigable() {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -135,7 +135,7 @@ func test_nextFocusedEdgeID_straightHorizontalEdgesRemainNavigable() {
     #expect(nextFocusedEdgeID == edgeCDID)
 }
 
-@Test("CanvasEdgeFocusNavigation: straight vertical edges remain navigable when bounding rect width is zero")
+@Test("境界四角形の幅がゼロの場合でも、まっすぐな垂直エッジはナビゲート可能のままである")
 func test_nextFocusedEdgeID_straightVerticalEdgesRemainNavigable() {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")

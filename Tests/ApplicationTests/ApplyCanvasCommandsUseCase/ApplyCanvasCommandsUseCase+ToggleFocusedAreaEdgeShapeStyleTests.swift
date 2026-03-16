@@ -2,7 +2,7 @@ import Application
 import Domain
 import Testing
 
-@Test("ApplyCanvasCommandsUseCase: toggleFocusedAreaEdgeShapeStyle cycles focused area edge shape style")
+@Test("toggleFocusedAreaEdgeShapeStyle すると、フォーカス中のエリアのエッジ形状が順番に切り替わる")
 func test_apply_toggleFocusedAreaEdgeShapeStyle_cyclesFocusedAreaEdgeShapeStyle() async throws {
     let nodeID = CanvasNodeID(rawValue: "focused")
     let areaID = CanvasAreaID(rawValue: "area-1")

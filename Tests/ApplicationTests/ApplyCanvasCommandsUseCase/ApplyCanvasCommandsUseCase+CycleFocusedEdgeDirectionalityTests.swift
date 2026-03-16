@@ -4,7 +4,7 @@ import Testing
 
 // Background: Edge-target operations must cycle arrow direction deterministically.
 // Responsibility: Verify cycleFocusedEdgeDirectionality command behavior.
-@Test("ApplyCanvasCommandsUseCase: cycleFocusedEdgeDirectionality cycles none->fromTo->toFrom->none")
+@Test("cycleFocusedEdgeDirectionality すると、none -> fromTo -> toFrom -> none の順に切り替わる")
 func test_apply_cycleFocusedEdgeDirectionality_cyclesDirectionality() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -45,7 +45,7 @@ func test_apply_cycleFocusedEdgeDirectionality_cyclesDirectionality() async thro
     #expect(third.newState.edgesByID[edgeID]?.directionality == CanvasEdgeDirectionality.none)
 }
 
-@Test("ApplyCanvasCommandsUseCase: cycleFocusedEdgeDirectionality becomes no-op when focused edge does not exist")
+@Test("フォーカス中のエッジが存在しない場合、cycleFocusedEdgeDirectionality は何もしない")
 func test_apply_cycleFocusedEdgeDirectionality_noOpWhenFocusedEdgeMissing() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -89,7 +89,7 @@ func test_apply_cycleFocusedEdgeDirectionality_noOpWhenFocusedEdgeMissing() asyn
     #expect(result.newState.focusedElement == .edge(CanvasEdgeFocus(edgeID: existingEdgeID, originNodeID: nodeAID)))
 }
 
-@Test("ApplyCanvasCommandsUseCase: cycleFocusedEdgeDirectionality keeps command-provided edge multi-selection")
+@Test("cycleFocusedEdgeDirectionality はコマンド提供のエッジの複数選択を維持する")
 func test_apply_cycleFocusedEdgeDirectionality_keepsProvidedEdgeMultiSelection() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")

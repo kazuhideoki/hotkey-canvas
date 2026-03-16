@@ -4,7 +4,7 @@ import Application
 import Domain
 import Testing
 
-@Test("DefaultKeymapContextActionResolver: primary add maps to add-sibling-below command")
+@Test("primary add は addSiblingNode(.below) コマンドにマップされる")
 func test_resolve_primaryAdd_returnsAddSiblingBelow() {
     let sut = DefaultKeymapContextActionResolver()
 
@@ -13,7 +13,7 @@ func test_resolve_primaryAdd_returnsAddSiblingBelow() {
     #expect(action == .apply(commands: [.addSiblingNode(position: .below)]))
 }
 
-@Test("DefaultKeymapContextActionResolver: edge target switch maps to switch-target-kind action")
+@Test("エッジ ターゲット スイッチは switch-target-kind アクションにマップされる")
 func test_resolve_switchTargetKindEdge_returnsSwitchTargetKindAction() {
     let sut = DefaultKeymapContextActionResolver()
 
@@ -22,7 +22,7 @@ func test_resolve_switchTargetKindEdge_returnsSwitchTargetKindAction() {
     #expect(action == .switchTargetKind(variant: .edge))
 }
 
-@Test("DefaultKeymapContextActionResolver: cycle target switch maps to switch-target-kind action")
+@Test("サイクル ターゲット スイッチは、switch-target-kind アクションにマップされる")
 func test_resolve_switchTargetKindCycle_returnsSwitchTargetKindAction() {
     let sut = DefaultKeymapContextActionResolver()
 
@@ -31,7 +31,7 @@ func test_resolve_switchTargetKindCycle_returnsSwitchTargetKindAction() {
     #expect(action == .switchTargetKind(variant: .cycle))
 }
 
-@Test("DefaultKeymapContextActionResolver: area target switch maps to switch-target-kind action")
+@Test("エリアターゲットスイッチはスイッチターゲット種類アクションにマップされる")
 func test_resolve_switchTargetKindArea_returnsSwitchTargetKindAction() {
     let sut = DefaultKeymapContextActionResolver()
 
@@ -40,7 +40,7 @@ func test_resolve_switchTargetKindArea_returnsSwitchTargetKindAction() {
     #expect(action == .switchTargetKind(variant: .area))
 }
 
-@Test("DefaultKeymapContextActionResolver: extend-selection focus intent keeps direction")
+@Test("拡張選択フォーカスのインテントが方向性を維持")
 func test_resolve_moveFocusExtendSelection_returnsExtendSelectionCommand() {
     let sut = DefaultKeymapContextActionResolver()
 
@@ -49,7 +49,7 @@ func test_resolve_moveFocusExtendSelection_returnsExtendSelectionCommand() {
     #expect(action == .apply(commands: [.extendSelection(.up)]))
 }
 
-@Test("DefaultKeymapContextActionResolver: across-areas focus intent maps to moveFocusAcrossAreasToRoot command")
+@Test("エリア間フォーカスのインテントは moveFocusAcrossAreasToRoot コマンドにマップされる")
 func test_resolve_moveFocusAcrossAreasToRoot_returnsMoveFocusAcrossAreasToRootCommand() {
     let sut = DefaultKeymapContextActionResolver()
 
@@ -58,7 +58,7 @@ func test_resolve_moveFocusAcrossAreasToRoot_returnsMoveFocusAcrossAreasToRootCo
     #expect(action == .apply(commands: [.moveFocusAcrossAreasToRoot(.right)]))
 }
 
-@Test("DefaultKeymapContextActionResolver: scale-selection-up transform maps to scale-selected-nodes command")
+@Test("scale-selection-up 変換は、scale-selected-nodes コマンドにマップされる")
 func test_resolve_transformScaleSelectionUp_returnsScaleSelectedNodesUp() {
     let sut = DefaultKeymapContextActionResolver()
 
@@ -67,7 +67,7 @@ func test_resolve_transformScaleSelectionUp_returnsScaleSelectedNodesUp() {
     #expect(action == .apply(commands: [.scaleSelectedNodes(.up)]))
 }
 
-@Test("DefaultKeymapContextActionResolver: area edge-shape toggle edit maps to area-edge-shape command")
+@Test("area-edge-shape コマンドへの編集マップの切り替え")
 func test_resolve_editToggleFocusedAreaEdgeShapeStyle_returnsToggleFocusedAreaEdgeShapeStyle() {
     let sut = DefaultKeymapContextActionResolver()
 
@@ -76,7 +76,7 @@ func test_resolve_editToggleFocusedAreaEdgeShapeStyle_returnsToggleFocusedAreaEd
     #expect(action == .apply(commands: [.toggleFocusedAreaEdgeShapeStyle]))
 }
 
-@Test("DefaultKeymapContextActionResolver: output intent returns unsupported contract")
+@Test("output インテントは reportUnsupportedIntent を返す")
 func test_resolve_output_returnsReportUnsupportedIntent() {
     let sut = DefaultKeymapContextActionResolver()
 

@@ -5,7 +5,7 @@ import Testing
 
 // Background: Phase-3 routes tree/area recomputation through the coordinator pipeline.
 // Responsibility: Verify pipeline execution still produces stable graph outputs.
-@Test("ApplyCanvasCommandsUseCase: pipeline mode produces deterministic result for mixed command sequence")
+@Test("パイプライン モードでは、混合コマンド シーケンスに対して決定的な結果が生成される")
 func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let firstChildID = CanvasNodeID(rawValue: "first-child")
@@ -36,7 +36,7 @@ func test_pipelineMode_matchesExpectedResultForMixedCommandSequence() async thro
     #expect(!pipelineResult.didAddNode)
 }
 
-@Test("ApplyCanvasCommandsUseCase: pipeline mode fails no-op sequence when focus is unresolved")
+@Test("フォーカスが未解決の場合、パイプラインモードは無変化シーケンスでも失敗する")
 func test_pipelineMode_failsNoOpSequence_whenFocusIsUnresolved() async throws {
     let sut = ApplyCanvasCommandsUseCase(initialGraph: .empty.withDefaultTreeAreaIfMissing())
     let commands: [CanvasCommand] = [
@@ -53,7 +53,7 @@ func test_pipelineMode_failsNoOpSequence_whenFocusIsUnresolved() async throws {
     }
 }
 
-@Test("ApplyCanvasCommandsUseCase: batched pipeline command sequence matches staged step-by-step execution")
+@Test("バッチ化されたパイプライン コマンド シーケンスは段階的なステップバイステップの実行と一致する")
 func test_pipelineMode_batchedSequence_matchesStepByStepExecution() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let firstChildID = CanvasNodeID(rawValue: "first-child")
@@ -89,7 +89,7 @@ func test_pipelineMode_batchedSequence_matchesStepByStepExecution() async throws
     #expect(batchedResult.viewportIntent == secondStep.viewportIntent)
 }
 
-@Test("ApplyCanvasCommandsUseCase: didAddNode is false when added node does not remain in final graph")
+@Test("追加されたノードが最終グラフに残らない場合、didAddNode は false になる")
 func test_pipelineMode_didAddNode_isFalseForTransientAdd() async throws {
     let sut = ApplyCanvasCommandsUseCase(initialGraph: .empty.withDefaultTreeAreaIfMissing())
 
@@ -102,7 +102,7 @@ func test_pipelineMode_didAddNode_isFalseForTransientAdd() async throws {
     #expect(!result.didAddNode)
 }
 
-@Test("ApplyCanvasCommandsUseCase: apply does not return viewport intent when focus changes")
+@Test("apply はフォーカスが変更されたときにビューポート インテントを返さない")
 func test_apply_doesNotReturnViewportIntent_whenFocusChanges() async throws {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
@@ -131,7 +131,7 @@ func test_apply_doesNotReturnViewportIntent_whenFocusChanges() async throws {
     #expect(applyResult.viewportIntent == nil)
 }
 
-@Test("ApplyCanvasCommandsUseCase: centerFocusedNode command emits viewport reset intent")
+@Test("centerFocusedNode コマンドはビューポート リセット インテントを発行する")
 func test_apply_centerFocusedNode_emitsViewportIntent() async throws {
     let focusedNodeID = CanvasNodeID(rawValue: "focused")
     let graph = CanvasGraph(
@@ -155,7 +155,7 @@ func test_apply_centerFocusedNode_emitsViewportIntent() async throws {
     #expect(applyResult.viewportIntent == .resetManualPanOffset)
 }
 
-@Test("CanvasCommandPipelineCoordinator: tree/area stages are idempotent")
+@Test("ツリー/エリアステージはべき等である")
 func test_pipelineCoordinator_treeAreaStages_areIdempotent() {
     let rootID = CanvasNodeID(rawValue: "root")
     let childID = CanvasNodeID(rawValue: "child")
@@ -221,7 +221,7 @@ func test_pipelineCoordinator_treeAreaStages_areIdempotent() {
     #expect(secondPass.graph == firstPass.graph)
 }
 
-@Test("CanvasCommandPipelineCoordinator: focus normalization resolves invalid focused node to deterministic fallback")
+@Test("フォーカスの正規化により、無効なフォーカス中のノードが決定的なフォールバックに解決される")
 func test_pipelineCoordinator_focusNormalization_resolvesInvalidFocus() {
     let upperID = CanvasNodeID(rawValue: "upper")
     let lowerID = CanvasNodeID(rawValue: "lower")
@@ -265,7 +265,7 @@ func test_pipelineCoordinator_focusNormalization_resolvesInvalidFocus() {
     #expect(result.viewportIntent == nil)
 }
 
-@Test("CanvasCommandPipelineCoordinator: area focus normalization re-anchors focused node inside focused area")
+@Test("エリアフォーカスの正規化 フォーカス中のエリア内にフォーカス中のノードを再固定する")
 func test_pipelineCoordinator_focusNormalization_reanchorsAreaFocusInsideFocusedArea() {
     let areaAID = CanvasAreaID(rawValue: "area-a")
     let areaBID = CanvasAreaID(rawValue: "area-b")

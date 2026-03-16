@@ -4,7 +4,7 @@ import Testing
 
 // Background: Diagram mode now supports explicit connection between existing nodes.
 // Responsibility: Verify connect-nodes command behavior and mode-policy boundaries.
-@Test("ApplyCanvasCommandsUseCase: connectNodes creates one normal edge in diagram area")
+@Test("connectNodes はダイアグラムエリアに 1 つの通常のエッジを作成する")
 func test_apply_connectNodesInDiagramArea_createsNormalEdge() async throws {
     let sourceNodeID = CanvasNodeID(rawValue: "source")
     let targetNodeID = CanvasNodeID(rawValue: "target")
@@ -45,7 +45,7 @@ func test_apply_connectNodesInDiagramArea_createsNormalEdge() async throws {
     #expect(result.newState.focusedElement == .node(targetNodeID))
 }
 
-@Test("ApplyCanvasCommandsUseCase: connectNodes allows multiple normal edges between same nodes")
+@Test("connectNodes は、同じノード間で複数の通常のエッジを許可する")
 func test_apply_connectNodes_whenNormalEdgeAlreadyExists_createsAdditionalEdge() async throws {
     let sourceNodeID = CanvasNodeID(rawValue: "source")
     let targetNodeID = CanvasNodeID(rawValue: "target")
@@ -94,7 +94,7 @@ func test_apply_connectNodes_whenNormalEdgeAlreadyExists_createsAdditionalEdge()
     #expect(matchedEdges.count == 2)
 }
 
-@Test("ApplyCanvasCommandsUseCase: tree area rejects connectNodes command")
+@Test("ツリーエリアは connectNodes コマンドを拒否する")
 func test_apply_connectNodesInTreeArea_throwsUnsupportedCommandError() async throws {
     let sourceNodeID = CanvasNodeID(rawValue: "source")
     let targetNodeID = CanvasNodeID(rawValue: "target")

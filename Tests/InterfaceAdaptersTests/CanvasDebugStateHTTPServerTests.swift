@@ -11,7 +11,7 @@ private enum TestPortReservationError: Error {
     case getsocknameFailed
 }
 
-@Test("CanvasDebugStateHTTPServer: start fails when port is already occupied")
+@Test("ポートがすでに占有されている場合、開始は失敗する")
 func test_start_failsWhenPortIsAlreadyOccupied() throws {
     let port = try findAvailablePort()
     let firstServer = makeServer(port: port)

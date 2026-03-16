@@ -4,7 +4,7 @@ import Testing
 
 // Background: Edge inline editing writes labels through command pipeline.
 // Responsibility: Verify setEdgeLabel mutation behavior and normalization.
-@Test("ApplyCanvasCommandsUseCase: setEdgeLabel updates edge label and normalizes empty to nil")
+@Test("setEdgeLabel はエッジラベルを更新し、空を nil に正規化する")
 func test_apply_setEdgeLabel_updatesEdgeLabel() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")
@@ -43,7 +43,7 @@ func test_apply_setEdgeLabel_updatesEdgeLabel() async throws {
     #expect(cleared.newState.edgesByID[edgeID]?.label == nil)
 }
 
-@Test("ApplyCanvasCommandsUseCase: setEdgeLabel is no-op when edge is missing")
+@Test("エッジが欠落している場合、setEdgeLabel は何もしない")
 func test_apply_setEdgeLabel_noOpWhenEdgeMissing() async throws {
     let nodeAID = CanvasNodeID(rawValue: "node-a")
     let nodeBID = CanvasNodeID(rawValue: "node-b")

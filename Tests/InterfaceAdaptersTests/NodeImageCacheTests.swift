@@ -6,7 +6,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("NodeImageCache: reloads image when same file path is overwritten")
+@Test("同じファイルパスが上書きされた場合にイメージをリロードする")
 func test_nodeImageCache_samePathOverwrite_reloadsUpdatedImage() throws {
     let cache = NodeImageCache()
     let tempURL = FileManager.default.temporaryDirectory
@@ -40,7 +40,7 @@ func test_nodeImageCache_samePathOverwrite_reloadsUpdatedImage() throws {
     #expect(updatedImage?.size.height == 60)
 }
 
-@Test("NodeImageCache: returns nil after cached file is deleted")
+@Test("キャッシュされたファイルが削除された後は nil を返す")
 func test_nodeImageCache_deletedFile_returnsNil() throws {
     let cache = NodeImageCache()
     let tempURL = FileManager.default.temporaryDirectory

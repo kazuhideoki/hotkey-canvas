@@ -4,7 +4,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("ConnectNodeSelectionHotkeyResolver: left arrow moves selection left")
+@Test("左矢印は選択範囲を左に移動する")
 func test_connectNodeSelection_action_leftArrow_returnsMoveSelectionLeft() throws {
     let sut = ConnectNodeSelectionHotkeyResolver()
 
@@ -13,7 +13,7 @@ func test_connectNodeSelection_action_leftArrow_returnsMoveSelectionLeft() throw
     #expect(action == .moveSelection(.left))
 }
 
-@Test("ConnectNodeSelectionHotkeyResolver: up arrow moves selection up")
+@Test("上矢印で選択範囲を上に移動する")
 func test_connectNodeSelection_action_upArrow_returnsMoveSelectionUp() throws {
     let sut = ConnectNodeSelectionHotkeyResolver()
 
@@ -22,7 +22,7 @@ func test_connectNodeSelection_action_upArrow_returnsMoveSelectionUp() throws {
     #expect(action == .moveSelection(.up))
 }
 
-@Test("ConnectNodeSelectionHotkeyResolver: down arrow moves selection down")
+@Test("下矢印で選択範囲を下に移動する")
 func test_connectNodeSelection_action_downArrow_returnsMoveSelectionDown() throws {
     let sut = ConnectNodeSelectionHotkeyResolver()
 
@@ -31,7 +31,7 @@ func test_connectNodeSelection_action_downArrow_returnsMoveSelectionDown() throw
     #expect(action == .moveSelection(.down))
 }
 
-@Test("ConnectNodeSelectionHotkeyResolver: right arrow moves selection right")
+@Test("右矢印で選択範囲を右に移動")
 func test_connectNodeSelection_action_rightArrow_returnsMoveSelectionRight() throws {
     let sut = ConnectNodeSelectionHotkeyResolver()
 
@@ -40,7 +40,7 @@ func test_connectNodeSelection_action_rightArrow_returnsMoveSelectionRight() thr
     #expect(action == .moveSelection(.right))
 }
 
-@Test("ConnectNodeSelectionHotkeyResolver: Enter confirms selection")
+@Test("Enter で選択を確定する")
 func test_connectNodeSelection_action_enter_returnsConfirmSelection() throws {
     let sut = ConnectNodeSelectionHotkeyResolver()
 
@@ -49,7 +49,7 @@ func test_connectNodeSelection_action_enter_returnsConfirmSelection() throws {
     #expect(action == .confirmSelection)
 }
 
-@Test("ConnectNodeSelectionHotkeyResolver: Escape dismisses mode")
+@Test("Escape でモードを終了する")
 func test_connectNodeSelection_action_escape_returnsDismiss() throws {
     let sut = ConnectNodeSelectionHotkeyResolver()
 
@@ -58,7 +58,7 @@ func test_connectNodeSelection_action_escape_returnsDismiss() throws {
     #expect(action == .dismiss)
 }
 
-@Test("ConnectNodeSelectionHotkeyResolver: unrelated key returns nil")
+@Test("無関係なキーは nil を返す")
 func test_connectNodeSelection_action_unrelatedKey_returnsNil() throws {
     let sut = ConnectNodeSelectionHotkeyResolver()
 
@@ -67,7 +67,7 @@ func test_connectNodeSelection_action_unrelatedKey_returnsNil() throws {
     #expect(action == nil)
 }
 
-@Test("ConnectNodeSelectionHotkeyResolver: non-keyDown event returns nil")
+@Test("keyDown 以外のイベントは nil を返す")
 func test_connectNodeSelection_action_nonKeyDownEvent_returnsNil() throws {
     let sut = ConnectNodeSelectionHotkeyResolver()
     let event = try #require(
