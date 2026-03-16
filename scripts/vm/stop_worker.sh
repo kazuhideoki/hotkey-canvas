@@ -18,8 +18,22 @@ vm_log "Stopping ${HOTKEY_VM_NAME}"
 tart stop "${HOTKEY_VM_NAME}" >/dev/null 2>&1 || true
 
 if [[ -f "${pid_file}" ]]; then
-    if kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
-        wait "$(cat "${pid_file}")" 2>/dev/null || true
+    tart_run_pid="$(cat "${pid_file}")"
+    if kill -0 "${tart_run_pid}" 2>/dev/null; then
+        deadline=$((SECONDS + 10))
+        while kill -0 "${tart_run_pid}" 2>/dev/null; do
+            if ((SECONDS >= deadline)); then
+                vm_error "tart run process did not exit after stop; sending TERM to ${tart_run_pid}"
+                kill "${tart_run_pid}" 2>/dev/null || true
+                sleep 1
+                if kill -0 "${tart_run_pid}" 2>/dev/null; then
+                    vm_error "tart run process still alive; sending KILL to ${tart_run_pid}"
+                    kill -9 "${tart_run_pid}" 2>/dev/null || true
+                fi
+                break
+            fi
+            sleep 1
+        done
     fi
     rm -f "${pid_file}"
 fi

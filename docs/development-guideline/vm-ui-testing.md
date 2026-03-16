@@ -34,6 +34,9 @@
 
 ## 使用スクリプト
 
+- `scripts/vm/session_up.sh`
+- `scripts/vm/session_down.sh`
+- `scripts/vm/restart_hotkey_canvas_debug.sh`
 - `scripts/vm/create_golden_image.sh`
 - `scripts/vm/clone_worker.sh`
 - `scripts/vm/start_worker.sh`
@@ -50,6 +53,9 @@
 
 ## 基本フロー
 
+探索的な GUI 確認では、まず `session_up.sh` / `session_down.sh` を入口に使う。
+詳細は `vm-skill-design.md` を参照。
+
 ### 1. golden image を作成する
 
 ```bash
@@ -60,14 +66,12 @@ scripts/vm/create_golden_image.sh
 ### 2. worker VM を複製して起動する
 
 ```bash
-HOTKEY_VM_GOLDEN_IMAGE=hotkey-canvas-golden \
-HOTKEY_VM_NAME=hotkey-canvas-agent \
-scripts/vm/clone_worker.sh
+export HOTKEY_VM_GOLDEN_IMAGE=hotkey-canvas-golden
+export HOTKEY_VM_NAME=hotkey-canvas-agent
+export HOTKEY_VM_DISPLAY_MODE=no-graphics
+export HOTKEY_VM_SHARED_REPO_MODE=rw
 
-HOTKEY_VM_NAME=hotkey-canvas-agent \
-HOTKEY_VM_DISPLAY_MODE=no-graphics \
-HOTKEY_VM_SHARED_REPO_MODE=rw \
-scripts/vm/start_worker.sh
+scripts/vm/session_up.sh --clone
 ```
 
 `HOTKEY_VM_SHARED_REPO_MODE=rw` を付けると、ホストの repo がゲストに `virtiofs` 共有される。
@@ -77,13 +81,10 @@ scripts/vm/start_worker.sh
 ### 3. guest を整備する
 
 ```bash
-HOTKEY_VM_NAME=hotkey-canvas-agent \
+export HOTKEY_VM_NAME=hotkey-canvas-agent
+
 scripts/vm/prepare_guest_image.sh --install-appium
-
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/bootstrap_tcc_permissions.sh
-
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/check_guest_setup.sh
 ```
 
@@ -99,14 +100,20 @@ Appium は将来の自動化経路として残しているが、最小フロー�
 ### 4. HotkeyCanvas をゲスト内で起動する
 
 ```bash
-HOTKEY_VM_NAME=hotkey-canvas-agent \
+export HOTKEY_VM_NAME=hotkey-canvas-agent
+
 scripts/vm/start_hotkey_canvas_debug.sh
+```
+
+fresh restart が必要なら:
+
+```bash
+scripts/vm/restart_hotkey_canvas_debug.sh
 ```
 
 debug-state API の疎通確認:
 
 ```bash
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/fetch_debug_state.sh /debug/v1/health
 ```
 
@@ -135,7 +142,6 @@ VM 上での GUI 検証は、常に HotkeyCanvas window を最大化した状態
 ### スクリーンショット取得
 
 ```bash
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/capture_screen.sh .tmp/vm-artifacts/guest-screen.png
 ```
 
@@ -174,21 +180,18 @@ modifier key を含む入力は `vncdotool` で不安定な場合がある。`cm
 例: `CGEvent` ベースで `cmd+enter` と `cmd+l` を送る
 
 ```bash
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/send_keys.sh cmd+enter pause:0.5 cmd+l pause:0.3 enter
 ```
 
 例: guest VNC 経由で Add Node popup を操作する
 
 ```bash
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/send_vnc_keys.sh move:500:350 click:1 pause:0.5 shift+enter pause:0.5 d pause:0.3 enter
 ```
 
 例: Diagram 2 nodes + 3 edges を作ってスクリーンショットを保存する
 
 ```bash
-HOTKEY_VM_NAME=hotkey-canvas-agent \
 scripts/vm/capture_diagram_multi_edge.sh \
   --edge-count 3 \
   --output .tmp/vm-artifacts/diagram-multi-edge.png \
@@ -223,6 +226,7 @@ scripts/vm/capture_diagram_multi_edge.sh \
 ## 後片付け
 
 ```bash
-HOTKEY_VM_NAME=hotkey-canvas-agent \
-scripts/vm/stop_worker.sh
+scripts/vm/session_down.sh --collect-standard-artifacts
 ```
+
+`session_down.sh` が長く待つ場合は、artifact を確認したうえで `tart stop "$HOTKEY_VM_NAME"` で明示停止してよい。
