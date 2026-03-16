@@ -25,7 +25,7 @@
 | --- | --- | --- |
 | D1 | キャンバスグラフ編集 | `CanvasGraph`, `CanvasFocusedElement`, `CanvasEdgeFocus`, `CanvasNode`, `CanvasEdge`, `CanvasCommand`, `CanvasDefaultNodeDistance`, `CanvasGraphCRUDService`, `CanvasGraphError` |
 | D2 | フォーカス移動と複数選択 | `CanvasFocusDirection`, `CanvasFocusNavigationService`, `CanvasSelectionService` |
-| D3 | エリアレイアウト | `CanvasNodeArea`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService` |
+| D3 | エリアレイアウトと衝突解消 | `CanvasNodeArea`, `CanvasCollisionBodyID`, `CanvasCollisionBody`, `CanvasCollisionShape`, `CanvasRect`, `CanvasTranslation`, `CanvasAreaLayoutService`, `CanvasCollisionResolutionService` |
 | D4 | ツリーレイアウト | `CanvasTreeLayoutService` |
 | D5 | ショートカットカタログ | `CanvasCommandPaletteLabel`, `CanvasShortcutDefinition`, `CanvasShortcutGesture`, `CanvasShortcutAction`, `CanvasShortcutCatalogService`, `KeymapPrimitiveIntent`, `KeymapGlobalAction`, `KeymapResolvedRoute`, `KeymapIntentResolver` |
 | D6 | 折りたたみ可視性 | `CanvasFoldedSubtreeVisibilityService` |
@@ -184,12 +184,15 @@
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 
-### D3. エリアレイアウトドメイン
+### D3. エリアレイアウトと衝突解消ドメイン
 
 #### 構造
 
 - モデル
   - `CanvasNodeArea`: 親子接続成分をひとまとまりの領域として表現する。
+  - `CanvasCollisionBodyID`: collision body 専用の識別子。単一 node body と cluster body を別 namespace で表現する。
+  - `CanvasCollisionBody`: 1 ノードまたは複数選択ノード群を、同一移動量で動く衝突単位として表現する。
+  - `CanvasCollisionShape`: 1 つ以上の矩形の union として衝突形状を表現する。
   - `CanvasAreaShapeKind`: 領域形状の生成戦略（矩形/凸包）を表現する。
   - `CanvasAreaShape`: 領域の外周形状（矩形/凸包頂点列）を表現する。
   - `CanvasPoint`: 凸包頂点や投影計算に使う 2D 座標値オブジェクト。
@@ -199,6 +202,7 @@
   - `CanvasEdgeRelationType.parentChild` を接続判定に使用する。
 - サービス
   - `CanvasAreaLayoutService`
+  - `CanvasCollisionResolutionService`
 
 #### サービス詳細
 
@@ -214,9 +218,21 @@
 - `makeParentChildAreas(in:)` は `parentChild` 接続成分ごとに領域を構成し、指定戦略に応じて矩形または凸包の形状を返す。
 - `resolveOverlaps(...)` は seed 領域を起点に衝突解消を伝播させ、決定的な移動量を返す。
 
+`CanvasCollisionResolutionService` は Diagram 文脈の node / node-cluster 衝突解消を担当する。
+
+| メソッド | 責務 |
+| --- | --- |
+| `resolveOverlaps(bodies:seedBodyID:minimumSpacing:seedPreferredMoveDirection:maxIterations:)` | seed body を起点に衝突解消を伝播し、body ごとの移動量を返す。 |
+
+仕様上の要点:
+
+- `CanvasCollisionShape` は矩形集合の union を表現し、凸包ではなく実際の矩形配置に基づいて衝突判定する。
+- `resolveOverlaps(...)` は body を cardinal direction のみで押し出し、concave な gap に存在する別 body を不要に押し出さない。
+- `seedPreferredMoveDirection` を与えた場合、seed body 自体の slot を保ちつつ、その移動方向を優先して衝突相手を押し出す。
+
 #### 主要な利用境界
 
-- Application の area layout 段と、ノード追加時の配置候補計算で利用する。
+- Application の area layout 段、Diagram の複数選択 node move 後の衝突解消、ノード追加時の配置候補計算で利用する。
 - `CanvasRect` などの幾何モデルは、描画範囲や当たり判定に関わる出力計算でも利用する。
 
 #### 不変条件・エラー一覧
@@ -226,6 +242,8 @@
   - `maxIterations <= 0` または領域数 1 以下の場合は移動なし。
   - `seedAreaID` が領域に存在しない場合は移動なし。
   - 返却値には非ゼロ移動のみ含める。
+  - `CanvasCollisionShape` の矩形集合は空を許容しない。
+  - `CanvasCollisionResolutionService.resolveOverlaps(...)` は seed body が存在しない場合、または初回衝突がない場合は移動なし。
 - エラー
   - ドメインエラー型は持たず、`throws` しない。
 

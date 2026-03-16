@@ -1,14 +1,14 @@
-// Background: Pipeline migration requires a centralized execution order for command mutation and recomputation.
-// Responsibility: Execute fixed stage order from mutation outputs and return final pipeline state.
+// 背景: pipeline 移行では mutation と再計算の実行順を一元化する必要がある。
+// 責務: mutation 出力から固定 stage 順序を実行し、最終 pipeline state を返す。
 import Domain
 
-/// Coordinator that evaluates fixed pipeline stage order from phase-1 effect contracts.
+/// phase-1 effect 契約に従って固定 stage 順序を評価する coordinator。
 struct CanvasCommandPipelineCoordinator: Sendable {
-    /// Runs mutation outputs through the fixed pipeline order and returns the last aggregated result.
+    /// mutation 出力へ固定 pipeline 順序を適用し、最後の集約結果を返す。
     /// - Parameters:
-    ///   - baseGraph: Snapshot before executing the current command sequence.
-    ///   - mutationResults: Mutation outputs that already classify stage requirements via effects.
-    /// - Returns: Final graph and viewport intent after all eligible stages are evaluated.
+    ///   - baseGraph: 現在の command sequence 実行前 snapshot。
+    ///   - mutationResults: effect により stage 要否が分類済みの mutation 出力。
+    /// - Returns: 適用可能な全 stage 評価後の最終 graph と viewport intent。
     func run(
         on baseGraph: CanvasGraph,
         mutationResults: [CanvasMutationResult]
@@ -42,7 +42,7 @@ struct CanvasCommandPipelineCoordinator: Sendable {
 }
 
 extension CanvasCommandPipelineCoordinator {
-    /// Applies deterministic stage gating from the phase-1 effects contract.
+    /// phase-1 effects 契約に基づいて決定的に stage を分岐する。
     private func runStages(
         from graphBeforeMutation: CanvasGraph,
         with mutationResult: CanvasMutationResult
@@ -61,7 +61,7 @@ extension CanvasCommandPipelineCoordinator {
         if effects.didMutateGraph && effects.needsAreaLayout {
             graph = runAreaLayoutStage(
                 on: graph,
-                seedNodeID: mutationResult.areaLayoutSeedNodeID
+                mutationResult: mutationResult
             )
         }
         if effects.didMutateGraph {
@@ -91,7 +91,7 @@ extension CanvasCommandPipelineCoordinator {
         return graph
     }
 
-    /// Recomputes parent-child tree bounds when structural mutation requests tree layout.
+    /// 構造 mutation が tree layout を要求したとき parent-child tree bounds を再計算する。
     private func runTreeLayoutStage(on graph: CanvasGraph) -> CanvasGraph {
         let updatedBoundsByNodeID = CanvasTreeLayoutService.relayoutParentChildTrees(
             in: graph,
@@ -134,9 +134,12 @@ extension CanvasCommandPipelineCoordinator {
         )
     }
 
-    /// Resolves overlap translations for the connected area that contains the mutation seed node.
-    private func runAreaLayoutStage(on graph: CanvasGraph, seedNodeID: CanvasNodeID?) -> CanvasGraph {
-        guard let seedNodeID else {
+    /// mutation seed を含む連結 area または移動済み diagram cluster の重なりを解消する。
+    private func runAreaLayoutStage(
+        on graph: CanvasGraph,
+        mutationResult: CanvasMutationResult
+    ) -> CanvasGraph {
+        guard let seedNodeID = mutationResult.areaLayoutSeedNodeID else {
             return graph
         }
         guard let seedArea = focusedArea(containing: seedNodeID, in: graph) else {
@@ -147,9 +150,14 @@ extension CanvasCommandPipelineCoordinator {
         case .tree:
             return runTreeAreaLayoutStage(on: graph, seedNodeID: seedNodeID)
         case .diagram:
+            let diagramSeedNodeIDs =
+                mutationResult.diagramNodeLayoutSeedNodeIDs.isEmpty
+                ? Set([seedNodeID])
+                : mutationResult.diagramNodeLayoutSeedNodeIDs
             let graphAfterNodeLayout = runDiagramNodeLayoutStage(
                 on: graph,
-                seedNodeID: seedNodeID,
+                seedNodeIDs: diagramSeedNodeIDs,
+                seedMoveDirection: mutationResult.diagramNodeLayoutSeedMoveDirection,
                 in: seedArea
             )
             return runDiagramAreaLayoutStage(
@@ -179,48 +187,6 @@ extension CanvasCommandPipelineCoordinator {
             areas: areas,
             seedAreaID: seedArea.id,
             minimumSpacing: CanvasDefaultNodeDistance.treeHorizontal
-        )
-        return applyingAreaTranslations(
-            to: graph,
-            areas: areas,
-            translationsByAreaID: translationsByAreaID
-        )
-    }
-
-    private func runDiagramNodeLayoutStage(
-        on graph: CanvasGraph,
-        seedNodeID: CanvasNodeID,
-        in seedArea: CanvasArea
-    ) -> CanvasGraph {
-        let nodeIDs = seedArea.nodeIDs
-            .filter { graph.nodesByID[$0] != nil }
-            .sorted { $0.rawValue < $1.rawValue }
-        guard nodeIDs.count > 1 else {
-            return graph
-        }
-
-        let areas: [CanvasNodeArea] = nodeIDs.map { nodeID in
-            guard let node = graph.nodesByID[nodeID] else {
-                preconditionFailure("Node ID listed in area must exist in graph: \(nodeID.rawValue)")
-            }
-            let bounds = CanvasRect(
-                minX: node.bounds.x,
-                minY: node.bounds.y,
-                width: node.bounds.width,
-                height: node.bounds.height
-            )
-            return CanvasNodeArea(
-                id: nodeID,
-                nodeIDs: [nodeID],
-                bounds: bounds,
-                shape: .rectangle
-            )
-        }
-
-        let translationsByAreaID = CanvasAreaLayoutService.resolveOverlaps(
-            areas: areas,
-            seedAreaID: seedNodeID,
-            minimumSpacing: 16
         )
         return applyingAreaTranslations(
             to: graph,

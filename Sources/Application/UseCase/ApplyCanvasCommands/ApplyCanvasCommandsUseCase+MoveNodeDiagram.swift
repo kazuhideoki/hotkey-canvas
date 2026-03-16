@@ -1,8 +1,8 @@
 import Domain
 
-// Background: Diagram-mode node move must feel like continuous grid movement with or without a connected anchor.
-// Responsibility: Resolve diagram move target from current slot.
-// Skip anchor-overlapping candidates only when a connected anchor exists.
+// 背景: Diagram mode の node move は、接続 anchor の有無にかかわらず連続した grid 移動として感じられる必要がある。
+// 責務: 現在 slot から diagram move の移動先を解決する。
+// 接続 anchor が存在するときだけ anchor と重なる候補をスキップする。
 extension ApplyCanvasCommandsUseCase {
     private static let diagramSemanticHorizontalGap: Double = CanvasDefaultNodeDistance.diagramHorizontal
     private static let diagramSemanticVerticalGap: Double = CanvasDefaultNodeDistance.vertical(for: .diagram)
@@ -96,7 +96,9 @@ extension ApplyCanvasCommandsUseCase {
                 needsAreaLayout: true,
                 needsFocusNormalization: false
             ),
-            areaLayoutSeedNodeID: focusedNodeID
+            areaLayoutSeedNodeID: focusedNodeID,
+            diagramNodeLayoutSeedNodeIDs: Set(targetNodeIDs),
+            diagramNodeLayoutSeedMoveDirection: direction
         )
     }
 

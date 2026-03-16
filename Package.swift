@@ -9,7 +9,9 @@ let package = Package(
     products: [
         .executable(name: "HotkeyCanvasApp", targets: ["App"])
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/realm/SwiftLint", exact: "0.63.2")
+    ],
     targets: [
         .target(
             name: "Domain"
