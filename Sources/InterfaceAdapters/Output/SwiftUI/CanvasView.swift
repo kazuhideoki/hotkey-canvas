@@ -233,9 +233,34 @@ public struct CanvasView: View {
                     .zIndex(10)
                 }
                 ZStack(alignment: .topLeading) {
+<<<<<<< HEAD
                     ZStack(alignment: .topLeading) {
                         areaFocusOverlay(scene: scene)
                         ForEach(scene.edges, id: \.id) { edge in
+=======
+                    areaFocusOverlay(
+                        displayNodes: displayNodes, viewportSize: viewportSize, effectiveOffset: cameraOffset)
+                    ForEach(displayEdges, id: \.id) { edge in
+                        let areaID = viewModel.areaIDByNodeID[edge.fromNodeID]
+                        let edgeShapeStyle = areaID.flatMap { viewModel.areaEdgeShapeStyleByID[$0] } ?? .curved
+                        let editingMode = areaID.flatMap { viewModel.areaEditingModeByID[$0] }
+                        let routingStyle: CanvasEdgeRouting.RoutingStyle =
+                            editingMode == .tree ? .treeSimple : .adaptive
+                        let nodeAvoidanceEnabled = editingMode != .tree
+                        let branchCoordinates =
+                            routingStyle == .treeSimple
+                            ? treeBranchCoordinateByParentAndDirection
+                            : branchCoordinateByParentAndDirection
+                        if let path = CanvasEdgeRouting.path(
+                            for: edge,
+                            nodesByID: nodesByID,
+                            branchCoordinateByParentAndDirection: branchCoordinates,
+                            laneOffsetsByEdgeID: laneOffsetsByEdgeID,
+                            edgeShapeStyle: edgeShapeStyle,
+                            routingStyle: routingStyle,
+                            nodeAvoidanceEnabled: nodeAvoidanceEnabled
+                        ) {
+>>>>>>> main
                             let isFocusedEdge = focusedEdgeID == edge.id
                             let isSelectedEdge = selectedEdgeIDs.contains(edge.id)
                             let strokeColor: Color =

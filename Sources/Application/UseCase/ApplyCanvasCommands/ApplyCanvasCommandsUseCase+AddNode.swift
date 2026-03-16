@@ -64,7 +64,7 @@ extension ApplyCanvasCommandsUseCase {
             effects: CanvasMutationEffects(
                 didMutateGraph: true,
                 needsTreeLayout: false,
-                needsAreaLayout: area.editingMode == .tree,
+                needsAreaLayout: true,
                 needsFocusNormalization: false
             ),
             areaLayoutSeedNodeID: node.id
