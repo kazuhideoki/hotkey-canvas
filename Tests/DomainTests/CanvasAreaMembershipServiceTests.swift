@@ -28,6 +28,36 @@ func test_validate_failsWhenNodeHasNoArea() throws {
     }
 }
 
+@Test("CanvasAreaMembershipService: validate fails when node belongs to multiple areas")
+func test_validate_failsWhenNodeBelongsToMultipleAreas() throws {
+    let nodeID = CanvasNodeID(rawValue: "node-1")
+    let firstAreaID = CanvasAreaID(rawValue: "area-1")
+    let secondAreaID = CanvasAreaID(rawValue: "area-2")
+    let graph = CanvasGraph(
+        nodesByID: [
+            nodeID: CanvasNode(
+                id: nodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: nodeID,
+        areasByID: [
+            firstAreaID: CanvasArea(id: firstAreaID, nodeIDs: [nodeID], editingMode: .tree),
+            secondAreaID: CanvasArea(id: secondAreaID, nodeIDs: [nodeID], editingMode: .diagram),
+        ]
+    )
+
+    do {
+        try CanvasAreaMembershipService.validate(in: graph).get()
+        Issue.record("Expected nodeAssignedToMultipleAreas")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .nodeAssignedToMultipleAreas(nodeID))
+    }
+}
+
 @Test("CanvasAreaMembershipService: assign moves membership between areas")
 func test_assign_movesMembershipBetweenAreas() throws {
     let nodeID = CanvasNodeID(rawValue: "node-1")
@@ -84,6 +114,36 @@ func test_focusedAreaID_failsWhenFocusedNodeIsUnassigned() throws {
         Issue.record("Expected focusedNodeNotAssignedToArea")
     } catch let error as CanvasAreaPolicyError {
         #expect(error == .focusedNodeNotAssignedToArea(focusedNodeID))
+    }
+}
+
+@Test("CanvasAreaMembershipService: focusedAreaID fails when focused node belongs to multiple areas")
+func test_focusedAreaID_failsWhenFocusedNodeBelongsToMultipleAreas() throws {
+    let focusedNodeID = CanvasNodeID(rawValue: "focused")
+    let firstAreaID = CanvasAreaID(rawValue: "area-1")
+    let secondAreaID = CanvasAreaID(rawValue: "area-2")
+    let graph = CanvasGraph(
+        nodesByID: [
+            focusedNodeID: CanvasNode(
+                id: focusedNodeID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 200, height: 80)
+            )
+        ],
+        edgesByID: [:],
+        focusedNodeID: focusedNodeID,
+        areasByID: [
+            firstAreaID: CanvasArea(id: firstAreaID, nodeIDs: [focusedNodeID], editingMode: .tree),
+            secondAreaID: CanvasArea(id: secondAreaID, nodeIDs: [focusedNodeID], editingMode: .diagram),
+        ]
+    )
+
+    do {
+        try CanvasAreaMembershipService.focusedAreaID(in: graph).get()
+        Issue.record("Expected nodeAssignedToMultipleAreas")
+    } catch let error as CanvasAreaPolicyError {
+        #expect(error == .nodeAssignedToMultipleAreas(focusedNodeID))
     }
 }
 
