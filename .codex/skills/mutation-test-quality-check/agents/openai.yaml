@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mutation Test Quality Check"
+  short_description: "現実的な mutation でテスト品質を点検する"
+  default_prompt: "Use $mutation-test-quality-check to inspect the quality of tests in a user-specified scope by applying realistic temporary mutations and reporting gaps."

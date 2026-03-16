@@ -7,9 +7,13 @@
 ## Development Guideline
 
 - 開発ワークフローと規約: `docs/development-guideline/development-workflow.md`
-  - 役割: 開発の進め方、コーディング規約、コメント方針、テスト方針、日常的な開発コマンドの正本
+  - 役割: 開発の進め方、コーディング規約、コメント方針、日常的な開発コマンドの正本
   - 参照タイミング: 実装に着手する前、実装中の判断に迷ったとき、ビルド・lint・test の進め方を確認したいとき
-  - 変更タイミング: 開発フロー、コーディング規約、コメント規約、テスト運用、日常利用コマンドの運用を変更したとき
+  - 変更タイミング: 開発フロー、コーディング規約、コメント規約、日常利用コマンドの運用を変更したとき
+- テストガイドライン: `docs/development-guideline/testing-guideline.md`
+  - 役割: テスト戦略、テスト追加方針、coverage 運用、`./scripts/test_with_coverage.sh` の使い方の正本
+  - 参照タイミング: テスト設計、回帰テスト追加、coverage 確認、`test_with_coverage.sh` の運用方法を確認したいとき
+  - 変更タイミング: テスト方針、coverage しきい値、テスト運用手順、受け入れ基準を変更したとき
 - VM UI テスト運用: `docs/development-guideline/vm-ui-testing.md`
   - 役割: 隔離 macOS VM を使った UI テスト運用手順の正本
   - 参照タイミング: GUI 検証、VM 上での UI テスト、実機相当の確認を行うとき

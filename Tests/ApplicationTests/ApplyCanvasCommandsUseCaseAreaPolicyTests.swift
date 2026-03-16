@@ -9,6 +9,35 @@ private func boundsOverlap(_ lhs: CanvasBounds, _ rhs: CanvasBounds) -> Bool {
         && lhs.y + lhs.height > rhs.y
 }
 
+private func areaBounds(for areaID: CanvasAreaID, in graph: CanvasGraph) -> CanvasBounds? {
+    guard let area = graph.areasByID[areaID] else {
+        return nil
+    }
+    let nodes = area.nodeIDs.compactMap { graph.nodesByID[$0] }
+    guard let firstNode = nodes.first else {
+        return nil
+    }
+
+    var minX = firstNode.bounds.x
+    var minY = firstNode.bounds.y
+    var maxX = firstNode.bounds.x + firstNode.bounds.width
+    var maxY = firstNode.bounds.y + firstNode.bounds.height
+
+    for node in nodes.dropFirst() {
+        minX = min(minX, node.bounds.x)
+        minY = min(minY, node.bounds.y)
+        maxX = max(maxX, node.bounds.x + node.bounds.width)
+        maxY = max(maxY, node.bounds.y + node.bounds.height)
+    }
+
+    return CanvasBounds(
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY
+    )
+}
+
 // Background: Phase-1 area mode requires command dispatch by focused area policy.
 // Responsibility: Verify mode-specific command gating and area-data validation in apply entry.
 @Test("ApplyCanvasCommandsUseCase: diagram area maps addChildNode command to addNode behavior")
@@ -128,6 +157,62 @@ func test_apply_diagramArea_addChildNodeSnapsDiagonalAnchorDirectionToCardinalAx
     let newNode = try #require(result.newState.nodesByID[newNodeID])
     #expect(newNode.bounds.x == 880)
     #expect(newNode.bounds.y == 440)
+}
+
+@Test("ApplyCanvasCommandsUseCase: diagram area addChildNode resolves cross-area overlap immediately after insertion")
+func test_apply_diagramArea_addChildNodeResolvesCrossAreaOverlapImmediatelyAfterInsertion() async throws {
+    let anchorID = CanvasNodeID(rawValue: "anchor")
+    let focusedID = CanvasNodeID(rawValue: "focused")
+    let blockerID = CanvasNodeID(rawValue: "blocker")
+    let sourceAreaID = CanvasAreaID(rawValue: "source-diagram-area")
+    let blockerAreaID = CanvasAreaID(rawValue: "blocker-diagram-area")
+    let graph = CanvasGraph(
+        nodesByID: [
+            anchorID: CanvasNode(
+                id: anchorID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 0, y: 0, width: 220, height: 220)
+            ),
+            focusedID: CanvasNode(
+                id: focusedID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 440, y: 440, width: 220, height: 220)
+            ),
+            blockerID: CanvasNode(
+                id: blockerID,
+                kind: .text,
+                text: nil,
+                bounds: CanvasBounds(x: 700, y: 120, width: 120, height: 120)
+            ),
+        ],
+        edgesByID: [
+            CanvasEdgeID(rawValue: "edge-anchor-focused"): CanvasEdge(
+                id: CanvasEdgeID(rawValue: "edge-anchor-focused"),
+                fromNodeID: anchorID,
+                toNodeID: focusedID,
+                relationType: .normal
+            )
+        ],
+        focusedNodeID: focusedID,
+        areasByID: [
+            sourceAreaID: CanvasArea(id: sourceAreaID, nodeIDs: [anchorID, focusedID], editingMode: .diagram),
+            blockerAreaID: CanvasArea(id: blockerAreaID, nodeIDs: [blockerID], editingMode: .diagram),
+        ]
+    )
+    let sut = ApplyCanvasCommandsUseCase(initialGraph: graph)
+
+    let result = try await sut.apply(commands: [.addChildNode])
+
+    let newNodeID = try #require(result.newState.focusedNodeID)
+    let newNode = try #require(result.newState.nodesByID[newNodeID])
+    let blockerNode = try #require(result.newState.nodesByID[blockerID])
+    #expect(boundsOverlap(newNode.bounds, blockerNode.bounds) == false)
+
+    let resolvedSourceAreaBounds = try #require(areaBounds(for: sourceAreaID, in: result.newState))
+    let resolvedBlockerAreaBounds = try #require(areaBounds(for: blockerAreaID, in: result.newState))
+    #expect(boundsOverlap(resolvedSourceAreaBounds, resolvedBlockerAreaBounds) == false)
 }
 
 @Test("ApplyCanvasCommandsUseCase: diagram area maps addChildNode to addNode when focus is nil and area is unique")

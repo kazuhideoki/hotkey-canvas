@@ -30,10 +30,11 @@ func test_addNodeModeSelectionTargetTransition_successfulAreaAddSwitchesToNodeTa
     )
 
     #expect(
-        transition == CanvasView.PendingAddNodeEditingTransitionState(
-            targetKind: .node,
-            shouldSwitchToNodeTargetAfterCommit: false
-        )
+        transition
+            == CanvasView.PendingAddNodeEditingTransitionState(
+                targetKind: .node,
+                shouldSwitchToNodeTargetAfterCommit: false
+            )
     )
 }
 
@@ -46,10 +47,11 @@ func test_addNodeModeSelectionTargetTransition_failedAreaAddKeepsAreaTarget() {
     )
 
     #expect(
-        transition == CanvasView.PendingAddNodeEditingTransitionState(
-            targetKind: .area,
-            shouldSwitchToNodeTargetAfterCommit: false
-        )
+        transition
+            == CanvasView.PendingAddNodeEditingTransitionState(
+                targetKind: .area,
+                shouldSwitchToNodeTargetAfterCommit: false
+            )
     )
 }
 
@@ -62,9 +64,10 @@ func test_addNodeModeSelectionTargetTransition_cancelledPopupKeepsAreaTarget() {
     )
 
     #expect(
-        transition == CanvasView.PendingAddNodeEditingTransitionState(
-            targetKind: .area,
-            shouldSwitchToNodeTargetAfterCommit: false
-        )
+        transition
+            == CanvasView.PendingAddNodeEditingTransitionState(
+                targetKind: .area,
+                shouldSwitchToNodeTargetAfterCommit: false
+            )
     )
 }

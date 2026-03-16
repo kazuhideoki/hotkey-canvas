@@ -3,6 +3,8 @@
 .codex/skills/*
 !.codex/skills/vm-ui-check/
 !.codex/skills/vm-ui-check/**
+!.codex/skills/mutation-test-quality-check/
+!.codex/skills/mutation-test-quality-check/**
 AGENTS.override.md
 .build
 .DS_Store
