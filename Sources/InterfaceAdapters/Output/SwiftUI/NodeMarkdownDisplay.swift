@@ -7,7 +7,6 @@ import SwiftUI
 struct NodeMarkdownDisplay: View {
     let text: String
     let nodeWidth: Double
-    let zoomScale: Double
     let contentScale: Double
     let appliesOuterPadding: Bool
     let style: NodeTextStyle
@@ -16,7 +15,6 @@ struct NodeMarkdownDisplay: View {
     init(
         text: String,
         nodeWidth: Double,
-        zoomScale: Double,
         contentScale: Double = 1,
         appliesOuterPadding: Bool = true,
         style: NodeTextStyle = .defaultStyle,
@@ -24,7 +22,6 @@ struct NodeMarkdownDisplay: View {
     ) {
         self.text = text
         self.nodeWidth = nodeWidth
-        self.zoomScale = zoomScale
         self.contentScale = contentScale
         self.appliesOuterPadding = appliesOuterPadding
         self.style = style
@@ -36,11 +33,10 @@ struct NodeMarkdownDisplay: View {
     }
 
     var body: some View {
-        let viewportScale = CGFloat(zoomScale)
         let contentScale = max(CGFloat(self.contentScale), 0.0001)
-        let typographyScale = viewportScale * contentScale
+        let typographyScale = contentScale
         let contentInset = style.outerPadding * typographyScale
-        let contentWidth = max((CGFloat(nodeWidth) * viewportScale) - (contentInset * 2), 1)
+        let contentWidth = max(CGFloat(nodeWidth) - (contentInset * 2), 1)
 
         VStack(alignment: contentAlignment.horizontalAlignment, spacing: style.markdownBlockSpacing * typographyScale) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in

@@ -11,6 +11,7 @@ import SwiftUI
 public struct CanvasView: View {
     static let minimumCanvasSize = CGSize(width: 900, height: 600)
     @StateObject var viewModel: CanvasViewModel
+    @StateObject var sceneAnimator = CanvasSceneAnimator()
     @State var editingContext: NodeEditingContext?
     @State var edgeEditingContext: EdgeEditingContext?
     @State var commandPaletteQuery: String = ""
@@ -68,7 +69,6 @@ public struct CanvasView: View {
     public var body: some View {
         let displayNodes = viewModel.nodes.map(displayNodeForCurrentEditingState)
         let displayEdges = viewModel.edges.map(displayEdgeForCurrentEditingState)
-        let nodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
         return GeometryReader { geometryProxy in
             let viewportSize = CGSize(
                 width: max(geometryProxy.size.width, Self.minimumCanvasSize.width),
@@ -84,38 +84,33 @@ public struct CanvasView: View {
                 manualPanOffset: manualPanOffset,
                 activeDragOffset: .zero
             )
-            let renderedNodes = displayNodes.map {
-                renderedNode($0, viewportSize: viewportSize, effectiveOffset: cameraOffset)
+            let cameraIntent = CanvasSceneCameraIntent(
+                zoomScale: zoomScale,
+                manualPanOffset: manualPanOffset,
+                hasInitializedCameraAnchor: hasInitializedCameraAnchor,
+                cameraAnchorPoint: cameraAnchorPoint
+            )
+            let targetScene = makeSceneSnapshot(
+                displayNodes: displayNodes,
+                displayEdges: displayEdges,
+                viewportSize: viewportSize,
+                effectiveOffset: cameraOffset,
+                cameraIntent: cameraIntent
+            )
+            let scene = sceneAnimator.renderedScene ?? targetScene
+            let sceneViewportTransform = viewportTransform(for: scene.viewport)
+            let renderedNodes = scene.nodes.map {
+                renderedNode($0, viewportTransform: sceneViewportTransform)
             }
             let renderedNodesByID = Dictionary(uniqueKeysWithValues: renderedNodes.map { ($0.id, $0) })
-            let branchCoordinateByParentAndDirection = CanvasEdgeRouting.branchCoordinateByParentAndDirection(
-                edges: displayEdges,
-                nodesByID: nodesByID
-            )
-            let treeBranchCoordinateByParentAndDirection = CanvasEdgeRouting.treeBranchCoordinateByParentAndDirection(
-                edges: displayEdges,
-                nodesByID: nodesByID
-            )
-            let laneOffsetsByEdgeID = CanvasEdgeRouting.laneOffsetsByEdgeID(
-                edges: displayEdges,
-                nodesByID: nodesByID
-            )
-            let edgeRenderContext = EdgeRenderContext(
-                nodesByID: nodesByID,
-                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
-                treeBranchCoordinateByParentAndDirection: treeBranchCoordinateByParentAndDirection,
-                laneOffsetsByEdgeID: laneOffsetsByEdgeID,
-                areaIDByNodeID: viewModel.areaIDByNodeID,
-                areaEditingModeByID: viewModel.areaEditingModeByID,
-                areaEdgeShapeStyleByID: viewModel.areaEdgeShapeStyleByID,
-                viewportSize: viewportSize,
-                zoomScale: zoomScale,
-                cameraOffset: cameraOffset
-            )
-            let edgeLabelPlacementCenters = edgeLabelPlacementCenters(
-                edges: displayEdges,
+            let edgeRenderContext = edgeRenderContext(scene: scene)
+            let worldEdgeLabelPlacementCenters = edgeLabelPlacementCenters(
+                edges: scene.edges,
                 context: edgeRenderContext
             )
+            let renderedEdgeLabelPlacementCenters = worldEdgeLabelPlacementCenters.mapValues {
+                $0.applying(sceneViewportTransform)
+            }
             let commandPaletteItems = filteredCommandPaletteItems()
             let recentCommandPaletteItemIDs = Set(
                 commandPaletteRecentItemIDs.prefix(Self.commandPaletteRecentPinnedCount)
@@ -238,27 +233,9 @@ public struct CanvasView: View {
                     .zIndex(10)
                 }
                 ZStack(alignment: .topLeading) {
-                    areaFocusOverlay(
-                        displayNodes: displayNodes, viewportSize: viewportSize, effectiveOffset: cameraOffset)
-                    ForEach(displayEdges, id: \.id) { edge in
-                        let areaID = viewModel.areaIDByNodeID[edge.fromNodeID]
-                        let edgeShapeStyle = areaID.flatMap { viewModel.areaEdgeShapeStyleByID[$0] } ?? .curved
-                        let editingMode = areaID.flatMap { viewModel.areaEditingModeByID[$0] }
-                        let routingStyle: CanvasEdgeRouting.RoutingStyle = editingMode == .tree ? .treeSimple : .adaptive
-                        let nodeAvoidanceEnabled = editingMode != .tree
-                        let branchCoordinates =
-                            routingStyle == .treeSimple
-                            ? treeBranchCoordinateByParentAndDirection
-                            : branchCoordinateByParentAndDirection
-                        if let path = CanvasEdgeRouting.path(
-                            for: edge,
-                            nodesByID: nodesByID,
-                            branchCoordinateByParentAndDirection: branchCoordinates,
-                            laneOffsetsByEdgeID: laneOffsetsByEdgeID,
-                            edgeShapeStyle: edgeShapeStyle,
-                            routingStyle: routingStyle,
-                            nodeAvoidanceEnabled: nodeAvoidanceEnabled
-                        ) {
+                    ZStack(alignment: .topLeading) {
+                        areaFocusOverlay(scene: scene)
+                        ForEach(scene.edges, id: \.id) { edge in
                             let isFocusedEdge = focusedEdgeID == edge.id
                             let isSelectedEdge = selectedEdgeIDs.contains(edge.id)
                             let strokeColor: Color =
@@ -277,20 +254,16 @@ public struct CanvasView: View {
                                 }
                             edgeStrokeAndArrow(
                                 edge: edge,
-                                path: path,
                                 strokeColor: strokeColor,
                                 strokeWidth: strokeWidth,
                                 context: edgeRenderContext
                             )
                             edgeLabelOverlay(
                                 edge: edge,
-                                context: edgeRenderContext,
-                                placementCenter: edgeLabelPlacementCenters[edge.id]
+                                placementCenter: worldEdgeLabelPlacementCenters[edge.id]
                             )
                         }
-                    }
-                    ForEach(displayNodes, id: \.id) { node in
-                        if let renderedNode = renderedNodesByID[node.id] {
+                        ForEach(scene.nodes, id: \.id) { node in
                             let isFocused = viewModel.focusedNodeID == node.id
                             let isSelected = viewModel.selectedNodeIDs.contains(node.id)
                             let isCollapsedRoot = viewModel.collapsedRootNodeIDs.contains(node.id)
@@ -323,11 +296,12 @@ public struct CanvasView: View {
                                         )
                                 )
                                 .overlay(alignment: .topLeading) {
-                                    nodeContentOverlay(
-                                        node: node,
-                                        zoomScale: zoomScale,
-                                        contentAlignment: textContentAlignment
-                                    )
+                                    if !isEditing {
+                                        nodeContentOverlay(
+                                            node: node,
+                                            contentAlignment: textContentAlignment
+                                        )
+                                    }
                                 }
                                 .overlay(alignment: .trailing) {
                                     if isCollapsedRoot {
@@ -339,26 +313,56 @@ public struct CanvasView: View {
                                             )
                                             .font(
                                                 .system(
-                                                    size: nodeTextStyle.collapsedBadgeFontSize
-                                                        * CGFloat(zoomScale),
+                                                    size: nodeTextStyle.collapsedBadgeFontSize,
                                                     weight: .semibold
                                                 )
                                             )
-                                            .offset(
-                                                x: nodeTextStyle.collapsedBadgeTrailingOffset
-                                                    * CGFloat(zoomScale)
-                                            )
+                                            .offset(x: nodeTextStyle.collapsedBadgeTrailingOffset)
                                     }
                                 }
                                 .frame(
-                                    width: CGFloat(renderedNode.bounds.width),
-                                    height: CGFloat(renderedNode.bounds.height),
+                                    width: CGFloat(node.bounds.width),
+                                    height: CGFloat(node.bounds.height),
                                     alignment: .topLeading
                                 )
                                 .position(
-                                    x: CGFloat(renderedNode.bounds.x + (renderedNode.bounds.width / 2)),
-                                    y: CGFloat(renderedNode.bounds.y + (renderedNode.bounds.height / 2))
+                                    x: CGFloat(node.bounds.x + (node.bounds.width / 2)),
+                                    y: CGFloat(node.bounds.y + (node.bounds.height / 2))
                                 )
+                        }
+                    }
+                    .transformEffect(sceneViewportTransform)
+                    ForEach(scene.nodes, id: \.id) { node in
+                        if editingContext?.nodeID == node.id,
+                            let renderedNode = renderedNodesByID[node.id]
+                        {
+                            nodeContentOverlay(
+                                node: renderedNode,
+                                contentAlignment: nodeTextContentAlignment(for: node.id)
+                            )
+                            .frame(
+                                width: CGFloat(renderedNode.bounds.width),
+                                height: CGFloat(renderedNode.bounds.height),
+                                alignment: .topLeading
+                            )
+                            .position(
+                                x: CGFloat(renderedNode.bounds.x + (renderedNode.bounds.width / 2)),
+                                y: CGFloat(renderedNode.bounds.y + (renderedNode.bounds.height / 2))
+                            )
+                            .zIndex(5)
+                        }
+                    }
+                    ForEach(scene.edges, id: \.id) { edge in
+                        if edgeEditingContext?.edgeID == edge.id,
+                            let labelCenter = renderedEdgeLabelPlacementCenters[edge.id]
+                        {
+                            editingEdgeLabelOverlay(
+                                edge: edge,
+                                labelCenter: labelCenter,
+                                fieldWidth: edgeLabelWidth(for: edgeEditingContext?.label ?? edge.label ?? ""),
+                                viewportZoomScale: scene.viewport.zoomScale
+                            )
+                            .zIndex(5)
                         }
                     }
                 }
@@ -448,6 +452,12 @@ public struct CanvasView: View {
                 presentAddNodeModeSelectionPopup()
             }
             .onAppear {
+                sceneAnimator.setScene(targetScene, animated: false)
+            }
+            .onChange(of: targetScene) { newScene in
+                sceneAnimator.setScene(newScene, animated: true)
+            }
+            .onAppear {
                 applyFocusVisibilityRule(viewportSize: viewportSize)
                 synchronizeEdgeTargetStateFromViewModel()
                 synchronizeEdgeTargetState()
@@ -520,7 +530,8 @@ public struct CanvasView: View {
                     if let node = viewModel.nodes.first(where: { $0.id == nodeID }) {
                         let transition = Self.pendingAddNodeEditingTransition(
                             currentTargetKind: operationTargetKind,
-                            shouldSwitchToNodeTargetAfterCommit: shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit,
+                            shouldSwitchToNodeTargetAfterCommit:
+                                shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit,
                             hasResolvedPendingEditingNode: true
                         )
                         operationTargetKind = transition.targetKind

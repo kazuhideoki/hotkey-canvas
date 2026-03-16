@@ -1,5 +1,5 @@
 // Background: Edge labels need inline editing and lightweight rendering without introducing a rich text mode.
-// Responsibility: Render edge labels near the route center and provide keyboard-first editing UI.
+// Responsibility: Render world-space edge labels and provide screen-space inline editing UI.
 import AppKit
 import Domain
 import SwiftUI
@@ -32,28 +32,16 @@ extension CanvasView {
     @ViewBuilder
     func edgeLabelOverlay(
         edge: CanvasEdge,
-        context: EdgeRenderContext,
         placementCenter: CGPoint?
     ) -> some View {
         let isEditing = edgeEditingContext?.edgeID == edge.id
-        let label = isEditing ? (edgeEditingContext?.label ?? "") : (edge.label ?? "")
-        if isEditing || !label.isEmpty, let labelCenter = placementCenter {
-            let fieldWidth = edgeLabelWidth(for: label, zoomScale: context.zoomScale)
-            if isEditing {
-                editingEdgeLabelOverlay(
-                    edge: edge,
-                    context: context,
-                    labelCenter: labelCenter,
-                    fieldWidth: fieldWidth
-                )
-            } else {
-                staticEdgeLabelOverlay(
-                    label: label,
-                    context: context,
-                    labelCenter: labelCenter,
-                    fieldWidth: fieldWidth
-                )
-            }
+        let label = edge.label ?? ""
+        if !isEditing, !label.isEmpty, let labelCenter = placementCenter {
+            staticEdgeLabelOverlay(
+                label: label,
+                labelCenter: labelCenter,
+                fieldWidth: edgeLabelWidth(for: label)
+            )
         } else {
             EmptyView()
         }
@@ -62,17 +50,18 @@ extension CanvasView {
 
 extension CanvasView {
     @ViewBuilder
-    private func editingEdgeLabelOverlay(
+    func editingEdgeLabelOverlay(
         edge: CanvasEdge,
-        context: EdgeRenderContext,
         labelCenter: CGPoint,
-        fieldWidth: CGFloat
+        fieldWidth: CGFloat,
+        viewportZoomScale: Double
     ) -> some View {
+        let zoomScale = max(CGFloat(viewportZoomScale), 0.0001)
         NodeTextEditor(
             text: editingEdgeLabelBinding(for: edge.id),
-            nodeWidth: fieldWidth,
-            zoomScale: context.zoomScale,
-            contentScale: edgeLabelEditorContentScale(zoomScale: context.zoomScale),
+            nodeWidth: fieldWidth * zoomScale,
+            zoomScale: viewportZoomScale,
+            contentScale: edgeLabelEditorContentScale(),
             style: nodeTextStyle,
             contentAlignment: .topLeading,
             selectAllOnFirstFocus: false,
@@ -89,14 +78,14 @@ extension CanvasView {
             }
         )
         .frame(
-            width: fieldWidth,
-            height: CGFloat(edgeEditingContext?.editorHeight ?? edgeLabelEditorHeight(zoomScale: context.zoomScale))
+            width: fieldWidth * zoomScale,
+            height: CGFloat(edgeEditingContext?.editorHeight ?? edgeLabelEditorHeight()) * zoomScale
         )
-        .padding(.horizontal, Self.edgeLabelHorizontalPadding)
-        .padding(.vertical, Self.edgeLabelVerticalPadding)
+        .padding(.horizontal, Self.edgeLabelHorizontalPadding * zoomScale)
+        .padding(.vertical, Self.edgeLabelVerticalPadding * zoomScale)
         .background(styleColor(.textBackground))
-        .overlay(edgeLabelBorderOverlay)
-        .clipShape(RoundedRectangle(cornerRadius: Self.edgeLabelCornerRadius))
+        .overlay(edgeLabelBorderOverlay(zoomScale: zoomScale))
+        .clipShape(RoundedRectangle(cornerRadius: Self.edgeLabelCornerRadius * zoomScale))
         .position(labelCenter)
         .zIndex(5)
     }
@@ -104,12 +93,11 @@ extension CanvasView {
     @ViewBuilder
     private func staticEdgeLabelOverlay(
         label: String,
-        context: EdgeRenderContext,
         labelCenter: CGPoint,
         fieldWidth: CGFloat
     ) -> some View {
         Text(label)
-            .font(.system(size: max(11 * CGFloat(context.zoomScale), 9), weight: .medium))
+            .font(.system(size: edgeLabelFontSize(), weight: .medium))
             .lineLimit(nil)
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)
@@ -117,39 +105,30 @@ extension CanvasView {
             .padding(.horizontal, Self.edgeLabelHorizontalPadding)
             .padding(.vertical, Self.edgeLabelVerticalPadding)
             .background(styleColor(.textBackground))
-            .overlay(edgeLabelBorderOverlay)
+            .overlay(edgeLabelBorderOverlay())
             .clipShape(RoundedRectangle(cornerRadius: Self.edgeLabelCornerRadius))
             .position(labelCenter)
             .zIndex(4)
     }
 
-    private var edgeLabelBorderOverlay: some View {
-        RoundedRectangle(cornerRadius: Self.edgeLabelCornerRadius)
-            .stroke(styleColor(.separator), lineWidth: 1)
+    private func edgeLabelBorderOverlay(zoomScale: CGFloat = 1) -> some View {
+        RoundedRectangle(cornerRadius: Self.edgeLabelCornerRadius * zoomScale)
+            .stroke(styleColor(.separator), lineWidth: zoomScale)
     }
 
     func edgeLabelPlacementCenters(
         edges: [CanvasEdge],
         context: EdgeRenderContext
     ) -> [CanvasEdgeID: CGPoint] {
-        let transform = CanvasViewportTransform.affineTransform(
-            viewportSize: context.viewportSize,
-            zoomScale: context.zoomScale,
-            effectiveOffset: context.cameraOffset
-        )
         let candidates = edges.compactMap { edge in
-            edgeLabelPlacementCandidate(
-                edge: edge,
-                context: context,
-                transform: transform
-            )
+            edgeLabelPlacementCandidate(edge: edge, context: context)
         }
         return Self.resolveEdgeLabelPlacements(candidates: candidates)
     }
 
-    private func edgeLabelWidth(for label: String, zoomScale: Double) -> CGFloat {
+    func edgeLabelWidth(for label: String) -> CGFloat {
         let font = NSFont.systemFont(
-            ofSize: edgeLabelFontSize(zoomScale: zoomScale),
+            ofSize: edgeLabelFontSize(),
             weight: .medium
         )
         let measuredWidth =
@@ -163,38 +142,34 @@ extension CanvasView {
         return min(max(widthWithPadding, Self.edgeLabelMinWidth), Self.edgeLabelMaxWidth)
     }
 
-    private func edgeLabelEditorHeight(zoomScale: Double) -> CGFloat {
+    private func edgeLabelEditorHeight() -> CGFloat {
         let font = NSFont.systemFont(
-            ofSize: edgeLabelFontSize(zoomScale: zoomScale),
+            ofSize: edgeLabelFontSize(),
             weight: .medium
         )
-        // Keep editing height to one line so edge label editor remains compact.
         let contentHeight = font.ascender - font.descender + font.leading
         let insets =
             nodeTextStyle.textContainerInset
-            * max(CGFloat(zoomScale), 0.0001)
-            * edgeLabelEditorContentScale(zoomScale: zoomScale)
+            * edgeLabelEditorContentScale()
             * 2
         return max(contentHeight + insets, 14)
     }
 
-    private func edgeLabelEditorContentScale(zoomScale: Double) -> Double {
-        let baseZoomScale = max(CGFloat(zoomScale), 0.0001)
-        let baseFontSize = nodeTextStyle.fontSize * baseZoomScale
+    private func edgeLabelEditorContentScale() -> Double {
+        let baseFontSize = nodeTextStyle.fontSize
         guard baseFontSize > 0 else {
             return 1
         }
-        return Double(edgeLabelFontSize(zoomScale: zoomScale) / baseFontSize)
+        return Double(edgeLabelFontSize() / baseFontSize)
     }
 
-    private func edgeLabelFontSize(zoomScale: Double) -> CGFloat {
-        max(11 * CGFloat(zoomScale), 9)
+    private func edgeLabelFontSize() -> CGFloat {
+        11
     }
 
     private func edgeLabelPlacementCandidate(
         edge: CanvasEdge,
-        context: EdgeRenderContext,
-        transform: CGAffineTransform
+        context: EdgeRenderContext
     ) -> EdgeLabelPlacementCandidate? {
         let isEditing = edgeEditingContext?.edgeID == edge.id
         let label = isEditing ? (edgeEditingContext?.label ?? "") : (edge.label ?? "")
@@ -225,33 +200,25 @@ extension CanvasView {
             return nil
         }
 
-        let fieldWidth = edgeLabelWidth(for: label, zoomScale: context.zoomScale)
+        let fieldWidth = edgeLabelWidth(for: label)
         let labelHeight =
             isEditing
-            ? CGFloat(edgeEditingContext?.editorHeight ?? edgeLabelEditorHeight(zoomScale: context.zoomScale))
+            ? CGFloat(edgeEditingContext?.editorHeight ?? edgeLabelEditorHeight())
                 + (Self.edgeLabelVerticalPadding * 2)
-            : edgeLabelDisplayHeight(for: label, width: fieldWidth, zoomScale: context.zoomScale)
-        let transformedNormal = CGVector(
-            dx: (anchor.normal.dx * transform.a) + (anchor.normal.dy * transform.c),
-            dy: (anchor.normal.dx * transform.b) + (anchor.normal.dy * transform.d)
-        )
-        let transformedTangent = CGVector(
-            dx: (anchor.tangent.dx * transform.a) + (anchor.tangent.dy * transform.c),
-            dy: (anchor.tangent.dx * transform.b) + (anchor.tangent.dy * transform.d)
-        )
+            : edgeLabelDisplayHeight(for: label, width: fieldWidth)
+
         return EdgeLabelPlacementCandidate(
             edgeID: edge.id,
-            baseCenter: anchor.point.applying(transform),
-            tangent: normalized(vector: transformedTangent) ?? CGVector(dx: 1, dy: 0),
-            normal: normalized(vector: transformedNormal) ?? CGVector(dx: 0, dy: -1),
+            baseCenter: anchor.point,
+            tangent: normalized(vector: anchor.tangent) ?? CGVector(dx: 1, dy: 0),
+            normal: normalized(vector: anchor.normal) ?? CGVector(dx: 0, dy: -1),
             size: CGSize(width: fieldWidth, height: labelHeight),
             bundleKey: edgeLabelBundleKey(for: edge),
             bundleSortValue: edgeLabelBundleSortValue(for: edge.id, context: context),
             tangentOffsetLimit: edgeLabelTangentOffsetLimit(
-                anchorCenter: anchor.point.applying(transform),
+                anchorCenter: anchor.point,
                 edge: edge,
                 context: context,
-                transform: transform,
                 labelSize: CGSize(width: fieldWidth, height: labelHeight)
             )
         )
@@ -259,11 +226,10 @@ extension CanvasView {
 
     private func edgeLabelDisplayHeight(
         for label: String,
-        width: CGFloat,
-        zoomScale: Double
+        width: CGFloat
     ) -> CGFloat {
         let font = NSFont.systemFont(
-            ofSize: edgeLabelFontSize(zoomScale: zoomScale),
+            ofSize: edgeLabelFontSize(),
             weight: .medium
         )
         let constrainedWidth = max(width - (Self.edgeLabelHorizontalPadding * 2), 1)
@@ -443,7 +409,6 @@ extension CanvasView {
         anchorCenter: CGPoint,
         edge: CanvasEdge,
         context: EdgeRenderContext,
-        transform: CGAffineTransform,
         labelSize: CGSize
     ) -> CGFloat {
         let areaID = context.areaIDByNodeID[edge.fromNodeID]
@@ -464,8 +429,8 @@ extension CanvasView {
         else {
             return 0
         }
-        let start = CGPoint(x: geometry.startX, y: geometry.startY).applying(transform)
-        let end = CGPoint(x: geometry.endX, y: geometry.endY).applying(transform)
+        let start = CGPoint(x: geometry.startX, y: geometry.startY)
+        let end = CGPoint(x: geometry.endX, y: geometry.endY)
         let minEndpointDistance = min(distance(from: anchorCenter, to: start), distance(from: anchorCenter, to: end))
         let contentInset = max(labelSize.width / 2, labelSize.height / 2) + 12
         return max(minEndpointDistance - contentInset, 0)

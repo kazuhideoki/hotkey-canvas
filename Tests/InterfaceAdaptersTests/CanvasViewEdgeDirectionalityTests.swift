@@ -1,16 +1,20 @@
+import CoreGraphics
 import Testing
 
 @testable import InterfaceAdapters
 
-@Test("CanvasView edge directionality: arrowhead scales up with zoom above 100% only")
-func test_edgeArrowZoomCompensation_zoomAtOrAboveOne_returnsIdentity() {
-    #expect(CanvasView.edgeArrowZoomCompensation(for: 1.0) == 1.0)
-    #expect(CanvasView.edgeArrowZoomCompensation(for: 1.5) == 1.0)
-    #expect(CanvasView.edgeArrowZoomCompensation(for: 4.0) == 1.0)
+@Test("CanvasView edge directionality: arrow metrics keep minimum readable size")
+func test_edgeArrowMetrics_smallStrokeWidth_usesMinimums() {
+    let metrics = CanvasView.edgeArrowMetrics(strokeWidth: 2)
+
+    #expect(metrics.length == 8)
+    #expect(metrics.halfWidth == 4)
 }
 
-@Test("CanvasView edge directionality: arrowhead keeps size below 100% zoom")
-func test_edgeArrowZoomCompensation_zoomBelowOne_returnsInverseScale() {
-    #expect(CanvasView.edgeArrowZoomCompensation(for: 0.5) == 2.0)
-    #expect(CanvasView.edgeArrowZoomCompensation(for: 0.25) == 4.0)
+@Test("CanvasView edge directionality: arrow metrics scale from stroke width in world space")
+func test_edgeArrowMetrics_largeStrokeWidth_scalesWithStrokeWidth() {
+    let metrics = CanvasView.edgeArrowMetrics(strokeWidth: 5)
+
+    #expect(metrics.length == 14)
+    #expect(metrics.halfWidth == 9)
 }

@@ -13,37 +13,42 @@ extension CanvasView {
         let areaIDByNodeID: [CanvasNodeID: CanvasAreaID]
         let areaEditingModeByID: [CanvasAreaID: CanvasEditingMode]
         let areaEdgeShapeStyleByID: [CanvasAreaID: CanvasAreaEdgeShapeStyle]
-        let viewportSize: CGSize
-        let zoomScale: Double
-        let cameraOffset: CGSize
     }
 
-    @ViewBuilder
     func edgeStrokeAndArrow(
         edge: CanvasEdge,
-        path: Path,
         strokeColor: Color,
         strokeWidth: CGFloat,
         context: EdgeRenderContext
     ) -> some View {
-        let zoomAdjustedStrokeWidth = strokeWidth * CGFloat(context.zoomScale)
-        let transform = CanvasViewportTransform.affineTransform(
-            viewportSize: context.viewportSize,
-            zoomScale: context.zoomScale,
-            effectiveOffset: context.cameraOffset
-        )
-        path
-            .applying(transform)
-            .stroke(strokeColor, lineWidth: zoomAdjustedStrokeWidth)
-
-        if let arrowPath = edgeArrowPath(
-            edge: edge,
-            strokeWidth: strokeWidth,
-            context: context
-        ) {
-            arrowPath
-                .applying(transform)
-                .fill(strokeColor)
+        let areaID = context.areaIDByNodeID[edge.fromNodeID]
+        let edgeShapeStyle = areaID.flatMap { context.areaEdgeShapeStyleByID[$0] } ?? .curved
+        let editingMode = areaID.flatMap { context.areaEditingModeByID[$0] }
+        let routingStyle: CanvasEdgeRouting.RoutingStyle = editingMode == .tree ? .treeSimple : .adaptive
+        let nodeAvoidanceEnabled = editingMode != .tree
+        let branchCoordinateByParentAndDirection =
+            routingStyle == .treeSimple
+            ? context.treeBranchCoordinateByParentAndDirection
+            : context.branchCoordinateByParentAndDirection
+        return Group {
+            if let path = CanvasEdgeRouting.path(
+                for: edge,
+                nodesByID: context.nodesByID,
+                branchCoordinateByParentAndDirection: branchCoordinateByParentAndDirection,
+                laneOffsetsByEdgeID: context.laneOffsetsByEdgeID,
+                edgeShapeStyle: edgeShapeStyle,
+                routingStyle: routingStyle,
+                nodeAvoidanceEnabled: nodeAvoidanceEnabled
+            ) {
+                path.stroke(strokeColor, lineWidth: strokeWidth)
+                if let arrowPath = edgeArrowPath(
+                    edge: edge,
+                    strokeWidth: strokeWidth,
+                    context: context
+                ) {
+                    arrowPath.fill(strokeColor)
+                }
+            }
         }
     }
 }
@@ -51,11 +56,12 @@ extension CanvasView {
 extension CanvasView {
     private static let edgeArrowLengthFactor: CGFloat = 2.8
     private static let edgeArrowHalfWidthFactor: CGFloat = 1.8
-    static func edgeArrowZoomCompensation(for zoomScale: Double) -> CGFloat {
-        if zoomScale < 1.0 {
-            return CGFloat(1.0 / zoomScale)
-        }
-        return 1.0
+
+    static func edgeArrowMetrics(strokeWidth: CGFloat) -> (length: CGFloat, halfWidth: CGFloat) {
+        (
+            length: max(8, strokeWidth * Self.edgeArrowLengthFactor),
+            halfWidth: max(4, strokeWidth * Self.edgeArrowHalfWidthFactor)
+        )
     }
 
     private func edgeArrowPath(
@@ -84,34 +90,25 @@ extension CanvasView {
                 edgeShapeStyle: edgeShapeStyle,
                 routingStyle: routingStyle,
                 nodeAvoidanceEnabled: nodeAvoidanceEnabled
-            )
+            ),
+            let unitVector = normalize(vector: tipAndVector.vector)
         else {
             return nil
         }
 
-        guard let unitVector = normalize(vector: tipAndVector.vector) else {
-            return nil
-        }
-
-        let zoomCompensation = Self.edgeArrowZoomCompensation(for: context.zoomScale)
-        let arrowLength =
-            max(8, strokeWidth * Self.edgeArrowLengthFactor)
-            * zoomCompensation
-        let arrowHalfWidth =
-            max(4, strokeWidth * Self.edgeArrowHalfWidthFactor)
-            * zoomCompensation
+        let arrowMetrics = Self.edgeArrowMetrics(strokeWidth: strokeWidth)
         let baseCenter = CGPoint(
-            x: tipAndVector.tip.x - (unitVector.dx * arrowLength),
-            y: tipAndVector.tip.y - (unitVector.dy * arrowLength)
+            x: tipAndVector.tip.x - (unitVector.dx * arrowMetrics.length),
+            y: tipAndVector.tip.y - (unitVector.dy * arrowMetrics.length)
         )
         let perpendicular = CGVector(dx: -unitVector.dy, dy: unitVector.dx)
         let left = CGPoint(
-            x: baseCenter.x + (perpendicular.dx * arrowHalfWidth),
-            y: baseCenter.y + (perpendicular.dy * arrowHalfWidth)
+            x: baseCenter.x + (perpendicular.dx * arrowMetrics.halfWidth),
+            y: baseCenter.y + (perpendicular.dy * arrowMetrics.halfWidth)
         )
         let right = CGPoint(
-            x: baseCenter.x - (perpendicular.dx * arrowHalfWidth),
-            y: baseCenter.y - (perpendicular.dy * arrowHalfWidth)
+            x: baseCenter.x - (perpendicular.dx * arrowMetrics.halfWidth),
+            y: baseCenter.y - (perpendicular.dy * arrowMetrics.halfWidth)
         )
 
         return Path { path in

@@ -7,20 +7,14 @@ extension CanvasView {
     static let areaFocusOutlinePadding: Double = 18
 
     func areaFocusOverlay(
-        displayNodes: [CanvasNode],
-        viewportSize: CGSize,
-        effectiveOffset: CGSize
+        scene: CanvasSceneSnapshot
     ) -> some View {
         guard operationTargetKind == .area else { return AnyView(EmptyView()) }
         guard let focusedAreaID = currentFocusedAreaID() else { return AnyView(EmptyView()) }
 
-        let nodesByID = Dictionary(uniqueKeysWithValues: displayNodes.map { ($0.id, $0) })
-        let areaNodeIDs = Set(
-            displayNodes
-                .filter { viewModel.areaIDByNodeID[$0.id] == focusedAreaID }
-                .map(\.id)
-        )
-        let graph = CanvasGraph(nodesByID: nodesByID)
+        let areaNodeIDs = scene.areaNodeIDsByAreaID[focusedAreaID, default: []]
+        guard !areaNodeIDs.isEmpty else { return AnyView(EmptyView()) }
+        let graph = CanvasGraph(nodesByID: scene.nodesByID)
         guard
             let outline = CanvasAreaLayoutService.makeAreaOutline(
                 nodeIDs: areaNodeIDs,
@@ -29,17 +23,8 @@ extension CanvasView {
             )
         else { return AnyView(EmptyView()) }
 
-        let areaPath = areaOutlinePath(outline: outline, padding: Self.areaFocusOutlinePadding)
-            .applying(
-                CanvasViewportTransform.affineTransform(
-                    viewportSize: viewportSize,
-                    zoomScale: zoomScale,
-                    effectiveOffset: effectiveOffset
-                )
-            )
-
         return AnyView(
-            areaPath
+            areaOutlinePath(outline: outline, padding: Self.areaFocusOutlinePadding)
                 .stroke(
                     styleColor(.accent).opacity(0.85),
                     style: StrokeStyle(lineWidth: 2, lineJoin: .round)

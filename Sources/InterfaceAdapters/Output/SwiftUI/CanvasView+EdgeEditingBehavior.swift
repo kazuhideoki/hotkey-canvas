@@ -101,7 +101,8 @@ extension CanvasView {
         guard var context = edgeEditingContext, context.edgeID == edgeID else {
             return
         }
-        let roundedHeight = Double(ceil(metrics.nodeHeight))
+        let zoomScale = max(CGFloat(zoomScale), 0.0001)
+        let roundedHeight = Double(ceil(metrics.nodeHeight / zoomScale))
         guard roundedHeight.isFinite, roundedHeight > 0 else {
             return
         }
@@ -114,25 +115,23 @@ extension CanvasView {
 
     private func edgeEditingSingleLineHeight() -> Double {
         let font = NSFont.systemFont(
-            ofSize: max(11 * CGFloat(zoomScale), 9),
+            ofSize: 11,
             weight: .medium
         )
         let contentHeight = font.ascender - font.descender + font.leading
         let insets =
             nodeTextStyle.textContainerInset
-            * max(CGFloat(zoomScale), 0.0001)
-            * edgeLabelEditorContentScale(zoomScale: zoomScale)
+            * edgeLabelEditorContentScale()
             * 2
         return Double(max(contentHeight + insets, 14))
     }
 
-    private func edgeLabelEditorContentScale(zoomScale: Double) -> Double {
-        let baseZoomScale = max(CGFloat(zoomScale), 0.0001)
-        let baseFontSize = nodeTextStyle.fontSize * baseZoomScale
+    private func edgeLabelEditorContentScale() -> Double {
+        let baseFontSize = nodeTextStyle.fontSize
         guard baseFontSize > 0 else {
             return 1
         }
-        return Double(max(11 * CGFloat(zoomScale), 9) / baseFontSize)
+        return Double(11 / baseFontSize)
     }
 }
 

@@ -147,39 +147,6 @@ extension CanvasView {
         return true
     }
 
-    func renderedNode(
-        _ node: CanvasNode,
-        viewportSize: CGSize,
-        effectiveOffset: CGSize
-    ) -> CanvasNode {
-        let worldRect = CGRect(
-            x: node.bounds.x,
-            y: node.bounds.y,
-            width: node.bounds.width,
-            height: node.bounds.height
-        )
-        let renderedRect = CanvasViewportTransform.rectOnScreen(
-            worldRect: worldRect,
-            viewportSize: viewportSize,
-            zoomScale: zoomScale,
-            effectiveOffset: effectiveOffset
-        )
-        return CanvasNode(
-            id: node.id,
-            kind: node.kind,
-            text: node.text,
-            attachments: node.attachments,
-            bounds: CanvasBounds(
-                x: renderedRect.origin.x,
-                y: renderedRect.origin.y,
-                width: renderedRect.width,
-                height: renderedRect.height
-            ),
-            metadata: node.metadata,
-            markdownStyleEnabled: node.markdownStyleEnabled
-        )
-    }
-
     func displayNodeForCurrentEditingState(_ node: CanvasNode) -> CanvasNode {
         guard let editingContext, editingContext.nodeID == node.id else {
             return node
@@ -364,7 +331,6 @@ extension CanvasView {
     @ViewBuilder
     func nodeContentOverlay(
         node: CanvasNode,
-        zoomScale: Double,
         contentAlignment: NodeTextContentAlignment
     ) -> some View {
         let contentScale = nodeContentScale(for: node)
@@ -372,7 +338,7 @@ extension CanvasView {
             NodeTextEditor(
                 text: editingTextBinding(for: node.id),
                 nodeWidth: CGFloat(node.bounds.width),
-                zoomScale: zoomScale,
+                zoomScale: 1,
                 contentScale: contentScale,
                 style: nodeTextStyle,
                 contentAlignment: contentAlignment,
@@ -389,12 +355,12 @@ extension CanvasView {
                     cancelNodeEditing()
                 }
             )
-            .padding(nodeTextStyle.editorContainerPadding * CGFloat(zoomScale) * CGFloat(contentScale))
+            .padding(nodeTextStyle.editorContainerPadding * CGFloat(contentScale))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: contentAlignment.frameAlignment)
         } else {
             nonEditingNodeContent(
                 node: node,
-                zoomScale: zoomScale
+                contentAlignment: contentAlignment
             )
         }
     }
@@ -408,25 +374,23 @@ extension CanvasView {
     }
 
     @ViewBuilder
-    func nonEditingNodeText(node: CanvasNode, zoomScale: Double) -> some View {
+    func nonEditingNodeText(node: CanvasNode) -> some View {
         let text = node.text ?? ""
-        let viewportScale = CGFloat(zoomScale)
         let contentScale = nodeContentScale(for: node)
-        let typographyScale = viewportScale * CGFloat(contentScale)
+        let typographyScale = CGFloat(contentScale)
         let contentAlignment = nodeTextContentAlignment(for: node.id)
         let shouldRenderSearchHighlight = hasSearchMatches(in: node)
         if node.markdownStyleEnabled && !shouldRenderSearchHighlight {
             NodeMarkdownDisplay(
                 text: text,
                 nodeWidth: node.bounds.width,
-                zoomScale: zoomScale,
                 contentScale: contentScale,
                 style: nodeTextStyle,
                 contentAlignment: contentAlignment
             )
         } else {
             let scaledPadding = nodeTextStyle.outerPadding * typographyScale
-            let textWidth = max((CGFloat(node.bounds.width) * viewportScale) - (scaledPadding * 2), 1)
+            let textWidth = max(CGFloat(node.bounds.width) - (scaledPadding * 2), 1)
             Text(highlightedNodeText(for: node))
                 .font(
                     .system(

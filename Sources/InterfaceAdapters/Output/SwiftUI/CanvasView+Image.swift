@@ -250,21 +250,22 @@ extension CanvasView {
     }
 
     @ViewBuilder
-    func nonEditingNodeContent(node: CanvasNode, zoomScale: Double) -> some View {
-        let contentAlignment = nodeTextContentAlignment(for: node.id)
+    func nonEditingNodeContent(
+        node: CanvasNode,
+        contentAlignment: NodeTextContentAlignment
+    ) -> some View {
         let nodeContentScale = nodeContentScale(for: node)
         if let imagePath = primaryImagePath(in: node), let image = Self.nodeImageCache.image(atFilePath: imagePath) {
-            let viewportScale = CGFloat(zoomScale)
-            let typographyScale = viewportScale * CGFloat(nodeContentScale)
+            let typographyScale = CGFloat(nodeContentScale)
             let scaledPadding = nodeTextStyle.outerPadding * typographyScale
-            let contentWidth = max((CGFloat(node.bounds.width) * viewportScale) - (scaledPadding * 2), 1)
+            let contentWidth = max(CGFloat(node.bounds.width) - (scaledPadding * 2), 1)
             let hasText = (node.text ?? "").isEmpty == false
             let unscaledImageDisplayWidth = measuredImageDisplayWidth(
                 imageSize: image.size,
                 nodeWidth: node.bounds.width,
                 nodeContentScale: nodeContentScale
             )
-            let imageDisplayWidth = max(CGFloat(unscaledImageDisplayWidth) * viewportScale, 1)
+            let imageDisplayWidth = max(CGFloat(unscaledImageDisplayWidth), 1)
             VStack(
                 alignment: contentAlignment.horizontalAlignment,
                 spacing: hasText ? nodeTextStyle.imageTextSpacing * typographyScale : 0
@@ -282,7 +283,6 @@ extension CanvasView {
                 if hasText {
                     nonEditingNodeTextBody(
                         node: node,
-                        zoomScale: zoomScale,
                         nodeContentScale: nodeContentScale,
                         contentAlignment: contentAlignment
                     )
@@ -291,14 +291,13 @@ extension CanvasView {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: contentAlignment.frameAlignment)
             .padding(scaledPadding)
         } else {
-            nonEditingNodeText(node: node, zoomScale: zoomScale)
+            nonEditingNodeText(node: node)
         }
     }
 
     @ViewBuilder
     func nonEditingNodeTextBody(
         node: CanvasNode,
-        zoomScale: Double,
         nodeContentScale: Double,
         contentAlignment: NodeTextContentAlignment
     ) -> some View {
@@ -311,7 +310,6 @@ extension CanvasView {
             NodeMarkdownDisplay(
                 text: text,
                 nodeWidth: node.bounds.width,
-                zoomScale: zoomScale,
                 contentScale: nodeContentScale,
                 appliesOuterPadding: false,
                 style: nodeTextStyle,
@@ -321,7 +319,6 @@ extension CanvasView {
             nonEditingPlainNodeTextBody(
                 attributedText: highlightedNodeText(for: node),
                 nodeWidth: node.bounds.width,
-                zoomScale: zoomScale,
                 nodeContentScale: nodeContentScale,
                 contentAlignment: contentAlignment
             )
@@ -332,14 +329,12 @@ extension CanvasView {
     private func nonEditingPlainNodeTextBody(
         attributedText: AttributedString,
         nodeWidth: Double,
-        zoomScale: Double,
         nodeContentScale: Double,
         contentAlignment: NodeTextContentAlignment
     ) -> some View {
-        let viewportScale = CGFloat(zoomScale)
-        let typographyScale = viewportScale * CGFloat(nodeContentScale)
+        let typographyScale = CGFloat(nodeContentScale)
         let contentWidth = max(
-            (CGFloat(nodeWidth) * viewportScale) - (nodeTextStyle.outerPadding * typographyScale * 2),
+            CGFloat(nodeWidth) - (nodeTextStyle.outerPadding * typographyScale * 2),
             1
         )
         Text(attributedText)
