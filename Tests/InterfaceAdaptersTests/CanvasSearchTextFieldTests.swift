@@ -41,7 +41,7 @@ func test_control_insertNewline_withMarkedText_returnsFalseWithoutSubmit() {
     #expect(backwardCount == 0)
 }
 
-@Test("マークされたテキストが非アクティブな場合に送信を送信すると入力する")
+@Test("マークされたテキストが非アクティブなとき、Enter は前方送信として処理される")
 func test_control_insertNewline_withoutMarkedText_returnsTrueAndSubmitsForward() {
     var textValue = ""
     let binding = Binding<String>(
@@ -78,7 +78,7 @@ func test_control_insertNewline_withoutMarkedText_returnsTrueAndSubmitsForward()
     #expect(backwardCount == 0)
 }
 
-@Test("Up および Down は履歴ナビゲーション ハンドラーを呼び出する")
+@Test("Up と Down は履歴ナビゲーションハンドラーを呼び出す")
 func test_control_moveUpDown_invokesHistoryHandlers() {
     var textValue = ""
     let binding = Binding<String>(

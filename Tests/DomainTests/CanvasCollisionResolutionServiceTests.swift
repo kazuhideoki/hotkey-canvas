@@ -72,7 +72,7 @@ func test_resolveOverlaps_rectUnion_resolvesOverlapOnOneMember() {
     expectAlmostEqual(blockerTranslation.dy, 0)
 }
 
-@Test("優先シード方向はシード スロットを維持し、ブロッカーをコマンド軸に沿って押する")
+@Test("優先シード方向はシードスロットを維持し、ブロッカーをコマンド軸に沿って押し出す")
 func test_resolveOverlaps_withPreferredSeedDirection_preservesSeedSlot() {
     let seedBody = CanvasCollisionBody(
         id: .cluster(nodeIDs: [

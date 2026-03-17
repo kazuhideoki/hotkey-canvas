@@ -3,7 +3,7 @@ import Testing
 
 @testable import InterfaceAdapters
 
-@Test("エリア-オリジンコミットアームノード-ターゲットスイッチ")
+@Test("エリア起点で確定すると、ノードターゲットへの切り替えを準備する")
 func test_addNodeModeSelectionTargetTransition_areaCommitArmsNodeTargetSwitch() {
     #expect(
         CanvasView.shouldSwitchToNodeTargetAfterAddNodeModeSelectionCommit(
@@ -21,7 +21,7 @@ func test_addNodeModeSelectionTargetTransition_nodeCommitDoesNotArmNodeTargetSwi
     )
 }
 
-@Test("area-origin の追加が成功すると、ノード ターゲットに切り替わり、フラグがクリアされる")
+@Test("エリア起点の追加が成功すると、ノードターゲットへ切り替わり、フラグがクリアされる")
 func test_addNodeModeSelectionTargetTransition_successfulAreaAddSwitchesToNodeTarget() {
     let transition = CanvasView.pendingAddNodeEditingTransition(
         currentTargetKind: .area,

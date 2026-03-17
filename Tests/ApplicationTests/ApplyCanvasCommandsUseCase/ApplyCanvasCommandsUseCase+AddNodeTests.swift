@@ -262,7 +262,7 @@ func test_apply_addNode_choosesAreaWithLargerMaxYWhenMinYTies() async throws {
     #expect(newNode.bounds.y >= 204)
 }
 
-@Test("図の addNode は、受信アンカーから右への配置を継続する")
+@Test("図の addNode は、接続元アンカーから右への配置を継続する")
 func test_apply_addNodeInDiagramArea_continuesToRightFromIncomingAnchor() async throws {
     let anchorID = CanvasNodeID(rawValue: "anchor")
     let focusedID = CanvasNodeID(rawValue: "focused")
@@ -307,7 +307,7 @@ func test_apply_addNodeInDiagramArea_continuesToRightFromIncomingAnchor() async 
     #expect(newNode.bounds.y == 0)
 }
 
-@Test("図の addNode は、入力アンカーから上向きに配置を継続する")
+@Test("図の addNode は、接続元アンカーから上向きに配置を継続する")
 func test_apply_addNodeInDiagramArea_continuesUpwardFromIncomingAnchor() async throws {
     let anchorID = CanvasNodeID(rawValue: "anchor")
     let focusedID = CanvasNodeID(rawValue: "focused")

@@ -176,7 +176,7 @@ func test_onAppear_hidesFoldedDescendants_fromPublishedGraph() async throws {
 }
 
 @MainActor
-@Test("onAppear は、ノード スタイル用のダイアグラムノード ID とツリー ルートノード ノード ID を公開する")
+@Test("onAppear は、ノードスタイル用のダイアグラムノード ID とツリールートノード ID を公開する")
 func test_onAppear_publishesNodeStylingIDs() async throws {
     let treeRootID = CanvasNodeID(rawValue: "tree-root")
     let treeChildID = CanvasNodeID(rawValue: "tree-child")
@@ -241,7 +241,7 @@ func test_apply_addNode_setsPendingEditingNodeID() async throws {
 }
 
 @MainActor
-@Test("モード選択されたノードの追加、ツリー セット保留中の編集ノード")
+@Test("ツリーを選んでノード追加すると、保留中の編集ノードを設定する")
 func test_addNodeFromModeSelection_tree_setsPendingEditingNodeID() async throws {
     let inputPort = UndoRedoCanvasEditingInputPort()
     let viewModel = CanvasViewModel(inputPort: inputPort)

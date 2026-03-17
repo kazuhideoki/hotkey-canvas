@@ -318,7 +318,7 @@ func test_pipelineCoordinator_focusNormalization_reanchorsAreaFocusInsideFocused
 }
 
 @Test(
-    "CanvasCommandPipelineCoordinator: selection normalization updates edge selection when node selection is stable"
+    "ノード選択が変わらないとき、エッジ選択は正規化後の状態に更新される"
 )
 func test_pipelineCoordinator_selectionNormalization_updatesEdgeSelectionWithoutNodeSelectionChange() {
     let nodeAID = CanvasNodeID(rawValue: "node-a")

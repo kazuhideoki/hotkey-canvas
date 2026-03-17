@@ -73,7 +73,7 @@ func test_apply_diagramArea_mapsAddChildNodeToAddNodeBehavior() async throws {
     #expect(edge.relationType == .normal)
 }
 
-@Test("ダイアグラムエリア addChildNode は受信アンカーからの配置方向を継続する")
+@Test("ダイアグラムエリア addChildNode は接続元アンカーからの配置方向を継続する")
 func test_apply_diagramArea_addChildNodeContinuesPlacementDirectionFromIncomingAnchor() async throws {
     let anchorID = CanvasNodeID(rawValue: "anchor")
     let focusedID = CanvasNodeID(rawValue: "focused")
