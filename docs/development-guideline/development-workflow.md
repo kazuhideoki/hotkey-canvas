@@ -58,6 +58,17 @@
 - コメント量を機械的に減らすより、設計意図や背景を保つことを優先する。ただし保守不能な長文化は避ける。
 - 自明なコードをそのまま言い換えるだけで、追加の意図や理由を含まないコメントは避ける。
 
+### domain-doc アノテーション方針
+
+- `Sources/Domain/Model` 配下で構造関係の抽出対象にしたい型には、宣言直前の `///` doc comment で `@domainDoc` アノテーションを付ける。
+- 構造関係の抽出単位として扱う型には `/// @domainDoc entity` を付ける。
+- ID 型がどのエンティティを識別するかを抽出器へ伝える場合は `/// @domainDoc identifierOf(TargetType)` を付ける。
+- `@domainDoc` はコメント規約の例外ではなく `///` doc comment の一部として扱う。Quick Help 向けの説明も必要な場合は、同じ doc comment ブロック内で人間向け説明と `@domainDoc` を併記してよい。
+- `domain-doc` 抽出器は保存プロパティの型推論を扱わない。抽出対象に含まれる Swift ファイルでは、保存プロパティに明示的な型アノテーションを付ける。
+- `docs/specs/generated/domain-model-relations.md` と `docs/specs/generated/domain-model-relations.json` は `./scripts/generate_domain_docs.sh` の生成物なので手動編集しない。
+- `Sources/Domain/Model` の構造、`@domainDoc` アノテーション、または抽出対象の型注釈を変更した場合は、同じ変更で `./scripts/generate_domain_docs.sh` と `./scripts/test_domain_docs.sh` を実行して生成物と抽出ルールを更新確認する。
+- `@domainDoc` の追加要否に迷った場合は、「その型や識別子の対応が構造関係の把握に必要か」を基準に判断し、必要なら同じ変更で `docs/specs/domain.md` の説明も追従させる。
+
 ## テスト方針
 
 - テスト配置と命名規則は `docs/specs/architecture.md` に従う。
