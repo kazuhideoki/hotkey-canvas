@@ -21,13 +21,13 @@ swiftc \
   -Xlinker "$TOOLCHAIN_HOST_DIR" \
   -lSwiftParser \
   -lSwiftSyntax \
-  "$REPO_ROOT"/tools/domain-docs/*.swift \
+  "$REPO_ROOT"/tools/DomainDocs/*.swift \
   -o "$BINARY_PATH"
 
 run_positive_test_case() {
   local test_case_name="$1"
   local title="$2"
-  local test_case_root="$REPO_ROOT/tools/domain-docs/tests/$test_case_name"
+  local test_case_root="$REPO_ROOT/tools/DomainDocs/tests/$test_case_name"
   local actual_json="$BUILD_DIR/$test_case_name.actual.json"
   local actual_markdown="$BUILD_DIR/$test_case_name.actual.md"
   local expected_json="$test_case_root/expected/graph.json"
@@ -47,7 +47,7 @@ run_positive_test_case() {
 run_negative_test_case() {
   local test_case_name="$1"
   local title="$2"
-  local test_case_root="$REPO_ROOT/tools/domain-docs/tests/$test_case_name"
+  local test_case_root="$REPO_ROOT/tools/DomainDocs/tests/$test_case_name"
   local stderr_path="$BUILD_DIR/$test_case_name.stderr"
   local actual_json="$BUILD_DIR/$test_case_name.actual.json"
   local actual_markdown="$BUILD_DIR/$test_case_name.actual.md"
@@ -76,11 +76,11 @@ run_negative_test_case "invalid-identifier-target" "Invalid Identifier Target"
 run_negative_test_case "inferred-property" "Inferred Property"
 
 MISSING_INCLUDE_STDERR="$BUILD_DIR/missing-include.stderr"
-MISSING_INCLUDE_EXPECTED_FRAGMENT=$(cat "$REPO_ROOT/tools/domain-docs/tests/missing-include.error.txt")
+MISSING_INCLUDE_EXPECTED_FRAGMENT=$(cat "$REPO_ROOT/tools/DomainDocs/tests/missing-include.error.txt")
 rm -f "$MISSING_INCLUDE_STDERR"
 if "$BINARY_PATH" \
   --repo-root "$REPO_ROOT" \
-  --include-dir "$REPO_ROOT/tools/domain-docs/tests/missing-directory" \
+  --include-dir "$REPO_ROOT/tools/DomainDocs/tests/missing-directory" \
   --json-output "$BUILD_DIR/missing-include.json" \
   --markdown-output "$BUILD_DIR/missing-include.md" \
   --title "Missing Include Directory" \

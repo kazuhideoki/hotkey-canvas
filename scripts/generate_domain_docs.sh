@@ -19,7 +19,7 @@ swiftc \
   -Xlinker "$TOOLCHAIN_HOST_DIR" \
   -lSwiftParser \
   -lSwiftSyntax \
-  "$REPO_ROOT"/tools/domain-docs/*.swift \
+  "$REPO_ROOT"/tools/DomainDocs/*.swift \
   -o "$BINARY_PATH"
 
 "$BINARY_PATH" \
@@ -31,4 +31,3 @@ swiftc \
 
 echo "Wrote $JSON_OUTPUT_PATH"
 echo "Wrote $MARKDOWN_OUTPUT_PATH"
-
