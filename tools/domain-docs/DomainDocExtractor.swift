@@ -2,6 +2,41 @@ import Foundation
 import SwiftParser
 import SwiftSyntax
 
+enum DomainDocExtractorError: Error, CustomStringConvertible {
+    case missingIncludeDirectory(String)
+    case includePathIsNotDirectory(String)
+    case unreadableIncludeDirectory(String)
+    case duplicateDeclarationTypeNames([(typeName: String, sourcePaths: [String])])
+    case duplicateIdentifierBindings([(identifierTypeName: String, targetTypeNames: [String])])
+    case invalidIdentifierTarget(identifierTypeName: String, targetTypeName: String)
+    case unsupportedInferredStoredProperty(sourcePath: String, line: Int, propertyName: String)
+
+    var description: String {
+        switch self {
+        case .missingIncludeDirectory(let directory):
+            return "Include directory does not exist: \(directory)"
+        case .includePathIsNotDirectory(let path):
+            return "Include path is not a directory: \(path)"
+        case .unreadableIncludeDirectory(let directory):
+            return "Include directory could not be read: \(directory)"
+        case .duplicateDeclarationTypeNames(let duplicates):
+            let details = duplicates
+                .map { "\($0.typeName): \($0.sourcePaths.joined(separator: ", "))" }
+                .joined(separator: "; ")
+            return "Duplicate declaration type names found: \(details)"
+        case .duplicateIdentifierBindings(let duplicates):
+            let details = duplicates
+                .map { "\($0.identifierTypeName): \($0.targetTypeNames.joined(separator: ", "))" }
+                .joined(separator: "; ")
+            return "Duplicate @domainDoc identifierOf(...) bindings found: \(details)"
+        case .invalidIdentifierTarget(let identifierTypeName, let targetTypeName):
+            return "Invalid @domainDoc identifierOf target '\(targetTypeName)' on '\(identifierTypeName)'. The target must resolve to a non-identifier declaration in the included source set."
+        case .unsupportedInferredStoredProperty(let sourcePath, let line, let propertyName):
+            return "Stored properties must declare an explicit type annotation for domain-doc extraction. Unsupported inferred property '\(propertyName)' at \(sourcePath):\(line)."
+        }
+    }
+}
+
 private struct DeclarationRecord {
     let typeName: String
     let declarationKind: DomainDeclarationKind
@@ -40,8 +75,10 @@ struct DomainDocExtractor {
             let sourceFile = Parser.parse(source: source)
             let relativePath = makeRelativePath(path: swiftFile, base: repoRoot)
             let collector = DeclarationCollector(sourcePath: relativePath, sourceFile: sourceFile)
-            declarationRecords.append(contentsOf: collector.collect())
+            declarationRecords.append(contentsOf: try collector.collect())
         }
+
+        try validateUniqueDeclarationTypeNames(declarationRecords)
 
         let identifierBindings: [(String, String)] = declarationRecords.compactMap { record in
             guard let identifierOf = record.identifierOf else {
@@ -49,7 +86,10 @@ struct DomainDocExtractor {
             }
             return (record.typeName, identifierOf)
         }
+        try validateIdentifierBindings(identifierBindings)
+
         let identifierTargets = Dictionary(uniqueKeysWithValues: identifierBindings)
+        try validateIdentifierTargets(identifierTargets, declarationRecords: declarationRecords)
 
         let graphableDeclarations = declarationRecords
             .map { $0.resolved(using: identifierTargets) }
@@ -189,15 +229,25 @@ struct DomainDocExtractor {
         let fileManager = FileManager.default
 
         for directory in includeDirectories {
-            guard let enumerator = fileManager.enumerator(atPath: directory) else {
-                continue
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: directory, isDirectory: &isDirectory) else {
+                throw DomainDocExtractorError.missingIncludeDirectory(directory)
+            }
+            guard isDirectory.boolValue else {
+                throw DomainDocExtractorError.includePathIsNotDirectory(directory)
+            }
+            guard let enumerator = fileManager.enumerator(
+                at: URL(fileURLWithPath: directory),
+                includingPropertiesForKeys: nil
+            ) else {
+                throw DomainDocExtractorError.unreadableIncludeDirectory(directory)
             }
 
-            while let next = enumerator.nextObject() as? String {
-                guard next.hasSuffix(".swift") else {
+            while let next = enumerator.nextObject() as? URL {
+                guard next.pathExtension == "swift" else {
                     continue
                 }
-                filePaths.append(URL(fileURLWithPath: directory).appendingPathComponent(next).path)
+                filePaths.append(next.path)
             }
         }
 
@@ -209,6 +259,51 @@ struct DomainDocExtractor {
         let standardizedBase = URL(fileURLWithPath: base).standardizedFileURL.path
         let baseURL = URL(fileURLWithPath: standardizedBase, isDirectory: true)
         return baseURL.relativePath(to: URL(fileURLWithPath: standardizedPath))
+    }
+
+    private static func validateUniqueDeclarationTypeNames(_ declarationRecords: [DeclarationRecord]) throws {
+        let groupedRecords = Dictionary(grouping: declarationRecords, by: \.typeName)
+        let duplicates = groupedRecords.compactMap { typeName, records -> (typeName: String, sourcePaths: [String])? in
+            guard records.count > 1 else {
+                return nil
+            }
+            return (typeName, records.map(\.sourcePath).sorted())
+        }.sorted { $0.typeName < $1.typeName }
+
+        guard duplicates.isEmpty else {
+            throw DomainDocExtractorError.duplicateDeclarationTypeNames(duplicates)
+        }
+    }
+
+    private static func validateIdentifierBindings(_ identifierBindings: [(String, String)]) throws {
+        let groupedBindings = Dictionary(grouping: identifierBindings, by: { $0.0 })
+        let duplicates = groupedBindings.compactMap { identifierTypeName, bindings -> (identifierTypeName: String, targetTypeNames: [String])? in
+            let targetTypeNames = bindings.map(\.1).sorted()
+            guard Set(targetTypeNames).count > 1 || bindings.count > 1 else {
+                return nil
+            }
+            return (identifierTypeName, targetTypeNames)
+        }.sorted { $0.identifierTypeName < $1.identifierTypeName }
+
+        guard duplicates.isEmpty else {
+            throw DomainDocExtractorError.duplicateIdentifierBindings(duplicates)
+        }
+    }
+
+    private static func validateIdentifierTargets(
+        _ identifierTargets: [String: String],
+        declarationRecords: [DeclarationRecord]
+    ) throws {
+        let declarationByTypeName = Dictionary(uniqueKeysWithValues: declarationRecords.map { ($0.typeName, $0) })
+
+        for (identifierTypeName, targetTypeName) in identifierTargets.sorted(by: { $0.key < $1.key }) {
+            guard let targetRecord = declarationByTypeName[targetTypeName], targetRecord.identifierOf == nil else {
+                throw DomainDocExtractorError.invalidIdentifierTarget(
+                    identifierTypeName: identifierTypeName,
+                    targetTypeName: targetTypeName
+                )
+            }
+        }
     }
 }
 
@@ -223,21 +318,25 @@ private final class DeclarationCollector {
         self.locationConverter = SourceLocationConverter(fileName: sourcePath, tree: sourceFile)
     }
 
-    func collect() -> [DeclarationRecord] {
-        sourceFile.statements.compactMap { statement in
+    func collect() throws -> [DeclarationRecord] {
+        var records: [DeclarationRecord] = []
+
+        for statement in sourceFile.statements {
             if let structDecl = statement.item.as(StructDeclSyntax.self), isPublic(structDecl.modifiers) {
-                return makeStructRecord(structDecl)
+                records.append(try makeStructRecord(structDecl))
+                continue
             }
             if let enumDecl = statement.item.as(EnumDeclSyntax.self), isPublic(enumDecl.modifiers) {
-                return makeEnumRecord(enumDecl)
+                records.append(try makeEnumRecord(enumDecl))
             }
-            return nil
         }
+
+        return records
     }
 
-    private func makeStructRecord(_ structDecl: StructDeclSyntax) -> DeclarationRecord {
-        let members = structDecl.memberBlock.members.flatMap { item in
-            extractPropertyMembers(from: item.decl)
+    private func makeStructRecord(_ structDecl: StructDeclSyntax) throws -> DeclarationRecord {
+        let members = try structDecl.memberBlock.members.flatMap { item in
+            try extractPropertyMembers(from: item.decl)
         }
 
         return DeclarationRecord(
@@ -251,12 +350,12 @@ private final class DeclarationCollector {
         )
     }
 
-    private func makeEnumRecord(_ enumDecl: EnumDeclSyntax) -> DeclarationRecord {
-        let members = enumDecl.memberBlock.members.flatMap { item in
+    private func makeEnumRecord(_ enumDecl: EnumDeclSyntax) throws -> DeclarationRecord {
+        let members = try enumDecl.memberBlock.members.flatMap { item in
             if let enumCaseDecl = item.decl.as(EnumCaseDeclSyntax.self) {
                 return extractEnumCaseMembers(from: enumCaseDecl)
             }
-            return extractPropertyMembers(from: item.decl)
+            return try extractPropertyMembers(from: item.decl)
         }
 
         return DeclarationRecord(
@@ -270,7 +369,7 @@ private final class DeclarationCollector {
         )
     }
 
-    private func extractPropertyMembers(from decl: DeclSyntax) -> [MemberRecord] {
+    private func extractPropertyMembers(from decl: DeclSyntax) throws -> [MemberRecord] {
         guard let variableDecl = decl.as(VariableDeclSyntax.self) else {
             return []
         }
@@ -278,7 +377,7 @@ private final class DeclarationCollector {
             return []
         }
 
-        return variableDecl.bindings.compactMap { binding in
+        return try variableDecl.bindings.compactMap { binding in
             guard binding.accessorBlock == nil else {
                 return nil
             }
@@ -286,7 +385,11 @@ private final class DeclarationCollector {
                 return nil
             }
             guard let typeSyntax = binding.typeAnnotation?.type else {
-                return nil
+                throw DomainDocExtractorError.unsupportedInferredStoredProperty(
+                    sourcePath: sourcePath,
+                    line: sourceLine(for: binding.pattern),
+                    propertyName: identifierPattern.identifier.text.trimmed
+                )
             }
 
             return MemberRecord(

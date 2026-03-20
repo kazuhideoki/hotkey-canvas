@@ -1,0 +1,1 @@
+error: Invalid @domainDoc identifierOf target 'MissingTargetEntity' on 'InvalidIdentifierTargetID'. The target must resolve to a non-identifier declaration in the included source set.

@@ -1,0 +1,1 @@
+error: Stored properties must declare an explicit type annotation for domain-doc extraction. Unsupported inferred property 'childIDs' at Sources/Domain/Model/InferredPropertyEntity.swift:2.

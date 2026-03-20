@@ -3,7 +3,7 @@
 この文書は `scripts/generate_domain_docs.sh` により自動生成されます。手動編集はしないでください。
 
 - entity ノード数: 3
-- entity 間参照数: 3
+- entity 間参照数: 4
 
 ```mermaid
 classDiagram
@@ -15,14 +15,13 @@ class FixtureGraph {
 }
 class FixtureNode {
   <<struct>>
-  id: FixtureNodeID
   children: [FixtureChild]
 }
 class FixtureShortcutDefinition {
   <<struct>>
-  id: FixtureShortcutID
 }
 FixtureGraph "1" --> "*" FixtureNode : nodesByID
 FixtureGraph "1" --> "*" FixtureNode : selectedNodeIDs
 FixtureGraph "1" --> "*" FixtureShortcutDefinition : shortcutsByID
+FixtureNode "1" --> "*" FixtureNode : children via FixtureChild
 ```

@@ -1,0 +1,211 @@
+{
+  "edges" : [
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "ProjectionBridgeEdgeFocus",
+      "memberKind" : "property",
+      "memberName" : "edgeID",
+      "origin" : "identifier",
+      "toTypeName" : "ProjectionBridgeEdge",
+      "viaTypeNames" : [
+        "ProjectionBridgeEdgeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "ProjectionBridgeEdgeFocus",
+      "memberKind" : "property",
+      "memberName" : "originNodeID",
+      "origin" : "identifier",
+      "toTypeName" : "ProjectionBridgeNode",
+      "viaTypeNames" : [
+        "ProjectionBridgeNodeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "ProjectionBridgeFocus",
+      "memberKind" : "enumCase",
+      "memberName" : "edge",
+      "origin" : "direct",
+      "toTypeName" : "ProjectionBridgeEdgeFocus",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "ProjectionBridgeFocus",
+      "memberKind" : "enumCase",
+      "memberName" : "group",
+      "origin" : "identifier",
+      "toTypeName" : "ProjectionBridgeGroup",
+      "viaTypeNames" : [
+        "ProjectionBridgeGroupID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "ProjectionBridgeFocus",
+      "memberKind" : "enumCase",
+      "memberName" : "node",
+      "origin" : "identifier",
+      "toTypeName" : "ProjectionBridgeNode",
+      "viaTypeNames" : [
+        "ProjectionBridgeNodeID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "dictionary",
+      "fromTypeName" : "ProjectionBridgeGraph",
+      "memberKind" : "property",
+      "memberName" : "edgesByID",
+      "origin" : "mixed",
+      "toTypeName" : "ProjectionBridgeEdge",
+      "viaTypeNames" : [
+        "ProjectionBridgeEdgeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "optional",
+      "fromTypeName" : "ProjectionBridgeGraph",
+      "memberKind" : "property",
+      "memberName" : "focus",
+      "origin" : "direct",
+      "toTypeName" : "ProjectionBridgeFocus",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "dictionary",
+      "fromTypeName" : "ProjectionBridgeGraph",
+      "memberKind" : "property",
+      "memberName" : "nodesByID",
+      "origin" : "mixed",
+      "toTypeName" : "ProjectionBridgeNode",
+      "viaTypeNames" : [
+        "ProjectionBridgeNodeID"
+      ]
+    }
+  ],
+  "nodes" : [
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "ProjectionBridgeEdgeID"
+        }
+      ],
+      "sourceLine" : 2,
+      "sourcePath" : "Sources\/Domain\/Model\/ProjectionBridgeEdge.swift",
+      "typeName" : "ProjectionBridgeEdge"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "edgeID",
+          "typeText" : "ProjectionBridgeEdgeID"
+        },
+        {
+          "kind" : "property",
+          "name" : "originNodeID",
+          "typeText" : "ProjectionBridgeNodeID"
+        }
+      ],
+      "sourceLine" : 1,
+      "sourcePath" : "Sources\/Domain\/Model\/ProjectionBridgeFocus.swift",
+      "typeName" : "ProjectionBridgeEdgeFocus"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "enumCase",
+          "name" : "node",
+          "typeText" : "ProjectionBridgeNodeID"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "edge",
+          "typeText" : "ProjectionBridgeEdgeFocus"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "group",
+          "typeText" : "ProjectionBridgeGroupID"
+        }
+      ],
+      "sourceLine" : 11,
+      "sourcePath" : "Sources\/Domain\/Model\/ProjectionBridgeFocus.swift",
+      "typeName" : "ProjectionBridgeFocus"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "nodesByID",
+          "typeText" : "[ProjectionBridgeNodeID: ProjectionBridgeNode]"
+        },
+        {
+          "kind" : "property",
+          "name" : "edgesByID",
+          "typeText" : "[ProjectionBridgeEdgeID: ProjectionBridgeEdge]"
+        },
+        {
+          "kind" : "property",
+          "name" : "focus",
+          "typeText" : "ProjectionBridgeFocus?"
+        }
+      ],
+      "sourceLine" : 2,
+      "sourcePath" : "Sources\/Domain\/Model\/ProjectionBridgeGraph.swift",
+      "typeName" : "ProjectionBridgeGraph"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "ProjectionBridgeGroupID"
+        }
+      ],
+      "sourceLine" : 2,
+      "sourcePath" : "Sources\/Domain\/Model\/ProjectionBridgeGroup.swift",
+      "typeName" : "ProjectionBridgeGroup"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "ProjectionBridgeNodeID"
+        }
+      ],
+      "sourceLine" : 2,
+      "sourcePath" : "Sources\/Domain\/Model\/ProjectionBridgeNode.swift",
+      "typeName" : "ProjectionBridgeNode"
+    }
+  ]
+}
