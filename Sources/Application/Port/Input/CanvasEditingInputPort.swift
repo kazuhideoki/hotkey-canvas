@@ -1,5 +1,8 @@
+// 背景: キャンバス編集ユースケースが UI に依存せずに操作を受け取れる入力境界が必要。
+// 責務: キャンバス編集に必要な操作契約と、追加モード選択時の補助フローを提供する。
 import Domain
 
+/// キャンバス編集操作を受け取る入力ポート。
 public protocol CanvasEditingInputPort: Sendable {
     func apply(commands: [CanvasCommand]) async throws -> ApplyResult
     func addNodeFromModeSelection(mode: CanvasEditingMode) async throws -> ApplyResult
@@ -10,7 +13,7 @@ public protocol CanvasEditingInputPort: Sendable {
 }
 
 extension CanvasEditingInputPort {
-    /// Default compatibility path: add node first, then move it into a mode-specific area when needed.
+    /// 互換経路として、まずノードを追加し、必要な場合だけ追加モード選択用のエリアへ移す。
     public func addNodeFromModeSelection(mode: CanvasEditingMode) async throws -> ApplyResult {
         let addResult = try await apply(commands: [.addNode])
         guard addResult.didAddNode, let addedNodeID = addResult.newState.focusedNodeID else {
@@ -26,10 +29,9 @@ extension CanvasEditingInputPort {
             return addResult
         }
 
-        let maximumRetryCount = 3
         var latestGraph = addResult.newState
         var retryCount = 0
-        while retryCount <= maximumRetryCount {
+        while retryCount <= CanvasEditingInputPortConstants.modeSelectionAreaCreationMaximumRetryCount {
             let areaID = nextAreaID(for: mode, in: latestGraph)
             do {
                 let modeResult = try await apply(
@@ -87,4 +89,8 @@ extension CanvasEditingInputPort {
             didAddNode: true
         )
     }
+}
+
+private enum CanvasEditingInputPortConstants {
+    static let modeSelectionAreaCreationMaximumRetryCount = 3
 }

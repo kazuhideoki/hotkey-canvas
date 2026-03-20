@@ -1,8 +1,8 @@
-// Background: Primitive intent routing needs a stable application input-port bridge into executable behavior.
-// Responsibility: Convert primitive intents into context actions without UI/framework dependencies.
+// 背景: 通常ショートカットの操作意図を UI 非依存で実行可能な操作へ橋渡しする必要がある。
+// 責務: 操作意図を入力ポート層で解決可能な操作へ変換する。
 import Domain
 
-/// Default resolver from primitive keymap intent to executable context action.
+/// 通常ショートカットの操作意図を実行可能な操作へ変換する既定実装。
 public struct DefaultKeymapContextActionResolver: KeymapContextActionResolver {
     public init() {}
 
