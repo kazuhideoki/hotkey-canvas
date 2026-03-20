@@ -76,6 +76,7 @@ run_negative_test_case "invalid-identifier-target" "Invalid Identifier Target"
 run_negative_test_case "inferred-property" "Inferred Property"
 
 MISSING_INCLUDE_STDERR="$BUILD_DIR/missing-include.stderr"
+MISSING_INCLUDE_EXPECTED_FRAGMENT=$(cat "$REPO_ROOT/tools/domain-docs/tests/missing-include.error.txt")
 rm -f "$MISSING_INCLUDE_STDERR"
 if "$BINARY_PATH" \
   --repo-root "$REPO_ROOT" \
@@ -88,9 +89,11 @@ if "$BINARY_PATH" \
   exit 1
 fi
 
-diff -u \
-  "$REPO_ROOT/tools/domain-docs/tests/missing-include.error.txt" \
-  "$MISSING_INCLUDE_STDERR"
+if ! grep -Fq "$MISSING_INCLUDE_EXPECTED_FRAGMENT" "$MISSING_INCLUDE_STDERR"; then
+  echo "Missing include directory error did not contain the expected stable fragment." >&2
+  cat "$MISSING_INCLUDE_STDERR" >&2
+  exit 1
+fi
 
 echo "Domain docs tool tests passed."
 

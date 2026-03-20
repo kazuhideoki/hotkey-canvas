@@ -54,6 +54,6 @@
   - 参照タイミング: 実装準拠のモデル参照関係を俯瞰したいとき、手書き仕様との差分を確認したいとき
   - 変更タイミング: `scripts/generate_domain_docs.sh` の出力仕様や `Sources/Domain/Model/` の関係が変わったとき
 - 生成ドメインモデル関係 JSON: `docs/specs/generated/domain-model-relations.json`
-  - 役割: ドメインモデル参照関係の中間表現 JSON 正本
+  - 役割: ドメインモデル参照関係の中間生成物 JSON。別 renderer や差分確認に使う artifact
   - 参照タイミング: 別 renderer を追加するとき、生成物の差分を機械比較したいとき
   - 変更タイミング: 中間表現 schema や `scripts/generate_domain_docs.sh` の出力仕様が変わったとき
