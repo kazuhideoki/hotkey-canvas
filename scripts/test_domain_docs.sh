@@ -24,18 +24,18 @@ swiftc \
   "$REPO_ROOT"/tools/domain-docs/*.swift \
   -o "$BINARY_PATH"
 
-run_positive_fixture() {
-  local fixture_name="$1"
+run_positive_test_case() {
+  local test_case_name="$1"
   local title="$2"
-  local fixture_root="$REPO_ROOT/tools/domain-docs/fixtures/$fixture_name"
-  local actual_json="$BUILD_DIR/$fixture_name.actual.json"
-  local actual_markdown="$BUILD_DIR/$fixture_name.actual.md"
-  local expected_json="$fixture_root/expected/graph.json"
-  local expected_markdown="$fixture_root/expected/graph.md"
+  local test_case_root="$REPO_ROOT/tools/domain-docs/tests/$test_case_name"
+  local actual_json="$BUILD_DIR/$test_case_name.actual.json"
+  local actual_markdown="$BUILD_DIR/$test_case_name.actual.md"
+  local expected_json="$test_case_root/expected/graph.json"
+  local expected_markdown="$test_case_root/expected/graph.md"
 
   "$BINARY_PATH" \
-    --repo-root "$fixture_root" \
-    --include-dir "$fixture_root/Sources/Domain/Model" \
+    --repo-root "$test_case_root" \
+    --include-dir "$test_case_root/Sources/Domain/Model" \
     --json-output "$actual_json" \
     --markdown-output "$actual_markdown" \
     --title "$title"
@@ -44,42 +44,42 @@ run_positive_fixture() {
   diff -u "$expected_markdown" "$actual_markdown"
 }
 
-run_negative_fixture() {
-  local fixture_name="$1"
+run_negative_test_case() {
+  local test_case_name="$1"
   local title="$2"
-  local fixture_root="$REPO_ROOT/tools/domain-docs/fixtures/$fixture_name"
-  local stderr_path="$BUILD_DIR/$fixture_name.stderr"
-  local actual_json="$BUILD_DIR/$fixture_name.actual.json"
-  local actual_markdown="$BUILD_DIR/$fixture_name.actual.md"
-  local expected_error="$fixture_root/expected/error.txt"
+  local test_case_root="$REPO_ROOT/tools/domain-docs/tests/$test_case_name"
+  local stderr_path="$BUILD_DIR/$test_case_name.stderr"
+  local actual_json="$BUILD_DIR/$test_case_name.actual.json"
+  local actual_markdown="$BUILD_DIR/$test_case_name.actual.md"
+  local expected_error="$test_case_root/expected/error.txt"
 
   rm -f "$stderr_path" "$actual_json" "$actual_markdown"
 
   if "$BINARY_PATH" \
-    --repo-root "$fixture_root" \
-    --include-dir "$fixture_root/Sources/Domain/Model" \
+    --repo-root "$test_case_root" \
+    --include-dir "$test_case_root/Sources/Domain/Model" \
     --json-output "$actual_json" \
     --markdown-output "$actual_markdown" \
     --title "$title" \
     2>"$stderr_path"; then
-    echo "Expected fixture '$fixture_name' to fail, but it succeeded." >&2
+    echo "Expected test case '$test_case_name' to fail, but it succeeded." >&2
     exit 1
   fi
 
   diff -u "$expected_error" "$stderr_path"
 }
 
-run_positive_fixture "basic" "Fixture Domain Model Relations"
-run_positive_fixture "projection-bridge" "Projection Bridge Domain Model Relations"
+run_positive_test_case "basic" "Fixture Domain Model Relations"
+run_positive_test_case "projection-bridge" "Projection Bridge Domain Model Relations"
 
-run_negative_fixture "invalid-identifier-target" "Invalid Identifier Target"
-run_negative_fixture "inferred-property" "Inferred Property"
+run_negative_test_case "invalid-identifier-target" "Invalid Identifier Target"
+run_negative_test_case "inferred-property" "Inferred Property"
 
 MISSING_INCLUDE_STDERR="$BUILD_DIR/missing-include.stderr"
 rm -f "$MISSING_INCLUDE_STDERR"
 if "$BINARY_PATH" \
   --repo-root "$REPO_ROOT" \
-  --include-dir "$REPO_ROOT/tools/domain-docs/fixtures/missing-directory" \
+  --include-dir "$REPO_ROOT/tools/domain-docs/tests/missing-directory" \
   --json-output "$BUILD_DIR/missing-include.json" \
   --markdown-output "$BUILD_DIR/missing-include.md" \
   --title "Missing Include Directory" \
@@ -89,10 +89,10 @@ if "$BINARY_PATH" \
 fi
 
 diff -u \
-  "$REPO_ROOT/tools/domain-docs/fixtures/missing-include.expected-error.txt" \
+  "$REPO_ROOT/tools/domain-docs/tests/missing-include.error.txt" \
   "$MISSING_INCLUDE_STDERR"
 
-echo "Domain docs fixture tests passed."
+echo "Domain docs tool tests passed."
 
 "$BINARY_PATH" \
   --repo-root "$REPO_ROOT" \
