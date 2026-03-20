@@ -1,0 +1,163 @@
+{
+  "edges" : [
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "FixtureChild",
+      "memberKind" : "property",
+      "memberName" : "ownerNodeID",
+      "origin" : "identifier",
+      "toTypeName" : "FixtureNode",
+      "viaTypeNames" : [
+        "FixtureNodeID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "dictionary",
+      "fromTypeName" : "FixtureGraph",
+      "memberKind" : "property",
+      "memberName" : "nodesByID",
+      "origin" : "mixed",
+      "toTypeName" : "FixtureNode",
+      "viaTypeNames" : [
+        "FixtureNodeID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "FixtureGraph",
+      "memberKind" : "property",
+      "memberName" : "selectedNodeIDs",
+      "origin" : "identifier",
+      "toTypeName" : "FixtureNode",
+      "viaTypeNames" : [
+        "FixtureNodeID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "dictionary",
+      "fromTypeName" : "FixtureGraph",
+      "memberKind" : "property",
+      "memberName" : "shortcutsByID",
+      "origin" : "mixed",
+      "toTypeName" : "FixtureShortcutDefinition",
+      "viaTypeNames" : [
+        "FixtureShortcutID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "FixtureGroup",
+      "memberKind" : "property",
+      "memberName" : "nodeIDs",
+      "origin" : "identifier",
+      "toTypeName" : "FixtureNode",
+      "viaTypeNames" : [
+        "FixtureNodeID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "array",
+      "fromTypeName" : "FixtureNode",
+      "memberKind" : "property",
+      "memberName" : "children",
+      "origin" : "direct",
+      "toTypeName" : "FixtureChild",
+      "viaTypeNames" : [
+
+      ]
+    }
+  ],
+  "nodes" : [
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "ownerNodeID",
+          "typeText" : "FixtureNodeID"
+        }
+      ],
+      "sourceLine" : 12,
+      "sourcePath" : "Sources\/Domain\/Model\/FixtureNode.swift",
+      "typeName" : "FixtureChild"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "nodesByID",
+          "typeText" : "[FixtureNodeID: FixtureNode]"
+        },
+        {
+          "kind" : "property",
+          "name" : "selectedNodeIDs",
+          "typeText" : "Set<FixtureNodeID>"
+        },
+        {
+          "kind" : "property",
+          "name" : "shortcutsByID",
+          "typeText" : "[FixtureShortcutID: FixtureShortcutDefinition]"
+        }
+      ],
+      "sourceLine" : 2,
+      "sourcePath" : "Sources\/Domain\/Model\/FixtureGraph.swift",
+      "typeName" : "FixtureGraph"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "nodeIDs",
+          "typeText" : "Set<FixtureNodeID>"
+        }
+      ],
+      "sourceLine" : 1,
+      "sourcePath" : "Sources\/Domain\/Model\/FixtureGroup.swift",
+      "typeName" : "FixtureGroup"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "FixtureNodeID"
+        },
+        {
+          "kind" : "property",
+          "name" : "children",
+          "typeText" : "[FixtureChild]"
+        }
+      ],
+      "sourceLine" : 2,
+      "sourcePath" : "Sources\/Domain\/Model\/FixtureNode.swift",
+      "typeName" : "FixtureNode"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "FixtureShortcutID"
+        }
+      ],
+      "sourceLine" : 2,
+      "sourcePath" : "Sources\/Domain\/Model\/FixtureShortcutDefinition.swift",
+      "typeName" : "FixtureShortcutDefinition"
+    }
+  ]
+}

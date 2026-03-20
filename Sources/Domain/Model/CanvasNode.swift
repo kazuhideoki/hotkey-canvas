@@ -1,6 +1,7 @@
 // Background: Node entities carry layout and content without framework dependencies.
 // Responsibility: Represent one immutable node value inside the graph.
 /// Immutable node entity for canvas graph state.
+/// @domainDoc entity
 public struct CanvasNode: Equatable, Sendable {
     /// Unique node identifier.
     public let id: CanvasNodeID

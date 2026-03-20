@@ -1,6 +1,7 @@
 // Background: IDs are wrapped to prevent mixing arbitrary strings in domain APIs.
 // Responsibility: Strongly typed identifier for canvas edges.
 /// Opaque identifier value for a `CanvasEdge`.
+/// @domainDoc identifierOf(CanvasEdge)
 public struct CanvasEdgeID: RawRepresentable, Equatable, Hashable, Sendable {
     /// Underlying string value.
     public let rawValue: String

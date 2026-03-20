@@ -1,0 +1,1716 @@
+{
+  "edges" : [
+    {
+      "cardinality" : "many",
+      "containerKind" : "array",
+      "fromTypeName" : "CanvasAreaShape",
+      "memberKind" : "enumCase",
+      "memberName" : "convexHull",
+      "origin" : "direct",
+      "toTypeName" : "CanvasPoint",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasArea",
+      "memberKind" : "property",
+      "memberName" : "edgeShapeStyle",
+      "origin" : "direct",
+      "toTypeName" : "CanvasAreaEdgeShapeStyle",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasArea",
+      "memberKind" : "property",
+      "memberName" : "editingMode",
+      "origin" : "direct",
+      "toTypeName" : "CanvasEditingMode",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "CanvasArea",
+      "memberKind" : "property",
+      "memberName" : "nodeIDs",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasAttachment",
+      "memberKind" : "property",
+      "memberName" : "kind",
+      "origin" : "direct",
+      "toTypeName" : "CanvasAttachmentKind",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasAttachment",
+      "memberKind" : "property",
+      "memberName" : "placement",
+      "origin" : "direct",
+      "toTypeName" : "CanvasAttachmentPlacement",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasCollisionBody",
+      "memberKind" : "property",
+      "memberName" : "shape",
+      "origin" : "direct",
+      "toTypeName" : "CanvasCollisionShape",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "CanvasCollisionBody",
+      "memberKind" : "property",
+      "memberName" : "nodeIDs",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasCollisionShape",
+      "memberKind" : "property",
+      "memberName" : "bounds",
+      "origin" : "direct",
+      "toTypeName" : "CanvasRect",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "array",
+      "fromTypeName" : "CanvasCollisionShape",
+      "memberKind" : "property",
+      "memberName" : "componentRects",
+      "origin" : "direct",
+      "toTypeName" : "CanvasRect",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "optional",
+      "fromTypeName" : "CanvasCommandPaletteContext",
+      "memberKind" : "property",
+      "memberName" : "activeEditingMode",
+      "origin" : "direct",
+      "toTypeName" : "CanvasEditingMode",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "CanvasCommandPaletteVisibility",
+      "memberKind" : "enumCase",
+      "memberName" : "requiresFocusedNodeAndMode",
+      "origin" : "direct",
+      "toTypeName" : "CanvasEditingMode",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "CanvasCommandPaletteVisibility",
+      "memberKind" : "enumCase",
+      "memberName" : "requiresMode",
+      "origin" : "direct",
+      "toTypeName" : "CanvasEditingMode",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasEdgeFocus",
+      "memberKind" : "property",
+      "memberName" : "edgeID",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasEdge",
+      "viaTypeNames" : [
+        "CanvasEdgeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasEdgeFocus",
+      "memberKind" : "property",
+      "memberName" : "originNodeID",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasEdge",
+      "memberKind" : "property",
+      "memberName" : "directionality",
+      "origin" : "direct",
+      "toTypeName" : "CanvasEdgeDirectionality",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasEdge",
+      "memberKind" : "property",
+      "memberName" : "relationType",
+      "origin" : "direct",
+      "toTypeName" : "CanvasEdgeRelationType",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasEdge",
+      "memberKind" : "property",
+      "memberName" : "fromNodeID",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasEdge",
+      "memberKind" : "property",
+      "memberName" : "toNodeID",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasFocusedElement",
+      "memberKind" : "enumCase",
+      "memberName" : "area",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasArea",
+      "viaTypeNames" : [
+        "CanvasAreaID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasFocusedElement",
+      "memberKind" : "enumCase",
+      "memberName" : "edge",
+      "origin" : "direct",
+      "toTypeName" : "CanvasEdgeFocus",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasFocusedElement",
+      "memberKind" : "enumCase",
+      "memberName" : "node",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "dictionary",
+      "fromTypeName" : "CanvasGraph",
+      "memberKind" : "property",
+      "memberName" : "areasByID",
+      "origin" : "mixed",
+      "toTypeName" : "CanvasArea",
+      "viaTypeNames" : [
+        "CanvasAreaID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "dictionary",
+      "fromTypeName" : "CanvasGraph",
+      "memberKind" : "property",
+      "memberName" : "edgesByID",
+      "origin" : "mixed",
+      "toTypeName" : "CanvasEdge",
+      "viaTypeNames" : [
+        "CanvasEdgeID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "CanvasGraph",
+      "memberKind" : "property",
+      "memberName" : "selectedEdgeIDs",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasEdge",
+      "viaTypeNames" : [
+        "CanvasEdgeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "optional",
+      "fromTypeName" : "CanvasGraph",
+      "memberKind" : "property",
+      "memberName" : "focusedElement",
+      "origin" : "direct",
+      "toTypeName" : "CanvasFocusedElement",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "CanvasGraph",
+      "memberKind" : "property",
+      "memberName" : "collapsedRootNodeIDs",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "optional",
+      "fromTypeName" : "CanvasGraph",
+      "memberKind" : "property",
+      "memberName" : "focusedNodeID",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "dictionary",
+      "fromTypeName" : "CanvasGraph",
+      "memberKind" : "property",
+      "memberName" : "nodesByID",
+      "origin" : "mixed",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "CanvasGraph",
+      "memberKind" : "property",
+      "memberName" : "selectedNodeIDs",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasNodeArea",
+      "memberKind" : "property",
+      "memberName" : "shape",
+      "origin" : "direct",
+      "toTypeName" : "CanvasAreaShape",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasNodeArea",
+      "memberKind" : "property",
+      "memberName" : "id",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "CanvasNodeArea",
+      "memberKind" : "property",
+      "memberName" : "nodeIDs",
+      "origin" : "identifier",
+      "toTypeName" : "CanvasNode",
+      "viaTypeNames" : [
+        "CanvasNodeID"
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasNodeArea",
+      "memberKind" : "property",
+      "memberName" : "bounds",
+      "origin" : "direct",
+      "toTypeName" : "CanvasRect",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "array",
+      "fromTypeName" : "CanvasNode",
+      "memberKind" : "property",
+      "memberName" : "attachments",
+      "origin" : "direct",
+      "toTypeName" : "CanvasAttachment",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasNode",
+      "memberKind" : "property",
+      "memberName" : "bounds",
+      "origin" : "direct",
+      "toTypeName" : "CanvasBounds",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasNode",
+      "memberKind" : "property",
+      "memberName" : "kind",
+      "origin" : "direct",
+      "toTypeName" : "CanvasNodeKind",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasShortcutDefinition",
+      "memberKind" : "property",
+      "memberName" : "commandPaletteLabel",
+      "origin" : "direct",
+      "toTypeName" : "CanvasCommandPaletteLabel",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasShortcutDefinition",
+      "memberKind" : "property",
+      "memberName" : "commandPaletteVisibility",
+      "origin" : "direct",
+      "toTypeName" : "CanvasCommandPaletteVisibility",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasShortcutDefinition",
+      "memberKind" : "property",
+      "memberName" : "action",
+      "origin" : "direct",
+      "toTypeName" : "CanvasShortcutAction",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasShortcutDefinition",
+      "memberKind" : "property",
+      "memberName" : "gesture",
+      "origin" : "direct",
+      "toTypeName" : "CanvasShortcutGesture",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasShortcutDefinition",
+      "memberKind" : "property",
+      "memberName" : "executionCondition",
+      "origin" : "direct",
+      "toTypeName" : "KeymapExecutionCondition",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasShortcutDefinition",
+      "memberKind" : "property",
+      "memberName" : "executionRoute",
+      "origin" : "direct",
+      "toTypeName" : "KeymapExecutionRoute",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasShortcutGesture",
+      "memberKind" : "property",
+      "memberName" : "key",
+      "origin" : "direct",
+      "toTypeName" : "CanvasShortcutKey",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "CanvasShortcutGesture",
+      "memberKind" : "property",
+      "memberName" : "modifiers",
+      "origin" : "direct",
+      "toTypeName" : "CanvasShortcutModifiers",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "KeymapExecutionCondition",
+      "memberKind" : "enumCase",
+      "memberName" : "disallowedModes",
+      "origin" : "direct",
+      "toTypeName" : "CanvasEditingMode",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "KeymapExecutionCondition",
+      "memberKind" : "enumCase",
+      "memberName" : "requiredModes",
+      "origin" : "direct",
+      "toTypeName" : "CanvasEditingMode",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "array",
+      "fromTypeName" : "KeymapExecutionCondition",
+      "memberKind" : "enumCase",
+      "memberName" : "all",
+      "origin" : "direct",
+      "toTypeName" : "KeymapExecutionCondition",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "KeymapExecutionCondition",
+      "memberKind" : "enumCase",
+      "memberName" : "modalIn",
+      "origin" : "direct",
+      "toTypeName" : "KeymapExecutionModalKind",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "KeymapExecutionCondition",
+      "memberKind" : "enumCase",
+      "memberName" : "modalOut",
+      "origin" : "direct",
+      "toTypeName" : "KeymapExecutionModalKind",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "KeymapExecutionCondition",
+      "memberKind" : "enumCase",
+      "memberName" : "requiresSelectionCount",
+      "origin" : "direct",
+      "toTypeName" : "KeymapExecutionSelectionCountCondition",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "many",
+      "containerKind" : "set",
+      "fromTypeName" : "KeymapExecutionCondition",
+      "memberKind" : "enumCase",
+      "memberName" : "targetKinds",
+      "origin" : "direct",
+      "toTypeName" : "KeymapSwitchTargetKindIntentVariant",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "optional",
+      "fromTypeName" : "KeymapExecutionContext",
+      "memberKind" : "property",
+      "memberName" : "editingMode",
+      "origin" : "direct",
+      "toTypeName" : "CanvasEditingMode",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "KeymapExecutionContext",
+      "memberKind" : "property",
+      "memberName" : "operationTargetKind",
+      "origin" : "direct",
+      "toTypeName" : "KeymapSwitchTargetKindIntentVariant",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "KeymapPrimitiveIntent",
+      "memberKind" : "enumCase",
+      "memberName" : "add",
+      "origin" : "direct",
+      "toTypeName" : "KeymapAddIntentVariant",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "KeymapPrimitiveIntent",
+      "memberKind" : "enumCase",
+      "memberName" : "edit",
+      "origin" : "direct",
+      "toTypeName" : "KeymapEditIntentVariant",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "KeymapPrimitiveIntent",
+      "memberKind" : "enumCase",
+      "memberName" : "moveFocus",
+      "origin" : "direct",
+      "toTypeName" : "KeymapMoveFocusIntentVariant",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "KeymapPrimitiveIntent",
+      "memberKind" : "enumCase",
+      "memberName" : "switchTargetKind",
+      "origin" : "direct",
+      "toTypeName" : "KeymapSwitchTargetKindIntentVariant",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "KeymapPrimitiveIntent",
+      "memberKind" : "enumCase",
+      "memberName" : "transform",
+      "origin" : "direct",
+      "toTypeName" : "KeymapTransformIntentVariant",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "KeymapResolvedRoute",
+      "memberKind" : "enumCase",
+      "memberName" : "global",
+      "origin" : "direct",
+      "toTypeName" : "KeymapGlobalAction",
+      "viaTypeNames" : [
+
+      ]
+    },
+    {
+      "cardinality" : "one",
+      "containerKind" : "scalar",
+      "fromTypeName" : "KeymapResolvedRoute",
+      "memberKind" : "enumCase",
+      "memberName" : "primitive",
+      "origin" : "direct",
+      "toTypeName" : "KeymapPrimitiveIntent",
+      "viaTypeNames" : [
+
+      ]
+    }
+  ],
+  "nodes" : [
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "CanvasAreaID"
+        },
+        {
+          "kind" : "property",
+          "name" : "nodeIDs",
+          "typeText" : "Set<CanvasNodeID>"
+        },
+        {
+          "kind" : "property",
+          "name" : "editingMode",
+          "typeText" : "CanvasEditingMode"
+        },
+        {
+          "kind" : "property",
+          "name" : "edgeShapeStyle",
+          "typeText" : "CanvasAreaEdgeShapeStyle"
+        }
+      ],
+      "sourceLine" : 5,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasArea.swift",
+      "typeName" : "CanvasArea"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasAreaEdgeShapeStyle.swift",
+      "typeName" : "CanvasAreaEdgeShapeStyle"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "enumCase",
+          "name" : "convexHull",
+          "typeText" : "[CanvasPoint]"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasAreaShape.swift",
+      "typeName" : "CanvasAreaShape"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasAreaShapeKind.swift",
+      "typeName" : "CanvasAreaShapeKind"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "CanvasAttachmentID"
+        },
+        {
+          "kind" : "property",
+          "name" : "kind",
+          "typeText" : "CanvasAttachmentKind"
+        },
+        {
+          "kind" : "property",
+          "name" : "placement",
+          "typeText" : "CanvasAttachmentPlacement"
+        }
+      ],
+      "sourceLine" : 5,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasAttachment.swift",
+      "typeName" : "CanvasAttachment"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "enumCase",
+          "name" : "image",
+          "typeText" : "String"
+        }
+      ],
+      "sourceLine" : 40,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasAttachment.swift",
+      "typeName" : "CanvasAttachmentKind"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 46,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasAttachment.swift",
+      "typeName" : "CanvasAttachmentPlacement"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "x",
+          "typeText" : "Double"
+        },
+        {
+          "kind" : "property",
+          "name" : "y",
+          "typeText" : "Double"
+        },
+        {
+          "kind" : "property",
+          "name" : "width",
+          "typeText" : "Double"
+        },
+        {
+          "kind" : "property",
+          "name" : "height",
+          "typeText" : "Double"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasBounds.swift",
+      "typeName" : "CanvasBounds"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "CanvasCollisionBodyID"
+        },
+        {
+          "kind" : "property",
+          "name" : "nodeIDs",
+          "typeText" : "Set<CanvasNodeID>"
+        },
+        {
+          "kind" : "property",
+          "name" : "shape",
+          "typeText" : "CanvasCollisionShape"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasCollisionBody.swift",
+      "typeName" : "CanvasCollisionBody"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "componentRects",
+          "typeText" : "[CanvasRect]"
+        },
+        {
+          "kind" : "property",
+          "name" : "bounds",
+          "typeText" : "CanvasRect"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasCollisionShape.swift",
+      "typeName" : "CanvasCollisionShape"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "activeEditingMode",
+          "typeText" : "CanvasEditingMode?"
+        },
+        {
+          "kind" : "property",
+          "name" : "hasFocusedNode",
+          "typeText" : "Bool"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasCommandPaletteContext.swift",
+      "typeName" : "CanvasCommandPaletteContext"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "noun",
+          "typeText" : "String"
+        },
+        {
+          "kind" : "property",
+          "name" : "verb",
+          "typeText" : "String"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasCommandPaletteLabel.swift",
+      "typeName" : "CanvasCommandPaletteLabel"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "enumCase",
+          "name" : "requiresMode",
+          "typeText" : "Set<CanvasEditingMode>"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "requiresFocusedNodeAndMode",
+          "typeText" : "Set<CanvasEditingMode>"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasCommandPaletteVisibility.swift",
+      "typeName" : "CanvasCommandPaletteVisibility"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasDefaultNodeDistance.swift",
+      "typeName" : "CanvasDefaultNodeDistance"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "CanvasEdgeID"
+        },
+        {
+          "kind" : "property",
+          "name" : "fromNodeID",
+          "typeText" : "CanvasNodeID"
+        },
+        {
+          "kind" : "property",
+          "name" : "toNodeID",
+          "typeText" : "CanvasNodeID"
+        },
+        {
+          "kind" : "property",
+          "name" : "relationType",
+          "typeText" : "CanvasEdgeRelationType"
+        },
+        {
+          "kind" : "property",
+          "name" : "directionality",
+          "typeText" : "CanvasEdgeDirectionality"
+        },
+        {
+          "kind" : "property",
+          "name" : "parentChildOrder",
+          "typeText" : "Int?"
+        },
+        {
+          "kind" : "property",
+          "name" : "label",
+          "typeText" : "String?"
+        },
+        {
+          "kind" : "property",
+          "name" : "metadata",
+          "typeText" : "[String: String]"
+        }
+      ],
+      "sourceLine" : 5,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasEdge.swift",
+      "typeName" : "CanvasEdge"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "rawValue",
+          "typeText" : "String"
+        }
+      ],
+      "sourceLine" : 5,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasEdgeDirectionality.swift",
+      "typeName" : "CanvasEdgeDirectionality"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "edgeID",
+          "typeText" : "CanvasEdgeID"
+        },
+        {
+          "kind" : "property",
+          "name" : "originNodeID",
+          "typeText" : "CanvasNodeID"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasFocusedElement.swift",
+      "typeName" : "CanvasEdgeFocus"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "rawValue",
+          "typeText" : "String"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasEdgeRelationType.swift",
+      "typeName" : "CanvasEdgeRelationType"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasEditingMode.swift",
+      "typeName" : "CanvasEditingMode"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "enumCase",
+          "name" : "node",
+          "typeText" : "CanvasNodeID"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "edge",
+          "typeText" : "CanvasEdgeFocus"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "area",
+          "typeText" : "CanvasAreaID"
+        }
+      ],
+      "sourceLine" : 21,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasFocusedElement.swift",
+      "typeName" : "CanvasFocusedElement"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "nodesByID",
+          "typeText" : "[CanvasNodeID: CanvasNode]"
+        },
+        {
+          "kind" : "property",
+          "name" : "edgesByID",
+          "typeText" : "[CanvasEdgeID: CanvasEdge]"
+        },
+        {
+          "kind" : "property",
+          "name" : "focusedNodeID",
+          "typeText" : "CanvasNodeID?"
+        },
+        {
+          "kind" : "property",
+          "name" : "focusedElement",
+          "typeText" : "CanvasFocusedElement?"
+        },
+        {
+          "kind" : "property",
+          "name" : "selectedNodeIDs",
+          "typeText" : "Set<CanvasNodeID>"
+        },
+        {
+          "kind" : "property",
+          "name" : "selectedEdgeIDs",
+          "typeText" : "Set<CanvasEdgeID>"
+        },
+        {
+          "kind" : "property",
+          "name" : "collapsedRootNodeIDs",
+          "typeText" : "Set<CanvasNodeID>"
+        },
+        {
+          "kind" : "property",
+          "name" : "areasByID",
+          "typeText" : "[CanvasAreaID: CanvasArea]"
+        }
+      ],
+      "sourceLine" : 5,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasGraph.swift",
+      "typeName" : "CanvasGraph"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "CanvasNodeID"
+        },
+        {
+          "kind" : "property",
+          "name" : "kind",
+          "typeText" : "CanvasNodeKind"
+        },
+        {
+          "kind" : "property",
+          "name" : "text",
+          "typeText" : "String?"
+        },
+        {
+          "kind" : "property",
+          "name" : "attachments",
+          "typeText" : "[CanvasAttachment]"
+        },
+        {
+          "kind" : "property",
+          "name" : "bounds",
+          "typeText" : "CanvasBounds"
+        },
+        {
+          "kind" : "property",
+          "name" : "metadata",
+          "typeText" : "[String: String]"
+        },
+        {
+          "kind" : "property",
+          "name" : "markdownStyleEnabled",
+          "typeText" : "Bool"
+        }
+      ],
+      "sourceLine" : 5,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasNode.swift",
+      "typeName" : "CanvasNode"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "CanvasNodeID"
+        },
+        {
+          "kind" : "property",
+          "name" : "nodeIDs",
+          "typeText" : "Set<CanvasNodeID>"
+        },
+        {
+          "kind" : "property",
+          "name" : "bounds",
+          "typeText" : "CanvasRect"
+        },
+        {
+          "kind" : "property",
+          "name" : "shape",
+          "typeText" : "CanvasAreaShape"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasNodeArea.swift",
+      "typeName" : "CanvasNodeArea"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "rawValue",
+          "typeText" : "String"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasNodeKind.swift",
+      "typeName" : "CanvasNodeKind"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "x",
+          "typeText" : "Double"
+        },
+        {
+          "kind" : "property",
+          "name" : "y",
+          "typeText" : "Double"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasPoint.swift",
+      "typeName" : "CanvasPoint"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "minX",
+          "typeText" : "Double"
+        },
+        {
+          "kind" : "property",
+          "name" : "minY",
+          "typeText" : "Double"
+        },
+        {
+          "kind" : "property",
+          "name" : "width",
+          "typeText" : "Double"
+        },
+        {
+          "kind" : "property",
+          "name" : "height",
+          "typeText" : "Double"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasRect.swift",
+      "typeName" : "CanvasRect"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "enumCase",
+          "name" : "apply",
+          "typeText" : "[CanvasCommand]"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasShortcutAction.swift",
+      "typeName" : "CanvasShortcutAction"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : true,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "id",
+          "typeText" : "CanvasShortcutID"
+        },
+        {
+          "kind" : "property",
+          "name" : "commandPaletteLabel",
+          "typeText" : "CanvasCommandPaletteLabel"
+        },
+        {
+          "kind" : "property",
+          "name" : "gesture",
+          "typeText" : "CanvasShortcutGesture"
+        },
+        {
+          "kind" : "property",
+          "name" : "action",
+          "typeText" : "CanvasShortcutAction"
+        },
+        {
+          "kind" : "property",
+          "name" : "shortcutLabel",
+          "typeText" : "String"
+        },
+        {
+          "kind" : "property",
+          "name" : "searchTokens",
+          "typeText" : "[String]"
+        },
+        {
+          "kind" : "property",
+          "name" : "isVisibleInCommandPalette",
+          "typeText" : "Bool"
+        },
+        {
+          "kind" : "property",
+          "name" : "commandPaletteVisibility",
+          "typeText" : "CanvasCommandPaletteVisibility"
+        },
+        {
+          "kind" : "property",
+          "name" : "executionCondition",
+          "typeText" : "KeymapExecutionCondition"
+        },
+        {
+          "kind" : "property",
+          "name" : "executionRoute",
+          "typeText" : "KeymapExecutionRoute"
+        }
+      ],
+      "sourceLine" : 5,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasShortcutDefinition.swift",
+      "typeName" : "CanvasShortcutDefinition"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "key",
+          "typeText" : "CanvasShortcutKey"
+        },
+        {
+          "kind" : "property",
+          "name" : "modifiers",
+          "typeText" : "CanvasShortcutModifiers"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasShortcutGesture.swift",
+      "typeName" : "CanvasShortcutGesture"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "enumCase",
+          "name" : "character",
+          "typeText" : "String"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasShortcutKey.swift",
+      "typeName" : "CanvasShortcutKey"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "rawValue",
+          "typeText" : "UInt8"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasShortcutModifiers.swift",
+      "typeName" : "CanvasShortcutModifiers"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "dx",
+          "typeText" : "Double"
+        },
+        {
+          "kind" : "property",
+          "name" : "dy",
+          "typeText" : "Double"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/CanvasTranslation.swift",
+      "typeName" : "CanvasTranslation"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapPrimitiveIntent.swift",
+      "typeName" : "KeymapAddIntentVariant"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 12,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapPrimitiveIntent.swift",
+      "typeName" : "KeymapEditIntentVariant"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "enumCase",
+          "name" : "all",
+          "typeText" : "[KeymapExecutionCondition]"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "targetKinds",
+          "typeText" : "Set<KeymapSwitchTargetKindIntentVariant>"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "requiredModes",
+          "typeText" : "Set<CanvasEditingMode>"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "disallowedModes",
+          "typeText" : "Set<CanvasEditingMode>"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "requiresSelectionCount",
+          "typeText" : "KeymapExecutionSelectionCountCondition"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "modalIn",
+          "typeText" : "Set<KeymapExecutionModalKind>"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "modalOut",
+          "typeText" : "Set<KeymapExecutionModalKind>"
+        }
+      ],
+      "sourceLine" : 3,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapExecutionCondition.swift",
+      "typeName" : "KeymapExecutionCondition"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "editingMode",
+          "typeText" : "CanvasEditingMode?"
+        },
+        {
+          "kind" : "property",
+          "name" : "operationTargetKind",
+          "typeText" : "KeymapSwitchTargetKindIntentVariant"
+        },
+        {
+          "kind" : "property",
+          "name" : "hasFocusedNode",
+          "typeText" : "Bool"
+        },
+        {
+          "kind" : "property",
+          "name" : "isEditingText",
+          "typeText" : "Bool"
+        },
+        {
+          "kind" : "property",
+          "name" : "isCommandPalettePresented",
+          "typeText" : "Bool"
+        },
+        {
+          "kind" : "property",
+          "name" : "isSearchPresented",
+          "typeText" : "Bool"
+        },
+        {
+          "kind" : "property",
+          "name" : "isConnectNodeSelectionActive",
+          "typeText" : "Bool"
+        },
+        {
+          "kind" : "property",
+          "name" : "isAddNodePopupPresented",
+          "typeText" : "Bool"
+        },
+        {
+          "kind" : "property",
+          "name" : "selectedNodeCount",
+          "typeText" : "Int"
+        },
+        {
+          "kind" : "property",
+          "name" : "selectedEdgeCount",
+          "typeText" : "Int"
+        }
+      ],
+      "sourceLine" : 3,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapExecutionContext.swift",
+      "typeName" : "KeymapExecutionContext"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 83,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapExecutionCondition.swift",
+      "typeName" : "KeymapExecutionModalKind"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapExecutionRoute.swift",
+      "typeName" : "KeymapExecutionRoute"
+    },
+    {
+      "declarationKind" : "struct",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "property",
+          "name" : "minNodeCount",
+          "typeText" : "Int?"
+        },
+        {
+          "kind" : "property",
+          "name" : "maxNodeCount",
+          "typeText" : "Int?"
+        },
+        {
+          "kind" : "property",
+          "name" : "minEdgeCount",
+          "typeText" : "Int?"
+        },
+        {
+          "kind" : "property",
+          "name" : "maxEdgeCount",
+          "typeText" : "Int?"
+        }
+      ],
+      "sourceLine" : 28,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapExecutionCondition.swift",
+      "typeName" : "KeymapExecutionSelectionCountCondition"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapGlobalAction.swift",
+      "typeName" : "KeymapGlobalAction"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 21,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapPrimitiveIntent.swift",
+      "typeName" : "KeymapMoveFocusIntentVariant"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "enumCase",
+          "name" : "add",
+          "typeText" : "KeymapAddIntentVariant"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "edit",
+          "typeText" : "KeymapEditIntentVariant"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "switchTargetKind",
+          "typeText" : "KeymapSwitchTargetKindIntentVariant"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "moveFocus",
+          "typeText" : "CanvasFocusDirection, KeymapMoveFocusIntentVariant"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "moveNode",
+          "typeText" : "CanvasNodeMoveDirection"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "nudgeNode",
+          "typeText" : "CanvasNodeMoveDirection"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "transform",
+          "typeText" : "KeymapTransformIntentVariant"
+        }
+      ],
+      "sourceLine" : 43,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapPrimitiveIntent.swift",
+      "typeName" : "KeymapPrimitiveIntent"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+        {
+          "kind" : "enumCase",
+          "name" : "primitive",
+          "typeText" : "KeymapPrimitiveIntent"
+        },
+        {
+          "kind" : "enumCase",
+          "name" : "global",
+          "typeText" : "KeymapGlobalAction"
+        }
+      ],
+      "sourceLine" : 4,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapResolvedRoute.swift",
+      "typeName" : "KeymapResolvedRoute"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 28,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapPrimitiveIntent.swift",
+      "typeName" : "KeymapSwitchTargetKindIntentVariant"
+    },
+    {
+      "declarationKind" : "enum",
+      "isEntity" : false,
+      "members" : [
+
+      ],
+      "sourceLine" : 36,
+      "sourcePath" : "Sources\/Domain\/Model\/KeymapPrimitiveIntent.swift",
+      "typeName" : "KeymapTransformIntentVariant"
+    }
+  ]
+}

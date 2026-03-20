@@ -1,6 +1,7 @@
 // Background: Graph relationships are represented as first-class immutable values.
 // Responsibility: Describe one directed relation between two nodes.
 /// Immutable edge connecting two nodes in a canvas graph.
+/// @domainDoc entity
 public struct CanvasEdge: Equatable, Sendable {
     /// Unique edge identifier.
     public let id: CanvasEdgeID

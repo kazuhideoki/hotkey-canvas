@@ -1,6 +1,7 @@
 // Background: Graph state is shared across use cases as immutable snapshots.
 // Responsibility: Hold all nodes and edges keyed by their identifiers.
 /// Immutable aggregate root for nodes and edges.
+/// @domainDoc entity
 public struct CanvasGraph: Equatable, Sendable {
     /// Node collection indexed by node identifier.
     public let nodesByID: [CanvasNodeID: CanvasNode]

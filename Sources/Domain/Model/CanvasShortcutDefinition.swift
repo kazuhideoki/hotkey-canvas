@@ -1,6 +1,7 @@
 // Background: Shortcut catalog entries must provide behavior and display metadata from one source.
 // Responsibility: Represent one shortcut rule used by event handling and command palette UI.
 /// Immutable shortcut catalog entry.
+/// @domainDoc entity
 public struct CanvasShortcutDefinition: Equatable, Sendable {
     /// Stable identifier for this shortcut rule.
     public let id: CanvasShortcutID

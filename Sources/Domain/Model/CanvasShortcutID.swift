@@ -1,6 +1,7 @@
 // Background: Shortcut definitions need stable identifiers for deterministic lookup and testing.
 // Responsibility: Provide a strongly typed identifier for shortcut catalog entries.
 /// Opaque identifier for a canvas shortcut definition.
+/// @domainDoc identifierOf(CanvasShortcutDefinition)
 public struct CanvasShortcutID: RawRepresentable, Equatable, Hashable, Sendable {
     /// Underlying string value.
     public let rawValue: String

@@ -1,6 +1,7 @@
 // Background: Node attachments need stable identities for deterministic updates and reordering.
 // Responsibility: Strongly typed identifier for canvas node attachments.
 /// Opaque identifier value for a `CanvasAttachment`.
+/// @domainDoc identifierOf(CanvasAttachment)
 public struct CanvasAttachmentID: RawRepresentable, Equatable, Hashable, Sendable {
     /// Underlying string value.
     public let rawValue: String

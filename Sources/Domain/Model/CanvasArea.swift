@@ -1,6 +1,7 @@
 // Background: Tree and diagram semantics are separated by area in one graph.
 // Responsibility: Hold node membership and mode for one editable canvas area.
 /// Immutable area aggregate for mode-specific editing boundaries.
+/// @domainDoc entity
 public struct CanvasArea: Equatable, Sendable {
     /// Area identifier.
     public let id: CanvasAreaID

@@ -1,6 +1,7 @@
 // Background: Node content must support multiple non-text payloads beyond images.
 // Responsibility: Represent one immutable attachment item owned by a node.
 /// Immutable attachment entity associated with a node.
+/// @domainDoc entity
 public struct CanvasAttachment: Equatable, Sendable {
     /// Unique attachment identifier scoped to the node.
     public let id: CanvasAttachmentID

@@ -49,3 +49,11 @@
   - 役割: ドメイン構造の関係図の正本
   - 参照タイミング: ドメイン間の関係や構造を図で確認したいとき
   - 変更タイミング: ドメインの関連や構造が図として更新必要になったとき
+- 生成ドメインモデル関係図: `docs/specs/generated/domain-model-relations.md`
+  - 役割: `Sources/Domain/Model/` から機械抽出した参照関係の生成物
+  - 参照タイミング: 実装準拠のモデル参照関係を俯瞰したいとき、手書き仕様との差分を確認したいとき
+  - 変更タイミング: `scripts/generate_domain_docs.sh` の出力仕様や `Sources/Domain/Model/` の関係が変わったとき
+- 生成ドメインモデル関係 JSON: `docs/specs/generated/domain-model-relations.json`
+  - 役割: ドメインモデル参照関係の中間表現 JSON 正本
+  - 参照タイミング: 別 renderer を追加するとき、生成物の差分を機械比較したいとき
+  - 変更タイミング: 中間表現 schema や `scripts/generate_domain_docs.sh` の出力仕様が変わったとき

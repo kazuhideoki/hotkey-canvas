@@ -1,6 +1,7 @@
 // Background: IDs are wrapped to preserve type safety across domain APIs.
 // Responsibility: Strongly typed identifier for canvas nodes.
 /// Opaque identifier value for a `CanvasNode`.
+/// @domainDoc identifierOf(CanvasNode)
 public struct CanvasNodeID: RawRepresentable, Equatable, Hashable, Sendable {
     /// Underlying string value.
     public let rawValue: String
