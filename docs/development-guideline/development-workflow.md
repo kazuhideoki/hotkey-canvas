@@ -34,6 +34,7 @@
   - `docs/` 配下のドキュメントは日本語で記述する。
 - Lint / 型安全ルール:
   - `Any` の使用は禁止する（SwiftLint `custom_rules.no_any_type` を `error` 扱い）。
+  - `as!` による強制ダウンキャストは禁止する（SwiftLint `force_cast` を `error` 扱い）。
   - 抽象化が必要な場合も、具体型、ジェネリクス、`any Protocol` を優先する。
   - lint は `./scripts/lint_and_format.sh` を使う（Swift Package Plugin ベースで、グローバルな SwiftLint は不要）。
   - `./scripts/lint_and_format.sh` は Periphery も実行し、未使用宣言や冗長な `public` アクセス指定を検出する。

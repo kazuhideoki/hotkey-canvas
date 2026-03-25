@@ -13,6 +13,7 @@ opt_in_rules:
   - empty_count
   - explicit_init
   - first_where
+  - force_cast
   - force_unwrapping
   - sorted_imports
   - vertical_parameter_alignment_on_call
@@ -49,6 +50,9 @@ file_length:
 cyclomatic_complexity:
   warning: 15
   error: 20
+
+force_cast:
+  severity: error
 
 custom_rules:
   no_any_type:
