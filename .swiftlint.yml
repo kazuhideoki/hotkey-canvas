@@ -51,7 +51,13 @@ cyclomatic_complexity:
   warning: 15
   error: 20
 
+empty_count:
+  severity: error
+
 force_cast:
+  severity: error
+
+force_unwrapping:
   severity: error
 
 custom_rules:
