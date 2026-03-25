@@ -7,10 +7,4 @@ public enum CanvasCollisionBodyID: Hashable, Sendable {
     case node(CanvasNodeID)
     /// 複数 node cluster を表す collision body identifier。
     case cluster(nodeIDs: [CanvasNodeID])
-
-    /// 複数 node 用の決定的 cluster identifier を生成する。
-    /// - Parameter nodeIDs: cluster に含まれる node identifier 群。
-    public static func cluster(nodeIDs: Set<CanvasNodeID>) -> CanvasCollisionBodyID {
-        .cluster(nodeIDs: nodeIDs.sorted { $0.rawValue < $1.rawValue })
-    }
 }
