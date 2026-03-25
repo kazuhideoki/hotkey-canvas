@@ -59,6 +59,22 @@ extension CanvasCollisionResolutionService {
         var propagationQueue: [CanvasCollisionBodyID]
     }
 
+    private struct PropagationContext {
+        let spacing: Double
+        let seedBodyID: CanvasCollisionBodyID
+        let seedPreferredMoveDirection: CanvasNodeMoveDirection?
+    }
+
+    private struct InitialSeparationContext {
+        let seedBodyID: CanvasCollisionBodyID
+        let seedShape: CanvasCollisionShape
+        let firstCollidedBodyID: CanvasCollisionBodyID
+        let firstCollidedShape: CanvasCollisionShape
+        let spacing: Double
+        let tieBreakDirection: Double
+        let seedPreferredMoveDirection: CanvasNodeMoveDirection?
+    }
+
     private static func makeInitialResolutionState(
         bodies: [CanvasCollisionBody],
         seedBodyID: CanvasCollisionBodyID,
@@ -86,33 +102,52 @@ extension CanvasCollisionResolutionService {
             propagationQueue: [seedBodyID, firstCollidedBodyID]
         )
 
-        if let seedPreferredMoveDirection {
+        let context = InitialSeparationContext(
+            seedBodyID: seedBodyID,
+            seedShape: seedShape,
+            firstCollidedBodyID: firstCollidedBodyID,
+            firstCollidedShape: firstCollidedShape,
+            spacing: spacing,
+            tieBreakDirection: bodyIDSortKey(seedBodyID) < bodyIDSortKey(firstCollidedBodyID) ? 1 : -1,
+            seedPreferredMoveDirection: seedPreferredMoveDirection
+        )
+        let didApplyInitialSeparation = applyInitialSeparation(
+            context: context,
+            state: &state
+        )
+        guard didApplyInitialSeparation else {
+            return nil
+        }
+        return state
+    }
+
+    private static func applyInitialSeparation(
+        context: InitialSeparationContext,
+        state: inout OverlapResolutionState
+    ) -> Bool {
+        if let seedPreferredMoveDirection = context.seedPreferredMoveDirection {
             let initialSeparation = requiredSeparation(
-                moving: firstCollidedShape,
-                fixed: seedShape,
-                spacing: spacing,
-                tieBreakDirection: bodyIDSortKey(seedBodyID) < bodyIDSortKey(firstCollidedBodyID) ? 1 : -1,
+                moving: context.firstCollidedShape,
+                fixed: context.seedShape,
+                spacing: context.spacing,
+                tieBreakDirection: context.tieBreakDirection,
                 preferredMoveDirection: seedPreferredMoveDirection
             )
-            let didMoveCollided = applyTranslation(
-                to: firstCollidedBodyID,
+            return applyTranslation(
+                to: context.firstCollidedBodyID,
                 translation: initialSeparation,
                 state: &state
             )
-            guard didMoveCollided else {
-                return nil
-            }
-            return state
         }
 
         let initialSeparation = requiredSeparation(
-            moving: firstCollidedShape,
-            fixed: seedShape,
-            spacing: spacing,
-            tieBreakDirection: bodyIDSortKey(seedBodyID) < bodyIDSortKey(firstCollidedBodyID) ? 1 : -1
+            moving: context.firstCollidedShape,
+            fixed: context.seedShape,
+            spacing: context.spacing,
+            tieBreakDirection: context.tieBreakDirection
         )
         let didMoveSeed = applyTranslation(
-            to: seedBodyID,
+            to: context.seedBodyID,
             translation: CanvasTranslation(
                 dx: -(initialSeparation.dx / 2),
                 dy: -(initialSeparation.dy / 2)
@@ -120,7 +155,7 @@ extension CanvasCollisionResolutionService {
             state: &state
         )
         let didMoveCollided = applyTranslation(
-            to: firstCollidedBodyID,
+            to: context.firstCollidedBodyID,
             translation: CanvasTranslation(
                 dx: initialSeparation.dx / 2,
                 dy: initialSeparation.dy / 2
@@ -129,9 +164,9 @@ extension CanvasCollisionResolutionService {
         )
 
         guard didMoveSeed || didMoveCollided else {
-            return nil
+            return false
         }
-        return state
+        return true
     }
 
     private static func propagateOverlaps(
@@ -141,6 +176,11 @@ extension CanvasCollisionResolutionService {
         seedPreferredMoveDirection: CanvasNodeMoveDirection?,
         maxIterations: Int
     ) {
+        let context = PropagationContext(
+            spacing: spacing,
+            seedBodyID: seedBodyID,
+            seedPreferredMoveDirection: seedPreferredMoveDirection
+        )
         var movementCount = 0
 
         while !state.propagationQueue.isEmpty, movementCount < maxIterations {
@@ -153,9 +193,7 @@ extension CanvasCollisionResolutionService {
                 if moveTargetBodyIfNeeded(
                     moverBodyID: moverBodyID,
                     targetBodyID: targetBodyID,
-                    spacing: spacing,
-                    seedBodyID: seedBodyID,
-                    seedPreferredMoveDirection: seedPreferredMoveDirection,
+                    context: context,
                     state: &state
                 ) {
                     movementCount += 1
@@ -167,9 +205,7 @@ extension CanvasCollisionResolutionService {
     private static func moveTargetBodyIfNeeded(
         moverBodyID: CanvasCollisionBodyID,
         targetBodyID: CanvasCollisionBodyID,
-        spacing: Double,
-        seedBodyID: CanvasCollisionBodyID,
-        seedPreferredMoveDirection: CanvasNodeMoveDirection?,
+        context: PropagationContext,
         state: inout OverlapResolutionState
     ) -> Bool {
         guard
@@ -178,16 +214,16 @@ extension CanvasCollisionResolutionService {
         else {
             return false
         }
-        guard shapesOverlap(moverShape, targetShape, spacing: spacing) else {
+        guard shapesOverlap(moverShape, targetShape, spacing: context.spacing) else {
             return false
         }
 
         let separation = requiredSeparation(
             moving: targetShape,
             fixed: moverShape,
-            spacing: spacing,
+            spacing: context.spacing,
             tieBreakDirection: bodyIDSortKey(moverBodyID) < bodyIDSortKey(targetBodyID) ? 1 : -1,
-            preferredMoveDirection: moverBodyID == seedBodyID ? seedPreferredMoveDirection : nil
+            preferredMoveDirection: moverBodyID == context.seedBodyID ? context.seedPreferredMoveDirection : nil
         )
         let didMoveTarget = applyTranslation(
             to: targetBodyID,

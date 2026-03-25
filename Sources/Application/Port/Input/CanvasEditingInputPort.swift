@@ -31,7 +31,7 @@ extension CanvasEditingInputPort {
 
         var latestGraph = addResult.newState
         var retryCount = 0
-        while retryCount <= CanvasEditingInputPortConstants.modeSelectionAreaCreationMaximumRetryCount {
+        while retryCount <= CanvasEditingInputPortConstants.modeSelectionAreaCreationRetryLimit {
             let areaID = nextAreaID(for: mode, in: latestGraph)
             do {
                 let modeResult = try await apply(
@@ -92,5 +92,5 @@ extension CanvasEditingInputPort {
 }
 
 private enum CanvasEditingInputPortConstants {
-    static let modeSelectionAreaCreationMaximumRetryCount = 3
+    static let modeSelectionAreaCreationRetryLimit = 3
 }
