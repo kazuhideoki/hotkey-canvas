@@ -23,7 +23,12 @@ if ! "$repo_root/scripts/bootstrap_periphery.sh"; then
 fi
 
 if periphery_binary="$("$repo_root/scripts/bootstrap_periphery.sh" --print-binary-path)"; then
-    if ! "$periphery_binary" scan --retain-codable-properties; then
+    rm -rf "$repo_root/.build/index-build"
+    if ! "$periphery_binary" scan \
+        --clean-build \
+        --strict \
+        --relative-results \
+        --retain-codable-properties; then
         status=1
     fi
 else

@@ -38,6 +38,8 @@
   - 抽象化が必要な場合も、具体型、ジェネリクス、`any Protocol` を優先する。
   - lint は `./scripts/lint_and_format.sh` を使う（Swift Package Plugin ベースで、グローバルな SwiftLint は不要）。
   - `./scripts/lint_and_format.sh` は Periphery も実行し、未使用宣言や冗長な `public` アクセス指定を検出する。
+  - Periphery は `--strict` で実行し、未使用宣言が見つかった場合は `./scripts/lint_and_format.sh` を失敗させる。
+  - Periphery 実行前には `.build/index-build` を削除し、`--clean-build` を付けて worktree をまたいだ古い index 混入による誤検出を防ぐ。
   - Periphery には `--retain-codable-properties` を付け、合成 `Codable` だけで使われるプロパティの誤検出を防ぐ。
   - Periphery は `./scripts/bootstrap_periphery.sh` により `.tools/` 配下へ repo ローカルに導入する。これにより、開発者はグローバルな `brew` / `mint` を前提にせず、CI と同じ固定バージョンを使える。
   - 初回 bootstrap では GitHub Releases から Periphery をダウンロードするため、`curl`、`unzip`、ネットワーク接続が一度だけ必要になる。
