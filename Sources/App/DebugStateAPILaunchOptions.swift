@@ -16,6 +16,10 @@ struct DebugStateAPILaunchOptions {
 }
 
 extension DebugStateAPILaunchOptions {
+    private enum Defaults {
+        static let port: UInt16 = 8750
+    }
+
     private static func resolvePort(arguments: [String]) -> UInt16 {
         let prefix = "--debug-state-port="
         for argument in arguments {
@@ -28,7 +32,7 @@ extension DebugStateAPILaunchOptions {
             }
             return rawPort
         }
-        return 8750
+        return Defaults.port
     }
 
     private static func resolveBearerToken(arguments: [String]) -> String {

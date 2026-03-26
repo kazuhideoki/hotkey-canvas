@@ -10,7 +10,7 @@ public final class CanvasSessionStore {
 
     /// Creates an empty store.
     /// - Parameter defaultMaxHistoryCount: Default undo history capacity for newly opened sessions.
-    public init(defaultMaxHistoryCount: Int = 100) {
+    public init(defaultMaxHistoryCount: Int = CanvasSessionDefaults.maxHistoryCount) {
         inputPortBySessionID = [:]
         self.defaultMaxHistoryCount = max(0, defaultMaxHistoryCount)
     }

@@ -10,7 +10,10 @@ public actor ApplyCanvasCommandsUseCase: CanvasEditingInputPort {
     private let maxHistoryCount: Int
     private let pipelineCoordinator: CanvasCommandPipelineCoordinator
 
-    public init(initialGraph: CanvasGraph = .empty, maxHistoryCount: Int = 100) {
+    public init(
+        initialGraph: CanvasGraph = .empty,
+        maxHistoryCount: Int = CanvasSessionDefaults.maxHistoryCount
+    ) {
         graph = initialGraph
         undoStack = []
         redoStack = []

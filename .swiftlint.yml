@@ -77,3 +77,17 @@ custom_rules:
     severity: error
     match_kinds:
       - keyword
+  no_bare_numeric_return:
+    name: "No Bare Numeric Return"
+    included:
+      - Sources
+    regex: "^\\s*return\\s+\\d{2,}(?:_?\\d)*(?:\\.\\d+)?\\s*$"
+    message: "Meaningful numeric return values must use a named constant."
+    severity: warning
+  no_numeric_default_argument:
+    name: "No Numeric Default Argument"
+    included:
+      - Sources
+    regex: "\\b(?:func\\s+[A-Za-z_][A-Za-z0-9_]*|init)\\([^\\n)]*=\\s*\\d{2,}(?:_?\\d)*(?:\\.\\d+)?"
+    message: "Meaningful numeric default arguments must use a named constant."
+    severity: warning

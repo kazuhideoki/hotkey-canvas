@@ -37,6 +37,9 @@
   - `as!` による強制ダウンキャストは禁止する（SwiftLint `force_cast` を `error` 扱い）。
   - 抽象化が必要な場合も、具体型、ジェネリクス、`any Protocol` を優先する。
   - lint は `./scripts/lint_and_format.sh` を使う（Swift Package Plugin ベースで、グローバルな SwiftLint は不要）。
+  - SwiftLint では、production code における「名前のない数値リテラルをそのまま返す」「単一行で書かれた関数・イニシャライザ引数の既定値として数値リテラルを直書きする」パターンを狭く警告し、意味付き定数への切り出しを促す。
+    - 意図 `Sources/` 配下の production code では、仕様値・既定値・しきい値・再試行回数のような意味を持つ数値を原則として名前付き定数へ切り出す。
+    - 例外として、`0` / `1` / `-1` のような自明な恒等値、添字、単純な個数比較、テストデータの入力値は必ずしも定数化しなくてよい。
   - `./scripts/lint_and_format.sh` は Periphery も実行し、未使用宣言や冗長な `public` アクセス指定を検出する。
   - Periphery は `--strict` で実行し、未使用宣言が見つかった場合は `./scripts/lint_and_format.sh` を失敗させる。
   - Periphery 実行前には `.build/index-build` を削除し、`--clean-build` を付けて worktree をまたいだ古い index 混入による誤検出を防ぐ。
